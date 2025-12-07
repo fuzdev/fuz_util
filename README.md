@@ -1,10 +1,10 @@
-# @ryanatkn/belt
+# @fuzdev/fuz_util
 
-[<img src="static/logo.svg" alt="a green sauropod wearing a brown utility belt" align="right" width="256" height="256">](https://belt.ryanatkn.com/)
+[<img src="static/logo.svg" alt="a green sauropod wearing a brown utility belt" align="right" width="256" height="256">](https://util.fuz.dev/)
 
 > utility belt for JS 🦕 ancient not extinct
 
-**[belt.ryanatkn.com](https://belt.ryanatkn.com)**
+**[util.fuz.dev](https://util.fuz.dev)**
 
 design:
 
@@ -15,32 +15,32 @@ design:
 - mix of JS module environments - browser-only, Node-only, universal
 - mostly small pure functions
 - all TypeScript, for styles and Svelte and SvelteKit
-  see <a href="https://github.com/fuz-dev/fuz">@ryanatkn/fuz</a>
+  see <a href="https://github.com/fuz-dev/fuz">@fuzdev/fuz_ui</a>
 - complements the modern web platform, drops legacy quickly
 - kinda minimal in many ways but also not, treeshakes well
 
 ## usage
 
-Install from [npm](https://www.npmjs.com/package/@ryanatkn/belt):
+Install from [npm](https://www.npmjs.com/package/@fuzdev/fuz_util):
 
 ```bash
-npm i -D @ryanatkn/belt
+npm i -D @fuzdev/fuz_util
 ```
 
 Import modules at their full paths:
 
 ```ts
-import {type Result, unwrap} from '@ryanatkn/belt/result.js';
-import {random_int} from '@ryanatkn/belt/random.js';
+import {type Result, unwrap} from '@fuzdev/fuz_util/result.js';
+import {random_int} from '@fuzdev/fuz_util/random.js';
 ```
 
 `.ts` imports also work:
 
 ```ts
-import {deep_equal} from '@ryanatkn/belt/deep_equal.ts';
+import {deep_equal} from '@fuzdev/fuz_util/deep_equal.ts';
 ```
 
-Docs at [belt.ryanatkn.com/docs](https://belt.ryanatkn.com/docs).
+Docs at [util.fuz.dev/docs](https://util.fuz.dev/docs).
 
 ## build
 

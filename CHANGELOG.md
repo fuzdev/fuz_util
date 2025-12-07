@@ -1,4 +1,4 @@
-# @ryanatkn/belt
+# @fuzdev/fuz_util
 
 ## 0.42.0
 

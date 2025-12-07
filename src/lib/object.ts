@@ -85,7 +85,7 @@ export const reorder = <T extends Record<K, any>, K extends string | number>(
 /**
  * Frozen empty object with no properties, good for options default values.
  */
-export const EMPTY_OBJECT: Record<string | number | symbol, undefined> & object = Object.freeze({}); // eslint-disable-line @typescript-eslint/no-redundant-type-constituents
+export const EMPTY_OBJECT: Record<string | number | symbol, undefined> & object = Object.freeze({});
 
 /**
  * Performs a depth-first traversal of an object's enumerable properties,
