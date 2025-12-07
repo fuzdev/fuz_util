@@ -1,11 +1,11 @@
 <script lang="ts">
-	import LibrarySummary from '@ryanatkn/fuz/LibrarySummary.svelte';
-	import DocsFooter from '@ryanatkn/fuz/DocsFooter.svelte';
-	import Card from '@ryanatkn/fuz/Card.svelte';
-	import Svg from '@ryanatkn/fuz/Svg.svelte';
-	import {belt_logo} from '@ryanatkn/fuz/logos.js';
+	import LibrarySummary from '@fuzdev/fuz_ui/LibrarySummary.svelte';
+	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
+	import Card from '@fuzdev/fuz_ui/Card.svelte';
+	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
+	import {belt_logo} from '@fuzdev/fuz_ui/logos.js';
 	import {resolve} from '$app/paths';
-	import {library_context} from '@ryanatkn/fuz/library.svelte.js';
+	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 
 	const library = library_context.get();
 </script>
@@ -21,7 +21,7 @@
 		<Card href={resolve('/docs')}>docs{#snippet icon()}{library.package_json.glyph}{/snippet}</Card>
 	</section>
 	<section>
-		<DocsFooter {library} />
+		<DocsFooter {library} root_url="https://www.fuz.dev/" />
 	</section>
 </main>
 

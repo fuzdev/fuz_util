@@ -13,11 +13,11 @@ import type {Url} from './url.js';
 export interface LibraryJson {
 	package_json: PackageJson;
 	source_json: SourceJson;
-	/** Package name, e.g. `@ryanatkn/fuz`. */
+	/** Package name, e.g. `@fuzdev/fuz_ui`. */
 	name: string;
 	/** Name without scope, e.g. `fuz`. */
 	repo_name: string;
-	/** GitHub repo URL, e.g. `https://github.com/ryanatkn/fuz`. */
+	/** GitHub repo URL, e.g. `https://github.com/fuzdev/fuz_ui`. */
 	repo_url: Url;
 	/** GitHub user/org, e.g. `ryanatkn`. */
 	owner_name: string | null;
@@ -95,7 +95,7 @@ export const library_json_parse = (
 };
 
 /**
- * Extracts repo name from a package name, e.g. `@ryanatkn/fuz` → `fuz`.
+ * Extracts repo name from a package name, e.g. `@fuzdev/fuz_ui` → `fuz`.
  */
 export const library_repo_name_parse = (name: string): string => {
 	if (name[0] === '@') {

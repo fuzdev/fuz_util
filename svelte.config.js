@@ -1,7 +1,7 @@
 import {vitePreprocess} from '@sveltejs/vite-plugin-svelte';
 import adapter from '@sveltejs/adapter-static';
-import {create_csp_directives} from '@ryanatkn/fuz/csp.js';
-import {csp_trusted_sources_of_ryanatkn} from '@ryanatkn/fuz/csp_of_ryanatkn.js';
+import {create_csp_directives} from '@fuzdev/fuz_ui/csp.js';
+import {csp_trusted_sources_of_ryanatkn} from '@fuzdev/fuz_ui/csp_of_ryanatkn.js';
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
@@ -11,7 +11,7 @@ export default {
 	kit: {
 		adapter: adapter(),
 		paths: {relative: false}, // use root-absolute paths for SSR path comparison: https://kit.svelte.dev/docs/configuration#paths
-		alias: {$routes: 'src/routes', '@ryanatkn/belt': 'src/lib'},
+		alias: {$routes: 'src/routes', '@fuzdev/fuz_util': 'src/lib'},
 		csp: {
 			directives: create_csp_directives({
 				trusted_sources: csp_trusted_sources_of_ryanatkn,

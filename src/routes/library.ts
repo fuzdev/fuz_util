@@ -4,7 +4,7 @@ import type {LibraryJson} from './library_json.js';
 
 export const library_json: LibraryJson = {
 	package_json: {
-		name: '@ryanatkn/belt',
+		name: '@fuzdev/fuz_util',
 		version: '0.41.1',
 		description: 'utility belt for JS',
 		glyph: '🦕',
@@ -13,7 +13,7 @@ export const library_json: LibraryJson = {
 		motto: 'ancient not extinct',
 		public: true,
 		license: 'MIT',
-		homepage: 'https://belt.ryanatkn.com/',
+		homepage: 'https://util.fuz.dev/',
 		author: {
 			name: 'Ryan Atkinson',
 			email: 'mail@ryanatkn.com',
@@ -21,9 +21,9 @@ export const library_json: LibraryJson = {
 		},
 		repository: {
 			type: 'git',
-			url: 'git+https://github.com/ryanatkn/belt.git',
+			url: 'git+https://github.com/fuzdev/fuz_util.git',
 		},
-		bugs: 'https://github.com/ryanatkn/belt/issues',
+		bugs: 'https://github.com/fuzdev/fuz_util/issues',
 		funding: 'https://www.ryanatkn.com/funding',
 		scripts: {
 			start: 'gro dev',
@@ -63,10 +63,10 @@ export const library_json: LibraryJson = {
 		devDependencies: {
 			'@changesets/changelog-git': '^0.2.1',
 			'@ryanatkn/eslint-config': '^0.9.0',
-			'@ryanatkn/fuz': '^0.167.0',
-			'@ryanatkn/fuz_code': '^0.36.0',
+			'@fuzdev/fuz_ui': '^0.167.0',
+			'@fuzdev/fuz_code': '^0.36.0',
 			'@ryanatkn/gro': '^0.179.0',
-			'@ryanatkn/moss': '^0.39.0',
+			'@fuzdev/fuz_css': '^0.39.0',
 			'@sveltejs/adapter-static': '^3.0.10',
 			'@sveltejs/kit': '^2.49.0',
 			'@sveltejs/package': '^2.5.6',
@@ -117,7 +117,7 @@ export const library_json: LibraryJson = {
 		},
 	},
 	source_json: {
-		name: '@ryanatkn/belt',
+		name: '@fuzdev/fuz_util',
 		version: '0.41.1',
 		modules: [
 			{
@@ -1896,7 +1896,7 @@ export const library_json: LibraryJson = {
 								name: 'name',
 								kind: 'variable',
 								type_signature: 'string',
-								doc_comment: 'Package name, e.g. `@ryanatkn/fuz`.',
+								doc_comment: 'Package name, e.g. `@fuzdev/fuz_ui`.',
 							},
 							{
 								name: 'repo_name',
@@ -1908,7 +1908,7 @@ export const library_json: LibraryJson = {
 								name: 'repo_url',
 								kind: 'variable',
 								type_signature: 'Url',
-								doc_comment: 'GitHub repo URL, e.g. `https://github.com/ryanatkn/fuz`.',
+								doc_comment: 'GitHub repo URL, e.g. `https://github.com/fuzdev/fuz_ui`.',
 							},
 							{
 								name: 'owner_name',
@@ -1973,7 +1973,7 @@ export const library_json: LibraryJson = {
 					{
 						name: 'library_repo_name_parse',
 						kind: 'function',
-						doc_comment: 'Extracts repo name from a package name, e.g. `@ryanatkn/fuz` → `fuz`.',
+						doc_comment: 'Extracts repo name from a package name, e.g. `@fuzdev/fuz_ui` → `fuz`.',
 						source_line: 100,
 						type_signature: '(name: string): string',
 						return_type: 'string',
@@ -4499,15 +4499,15 @@ export const library_json: LibraryJson = {
 			},
 		],
 	},
-	name: '@ryanatkn/belt',
+	name: '@fuzdev/fuz_util',
 	repo_name: 'belt',
-	repo_url: 'https://github.com/ryanatkn/belt',
+	repo_url: 'https://github.com/fuzdev/fuz_util',
 	owner_name: 'ryanatkn',
-	homepage_url: 'https://belt.ryanatkn.com/',
-	logo_url: 'https://belt.ryanatkn.com/logo.svg',
+	homepage_url: 'https://util.fuz.dev/',
+	logo_url: 'https://util.fuz.dev/logo.svg',
 	logo_alt: 'a green sauropod wearing a brown utility belt',
-	npm_url: 'https://www.npmjs.com/package/@ryanatkn/belt',
-	changelog_url: 'https://github.com/ryanatkn/belt/blob/main/CHANGELOG.md',
+	npm_url: 'https://www.npmjs.com/package/@fuzdev/fuz_util',
+	changelog_url: 'https://github.com/fuzdev/fuz_util/blob/main/CHANGELOG.md',
 	published: true,
 };
 
