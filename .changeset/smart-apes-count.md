@@ -1,5 +1,5 @@
 ---
-'@ryanatkn/belt': minor
+'@fuzdev/fuz_util': minor
 ---
 
 move to fuzdev and rename to fuz_util from belt
