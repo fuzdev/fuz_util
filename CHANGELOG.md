@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.42.0
+
+### Minor Changes
+
+- move to fuzdev and rename to fuz_util from belt ([8d4e5a0](https://github.com/ryanatkn/belt/commit/8d4e5a0))
+
 ## 0.41.1
 
 ### Patch Changes
