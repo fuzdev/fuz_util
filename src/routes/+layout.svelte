@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '@fuzdev/fuz_css/style.css';
 	import '@fuzdev/fuz_css/theme.css';
-	import '$routes/moss.css';
+	import '$routes/fuz.css';
 	import '$routes/style.css';
 
 	import Themed from '@fuzdev/fuz_ui/Themed.svelte';
