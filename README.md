@@ -52,13 +52,13 @@ gro build
 
 ## test
 
-For more see [`uvu`](https://github.com/lukeed/uvu)
+For more see [Vitest](https://github.com/vitest-dev/vitest)
 and [Gro's test docs](https://github.com/feltjs/gro/blob/main/src/docs/test.md).
 
 ```bash
 gro test
 gro test filepattern1 filepatternB
-gro test -- uvu --forwarded_args 'to uvu'
+gro test -- --forwarded-args 'to vitest'
 ```
 
 ## deploy
