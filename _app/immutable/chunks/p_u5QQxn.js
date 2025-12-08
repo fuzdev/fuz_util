@@ -1,0 +1,1 @@
+import{j as c,k as _,w as o,E as d,L as E,M as T,O as b,o as y,F as g,n as f}from"./BF-e15DA.js";function p(n,i,u=!1){_&&o();var r=new g(n),h=u?d:0;function t(a,s){if(_){const l=E(n)===T;if(a===l){var e=b();y(e),r.anchor=e,f(!1),r.ensure(a,s),f(!0);return}}r.ensure(a,s)}c(()=>{var a=!1;i((s,e=!0)=>{a=!0,t(e,s)}),a||t(!1,null)},h)}export{p as i};
