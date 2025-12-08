@@ -3,7 +3,7 @@
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
-	import {belt_logo} from '@fuzdev/fuz_ui/logos.js';
+	import {logo_fuz_util} from '@fuzdev/fuz_ui/logos.js';
 	import {resolve} from '$app/paths';
 	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 
@@ -14,7 +14,7 @@
 	<section>
 		<LibrarySummary {library}>
 			{#snippet repo_name()}<h1 class="mt_xl mb_xl">belt</h1>{/snippet}
-			{#snippet logo()}<div class="logo"><Svg data={belt_logo} /></div>{/snippet}
+			{#snippet logo()}<div class="logo"><Svg data={logo_fuz_util} /></div>{/snippet}
 		</LibrarySummary>
 	</section>
 	<section class="box">
