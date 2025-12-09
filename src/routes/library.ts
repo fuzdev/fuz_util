@@ -391,7 +391,7 @@ export const library_json: LibraryJson = {
 						],
 						source_line: 225,
 						type_signature:
-							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions): string',
+							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string',
 						return_type: 'string',
 						return_description: 'JSON string',
 						parameters: [
@@ -402,9 +402,9 @@ export const library_json: LibraryJson = {
 							},
 							{
 								name: 'options',
-								type: 'BenchmarkFormatJsonOptions',
+								type: 'BenchmarkFormatJsonOptions | undefined',
+								optional: true,
 								description: '- Formatting options',
-								default_value: '{}',
 							},
 						],
 					},
@@ -415,7 +415,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 283,
+						source_line: 284,
 						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
@@ -433,10 +433,10 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'format_number',
+						name: 'benchmark_format_number',
 						kind: 'function',
 						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
-						source_line: 318,
+						source_line: 320,
 						type_signature: '(n: number, decimals?: number): string',
 						return_type: 'string',
 						parameters: [
@@ -459,11 +459,94 @@ export const library_json: LibraryJson = {
 				path: 'benchmark_stats.ts',
 				declarations: [
 					{
+						name: 'EffectMagnitude',
+						kind: 'type',
+						doc_comment: "Effect size magnitude interpretation (Cohen's d).",
+						source_line: 22,
+						type_signature: 'EffectMagnitude',
+					},
+					{
+						name: 'BenchmarkComparison',
+						kind: 'type',
+						doc_comment: 'Result from comparing two benchmark stats.',
+						source_line: 27,
+						type_signature: 'BenchmarkComparison',
+						properties: [
+							{
+								name: 'faster',
+								kind: 'variable',
+								type_signature: "'a' | 'b' | 'equal'",
+								doc_comment:
+									"Which benchmark is faster ('a', 'b', or 'equal' if difference is negligible)",
+							},
+							{
+								name: 'speedup_ratio',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'How much faster the winner is (e.g., 1.5 means 1.5x faster)',
+							},
+							{
+								name: 'significant',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment:
+									'Whether the difference is statistically significant at the given alpha',
+							},
+							{
+								name: 'p_value',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									"P-value from Welch's t-test (lower = more confident the difference is real)",
+							},
+							{
+								name: 'effect_size',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									"Cohen's d effect size (magnitude of difference independent of sample size)",
+							},
+							{
+								name: 'effect_magnitude',
+								kind: 'variable',
+								type_signature: 'EffectMagnitude',
+								doc_comment: 'Interpretation of effect size',
+							},
+							{
+								name: 'ci_overlap',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment: 'Whether the 95% confidence intervals overlap',
+							},
+							{
+								name: 'recommendation',
+								kind: 'variable',
+								type_signature: 'string',
+								doc_comment: 'Human-readable interpretation of the comparison',
+							},
+						],
+					},
+					{
+						name: 'BenchmarkCompareOptions',
+						kind: 'type',
+						doc_comment: 'Options for benchmark comparison.',
+						source_line: 49,
+						type_signature: 'BenchmarkCompareOptions',
+						properties: [
+							{
+								name: 'alpha',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Significance level for hypothesis testing (default: 0.05)',
+							},
+						],
+					},
+					{
 						name: 'BenchmarkStats',
 						kind: 'class',
 						doc_comment:
 							'Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.',
-						source_line: 24,
+						source_line: 59,
 						members: [
 							{
 								name: 'mean_ns',
@@ -603,6 +686,36 @@ export const library_json: LibraryJson = {
 								return_type: 'string',
 								parameters: [],
 							},
+							{
+								name: 'compare',
+								kind: 'function',
+								modifiers: ['static'],
+								doc_comment:
+									"Compare two benchmark results for statistical significance.\nUses Welch's t-test (handles unequal variances) and Cohen's d effect size.",
+								type_signature:
+									'(a: BenchmarkStats, b: BenchmarkStats, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison',
+								return_type: 'BenchmarkComparison',
+								return_description:
+									'Comparison result with significance, effect size, and recommendation',
+								parameters: [
+									{
+										name: 'a',
+										type: 'BenchmarkStats',
+										description: '- First benchmark stats',
+									},
+									{
+										name: 'b',
+										type: 'BenchmarkStats',
+										description: '- Second benchmark stats',
+									},
+									{
+										name: 'options',
+										type: 'BenchmarkCompareOptions | undefined',
+										optional: true,
+										description: '- Comparison options',
+									},
+								],
+							},
 						],
 					},
 				],
@@ -669,13 +782,20 @@ export const library_json: LibraryJson = {
 								doc_comment:
 									'Callback invoked after each iteration completes.\nUseful for triggering garbage collection, logging progress, early termination,\nor custom instrumentation.\n\n**Note**: The callback time is NOT included in iteration measurements - it runs\nafter the timing capture. However, frequent GC calls will slow overall benchmark\nexecution time.',
 							},
+							{
+								name: 'on_task_complete',
+								kind: 'variable',
+								type_signature: '(result: BenchmarkResult, index: number, total: number) => void',
+								doc_comment:
+									'Callback invoked after each task completes.\nUseful for logging progress during long benchmark runs.',
+							},
 						],
 					},
 					{
 						name: 'BenchmarkTask',
 						kind: 'type',
 						doc_comment: 'A benchmark task to execute.',
-						source_line: 93,
+						source_line: 112,
 						type_signature: 'BenchmarkTask',
 						properties: [
 							{
@@ -704,13 +824,34 @@ export const library_json: LibraryJson = {
 								doc_comment:
 									'Optional teardown function run after benchmarking this task.\nNot included in timing measurements.',
 							},
+							{
+								name: 'skip',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment:
+									'If true, skip this task during benchmark runs.\nUseful for temporarily disabling tasks during development.',
+							},
+							{
+								name: 'only',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment:
+									'If true, run only this task (and other tasks marked `only`).\nUseful for focusing on specific tasks during development.',
+							},
+							{
+								name: 'async',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment:
+									'Hint for whether the function is sync or async.\nIf not provided, automatically detected during warmup.\nSetting this explicitly skips per-iteration promise checking for sync functions.',
+							},
 						],
 					},
 					{
 						name: 'BenchmarkResult',
 						kind: 'type',
 						doc_comment: 'Result from running a single benchmark task.',
-						source_line: 116,
+						source_line: 154,
 						type_signature: 'BenchmarkResult',
 						properties: [
 							{
@@ -750,7 +891,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkFormatTableOptions',
 						kind: 'type',
 						doc_comment: 'Options for table formatting.',
-						source_line: 140,
+						source_line: 178,
 						type_signature: 'BenchmarkFormatTableOptions',
 						properties: [
 							{
@@ -765,7 +906,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkGroup',
 						kind: 'type',
 						doc_comment: 'A group definition for organizing benchmark results.',
-						source_line: 150,
+						source_line: 188,
 						type_signature: 'BenchmarkGroup',
 						properties: [
 							{
@@ -797,11 +938,15 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_warmup',
 						kind: 'function',
 						doc_comment:
-							'Warmup function by running it multiple times.\nAwaits any promises returned by the function.',
-						examples: ['```ts\nawait benchmark_warmup(() => expensive_operation(), 10);\n```'],
-						source_line: 59,
-						type_signature: '(fn: () => unknown, iterations: number): Promise<void>',
-						return_type: 'Promise<void>',
+							'Warmup function by running it multiple times.\nDetects whether the function is async based on return value.',
+						examples: [
+							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```',
+						],
+						source_line: 69,
+						type_signature:
+							'(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>',
+						return_type: 'Promise<boolean>',
+						return_description: 'Whether the function is async',
 						parameters: [
 							{
 								name: 'fn',
@@ -813,13 +958,19 @@ export const library_json: LibraryJson = {
 								type: 'number',
 								description: '- Number of warmup iterations',
 							},
+							{
+								name: 'async_hint',
+								type: 'boolean | undefined',
+								optional: true,
+								description: '- If provided, use this instead of detecting',
+							},
 						],
 					},
 					{
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 71,
+						source_line: 103,
 						members: [
 							{
 								name: 'constructor',
@@ -908,6 +1059,48 @@ export const library_json: LibraryJson = {
 								],
 							},
 							{
+								name: 'skip',
+								kind: 'function',
+								doc_comment: 'Mark a task to be skipped during benchmark runs.',
+								type_signature: '(name: string): this',
+								return_type: 'this',
+								return_description: 'This Benchmark instance for chaining',
+								parameters: [
+									{
+										name: 'name',
+										type: 'string',
+										description: '- Name of the task to skip',
+									},
+								],
+								throws: [
+									{
+										type: 'Error',
+										description: "if task with given name doesn't exist",
+									},
+								],
+							},
+							{
+								name: 'only',
+								kind: 'function',
+								doc_comment: 'Mark a task to run exclusively (along with other `only` tasks).',
+								type_signature: '(name: string): this',
+								return_type: 'this',
+								return_description: 'This Benchmark instance for chaining',
+								parameters: [
+									{
+										name: 'name',
+										type: 'string',
+										description: '- Name of the task to run exclusively',
+									},
+								],
+								throws: [
+									{
+										type: 'Error',
+										description: "if task with given name doesn't exist",
+									},
+								],
+							},
+							{
 								name: 'run',
 								kind: 'function',
 								doc_comment: 'Run all benchmark tasks.',
@@ -921,15 +1114,15 @@ export const library_json: LibraryJson = {
 								kind: 'function',
 								doc_comment:
 									'Format results as an ASCII table with percentiles, min/max, and relative performance.',
-								type_signature: '(options?: BenchmarkFormatTableOptions): string',
+								type_signature: '(options?: BenchmarkFormatTableOptions | undefined): string',
 								return_type: 'string',
 								return_description: 'Formatted table string',
 								parameters: [
 									{
 										name: 'options',
-										type: 'BenchmarkFormatTableOptions',
+										type: 'BenchmarkFormatTableOptions | undefined',
+										optional: true,
 										description: '- Formatting options',
-										default_value: '{}',
 									},
 								],
 							},
@@ -946,15 +1139,15 @@ export const library_json: LibraryJson = {
 								name: 'json',
 								kind: 'function',
 								doc_comment: 'Format results as JSON.',
-								type_signature: '(options?: BenchmarkFormatJsonOptions): string',
+								type_signature: '(options?: BenchmarkFormatJsonOptions | undefined): string',
 								return_type: 'string',
 								return_description: 'JSON string',
 								parameters: [
 									{
 										name: 'options',
-										type: 'BenchmarkFormatJsonOptions',
+										type: 'BenchmarkFormatJsonOptions | undefined',
+										optional: true,
 										description: '- Formatting options (pretty, include_timings)',
-										default_value: '{}',
 									},
 								],
 							},
@@ -4522,7 +4715,7 @@ export const library_json: LibraryJson = {
 						name: 'stats_mean',
 						kind: 'function',
 						doc_comment: 'Calculate the mean (average) of an array of numbers.',
-						source_line: 22,
+						source_line: 20,
 						type_signature: '(values: number[]): number',
 						return_type: 'number',
 						parameters: [
@@ -4536,7 +4729,7 @@ export const library_json: LibraryJson = {
 						name: 'stats_median',
 						kind: 'function',
 						doc_comment: 'Calculate the median of an array of numbers.',
-						source_line: 30,
+						source_line: 28,
 						type_signature: '(values: number[]): number',
 						return_type: 'number',
 						parameters: [
@@ -4551,7 +4744,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Calculate the standard deviation of an array of numbers.\nUses population standard deviation (divides by n, not n-1).\nFor benchmarks with many samples, this is typically appropriate.',
-						source_line: 42,
+						source_line: 40,
 						type_signature: '(values: number[], mean?: number | undefined): number',
 						return_type: 'number',
 						parameters: [
@@ -4570,7 +4763,7 @@ export const library_json: LibraryJson = {
 						name: 'stats_variance',
 						kind: 'function',
 						doc_comment: 'Calculate the variance of an array of numbers.',
-						source_line: 52,
+						source_line: 50,
 						type_signature: '(values: number[], mean?: number | undefined): number',
 						return_type: 'number',
 						parameters: [
@@ -4590,7 +4783,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Calculate a percentile of an array of numbers using linear interpolation.\nUses the "R-7" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.',
-						source_line: 65,
+						source_line: 63,
 						type_signature: '(values: number[], p: number): number',
 						return_type: 'number',
 						parameters: [
@@ -4611,7 +4804,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.',
-						source_line: 91,
+						source_line: 89,
 						type_signature: '(mean: number, std_dev: number): number',
 						return_type: 'number',
 						parameters: [
@@ -4629,7 +4822,7 @@ export const library_json: LibraryJson = {
 						name: 'stats_min_max',
 						kind: 'function',
 						doc_comment: 'Calculate min and max values.',
-						source_line: 99,
+						source_line: 97,
 						type_signature: '(values: number[]): { min: number; max: number; }',
 						return_type: '{ min: number; max: number; }',
 						parameters: [
@@ -4643,7 +4836,7 @@ export const library_json: LibraryJson = {
 						name: 'StatsOutlierResult',
 						kind: 'type',
 						doc_comment: 'Result from outlier detection.',
-						source_line: 114,
+						source_line: 112,
 						type_signature: 'StatsOutlierResult',
 						properties: [
 							{
@@ -4661,17 +4854,102 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
+						name: 'StatsOutliersIqrOptions',
+						kind: 'type',
+						doc_comment: 'Configuration options for IQR outlier detection.',
+						source_line: 122,
+						type_signature: 'StatsOutliersIqrOptions',
+						properties: [
+							{
+								name: 'iqr_multiplier',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Multiplier for IQR bounds (default: 1.5)',
+							},
+							{
+								name: 'min_sample_size',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Minimum sample size to perform outlier detection (default: 3)',
+							},
+						],
+					},
+					{
 						name: 'stats_outliers_iqr',
 						kind: 'function',
 						doc_comment:
-							'Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - 1.5*IQR, Q3 + 1.5*IQR] are considered outliers.',
-						source_line: 125,
-						type_signature: '(values: number[]): StatsOutlierResult',
+							'Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - multiplier*IQR, Q3 + multiplier*IQR] are considered outliers.',
+						source_line: 133,
+						type_signature:
+							'(values: number[], options?: StatsOutliersIqrOptions | undefined): StatsOutlierResult',
 						return_type: 'StatsOutlierResult',
 						parameters: [
 							{
 								name: 'values',
 								type: 'number[]',
+							},
+							{
+								name: 'options',
+								type: 'StatsOutliersIqrOptions | undefined',
+								optional: true,
+							},
+						],
+					},
+					{
+						name: 'StatsOutliersMadOptions',
+						kind: 'type',
+						doc_comment: 'Configuration options for MAD outlier detection.',
+						source_line: 173,
+						type_signature: 'StatsOutliersMadOptions',
+						properties: [
+							{
+								name: 'z_score_threshold',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Modified Z-score threshold for outlier detection (default: 3.5)',
+							},
+							{
+								name: 'z_score_extreme',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									'Extreme Z-score threshold when too many outliers detected (default: 5.0)',
+							},
+							{
+								name: 'mad_constant',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'MAD constant for normal distribution (default: 0.6745)',
+							},
+							{
+								name: 'outlier_ratio_high',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Ratio threshold to switch to extreme mode (default: 0.3)',
+							},
+							{
+								name: 'outlier_ratio_extreme',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Ratio threshold to switch to keep-closest mode (default: 0.4)',
+							},
+							{
+								name: 'outlier_keep_ratio',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Ratio of values to keep in keep-closest mode (default: 0.8)',
+							},
+							{
+								name: 'min_sample_size',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Minimum sample size to perform outlier detection (default: 3)',
+							},
+							{
+								name: 'iqr_options',
+								kind: 'variable',
+								type_signature: 'StatsOutliersIqrOptions',
+								doc_comment: 'Options to pass to IQR fallback when MAD is zero',
 							},
 						],
 					},
@@ -4679,24 +4957,45 @@ export const library_json: LibraryJson = {
 						name: 'stats_outliers_mad',
 						kind: 'function',
 						doc_comment:
-							'Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > 3.5 are considered outliers.',
-						source_line: 162,
-						type_signature: '(values: number[]): StatsOutlierResult',
+							'Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > threshold are considered outliers.',
+						source_line: 198,
+						type_signature:
+							'(values: number[], options?: StatsOutliersMadOptions | undefined): StatsOutlierResult',
 						return_type: 'StatsOutlierResult',
 						parameters: [
 							{
 								name: 'values',
 								type: 'number[]',
 							},
+							{
+								name: 'options',
+								type: 'StatsOutliersMadOptions | undefined',
+								optional: true,
+							},
+						],
+					},
+					{
+						name: 'StatsConfidenceIntervalOptions',
+						kind: 'type',
+						doc_comment: 'Configuration options for confidence interval calculation.',
+						source_line: 275,
+						type_signature: 'StatsConfidenceIntervalOptions',
+						properties: [
+							{
+								name: 'z_score',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Z-score for confidence level (default: 1.96 for 95% CI)',
+							},
 						],
 					},
 					{
 						name: 'stats_confidence_interval',
 						kind: 'function',
-						doc_comment:
-							'Calculate confidence interval for the mean.\nUses 95% confidence level (z=1.96).',
-						source_line: 230,
-						type_signature: '(values: number[]): [number, number]',
+						doc_comment: 'Calculate confidence interval for the mean.',
+						source_line: 286,
+						type_signature:
+							'(values: number[], options?: StatsConfidenceIntervalOptions | undefined): [number, number]',
 						return_type: '[number, number]',
 						return_description: '[lower_bound, upper_bound]',
 						parameters: [
@@ -4704,6 +5003,12 @@ export const library_json: LibraryJson = {
 								name: 'values',
 								type: 'number[]',
 								description: '- Array of numbers',
+							},
+							{
+								name: 'options',
+								type: 'StatsConfidenceIntervalOptions | undefined',
+								optional: true,
+								description: '- Configuration options',
 							},
 						],
 					},

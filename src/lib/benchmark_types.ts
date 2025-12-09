@@ -85,6 +85,25 @@ export interface BenchmarkConfig {
 	 * ```
 	 */
 	on_iteration?: (task_name: string, iteration: number, abort: () => void) => void;
+
+	/**
+	 * Callback invoked after each task completes.
+	 * Useful for logging progress during long benchmark runs.
+	 *
+	 * @param result - The completed benchmark result
+	 * @param index - Zero-based index of the completed task
+	 * @param total - Total number of tasks to run
+	 *
+	 * @example
+	 * ```ts
+	 * new Benchmark({
+	 *   on_task_complete: (result, index, total) => {
+	 *     console.log(`[${index + 1}/${total}] ${result.name}: ${result.stats.ops_per_second.toFixed(0)} ops/sec`);
+	 *   }
+	 * })
+	 * ```
+	 */
+	on_task_complete?: (result: BenchmarkResult, index: number, total: number) => void;
 }
 
 /**
@@ -108,6 +127,25 @@ export interface BenchmarkTask {
 	 * Not included in timing measurements.
 	 */
 	teardown?: () => void | Promise<void>;
+
+	/**
+	 * If true, skip this task during benchmark runs.
+	 * Useful for temporarily disabling tasks during development.
+	 */
+	skip?: boolean;
+
+	/**
+	 * If true, run only this task (and other tasks marked `only`).
+	 * Useful for focusing on specific tasks during development.
+	 */
+	only?: boolean;
+
+	/**
+	 * Hint for whether the function is sync or async.
+	 * If not provided, automatically detected during warmup.
+	 * Setting this explicitly skips per-iteration promise checking for sync functions.
+	 */
+	async?: boolean;
 }
 
 /**

@@ -151,7 +151,7 @@ interface BenchmarkConfig {
 	/** Target time to run each task (default: 1000ms) */
 	duration_ms?: number;
 
-	/** Warmup iterations before measuring (default: 5, minimum: 1) */
+	/** Warmup iterations before measuring (default: 5) */
 	warmup_iterations?: number;
 
 	/** Cooldown between tasks (default: 100ms) */
@@ -168,10 +168,68 @@ interface BenchmarkConfig {
 
 	/** Callback after each iteration. Call abort() to stop early. */
 	on_iteration?: (task_name: string, iteration: number, abort: () => void) => void;
+
+	/** Callback after each task completes */
+	on_task_complete?: (result: BenchmarkResult, index: number, total: number) => void;
 }
 ```
 
 ## Advanced Usage
+
+### Skip and Only
+
+Focus on specific tasks during development:
+
+```ts
+// Skip a task
+bench.add('slow task', () => slow_operation());
+bench.skip('slow task'); // Won't run
+
+// Run only specific tasks
+bench.add('task1', () => fn1());
+bench.add('task2', () => fn2());
+bench.add('task3', () => fn3());
+bench.only('task2'); // Only task2 runs
+
+// Or via task object
+bench.add({name: 'focused', fn: () => test(), only: true});
+bench.add({name: 'skipped', fn: () => other(), skip: true});
+```
+
+### Async Hint
+
+For sync-heavy benchmarks, skip promise detection overhead:
+
+```ts
+bench.add({
+	name: 'definitely sync',
+	fn: () => compute(data),
+	async: false, // Skip promise checking each iteration
+});
+
+bench.add({
+	name: 'definitely async',
+	fn: async () => await fetch(url),
+	async: true, // Always await
+});
+```
+
+Without the hint, async detection happens during warmup automatically.
+
+### Progress Tracking
+
+Monitor long-running benchmark suites:
+
+```ts
+const bench = new Benchmark({
+	duration_ms: 5000,
+	on_task_complete: (result, index, total) => {
+		console.log(
+			`[${index + 1}/${total}] ${result.name}: ${result.stats.ops_per_second.toFixed(0)} ops/sec`,
+		);
+	},
+});
+```
 
 ### Setup and Teardown
 
@@ -403,6 +461,8 @@ class Benchmark {
 	add(name: string, fn: () => unknown): this;
 	add(task: BenchmarkTask): this;
 	remove(name: string): this;
+	skip(name: string): this; // Mark task to be skipped
+	only(name: string): this; // Run only marked tasks
 	run(): Promise<Array<BenchmarkResult>>;
 	table(options?: BenchmarkFormatTableOptions): string;
 	markdown(): string;
@@ -424,6 +484,9 @@ interface BenchmarkTask {
 	fn: () => unknown | Promise<unknown>;
 	setup?: () => void | Promise<void>;
 	teardown?: () => void | Promise<void>;
+	skip?: boolean; // Skip this task
+	only?: boolean; // Run only this task (and other `only` tasks)
+	async?: boolean; // Hint: skip promise detection if false
 }
 
 interface BenchmarkResult {
@@ -481,6 +544,51 @@ class BenchmarkStats {
 	raw_sample_size: number;
 	ops_per_second: number;
 	failed_iterations: number;
+
+	// Compare two benchmarks for statistical significance
+	static compare(
+		a: BenchmarkStats,
+		b: BenchmarkStats,
+		options?: {alpha?: number},
+	): BenchmarkComparison;
+}
+```
+
+### Comparing Results
+
+Use `BenchmarkStats.compare()` to determine if performance differences are statistically significant:
+
+```ts
+const results = await bench.run();
+const [result_a, result_b] = results;
+
+const comparison = BenchmarkStats.compare(result_a.stats, result_b.stats);
+
+console.log(comparison.faster); // 'a', 'b', or 'equal'
+console.log(comparison.speedup_ratio); // e.g., 1.5 means 1.5x faster
+console.log(comparison.significant); // true if p < 0.05
+console.log(comparison.p_value); // Welch's t-test p-value
+console.log(comparison.effect_size); // Cohen's d
+console.log(comparison.effect_magnitude); // 'negligible', 'small', 'medium', 'large'
+console.log(comparison.recommendation); // Human-readable interpretation
+```
+
+**Use cases:**
+
+- **CI/CD regression detection**: Alert when p < 0.05 and effect is not negligible
+- **A/B performance comparison**: Compare two implementations objectively
+- **Before/after analysis**: Verify optimizations are real improvements
+
+```ts
+interface BenchmarkComparison {
+	faster: 'a' | 'b' | 'equal';
+	speedup_ratio: number;
+	significant: boolean;
+	p_value: number;
+	effect_size: number;
+	effect_magnitude: 'negligible' | 'small' | 'medium' | 'large';
+	ci_overlap: boolean;
+	recommendation: string;
 }
 ```
 

@@ -17,6 +17,41 @@ import {
 } from './stats.js';
 
 /**
+ * Effect size magnitude interpretation (Cohen's d).
+ */
+export type EffectMagnitude = 'negligible' | 'small' | 'medium' | 'large';
+
+/**
+ * Result from comparing two benchmark stats.
+ */
+export interface BenchmarkComparison {
+	/** Which benchmark is faster ('a', 'b', or 'equal' if difference is negligible) */
+	faster: 'a' | 'b' | 'equal';
+	/** How much faster the winner is (e.g., 1.5 means 1.5x faster) */
+	speedup_ratio: number;
+	/** Whether the difference is statistically significant at the given alpha */
+	significant: boolean;
+	/** P-value from Welch's t-test (lower = more confident the difference is real) */
+	p_value: number;
+	/** Cohen's d effect size (magnitude of difference independent of sample size) */
+	effect_size: number;
+	/** Interpretation of effect size */
+	effect_magnitude: EffectMagnitude;
+	/** Whether the 95% confidence intervals overlap */
+	ci_overlap: boolean;
+	/** Human-readable interpretation of the comparison */
+	recommendation: string;
+}
+
+/**
+ * Options for benchmark comparison.
+ */
+export interface BenchmarkCompareOptions {
+	/** Significance level for hypothesis testing (default: 0.05) */
+	alpha?: number;
+}
+
+/**
  * Complete statistical analysis of timing measurements.
  * Includes outlier detection, descriptive statistics, and performance metrics.
  * All timing values are in nanoseconds.
@@ -129,13 +164,274 @@ export class BenchmarkStats {
 		return `BenchmarkStats(mean=${time_format_adaptive(this.mean_ns)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${this.sample_size})`;
 	}
 
-	// TODO @enhance Consider adding a static `compare(a: BenchmarkStats, b: BenchmarkStats)` method
-	// for statistical significance testing between benchmark runs.
-	// Use cases: CI/CD regression detection, A/B performance comparisons, before/after analysis.
-	// Implementation options:
-	//   - Welch's t-test: handles unequal variances, returns p-value
-	//   - Effect size (Cohen's d): magnitude of difference independent of sample size
-	//   - Confidence interval overlap: simpler, visual interpretation
-	// Return type could be: { significant: boolean; p_value: number; effect_size: number;
-	//   faster: 'a' | 'b' | 'equal'; speedup_ratio: number }
+	/**
+	 * Compare two benchmark results for statistical significance.
+	 * Uses Welch's t-test (handles unequal variances) and Cohen's d effect size.
+	 *
+	 * @param a - First benchmark stats
+	 * @param b - Second benchmark stats
+	 * @param options - Comparison options
+	 * @returns Comparison result with significance, effect size, and recommendation
+	 *
+	 * @example
+	 * ```ts
+	 * const comparison = BenchmarkStats.compare(result_a.stats, result_b.stats);
+	 * if (comparison.significant) {
+	 *   console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);
+	 * }
+	 * ```
+	 */
+	static compare(
+		a: BenchmarkStats,
+		b: BenchmarkStats,
+		options?: BenchmarkCompareOptions,
+	): BenchmarkComparison {
+		const alpha = options?.alpha ?? 0.05;
+
+		// Handle edge cases
+		if (a.sample_size === 0 || b.sample_size === 0) {
+			return {
+				faster: 'equal',
+				speedup_ratio: 1,
+				significant: false,
+				p_value: 1,
+				effect_size: 0,
+				effect_magnitude: 'negligible',
+				ci_overlap: true,
+				recommendation: 'Insufficient data for comparison',
+			};
+		}
+
+		// Calculate speedup ratio (lower time = faster, so compare by time not ops/sec)
+		const speedup_ratio = a.mean_ns < b.mean_ns ? b.mean_ns / a.mean_ns : a.mean_ns / b.mean_ns;
+		const faster: 'a' | 'b' | 'equal' =
+			a.mean_ns < b.mean_ns ? 'a' : a.mean_ns > b.mean_ns ? 'b' : 'equal';
+
+		// Welch's t-test (handles unequal variances)
+		// Special case: if both have zero variance, t-test is undefined
+		let p_value: number;
+		if (a.std_dev_ns === 0 && b.std_dev_ns === 0) {
+			// When there's no variance, any difference is 100% reliable (p=0) or identical (p=1)
+			p_value = a.mean_ns === b.mean_ns ? 1 : 0;
+		} else {
+			const {t_statistic, degrees_of_freedom} = welch_t_test(
+				a.mean_ns,
+				a.std_dev_ns,
+				a.sample_size,
+				b.mean_ns,
+				b.std_dev_ns,
+				b.sample_size,
+			);
+			// Calculate two-tailed p-value using t-distribution approximation
+			p_value = t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
+		}
+
+		// Cohen's d effect size
+		const pooled_std_dev = Math.sqrt(
+			((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
+				(a.sample_size + b.sample_size - 2),
+		);
+
+		// When pooled_std_dev is 0 but means differ, effect is maximal (infinite)
+		// When means are equal, effect is 0
+		let effect_size: number;
+		let effect_magnitude: EffectMagnitude;
+
+		if (pooled_std_dev === 0) {
+			// Zero variance case - if means differ, it's a definitive difference
+			if (a.mean_ns === b.mean_ns) {
+				effect_size = 0;
+				effect_magnitude = 'negligible';
+			} else {
+				// Any difference is 100% reliable when there's no variance
+				effect_size = Infinity;
+				effect_magnitude = 'large';
+			}
+		} else {
+			effect_size = Math.abs(a.mean_ns - b.mean_ns) / pooled_std_dev;
+			// Interpret effect size (Cohen's conventions)
+			effect_magnitude =
+				effect_size < 0.2
+					? 'negligible'
+					: effect_size < 0.5
+						? 'small'
+						: effect_size < 0.8
+							? 'medium'
+							: 'large';
+		}
+
+		// Check confidence interval overlap
+		const ci_overlap =
+			a.confidence_interval_ns[0] <= b.confidence_interval_ns[1] &&
+			b.confidence_interval_ns[0] <= a.confidence_interval_ns[1];
+
+		// Determine significance
+		const significant = p_value < alpha;
+
+		// Generate recommendation
+		let recommendation: string;
+		if (!significant) {
+			recommendation =
+				effect_magnitude === 'negligible'
+					? 'No meaningful difference detected'
+					: `Difference not statistically significant (p=${p_value.toFixed(3)}), but effect size suggests ${effect_magnitude} practical difference`;
+		} else if (effect_magnitude === 'negligible') {
+			recommendation = `Statistically significant but negligible practical difference (${speedup_ratio.toFixed(2)}x)`;
+		} else {
+			recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (p=${p_value.toFixed(3)})`;
+		}
+
+		// Adjust 'faster' to 'equal' if effect is negligible
+		const adjusted_faster = effect_magnitude === 'negligible' ? 'equal' : faster;
+
+		return {
+			faster: adjusted_faster,
+			speedup_ratio,
+			significant,
+			p_value,
+			effect_size,
+			effect_magnitude,
+			ci_overlap,
+			recommendation,
+		};
+	}
 }
+
+/**
+ * Calculate Welch's t-test statistic and degrees of freedom.
+ * Welch's t-test is more robust than Student's t-test when variances are unequal.
+ */
+const welch_t_test = (
+	mean1: number,
+	std1: number,
+	n1: number,
+	mean2: number,
+	std2: number,
+	n2: number,
+): {t_statistic: number; degrees_of_freedom: number} => {
+	const var1 = std1 ** 2;
+	const var2 = std2 ** 2;
+
+	const se1 = var1 / n1;
+	const se2 = var2 / n2;
+
+	const t_statistic = (mean1 - mean2) / Math.sqrt(se1 + se2);
+
+	// Welch-Satterthwaite degrees of freedom
+	const numerator = (se1 + se2) ** 2;
+	const denominator = se1 ** 2 / (n1 - 1) + se2 ** 2 / (n2 - 1);
+	const degrees_of_freedom = numerator / denominator;
+
+	return {t_statistic, degrees_of_freedom};
+};
+
+/**
+ * Approximate p-value from t-distribution using the approximation formula.
+ * This avoids requiring a full t-distribution table or library.
+ * For large df (>30), this approximation is very accurate.
+ */
+const t_distribution_p_value = (t: number, df: number): number => {
+	// Use normal approximation for large df
+	if (df > 100) {
+		// Standard normal CDF approximation
+		return 2 * (1 - normal_cdf(t));
+	}
+
+	// For smaller df, use a more accurate approximation
+	// Based on the incomplete beta function relationship
+	const x = df / (df + t * t);
+	const a = df / 2;
+	const b = 0.5;
+
+	// Approximation of regularized incomplete beta function
+	// This is accurate to about 4 decimal places for typical use cases
+	const beta_approx = incomplete_beta_approx(x, a, b);
+	return beta_approx;
+};
+
+/**
+ * Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).
+ */
+const normal_cdf = (x: number): number => {
+	const t = 1 / (1 + 0.2316419 * Math.abs(x));
+	const d = 0.3989423 * Math.exp((-x * x) / 2);
+	const p =
+		d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+	return x > 0 ? 1 - p : p;
+};
+
+/**
+ * Approximate regularized incomplete beta function for p-value calculation.
+ * Uses continued fraction expansion for reasonable accuracy.
+ */
+const incomplete_beta_approx = (x: number, a: number, b: number): number => {
+	// Simple approximation using the relationship between beta and normal distributions
+	// For our use case (t-distribution p-values), this provides sufficient accuracy
+	if (x <= 0) return 0;
+	if (x >= 1) return 1;
+
+	// Use symmetry if needed
+	if (x > (a + 1) / (a + b + 2)) {
+		return 1 - incomplete_beta_approx(1 - x, b, a);
+	}
+
+	// Continued fraction approximation (first few terms)
+	const lnBeta = ln_gamma(a) + ln_gamma(b) - ln_gamma(a + b);
+	const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+
+	// Simple continued fraction (limited iterations for speed)
+	let f = 1;
+	let c = 1;
+	let d = 0;
+
+	for (let m = 1; m <= 100; m++) {
+		const m2 = 2 * m;
+
+		// Even step
+		let aa = (m * (b - m) * x) / ((a + m2 - 1) * (a + m2));
+		d = 1 + aa * d;
+		if (Math.abs(d) < 1e-30) d = 1e-30;
+		c = 1 + aa / c;
+		if (Math.abs(c) < 1e-30) c = 1e-30;
+		d = 1 / d;
+		f *= d * c;
+
+		// Odd step
+		aa = (-(a + m) * (a + b + m) * x) / ((a + m2) * (a + m2 + 1));
+		d = 1 + aa * d;
+		if (Math.abs(d) < 1e-30) d = 1e-30;
+		c = 1 + aa / c;
+		if (Math.abs(c) < 1e-30) c = 1e-30;
+		d = 1 / d;
+		const delta = d * c;
+		f *= delta;
+
+		if (Math.abs(delta - 1) < 1e-8) break;
+	}
+
+	return front * f;
+};
+
+/**
+ * Log gamma function approximation (Lanczos approximation).
+ */
+const ln_gamma = (z: number): number => {
+	const g = 7;
+	const c = [
+		0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+		-176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6,
+		1.5056327351493116e-7,
+	];
+
+	if (z < 0.5) {
+		return Math.log(Math.PI / Math.sin(Math.PI * z)) - ln_gamma(1 - z);
+	}
+
+	const z_adj = z - 1;
+	let x = c[0]!;
+	for (let i = 1; i < g + 2; i++) {
+		x += c[i]! / (z_adj + i);
+	}
+	const t = z_adj + g + 0.5;
+	return 0.5 * Math.log(2 * Math.PI) + (z_adj + 0.5) * Math.log(t) - t + Math.log(x);
+};

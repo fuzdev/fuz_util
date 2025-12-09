@@ -27,7 +27,7 @@ import {
 	benchmark_format_table_grouped,
 	benchmark_format_markdown,
 	benchmark_format_json,
-	format_number,
+	benchmark_format_number,
 	type BenchmarkFormatJsonOptions,
 } from './benchmark_format.js';
 import type {
@@ -45,49 +45,77 @@ const DEFAULT_MIN_ITERATIONS = 10;
 const DEFAULT_MAX_ITERATIONS = 100_000;
 
 /**
+ * Internal task representation with detected async status.
+ */
+interface BenchmarkTaskInternal extends BenchmarkTask {
+	/** Whether the function returns a promise (detected during warmup or from hint) */
+	is_async?: boolean;
+}
+
+/**
  * Warmup function by running it multiple times.
- * Awaits any promises returned by the function.
+ * Detects whether the function is async based on return value.
  *
  * @param fn - Function to warmup (sync or async)
  * @param iterations - Number of warmup iterations
+ * @param async_hint - If provided, use this instead of detecting
+ * @returns Whether the function is async
  *
  * @example
  * ```ts
- * await benchmark_warmup(() => expensive_operation(), 10);
+ * const is_async = await benchmark_warmup(() => expensive_operation(), 10);
  * ```
  */
-export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<void> => {
+export const benchmark_warmup = async (
+	fn: () => unknown,
+	iterations: number,
+	async_hint?: boolean,
+): Promise<boolean> => {
+	// If we have an explicit hint, use it
+	if (async_hint !== undefined) {
+		// Still run warmup iterations for JIT
+		for (let i = 0; i < iterations; i++) {
+			const result = fn();
+			if (async_hint && is_promise(result)) {
+				await result; // eslint-disable-line no-await-in-loop
+			}
+		}
+		return async_hint;
+	}
+
+	// Detect on first iteration
+	let detected_async = false;
 	for (let i = 0; i < iterations; i++) {
 		const result = fn();
-		if (is_promise(result)) {
+		if (i === 0) {
+			detected_async = is_promise(result);
+		}
+		if (detected_async && is_promise(result)) {
 			await result; // eslint-disable-line no-await-in-loop
 		}
 	}
+	return detected_async;
 };
 
 /**
  * Benchmark class for measuring and comparing function performance.
  */
 export class Benchmark {
-	readonly #config: Required<Omit<BenchmarkConfig, 'on_iteration'>> &
-		Pick<BenchmarkConfig, 'on_iteration'>;
-	readonly #tasks: Array<BenchmarkTask> = [];
+	readonly #config: Required<Omit<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>> &
+		Pick<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>;
+	readonly #tasks: Array<BenchmarkTaskInternal> = [];
 	#results: Array<BenchmarkResult> = [];
 
 	constructor(config: BenchmarkConfig = {}) {
-		const warmup_iterations = config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS;
-		if (warmup_iterations < 1) {
-			throw new Error('warmup_iterations must be at least 1');
-		}
-
 		this.#config = {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
-			warmup_iterations,
+			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
 			cooldown_ms: config.cooldown_ms ?? DEFAULT_COOLDOWN_MS,
 			min_iterations: config.min_iterations ?? DEFAULT_MIN_ITERATIONS,
 			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
 			timer: config.timer ?? timer_default,
 			on_iteration: config.on_iteration,
+			on_task_complete: config.on_task_complete,
 		};
 	}
 
@@ -153,18 +181,77 @@ export class Benchmark {
 	}
 
 	/**
+	 * Mark a task to be skipped during benchmark runs.
+	 * @param name - Name of the task to skip
+	 * @returns This Benchmark instance for chaining
+	 * @throws Error if task with given name doesn't exist
+	 *
+	 * @example
+	 * ```ts
+	 * bench.add('task1', () => fn1());
+	 * bench.add('task2', () => fn2());
+	 * bench.skip('task1');
+	 * // Only task2 will run
+	 * ```
+	 */
+	skip(name: string): this {
+		const task = this.#tasks.find((t) => t.name === name);
+		if (!task) {
+			throw new Error(`Task "${name}" not found`);
+		}
+		task.skip = true;
+		return this;
+	}
+
+	/**
+	 * Mark a task to run exclusively (along with other `only` tasks).
+	 * @param name - Name of the task to run exclusively
+	 * @returns This Benchmark instance for chaining
+	 * @throws Error if task with given name doesn't exist
+	 *
+	 * @example
+	 * ```ts
+	 * bench.add('task1', () => fn1());
+	 * bench.add('task2', () => fn2());
+	 * bench.add('task3', () => fn3());
+	 * bench.only('task2');
+	 * // Only task2 will run
+	 * ```
+	 */
+	only(name: string): this {
+		const task = this.#tasks.find((t) => t.name === name);
+		if (!task) {
+			throw new Error(`Task "${name}" not found`);
+		}
+		task.only = true;
+		return this;
+	}
+
+	/**
 	 * Run all benchmark tasks.
 	 * @returns Array of benchmark results
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this.#results = [];
 
-		for (const task of this.#tasks) {
+		// Determine which tasks to run
+		const has_only = this.#tasks.some((t) => t.only);
+		const tasks_to_run = this.#tasks.filter((t) => {
+			if (t.skip) return false;
+			if (has_only) return t.only;
+			return true;
+		});
+
+		for (let i = 0; i < tasks_to_run.length; i++) {
+			const task = tasks_to_run[i]!;
 			const result = await this.#run_task(task); // eslint-disable-line no-await-in-loop
 			this.#results.push(result);
 
-			// Cooldown between tasks
-			if (this.#config.cooldown_ms > 0) {
+			// Call on_task_complete callback
+			this.#config.on_task_complete?.(result, i, tasks_to_run.length);
+
+			// Cooldown between tasks (skip after last task)
+			if (this.#config.cooldown_ms > 0 && i < tasks_to_run.length - 1) {
 				await wait(this.#config.cooldown_ms); // eslint-disable-line no-await-in-loop
 			}
 		}
@@ -176,7 +263,7 @@ export class Benchmark {
 	 * Run a single benchmark task.
 	 * Throws if the task fails during setup, warmup, or measurement.
 	 */
-	async #run_task(task: BenchmarkTask): Promise<BenchmarkResult> {
+	async #run_task(task: BenchmarkTaskInternal): Promise<BenchmarkResult> {
 		const suite_start_ns = this.#config.timer.now();
 		const timings_ns: Array<number> = [];
 
@@ -186,8 +273,9 @@ export class Benchmark {
 				await task.setup();
 			}
 
-			// Warmup
-			await benchmark_warmup(task.fn, this.#config.warmup_iterations);
+			// Warmup and detect async
+			const is_async = await benchmark_warmup(task.fn, this.#config.warmup_iterations, task.async);
+			task.is_async = is_async;
 
 			// Measurement phase
 			const target_time_ns = this.#config.duration_ms * 1_000_000; // Convert ms to ns
@@ -201,21 +289,38 @@ export class Benchmark {
 			};
 			const measurement_start_ns = this.#config.timer.now();
 
-			// eslint-disable-next-line no-unmodified-loop-condition
-			while (iteration < max_iterations && !aborted) {
-				const iter_start_ns = this.#config.timer.now();
-				const result = task.fn();
-				if (is_promise(result)) {
-					await result; // eslint-disable-line no-await-in-loop
-				}
-				const iter_end_ns = this.#config.timer.now();
-				timings_ns.push(iter_end_ns - iter_start_ns);
-				iteration++;
-				this.#config.on_iteration?.(task.name, iteration, abort);
+			// Use separate code paths for sync vs async for better performance
+			if (is_async) {
+				// Async code path - await each iteration
+				// eslint-disable-next-line no-unmodified-loop-condition
+				while (iteration < max_iterations && !aborted) {
+					const iter_start_ns = this.#config.timer.now();
+					await task.fn(); // eslint-disable-line no-await-in-loop
+					const iter_end_ns = this.#config.timer.now();
+					timings_ns.push(iter_end_ns - iter_start_ns);
+					iteration++;
+					this.#config.on_iteration?.(task.name, iteration, abort);
 
-				const total_elapsed_ns = iter_end_ns - measurement_start_ns;
-				if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
-					break;
+					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
+					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
+						break;
+					}
+				}
+			} else {
+				// Sync code path - no promise checking overhead
+				// eslint-disable-next-line no-unmodified-loop-condition
+				while (iteration < max_iterations && !aborted) {
+					const iter_start_ns = this.#config.timer.now();
+					task.fn();
+					const iter_end_ns = this.#config.timer.now();
+					timings_ns.push(iter_end_ns - iter_start_ns);
+					iteration++;
+					this.#config.on_iteration?.(task.name, iteration, abort);
+
+					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
+					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
+						break;
+					}
 				}
 			}
 		} finally {
@@ -259,8 +364,8 @@ export class Benchmark {
 	 * }));
 	 * ```
 	 */
-	table(options: BenchmarkFormatTableOptions = {}): string {
-		return options.groups
+	table(options?: BenchmarkFormatTableOptions): string {
+		return options?.groups
 			? benchmark_format_table_grouped(this.#results, options.groups)
 			: benchmark_format_table(this.#results);
 	}
@@ -278,7 +383,7 @@ export class Benchmark {
 	 * @param options - Formatting options (pretty, include_timings)
 	 * @returns JSON string
 	 */
-	json(options: BenchmarkFormatJsonOptions = {}): string {
+	json(options?: BenchmarkFormatJsonOptions): string {
 		return benchmark_format_json(this.#results, options);
 	}
 
@@ -343,12 +448,12 @@ export class Benchmark {
 
 		const lines: Array<string> = [];
 		lines.push(
-			`Fastest: ${fastest.name} (${format_number(fastest.stats.ops_per_second)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
+			`Fastest: ${fastest.name} (${benchmark_format_number(fastest.stats.ops_per_second)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
 		);
 
 		if (this.#results.length > 1) {
 			lines.push(
-				`Slowest: ${slowest.name} (${format_number(slowest.stats.ops_per_second)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
+				`Slowest: ${slowest.name} (${benchmark_format_number(slowest.stats.ops_per_second)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
 			);
 			lines.push(`Speed difference: ${ratio.toFixed(2)}x`);
 		}

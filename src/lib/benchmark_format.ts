@@ -55,7 +55,7 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 	// Data rows - all use same unit
 	results.forEach((r) => {
 		const tier = get_perf_tier(r.stats.ops_per_second);
-		const ops_sec = format_number(r.stats.ops_per_second, 2);
+		const ops_sec = benchmark_format_number(r.stats.ops_per_second, 2);
 		const median = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
 		const p75 = time_format(r.stats.p75_ns, unit, 2).replace(unit_str, '').trim();
 		const p90 = time_format(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
@@ -153,7 +153,7 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
 
 	// Data rows - all use same unit
 	results.forEach((r) => {
-		const ops_sec = format_number(r.stats.ops_per_second, 2);
+		const ops_sec = benchmark_format_number(r.stats.ops_per_second, 2);
 		const median = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
 		const p75 = time_format(r.stats.p75_ns, unit, 2).replace(unit_str, '').trim();
 		const p90 = time_format(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
@@ -224,9 +224,10 @@ export interface BenchmarkFormatJsonOptions {
  */
 export const benchmark_format_json = (
 	results: Array<BenchmarkResult>,
-	options: BenchmarkFormatJsonOptions = {},
+	options?: BenchmarkFormatJsonOptions,
 ): string => {
-	const {pretty = true, include_timings = false} = options;
+	const pretty = options?.pretty ?? true;
+	const include_timings = options?.include_timings ?? false;
 	// Flatten stats into result object for easier consumption
 	const flattened = results.map((r) => ({
 		name: r.name,
@@ -312,10 +313,11 @@ export const benchmark_format_table_grouped = (
 	return sections.join('\n');
 };
 
+// TODO consider extracting to a general format utility module when more formatters are needed
 /**
  * Format a number with fixed decimal places and thousands separators.
  */
-export const format_number = (n: number, decimals: number = 2): string => {
+export const benchmark_format_number = (n: number, decimals: number = 2): string => {
 	if (!isFinite(n)) return String(n);
 	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };

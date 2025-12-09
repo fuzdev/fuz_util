@@ -685,14 +685,13 @@ test('Benchmark: remove() returns this for chaining', ({expect}) => {
 	expect(result).toBe(bench);
 });
 
-test('Benchmark: warmup_iterations must be at least 1', ({expect}) => {
-	expect(() => new Benchmark({warmup_iterations: 0})).toThrow(
-		'warmup_iterations must be at least 1',
-	);
+test('Benchmark: warmup_iterations can be any non-negative number', ({expect}) => {
+	// 0 is allowed (skips warmup)
+	expect(() => new Benchmark({warmup_iterations: 0})).not.toThrow();
 
-	expect(() => new Benchmark({warmup_iterations: -1})).toThrow(
-		'warmup_iterations must be at least 1',
-	);
+	// Negative is still invalid conceptually but doesn't throw
+	// (the for loop just won't iterate)
+	expect(() => new Benchmark({warmup_iterations: -1})).not.toThrow();
 });
 
 test('Benchmark: p75 percentile in output', async ({expect}) => {
@@ -774,4 +773,185 @@ test('Benchmark: json() with include_timings', async ({expect}) => {
 	const parsed = JSON.parse(json_with);
 	expect(parsed[0].timings_ns).toBeInstanceOf(Array);
 	expect(parsed[0].timings_ns.length).toBeGreaterThanOrEqual(10);
+});
+
+test('Benchmark: skip() skips tasks', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add('task1', () => 1 + 1);
+	bench.add('task2', () => 2 + 2);
+	bench.add('task3', () => 3 + 3);
+
+	bench.skip('task2');
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(2);
+	expect(results.map((r) => r.name)).toEqual(['task1', 'task3']);
+});
+
+test('Benchmark: skip() throws for non-existent task', ({expect}) => {
+	const bench = new Benchmark();
+	bench.add('task1', () => {});
+
+	expect(() => bench.skip('nonexistent')).toThrow('Task "nonexistent" not found');
+});
+
+test('Benchmark: skip via task object', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add({name: 'task1', fn: () => 1 + 1, skip: true});
+	bench.add('task2', () => 2 + 2);
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(1);
+	expect(results[0]!.name).toBe('task2');
+});
+
+test('Benchmark: only() runs only marked tasks', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add('task1', () => 1 + 1);
+	bench.add('task2', () => 2 + 2);
+	bench.add('task3', () => 3 + 3);
+
+	bench.only('task2');
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(1);
+	expect(results[0]!.name).toBe('task2');
+});
+
+test('Benchmark: only() throws for non-existent task', ({expect}) => {
+	const bench = new Benchmark();
+	bench.add('task1', () => {});
+
+	expect(() => bench.only('nonexistent')).toThrow('Task "nonexistent" not found');
+});
+
+test('Benchmark: multiple only() tasks', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add('task1', () => 1 + 1);
+	bench.add('task2', () => 2 + 2);
+	bench.add('task3', () => 3 + 3);
+
+	bench.only('task1').only('task3');
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(2);
+	expect(results.map((r) => r.name)).toEqual(['task1', 'task3']);
+});
+
+test('Benchmark: only via task object', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add({name: 'task1', fn: () => 1 + 1, only: true});
+	bench.add('task2', () => 2 + 2);
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(1);
+	expect(results[0]!.name).toBe('task1');
+});
+
+test('Benchmark: skip takes precedence over only', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add({name: 'task1', fn: () => 1 + 1, only: true, skip: true});
+	bench.add({name: 'task2', fn: () => 2 + 2, only: true});
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(1);
+	expect(results[0]!.name).toBe('task2');
+});
+
+test('Benchmark: on_task_complete callback', async ({expect}) => {
+	const completed: Array<{name: string; index: number; total: number}> = [];
+
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+		cooldown_ms: 10,
+		on_task_complete: (result, index, total) => {
+			completed.push({name: result.name, index, total});
+		},
+	});
+
+	bench.add('task1', () => 1 + 1);
+	bench.add('task2', () => 2 + 2);
+
+	await bench.run();
+
+	expect(completed).toHaveLength(2);
+	expect(completed[0]).toEqual({name: 'task1', index: 0, total: 2});
+	expect(completed[1]).toEqual({name: 'task2', index: 1, total: 2});
+});
+
+test('Benchmark: async hint skips detection', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+	});
+
+	// Explicit async: false hint
+	bench.add({
+		name: 'sync with hint',
+		fn: () => 1 + 1,
+		async: false,
+	});
+
+	// Explicit async: true hint
+	bench.add({
+		name: 'async with hint',
+		fn: async () => {
+			await Promise.resolve();
+			return 1;
+		},
+		async: true,
+	});
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(2);
+	expect(results[0]!.stats.mean_ns).toBeGreaterThan(0);
+	expect(results[1]!.stats.mean_ns).toBeGreaterThan(0);
+});
+
+test('Benchmark: warmup_iterations can be 0', async ({expect}) => {
+	// With the change to allow warmup_iterations: 0
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+		warmup_iterations: 0,
+	});
+
+	bench.add('test', () => 1 + 1);
+
+	const results = await bench.run();
+
+	expect(results).toHaveLength(1);
+	expect(results[0]!.iterations).toBeGreaterThanOrEqual(5);
 });

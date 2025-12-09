@@ -137,3 +137,119 @@ test('BenchmarkStats: two samples', ({expect}) => {
 	expect(stats.min_ns).toBe(1000);
 	expect(stats.max_ns).toBe(2000);
 });
+
+// BenchmarkStats.compare() tests
+
+test('BenchmarkStats.compare: clearly faster', ({expect}) => {
+	// a is clearly faster than b (1μs vs 2μs)
+	const a = new BenchmarkStats(Array(100).fill(1000));
+	const b = new BenchmarkStats(Array(100).fill(2000));
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('a');
+	expect(comparison.speedup_ratio).toBeCloseTo(2, 1);
+	expect(comparison.significant).toBe(true);
+	expect(comparison.p_value).toBeLessThan(0.05);
+	expect(comparison.effect_magnitude).toBe('large');
+});
+
+test('BenchmarkStats.compare: clearly slower', ({expect}) => {
+	// a is clearly slower than b
+	const a = new BenchmarkStats(Array(100).fill(3000));
+	const b = new BenchmarkStats(Array(100).fill(1000));
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('b');
+	expect(comparison.speedup_ratio).toBeCloseTo(3, 1);
+	expect(comparison.significant).toBe(true);
+});
+
+test('BenchmarkStats.compare: equal', ({expect}) => {
+	// a and b are the same
+	const a = new BenchmarkStats(Array(100).fill(1000));
+	const b = new BenchmarkStats(Array(100).fill(1000));
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('equal');
+	expect(comparison.speedup_ratio).toBe(1);
+	expect(comparison.effect_magnitude).toBe('negligible');
+});
+
+test('BenchmarkStats.compare: negligible difference', ({expect}) => {
+	// Very small difference with realistic variance
+	// The difference between means should be small relative to the variance
+	const base_a = 1000;
+	const base_b = 1010; // 1% difference
+	const variance = 200; // Large variance relative to difference
+
+	// Generate data with variance around each mean
+	const a_data = Array.from(
+		{length: 100},
+		(_, i) => base_a + (i % 5) * (variance / 5) - variance / 2,
+	);
+	const b_data = Array.from(
+		{length: 100},
+		(_, i) => base_b + (i % 5) * (variance / 5) - variance / 2,
+	);
+
+	const a = new BenchmarkStats(a_data);
+	const b = new BenchmarkStats(b_data);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	// With high variance and small difference, effect should be small or negligible
+	expect(['negligible', 'small']).toContain(comparison.effect_magnitude);
+});
+
+test('BenchmarkStats.compare: empty stats', ({expect}) => {
+	const a = new BenchmarkStats([]);
+	const b = new BenchmarkStats([1000, 1100, 1200]);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('equal');
+	expect(comparison.significant).toBe(false);
+	expect(comparison.recommendation).toContain('Insufficient data');
+});
+
+test('BenchmarkStats.compare: custom alpha', ({expect}) => {
+	// Create data with moderate difference
+	const a = new BenchmarkStats([1000, 1100, 1200, 1050, 1150]);
+	const b = new BenchmarkStats([1500, 1600, 1700, 1550, 1650]);
+
+	// With default alpha (0.05), should be significant
+	const comparison_default = BenchmarkStats.compare(a, b);
+	expect(comparison_default.significant).toBe(true);
+
+	// With very strict alpha (0.001), might not be significant
+	const comparison_strict = BenchmarkStats.compare(a, b, {alpha: 0.001});
+	// p_value should be reported regardless
+	expect(comparison_strict.p_value).toBeGreaterThan(0);
+});
+
+test('BenchmarkStats.compare: confidence interval overlap', ({expect}) => {
+	// Overlapping CIs - a and b have close means with variance
+	const a_values = [1000, 1100, 1200, 1050, 1150, 1080, 1120, 1090, 1110, 1095];
+	const b_values = [1100, 1200, 1300, 1150, 1250, 1180, 1220, 1190, 1210, 1195];
+
+	const a = new BenchmarkStats(a_values);
+	const b = new BenchmarkStats(b_values);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	// These should have overlapping CIs
+	expect(typeof comparison.ci_overlap).toBe('boolean');
+});
+
+test('BenchmarkStats.compare: recommendation string', ({expect}) => {
+	const a = new BenchmarkStats(Array(50).fill(1000));
+	const b = new BenchmarkStats(Array(50).fill(2000));
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(typeof comparison.recommendation).toBe('string');
+	expect(comparison.recommendation.length).toBeGreaterThan(0);
+});

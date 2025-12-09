@@ -3,18 +3,16 @@
  * Pure functions with zero dependencies - can be used standalone for any data analysis.
  */
 
-// Statistical constants
-const QUARTILE_Q1 = 0.25;
-const QUARTILE_Q3 = 0.75;
-const IQR_MULTIPLIER = 1.5;
-const MAD_Z_SCORE_THRESHOLD = 3.5;
-const MAD_Z_SCORE_EXTREME = 5.0;
-const MAD_CONSTANT = 0.6745; // For normal distribution approximation
-const OUTLIER_RATIO_HIGH = 0.3;
-const OUTLIER_RATIO_EXTREME = 0.4;
-const OUTLIER_KEEP_RATIO = 0.8;
-const CONFIDENCE_INTERVAL_Z = 1.96; // 95% confidence
-const MIN_SAMPLE_SIZE = 3;
+// Statistical constants (defaults)
+const DEFAULT_IQR_MULTIPLIER = 1.5;
+const DEFAULT_MAD_Z_SCORE_THRESHOLD = 3.5;
+const DEFAULT_MAD_Z_SCORE_EXTREME = 5.0;
+const DEFAULT_MAD_CONSTANT = 0.6745; // For normal distribution approximation
+const DEFAULT_OUTLIER_RATIO_HIGH = 0.3;
+const DEFAULT_OUTLIER_RATIO_EXTREME = 0.4;
+const DEFAULT_OUTLIER_KEEP_RATIO = 0.8;
+const DEFAULT_CONFIDENCE_Z = 1.96; // 95% confidence
+const DEFAULT_MIN_SAMPLE_SIZE = 3;
 
 /**
  * Calculate the mean (average) of an array of numbers.
@@ -119,25 +117,41 @@ export interface StatsOutlierResult {
 }
 
 /**
- * Detect outliers using the IQR (Interquartile Range) method.
- * Values outside [Q1 - 1.5*IQR, Q3 + 1.5*IQR] are considered outliers.
+ * Configuration options for IQR outlier detection.
  */
-export const stats_outliers_iqr = (values: Array<number>): StatsOutlierResult => {
-	if (values.length < MIN_SAMPLE_SIZE) {
+export interface StatsOutliersIqrOptions {
+	/** Multiplier for IQR bounds (default: 1.5) */
+	iqr_multiplier?: number;
+	/** Minimum sample size to perform outlier detection (default: 3) */
+	min_sample_size?: number;
+}
+
+/**
+ * Detect outliers using the IQR (Interquartile Range) method.
+ * Values outside [Q1 - multiplier*IQR, Q3 + multiplier*IQR] are considered outliers.
+ */
+export const stats_outliers_iqr = (
+	values: Array<number>,
+	options?: StatsOutliersIqrOptions,
+): StatsOutlierResult => {
+	const iqr_multiplier = options?.iqr_multiplier ?? DEFAULT_IQR_MULTIPLIER;
+	const min_sample_size = options?.min_sample_size ?? DEFAULT_MIN_SAMPLE_SIZE;
+
+	if (values.length < min_sample_size) {
 		return {cleaned: values, outliers: []};
 	}
 
 	const sorted = [...values].sort((a, b) => a - b);
-	const q1 = sorted[Math.floor(sorted.length * QUARTILE_Q1)]!;
-	const q3 = sorted[Math.floor(sorted.length * QUARTILE_Q3)]!;
+	const q1 = sorted[Math.floor(sorted.length * 0.25)]!;
+	const q3 = sorted[Math.floor(sorted.length * 0.75)]!;
 	const iqr = q3 - q1;
 
 	if (iqr === 0) {
 		return {cleaned: values, outliers: []};
 	}
 
-	const lower_bound = q1 - IQR_MULTIPLIER * iqr;
-	const upper_bound = q3 + IQR_MULTIPLIER * iqr;
+	const lower_bound = q1 - iqr_multiplier * iqr;
+	const upper_bound = q3 + iqr_multiplier * iqr;
 
 	const cleaned: Array<number> = [];
 	const outliers: Array<number> = [];
@@ -154,13 +168,47 @@ export const stats_outliers_iqr = (values: Array<number>): StatsOutlierResult =>
 };
 
 /**
+ * Configuration options for MAD outlier detection.
+ */
+export interface StatsOutliersMadOptions {
+	/** Modified Z-score threshold for outlier detection (default: 3.5) */
+	z_score_threshold?: number;
+	/** Extreme Z-score threshold when too many outliers detected (default: 5.0) */
+	z_score_extreme?: number;
+	/** MAD constant for normal distribution (default: 0.6745) */
+	mad_constant?: number;
+	/** Ratio threshold to switch to extreme mode (default: 0.3) */
+	outlier_ratio_high?: number;
+	/** Ratio threshold to switch to keep-closest mode (default: 0.4) */
+	outlier_ratio_extreme?: number;
+	/** Ratio of values to keep in keep-closest mode (default: 0.8) */
+	outlier_keep_ratio?: number;
+	/** Minimum sample size to perform outlier detection (default: 3) */
+	min_sample_size?: number;
+	/** Options to pass to IQR fallback when MAD is zero */
+	iqr_options?: StatsOutliersIqrOptions;
+}
+
+/**
  * Detect outliers using the MAD (Median Absolute Deviation) method.
  * More robust than IQR for skewed distributions.
  * Uses modified Z-score: |0.6745 * (x - median) / MAD|
- * Values with modified Z-score > 3.5 are considered outliers.
+ * Values with modified Z-score > threshold are considered outliers.
  */
-export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult => {
-	if (values.length < MIN_SAMPLE_SIZE) {
+export const stats_outliers_mad = (
+	values: Array<number>,
+	options?: StatsOutliersMadOptions,
+): StatsOutlierResult => {
+	const z_score_threshold = options?.z_score_threshold ?? DEFAULT_MAD_Z_SCORE_THRESHOLD;
+	const z_score_extreme = options?.z_score_extreme ?? DEFAULT_MAD_Z_SCORE_EXTREME;
+	const mad_constant = options?.mad_constant ?? DEFAULT_MAD_CONSTANT;
+	const outlier_ratio_high = options?.outlier_ratio_high ?? DEFAULT_OUTLIER_RATIO_HIGH;
+	const outlier_ratio_extreme = options?.outlier_ratio_extreme ?? DEFAULT_OUTLIER_RATIO_EXTREME;
+	const outlier_keep_ratio = options?.outlier_keep_ratio ?? DEFAULT_OUTLIER_KEEP_RATIO;
+	const min_sample_size = options?.min_sample_size ?? DEFAULT_MIN_SAMPLE_SIZE;
+	const iqr_options = options?.iqr_options;
+
+	if (values.length < min_sample_size) {
 		return {cleaned: values, outliers: []};
 	}
 
@@ -174,7 +222,7 @@ export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult =>
 
 	// If MAD is zero, fall back to IQR method
 	if (mad === 0) {
-		return stats_outliers_iqr(values);
+		return stats_outliers_iqr(values, iqr_options);
 	}
 
 	// Use modified Z-score with MAD
@@ -182,8 +230,8 @@ export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult =>
 	let outliers: Array<number> = [];
 
 	for (const value of values) {
-		const modified_z_score = (MAD_CONSTANT * (value - median)) / mad;
-		if (Math.abs(modified_z_score) > MAD_Z_SCORE_THRESHOLD) {
+		const modified_z_score = (mad_constant * (value - median)) / mad;
+		if (Math.abs(modified_z_score) > z_score_threshold) {
 			outliers.push(value);
 		} else {
 			cleaned.push(value);
@@ -191,13 +239,13 @@ export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult =>
 	}
 
 	// If too many outliers, increase threshold and try again
-	if (outliers.length > values.length * OUTLIER_RATIO_HIGH) {
+	if (outliers.length > values.length * outlier_ratio_high) {
 		cleaned = [];
 		outliers = [];
 
 		for (const value of values) {
-			const modified_z_score = (MAD_CONSTANT * (value - median)) / mad;
-			if (Math.abs(modified_z_score) > MAD_Z_SCORE_EXTREME) {
+			const modified_z_score = (mad_constant * (value - median)) / mad;
+			if (Math.abs(modified_z_score) > z_score_extreme) {
 				outliers.push(value);
 			} else {
 				cleaned.push(value);
@@ -205,14 +253,14 @@ export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult =>
 		}
 
 		// If still too many outliers, keep closest values to median
-		if (outliers.length > values.length * OUTLIER_RATIO_EXTREME) {
+		if (outliers.length > values.length * outlier_ratio_extreme) {
 			const with_distances = values.map((v) => ({
 				value: v,
 				distance: Math.abs(v - median),
 			}));
 			with_distances.sort((a, b) => a.distance - b.distance);
 
-			const keep_count = Math.floor(values.length * OUTLIER_KEEP_RATIO);
+			const keep_count = Math.floor(values.length * outlier_keep_ratio);
 			cleaned = with_distances.slice(0, keep_count).map((d) => d.value);
 			outliers = with_distances.slice(keep_count).map((d) => d.value);
 		}
@@ -222,19 +270,32 @@ export const stats_outliers_mad = (values: Array<number>): StatsOutlierResult =>
 };
 
 /**
+ * Configuration options for confidence interval calculation.
+ */
+export interface StatsConfidenceIntervalOptions {
+	/** Z-score for confidence level (default: 1.96 for 95% CI) */
+	z_score?: number;
+}
+
+/**
  * Calculate confidence interval for the mean.
- * Uses 95% confidence level (z=1.96).
  * @param values - Array of numbers
+ * @param options - Configuration options
  * @returns [lower_bound, upper_bound]
  */
-export const stats_confidence_interval = (values: Array<number>): [number, number] => {
+export const stats_confidence_interval = (
+	values: Array<number>,
+	options?: StatsConfidenceIntervalOptions,
+): [number, number] => {
+	const z_score = options?.z_score ?? DEFAULT_CONFIDENCE_Z;
+
 	if (values.length === 0) return [NaN, NaN];
 
 	const mean = stats_mean(values);
 	const std_dev = stats_std_dev(values, mean);
 
 	const se = std_dev / Math.sqrt(values.length);
-	const margin = CONFIDENCE_INTERVAL_Z * se;
+	const margin = z_score * se;
 
 	return [mean - margin, mean + margin];
 };
