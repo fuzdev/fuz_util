@@ -4,7 +4,7 @@ import {test} from 'vitest';
 
 import {Benchmark} from '$lib/benchmark.js';
 import {wait} from '$lib/async.js';
-import type {Timer} from '$lib/benchmark_timing.js';
+import type {Timer} from '$lib/time.js';
 
 test('Benchmark: basic usage with string name', async ({expect}) => {
 	const bench = new Benchmark({

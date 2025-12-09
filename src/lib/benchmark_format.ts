@@ -1,5 +1,5 @@
 import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
-import {time_unit_detect_best, time_format, type TimeUnit} from './benchmark_timing.js';
+import {time_unit_detect_best, time_format, type TimeUnit} from './time.js';
 
 /**
  * Format results as an ASCII table.

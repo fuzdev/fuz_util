@@ -317,13 +317,13 @@ export const library_json: LibraryJson = {
 						],
 					},
 				],
-				dependents: ['benchmark.ts', 'benchmark_timing.ts', 'throttle.ts'],
+				dependents: ['benchmark.ts', 'throttle.ts'],
 			},
 			{
 				path: 'benchmark_format.ts',
 				declarations: [
 					{
-						name: 'format_table',
+						name: 'benchmark_format_table',
 						kind: 'function',
 						doc_comment:
 							'Format results as an ASCII table.\nAll mean times use the same unit for easy comparison.',
@@ -343,7 +343,7 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'format_table_detailed',
+						name: 'benchmark_format_table_detailed',
 						kind: 'function',
 						doc_comment:
 							'Format results as a detailed ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
@@ -363,7 +363,7 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'format_markdown',
+						name: 'benchmark_format_markdown',
 						kind: 'function',
 						doc_comment:
 							'Format results as a Markdown table.\nAll mean times use the same unit for easy comparison.',
@@ -383,7 +383,7 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'format_json',
+						name: 'benchmark_format_json',
 						kind: 'function',
 						doc_comment: 'Format results as JSON.',
 						examples: [
@@ -408,7 +408,7 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'format_table_grouped',
+						name: 'benchmark_format_table_grouped',
 						kind: 'function',
 						doc_comment: 'Format results as a grouped table with visual separators between groups.',
 						examples: [
@@ -440,207 +440,18 @@ export const library_json: LibraryJson = {
 						],
 					},
 				],
-				dependencies: ['benchmark_timing.ts'],
+				dependencies: ['time.ts'],
 				dependents: ['benchmark.ts'],
 			},
 			{
 				path: 'benchmark_stats.ts',
 				declarations: [
 					{
-						name: 'stats_mean',
-						kind: 'function',
-						doc_comment: 'Calculate the mean (average) of an array of numbers.',
-						source_line: 25,
-						type_signature: '(values: number[]): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-						],
-					},
-					{
-						name: 'stats_median',
-						kind: 'function',
-						doc_comment: 'Calculate the median of an array of numbers.',
-						source_line: 33,
-						type_signature: '(values: number[]): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-						],
-					},
-					{
-						name: 'stats_std_dev',
-						kind: 'function',
-						doc_comment:
-							'Calculate the standard deviation of an array of numbers.\nUses population standard deviation (divides by n, not n-1).\nFor benchmarks with many samples, this is typically appropriate.',
-						source_line: 45,
-						type_signature: '(values: number[], mean?: number | undefined): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-							{
-								name: 'mean',
-								type: 'number | undefined',
-								optional: true,
-							},
-						],
-					},
-					{
-						name: 'stats_variance',
-						kind: 'function',
-						doc_comment: 'Calculate the variance of an array of numbers.',
-						source_line: 55,
-						type_signature: '(values: number[], mean?: number | undefined): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-							{
-								name: 'mean',
-								type: 'number | undefined',
-								optional: true,
-							},
-						],
-					},
-					{
-						name: 'stats_percentile',
-						kind: 'function',
-						doc_comment:
-							'Calculate a percentile of an array of numbers using linear interpolation.\nUses the "R-7" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.',
-						source_line: 68,
-						type_signature: '(values: number[], p: number): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-								description: '- Array of numbers',
-							},
-							{
-								name: 'p',
-								type: 'number',
-								description: '- Percentile (0-1, e.g., 0.95 for 95th percentile)',
-							},
-						],
-					},
-					{
-						name: 'stats_cv',
-						kind: 'function',
-						doc_comment:
-							'Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.',
-						source_line: 94,
-						type_signature: '(mean: number, std_dev: number): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'mean',
-								type: 'number',
-							},
-							{
-								name: 'std_dev',
-								type: 'number',
-							},
-						],
-					},
-					{
-						name: 'stats_min_max',
-						kind: 'function',
-						doc_comment: 'Calculate min and max values.',
-						source_line: 102,
-						type_signature: '(values: number[]): { min: number; max: number; }',
-						return_type: '{ min: number; max: number; }',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-						],
-					},
-					{
-						name: 'OutlierDetectionResult',
-						kind: 'type',
-						doc_comment: 'Result from outlier detection.',
-						source_line: 117,
-						type_signature: 'OutlierDetectionResult',
-						properties: [
-							{
-								name: 'cleaned',
-								kind: 'variable',
-								type_signature: 'Array<number>',
-								doc_comment: 'Values after removing outliers',
-							},
-							{
-								name: 'outliers',
-								kind: 'variable',
-								type_signature: 'Array<number>',
-								doc_comment: 'Detected outlier values',
-							},
-						],
-					},
-					{
-						name: 'outliers_detect_iqr',
-						kind: 'function',
-						doc_comment:
-							'Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - 1.5*IQR, Q3 + 1.5*IQR] are considered outliers.',
-						source_line: 128,
-						type_signature: '(values: number[]): OutlierDetectionResult',
-						return_type: 'OutlierDetectionResult',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-						],
-					},
-					{
-						name: 'outliers_detect_mad',
-						kind: 'function',
-						doc_comment:
-							'Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > 3.5 are considered outliers.',
-						source_line: 165,
-						type_signature: '(values: number[]): OutlierDetectionResult',
-						return_type: 'OutlierDetectionResult',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-							},
-						],
-					},
-					{
-						name: 'stats_confidence_interval',
-						kind: 'function',
-						doc_comment:
-							'Calculate confidence interval for the mean.\nUses 95% confidence level (z=1.96).',
-						source_line: 233,
-						type_signature: '(values: number[]): [number, number]',
-						return_type: '[number, number]',
-						return_description: '[lower_bound, upper_bound]',
-						parameters: [
-							{
-								name: 'values',
-								type: 'number[]',
-								description: '- Array of numbers',
-							},
-						],
-					},
-					{
 						name: 'BenchmarkStats',
 						kind: 'class',
 						doc_comment:
 							'Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.',
-						source_line: 250,
+						source_line: 24,
 						members: [
 							{
 								name: 'mean_ns',
@@ -777,358 +588,9 @@ export const library_json: LibraryJson = {
 					},
 				],
 				module_comment:
-					'Statistical analysis utilities for benchmarking.\nPure functions with zero dependencies - can be used standalone for any timing/performance analysis.\nAll timing values are in nanoseconds unless otherwise specified.',
-				dependencies: ['benchmark_timing.ts'],
+					'Benchmark-specific statistical analysis.\nUses the general stats utilities from stats.ts for timing/performance analysis.\nAll timing values are in nanoseconds.',
+				dependencies: ['stats.ts', 'time.ts'],
 				dependents: ['benchmark.ts'],
-			},
-			{
-				path: 'benchmark_timing.ts',
-				declarations: [
-					{
-						name: 'Timer',
-						kind: 'type',
-						doc_comment:
-							'Timer interface for measuring elapsed time.\nReturns time in nanoseconds for maximum precision.',
-						source_line: 12,
-						type_signature: 'Timer',
-						properties: [
-							{
-								name: 'now',
-								kind: 'variable',
-								type_signature: '() => number',
-								doc_comment: 'Get current time in nanoseconds',
-							},
-						],
-					},
-					{
-						name: 'timer_node',
-						kind: 'variable',
-						doc_comment:
-							'Node.js high-resolution timer using process.hrtime.bigint().\nProvides true nanosecond precision.',
-						source_line: 21,
-						type_signature: 'Timer',
-					},
-					{
-						name: 'timer_browser',
-						kind: 'variable',
-						doc_comment:
-							'Browser high-resolution timer using performance.now().\nConverts milliseconds to nanoseconds for consistent API.\n\n**Precision varies by browser due to Spectre/Meltdown mitigations:**\n- Chrome: ~100μs (coarsened)\n- Firefox: ~1ms (rounded)\n- Safari: ~100μs\n- Node.js: ~1μs\n\nFor nanosecond-precision benchmarks, use Node.js with `timer_node`.',
-						source_line: 40,
-						type_signature: 'Timer',
-					},
-					{
-						name: 'timer_default',
-						kind: 'variable',
-						doc_comment:
-							'Auto-detected timer based on environment.\nUses process.hrtime in Node.js, performance.now() in browsers.\nThe timer function is detected once and cached for performance.',
-						source_line: 84,
-						type_signature: 'Timer',
-					},
-					{
-						name: 'NS_PER_US',
-						kind: 'variable',
-						doc_comment: 'Time units and conversions.',
-						source_line: 91,
-						type_signature: '1000',
-					},
-					{
-						name: 'NS_PER_MS',
-						kind: 'variable',
-						source_line: 92,
-						type_signature: '1000000',
-					},
-					{
-						name: 'NS_PER_SEC',
-						kind: 'variable',
-						source_line: 93,
-						type_signature: '1000000000',
-					},
-					{
-						name: 'ns_to_us',
-						kind: 'function',
-						doc_comment: 'Convert nanoseconds to microseconds.',
-						source_line: 98,
-						type_signature: '(ns: number): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'ns',
-								type: 'number',
-							},
-						],
-					},
-					{
-						name: 'ns_to_ms',
-						kind: 'function',
-						doc_comment: 'Convert nanoseconds to milliseconds.',
-						source_line: 103,
-						type_signature: '(ns: number): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'ns',
-								type: 'number',
-							},
-						],
-					},
-					{
-						name: 'ns_to_sec',
-						kind: 'function',
-						doc_comment: 'Convert nanoseconds to seconds.',
-						source_line: 108,
-						type_signature: '(ns: number): number',
-						return_type: 'number',
-						parameters: [
-							{
-								name: 'ns',
-								type: 'number',
-							},
-						],
-					},
-					{
-						name: 'TimeUnit',
-						kind: 'type',
-						doc_comment: 'Time unit for formatting.',
-						source_line: 113,
-						type_signature: 'TimeUnit',
-					},
-					{
-						name: 'detect_best_time_unit',
-						kind: 'function',
-						doc_comment:
-							'Detect the best time unit for a set of nanosecond values.\nChooses the unit where most values fall in the range 1-9999.',
-						source_line: 121,
-						type_signature: '(values_ns: number[]): TimeUnit',
-						return_type: 'TimeUnit',
-						return_description: 'Best unit to use for all values',
-						parameters: [
-							{
-								name: 'values_ns',
-								type: 'number[]',
-								description: '- Array of times in nanoseconds',
-							},
-						],
-					},
-					{
-						name: 'format_time',
-						kind: 'function',
-						doc_comment: 'Format time with a specific unit.',
-						source_line: 151,
-						type_signature: '(ns: number, unit: TimeUnit, decimals?: number): string',
-						return_type: 'string',
-						return_description: 'Formatted string like "3.87μs"',
-						parameters: [
-							{
-								name: 'ns',
-								type: 'number',
-								description: '- Time in nanoseconds',
-							},
-							{
-								name: 'unit',
-								type: 'TimeUnit',
-								description: "- Unit to use ('ns', 'us', 'ms', 's')",
-							},
-							{
-								name: 'decimals',
-								type: 'number',
-								description: '- Number of decimal places (default: 2)',
-								default_value: '2',
-							},
-						],
-					},
-					{
-						name: 'format_time_adaptive',
-						kind: 'function',
-						doc_comment: 'Format time with adaptive units (ns/μs/ms/s) based on magnitude.',
-						examples: [
-							'```ts\nformat_time_adaptive(1500) // "1.50μs"\nformat_time_adaptive(3870) // "3.87μs"\nformat_time_adaptive(1500000) // "1.50ms"\nformat_time_adaptive(1500000000) // "1.50s"\n```',
-						],
-						source_line: 180,
-						type_signature: '(ns: number, decimals?: number): string',
-						return_type: 'string',
-						return_description: 'Formatted string like "3.87μs" or "1.23ms"',
-						parameters: [
-							{
-								name: 'ns',
-								type: 'number',
-								description: '- Time in nanoseconds',
-							},
-							{
-								name: 'decimals',
-								type: 'number',
-								description: '- Number of decimal places (default: 2)',
-								default_value: '2',
-							},
-						],
-					},
-					{
-						name: 'TimingResult',
-						kind: 'type',
-						doc_comment:
-							'Result from timing a function execution.\nAll times in nanoseconds for maximum precision.',
-						source_line: 199,
-						type_signature: 'TimingResult',
-						properties: [
-							{
-								name: 'elapsed_ns',
-								kind: 'variable',
-								type_signature: 'number',
-								doc_comment: 'Elapsed time in nanoseconds',
-							},
-							{
-								name: 'elapsed_us',
-								kind: 'variable',
-								type_signature: 'number',
-								doc_comment: 'Elapsed time in microseconds (convenience)',
-							},
-							{
-								name: 'elapsed_ms',
-								kind: 'variable',
-								type_signature: 'number',
-								doc_comment: 'Elapsed time in milliseconds (convenience)',
-							},
-							{
-								name: 'started_at_ns',
-								kind: 'variable',
-								type_signature: 'number',
-								doc_comment: 'Start time in nanoseconds (from timer.now())',
-							},
-							{
-								name: 'ended_at_ns',
-								kind: 'variable',
-								type_signature: 'number',
-								doc_comment: 'End time in nanoseconds (from timer.now())',
-							},
-						],
-					},
-					{
-						name: 'time_async',
-						kind: 'function',
-						doc_comment: 'Time an asynchronous function execution.',
-						examples: [
-							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${format_time_adaptive(timing.elapsed_ns)}`);\n```",
-						],
-						source_line: 227,
-						type_signature:
-							'<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimingResult; }>',
-						return_type: 'Promise<{ result: T; timing: TimingResult; }>',
-						return_description: 'Object containing the function result and timing information',
-						parameters: [
-							{
-								name: 'fn',
-								type: '() => Promise<T>',
-								description: '- Async function to time',
-							},
-							{
-								name: 'timer',
-								type: 'Timer',
-								description: '- Timer to use (defaults to timer_default)',
-								default_value: 'timer_default',
-							},
-						],
-					},
-					{
-						name: 'time_sync',
-						kind: 'function',
-						doc_comment: 'Time a synchronous function execution.',
-						examples: [
-							'```ts\nconst {result, timing} = time_sync(() => {\n  return expensive_computation();\n});\nconsole.log(`Result: ${result}, took ${format_time_adaptive(timing.elapsed_ns)}`);\n```',
-						],
-						source_line: 262,
-						type_signature: '<T>(fn: () => T, timer?: Timer): { result: T; timing: TimingResult; }',
-						return_type: '{ result: T; timing: TimingResult; }',
-						return_description: 'Object containing the function result and timing information',
-						parameters: [
-							{
-								name: 'fn',
-								type: '() => T',
-								description: '- Sync function to time',
-							},
-							{
-								name: 'timer',
-								type: 'Timer',
-								description: '- Timer to use (defaults to timer_default)',
-								default_value: 'timer_default',
-							},
-						],
-					},
-					{
-						name: 'time_measure',
-						kind: 'function',
-						doc_comment: 'Measure multiple executions of a function and return all timings.',
-						examples: [
-							"```ts\nconst timings_ns = await time_measure(async () => {\n  await process_data();\n}, 100);\n\nimport {BenchmarkStats} from './benchmark_stats.js';\nconst stats = new BenchmarkStats(timings_ns);\nconsole.log(`Mean: ${format_time_adaptive(stats.mean_ns)}`);\n```",
-						],
-						source_line: 301,
-						type_signature:
-							'(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>',
-						return_type: 'Promise<number[]>',
-						return_description: 'Array of elapsed times in nanoseconds',
-						parameters: [
-							{
-								name: 'fn',
-								type: '() => unknown',
-								description: '- Function to measure (sync or async)',
-							},
-							{
-								name: 'iterations',
-								type: 'number',
-								description: '- Number of times to execute',
-							},
-							{
-								name: 'timer',
-								type: 'Timer',
-								description: '- Timer to use (defaults to timer_default)',
-								default_value: 'timer_default',
-							},
-						],
-					},
-					{
-						name: 'warmup',
-						kind: 'function',
-						doc_comment:
-							'Warmup function by running it multiple times.\nDetects whether the function returns promises and uses the appropriate path.\nReturns whether the function is async (returns promises) for use in measurement.',
-						examples: [
-							'```ts\nconst is_async = await warmup(() => expensive_operation(), 10);\n// Use is_async to choose measurement strategy\n```',
-						],
-						source_line: 333,
-						type_signature: '(fn: () => unknown, iterations: number): Promise<boolean>',
-						return_type: 'Promise<boolean>',
-						return_description: 'Whether the function returns promises (is async)',
-						parameters: [
-							{
-								name: 'fn',
-								type: '() => unknown',
-								description: '- Function to warmup (sync or async)',
-							},
-							{
-								name: 'iterations',
-								type: 'number',
-								description: '- Number of warmup iterations',
-							},
-						],
-					},
-					{
-						name: 'sleep',
-						kind: 'function',
-						doc_comment: 'Sleep for a specified duration.',
-						examples: ['```ts\nawait sleep(100); // Wait 100ms\n```'],
-						source_line: 373,
-						type_signature: '(ms: number): Promise<void>',
-						return_type: 'Promise<void>',
-						parameters: [
-							{
-								name: 'ms',
-								type: 'number',
-								description: '- Duration in milliseconds',
-							},
-						],
-					},
-				],
-				module_comment:
-					'Timing utilities for benchmarking.\nProvides cross-platform high-resolution timing and measurement helpers.',
-				dependencies: ['async.ts'],
-				dependents: ['benchmark.ts', 'benchmark_format.ts', 'benchmark_stats.ts'],
 			},
 			{
 				path: 'benchmark_types.ts',
@@ -1319,10 +781,35 @@ export const library_json: LibraryJson = {
 				path: 'benchmark.ts',
 				declarations: [
 					{
+						name: 'benchmark_warmup',
+						kind: 'function',
+						doc_comment:
+							'Warmup function by running it multiple times.\nDetects whether the function returns promises and uses the appropriate path.\nReturns whether the function is async (returns promises) for use in measurement.',
+						examples: [
+							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n// Use is_async to choose measurement strategy\n```',
+						],
+						source_line: 61,
+						type_signature: '(fn: () => unknown, iterations: number): Promise<boolean>',
+						return_type: 'Promise<boolean>',
+						return_description: 'Whether the function returns promises (is async)',
+						parameters: [
+							{
+								name: 'fn',
+								type: '() => unknown',
+								description: '- Function to warmup (sync or async)',
+							},
+							{
+								name: 'iterations',
+								type: 'number',
+								description: '- Number of warmup iterations',
+							},
+						],
+					},
+					{
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 55,
+						source_line: 95,
 						members: [
 							{
 								name: 'config',
@@ -1347,7 +834,7 @@ export const library_json: LibraryJson = {
 								name: 'cached_unit',
 								kind: 'variable',
 								modifiers: ['private'],
-								type_signature: 'ReturnType<typeof detect_best_time_unit> | null',
+								type_signature: 'ReturnType<typeof time_unit_detect_best> | null',
 							},
 							{
 								name: 'constructor',
@@ -1533,12 +1020,7 @@ export const library_json: LibraryJson = {
 				],
 				module_comment:
 					"Zero-dependency benchmarking library for measuring function performance.\n\n@example\n```ts\nimport {Benchmark} from '@fuzdev/fuz_util/benchmark.js';\n\nconst bench = new Benchmark({\n  duration_ms: 5000,\n  warmup_iterations: 5,\n});\n\nbench\n  .add('slugify', () => slugify(title))\n  .add('slugify_slower', () => slugify_slower(title));\n\nconst results = await bench.run();\nconsole.log(bench.table());\n```",
-				dependencies: [
-					'async.ts',
-					'benchmark_format.ts',
-					'benchmark_stats.ts',
-					'benchmark_timing.ts',
-				],
+				dependencies: ['async.ts', 'benchmark_format.ts', 'benchmark_stats.ts', 'time.ts'],
 			},
 			{
 				path: 'colors.ts',
@@ -5052,6 +4534,203 @@ export const library_json: LibraryJson = {
 					'Metadata types for library source code analysis.\n\nThese types represent the structure of `src/lib/` exports,\nextracted at build time via TypeScript compiler analysis.\nUsed for generating API documentation and enabling code search.\n\nHierarchy: SourceJson → ModuleJson → DeclarationJson',
 			},
 			{
+				path: 'stats.ts',
+				declarations: [
+					{
+						name: 'stats_mean',
+						kind: 'function',
+						doc_comment: 'Calculate the mean (average) of an array of numbers.',
+						source_line: 22,
+						type_signature: '(values: number[]): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+						],
+					},
+					{
+						name: 'stats_median',
+						kind: 'function',
+						doc_comment: 'Calculate the median of an array of numbers.',
+						source_line: 30,
+						type_signature: '(values: number[]): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+						],
+					},
+					{
+						name: 'stats_std_dev',
+						kind: 'function',
+						doc_comment:
+							'Calculate the standard deviation of an array of numbers.\nUses population standard deviation (divides by n, not n-1).\nFor benchmarks with many samples, this is typically appropriate.',
+						source_line: 42,
+						type_signature: '(values: number[], mean?: number | undefined): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+							{
+								name: 'mean',
+								type: 'number | undefined',
+								optional: true,
+							},
+						],
+					},
+					{
+						name: 'stats_variance',
+						kind: 'function',
+						doc_comment: 'Calculate the variance of an array of numbers.',
+						source_line: 52,
+						type_signature: '(values: number[], mean?: number | undefined): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+							{
+								name: 'mean',
+								type: 'number | undefined',
+								optional: true,
+							},
+						],
+					},
+					{
+						name: 'stats_percentile',
+						kind: 'function',
+						doc_comment:
+							'Calculate a percentile of an array of numbers using linear interpolation.\nUses the "R-7" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.',
+						source_line: 65,
+						type_signature: '(values: number[], p: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+								description: '- Array of numbers',
+							},
+							{
+								name: 'p',
+								type: 'number',
+								description: '- Percentile (0-1, e.g., 0.95 for 95th percentile)',
+							},
+						],
+					},
+					{
+						name: 'stats_cv',
+						kind: 'function',
+						doc_comment:
+							'Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.',
+						source_line: 91,
+						type_signature: '(mean: number, std_dev: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'mean',
+								type: 'number',
+							},
+							{
+								name: 'std_dev',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'stats_min_max',
+						kind: 'function',
+						doc_comment: 'Calculate min and max values.',
+						source_line: 99,
+						type_signature: '(values: number[]): { min: number; max: number; }',
+						return_type: '{ min: number; max: number; }',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+						],
+					},
+					{
+						name: 'StatsOutlierResult',
+						kind: 'type',
+						doc_comment: 'Result from outlier detection.',
+						source_line: 114,
+						type_signature: 'StatsOutlierResult',
+						properties: [
+							{
+								name: 'cleaned',
+								kind: 'variable',
+								type_signature: 'Array<number>',
+								doc_comment: 'Values after removing outliers',
+							},
+							{
+								name: 'outliers',
+								kind: 'variable',
+								type_signature: 'Array<number>',
+								doc_comment: 'Detected outlier values',
+							},
+						],
+					},
+					{
+						name: 'stats_outliers_iqr',
+						kind: 'function',
+						doc_comment:
+							'Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - 1.5*IQR, Q3 + 1.5*IQR] are considered outliers.',
+						source_line: 125,
+						type_signature: '(values: number[]): StatsOutlierResult',
+						return_type: 'StatsOutlierResult',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+						],
+					},
+					{
+						name: 'stats_outliers_mad',
+						kind: 'function',
+						doc_comment:
+							'Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > 3.5 are considered outliers.',
+						source_line: 162,
+						type_signature: '(values: number[]): StatsOutlierResult',
+						return_type: 'StatsOutlierResult',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+							},
+						],
+					},
+					{
+						name: 'stats_confidence_interval',
+						kind: 'function',
+						doc_comment:
+							'Calculate confidence interval for the mean.\nUses 95% confidence level (z=1.96).',
+						source_line: 230,
+						type_signature: '(values: number[]): [number, number]',
+						return_type: '[number, number]',
+						return_description: '[lower_bound, upper_bound]',
+						parameters: [
+							{
+								name: 'values',
+								type: 'number[]',
+								description: '- Array of numbers',
+							},
+						],
+					},
+				],
+				module_comment:
+					'Statistical analysis utilities.\nPure functions with zero dependencies - can be used standalone for any data analysis.',
+				dependents: ['benchmark_stats.ts'],
+			},
+			{
 				path: 'string.ts',
 				declarations: [
 					{
@@ -5317,6 +4996,313 @@ export const library_json: LibraryJson = {
 					},
 				],
 				dependencies: ['async.ts', 'object.ts'],
+			},
+			{
+				path: 'time.ts',
+				declarations: [
+					{
+						name: 'Timer',
+						kind: 'type',
+						doc_comment:
+							'Timer interface for measuring elapsed time.\nReturns time in nanoseconds for maximum precision.',
+						source_line: 10,
+						type_signature: 'Timer',
+						properties: [
+							{
+								name: 'now',
+								kind: 'variable',
+								type_signature: '() => number',
+								doc_comment: 'Get current time in nanoseconds',
+							},
+						],
+					},
+					{
+						name: 'timer_node',
+						kind: 'variable',
+						doc_comment:
+							'Node.js high-resolution timer using process.hrtime.bigint().\nProvides true nanosecond precision.',
+						source_line: 19,
+						type_signature: 'Timer',
+					},
+					{
+						name: 'timer_browser',
+						kind: 'variable',
+						doc_comment:
+							'Browser high-resolution timer using performance.now().\nConverts milliseconds to nanoseconds for consistent API.\n\n**Precision varies by browser due to Spectre/Meltdown mitigations:**\n- Chrome: ~100μs (coarsened)\n- Firefox: ~1ms (rounded)\n- Safari: ~100μs\n- Node.js: ~1μs\n\nFor nanosecond-precision benchmarks, use Node.js with `timer_node`.',
+						source_line: 38,
+						type_signature: 'Timer',
+					},
+					{
+						name: 'timer_default',
+						kind: 'variable',
+						doc_comment:
+							'Auto-detected timer based on environment.\nUses process.hrtime in Node.js, performance.now() in browsers.\nThe timer function is detected once and cached for performance.',
+						source_line: 82,
+						type_signature: 'Timer',
+					},
+					{
+						name: 'TIME_NS_PER_US',
+						kind: 'variable',
+						doc_comment: 'Time units and conversions.',
+						source_line: 89,
+						type_signature: '1000',
+					},
+					{
+						name: 'TIME_NS_PER_MS',
+						kind: 'variable',
+						source_line: 90,
+						type_signature: '1000000',
+					},
+					{
+						name: 'TIME_NS_PER_SEC',
+						kind: 'variable',
+						source_line: 91,
+						type_signature: '1000000000',
+					},
+					{
+						name: 'time_ns_to_us',
+						kind: 'function',
+						doc_comment: 'Convert nanoseconds to microseconds.',
+						source_line: 96,
+						type_signature: '(ns: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'ns',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'time_ns_to_ms',
+						kind: 'function',
+						doc_comment: 'Convert nanoseconds to milliseconds.',
+						source_line: 101,
+						type_signature: '(ns: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'ns',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'time_ns_to_sec',
+						kind: 'function',
+						doc_comment: 'Convert nanoseconds to seconds.',
+						source_line: 106,
+						type_signature: '(ns: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'ns',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'TimeUnit',
+						kind: 'type',
+						doc_comment: 'Time unit for formatting.',
+						source_line: 111,
+						type_signature: 'TimeUnit',
+					},
+					{
+						name: 'time_unit_detect_best',
+						kind: 'function',
+						doc_comment:
+							'Detect the best time unit for a set of nanosecond values.\nChooses the unit where most values fall in the range 1-9999.',
+						source_line: 119,
+						type_signature: '(values_ns: number[]): TimeUnit',
+						return_type: 'TimeUnit',
+						return_description: 'Best unit to use for all values',
+						parameters: [
+							{
+								name: 'values_ns',
+								type: 'number[]',
+								description: '- Array of times in nanoseconds',
+							},
+						],
+					},
+					{
+						name: 'time_format',
+						kind: 'function',
+						doc_comment: 'Format time with a specific unit.',
+						source_line: 149,
+						type_signature: '(ns: number, unit: TimeUnit, decimals?: number): string',
+						return_type: 'string',
+						return_description: 'Formatted string like "3.87μs"',
+						parameters: [
+							{
+								name: 'ns',
+								type: 'number',
+								description: '- Time in nanoseconds',
+							},
+							{
+								name: 'unit',
+								type: 'TimeUnit',
+								description: "- Unit to use ('ns', 'us', 'ms', 's')",
+							},
+							{
+								name: 'decimals',
+								type: 'number',
+								description: '- Number of decimal places (default: 2)',
+								default_value: '2',
+							},
+						],
+					},
+					{
+						name: 'time_format_adaptive',
+						kind: 'function',
+						doc_comment: 'Format time with adaptive units (ns/μs/ms/s) based on magnitude.',
+						examples: [
+							'```ts\ntime_format_adaptive(1500) // "1.50μs"\ntime_format_adaptive(3870) // "3.87μs"\ntime_format_adaptive(1500000) // "1.50ms"\ntime_format_adaptive(1500000000) // "1.50s"\n```',
+						],
+						source_line: 178,
+						type_signature: '(ns: number, decimals?: number): string',
+						return_type: 'string',
+						return_description: 'Formatted string like "3.87μs" or "1.23ms"',
+						parameters: [
+							{
+								name: 'ns',
+								type: 'number',
+								description: '- Time in nanoseconds',
+							},
+							{
+								name: 'decimals',
+								type: 'number',
+								description: '- Number of decimal places (default: 2)',
+								default_value: '2',
+							},
+						],
+					},
+					{
+						name: 'TimeResult',
+						kind: 'type',
+						doc_comment:
+							'Result from timing a function execution.\nAll times in nanoseconds for maximum precision.',
+						source_line: 197,
+						type_signature: 'TimeResult',
+						properties: [
+							{
+								name: 'elapsed_ns',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Elapsed time in nanoseconds',
+							},
+							{
+								name: 'elapsed_us',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Elapsed time in microseconds (convenience)',
+							},
+							{
+								name: 'elapsed_ms',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Elapsed time in milliseconds (convenience)',
+							},
+							{
+								name: 'started_at_ns',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Start time in nanoseconds (from timer.now())',
+							},
+							{
+								name: 'ended_at_ns',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'End time in nanoseconds (from timer.now())',
+							},
+						],
+					},
+					{
+						name: 'time_async',
+						kind: 'function',
+						doc_comment: 'Time an asynchronous function execution.',
+						examples: [
+							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```",
+						],
+						source_line: 225,
+						type_signature:
+							'<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>',
+						return_type: 'Promise<{ result: T; timing: TimeResult; }>',
+						return_description: 'Object containing the function result and timing information',
+						parameters: [
+							{
+								name: 'fn',
+								type: '() => Promise<T>',
+								description: '- Async function to time',
+							},
+							{
+								name: 'timer',
+								type: 'Timer',
+								description: '- Timer to use (defaults to timer_default)',
+								default_value: 'timer_default',
+							},
+						],
+					},
+					{
+						name: 'time_sync',
+						kind: 'function',
+						doc_comment: 'Time a synchronous function execution.',
+						examples: [
+							'```ts\nconst {result, timing} = time_sync(() => {\n  return expensive_computation();\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```',
+						],
+						source_line: 260,
+						type_signature: '<T>(fn: () => T, timer?: Timer): { result: T; timing: TimeResult; }',
+						return_type: '{ result: T; timing: TimeResult; }',
+						return_description: 'Object containing the function result and timing information',
+						parameters: [
+							{
+								name: 'fn',
+								type: '() => T',
+								description: '- Sync function to time',
+							},
+							{
+								name: 'timer',
+								type: 'Timer',
+								description: '- Timer to use (defaults to timer_default)',
+								default_value: 'timer_default',
+							},
+						],
+					},
+					{
+						name: 'time_measure',
+						kind: 'function',
+						doc_comment: 'Measure multiple executions of a function and return all timings.',
+						examples: [
+							"```ts\nconst timings_ns = await time_measure(async () => {\n  await process_data();\n}, 100);\n\nimport {BenchmarkStats} from './benchmark_stats.js';\nconst stats = new BenchmarkStats(timings_ns);\nconsole.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);\n```",
+						],
+						source_line: 299,
+						type_signature:
+							'(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>',
+						return_type: 'Promise<number[]>',
+						return_description: 'Array of elapsed times in nanoseconds',
+						parameters: [
+							{
+								name: 'fn',
+								type: '() => unknown',
+								description: '- Function to measure (sync or async)',
+							},
+							{
+								name: 'iterations',
+								type: 'number',
+								description: '- Number of times to execute',
+							},
+							{
+								name: 'timer',
+								type: 'Timer',
+								description: '- Timer to use (defaults to timer_default)',
+								default_value: 'timer_default',
+							},
+						],
+					},
+				],
+				module_comment:
+					'Time utilities.\nProvides cross-platform high-resolution timing and measurement helpers.',
+				dependents: ['benchmark.ts', 'benchmark_format.ts', 'benchmark_stats.ts'],
 			},
 			{
 				path: 'timings.ts',

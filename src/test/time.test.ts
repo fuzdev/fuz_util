@@ -1,6 +1,7 @@
 import {test} from 'vitest';
 
 import {is_promise, wait} from '$lib/async.js';
+import {benchmark_warmup} from '$lib/benchmark.js';
 import {
 	timer_node,
 	timer_browser,
@@ -8,12 +9,11 @@ import {
 	time_async,
 	time_sync,
 	time_measure,
-	benchmark_warmup,
 	time_format_adaptive,
 	time_format,
 	time_unit_detect_best,
 	type Timer,
-} from '$lib/benchmark_timing.js';
+} from '$lib/time.js';
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 

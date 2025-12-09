@@ -1,9 +1,7 @@
 /**
- * Timing utilities for benchmarking.
+ * Time utilities.
  * Provides cross-platform high-resolution timing and measurement helpers.
  */
-
-import {is_promise} from './async.js';
 
 /**
  * Timer interface for measuring elapsed time.
@@ -171,10 +169,10 @@ export const time_format = (ns: number, unit: TimeUnit, decimals: number = 2): s
  *
  * @example
  * ```ts
- * format_time_adaptive(1500) // "1.50μs"
- * format_time_adaptive(3870) // "3.87μs"
- * format_time_adaptive(1500000) // "1.50ms"
- * format_time_adaptive(1500000000) // "1.50s"
+ * time_format_adaptive(1500) // "1.50μs"
+ * time_format_adaptive(3870) // "3.87μs"
+ * time_format_adaptive(1500000) // "1.50ms"
+ * time_format_adaptive(1500000000) // "1.50s"
  * ```
  */
 export const time_format_adaptive = (ns: number, decimals: number = 2): string => {
@@ -196,7 +194,7 @@ export const time_format_adaptive = (ns: number, decimals: number = 2): string =
  * Result from timing a function execution.
  * All times in nanoseconds for maximum precision.
  */
-export interface TimingResult {
+export interface TimeResult {
 	/** Elapsed time in nanoseconds */
 	elapsed_ns: number;
 	/** Elapsed time in microseconds (convenience) */
@@ -221,13 +219,13 @@ export interface TimingResult {
  *   await fetch('https://api.example.com/data');
  *   return 42;
  * });
- * console.log(`Result: ${result}, took ${format_time_adaptive(timing.elapsed_ns)}`);
+ * console.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);
  * ```
  */
 export const time_async = async <T>(
 	fn: () => Promise<T>,
 	timer: Timer = timer_default,
-): Promise<{result: T; timing: TimingResult}> => {
+): Promise<{result: T; timing: TimeResult}> => {
 	const started_at_ns = timer.now();
 	const result = await fn();
 	const ended_at_ns = timer.now();
@@ -256,13 +254,13 @@ export const time_async = async <T>(
  * const {result, timing} = time_sync(() => {
  *   return expensive_computation();
  * });
- * console.log(`Result: ${result}, took ${format_time_adaptive(timing.elapsed_ns)}`);
+ * console.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);
  * ```
  */
 export const time_sync = <T>(
 	fn: () => T,
 	timer: Timer = timer_default,
-): {result: T; timing: TimingResult} => {
+): {result: T; timing: TimeResult} => {
 	const started_at_ns = timer.now();
 	const result = fn();
 	const ended_at_ns = timer.now();
@@ -295,7 +293,7 @@ export const time_sync = <T>(
  *
  * import {BenchmarkStats} from './benchmark_stats.js';
  * const stats = new BenchmarkStats(timings_ns);
- * console.log(`Mean: ${format_time_adaptive(stats.mean_ns)}`);
+ * console.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);
  * ```
  */
 export const time_measure = async (
@@ -314,50 +312,3 @@ export const time_measure = async (
 
 	return timings;
 };
-
-/**
- * Warmup function by running it multiple times.
- * Detects whether the function returns promises and uses the appropriate path.
- * Returns whether the function is async (returns promises) for use in measurement.
- *
- * @param fn - Function to warmup (sync or async)
- * @param iterations - Number of warmup iterations
- * @returns Whether the function returns promises (is async)
- *
- * @example
- * ```ts
- * const is_async = await warmup(() => expensive_operation(), 10);
- * // Use is_async to choose measurement strategy
- * ```
- */
-export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<boolean> => {
-	if (iterations <= 0) {
-		// No warmup requested - detect async with a single call
-		const result = fn();
-		if (is_promise(result)) {
-			await result;
-			return true;
-		}
-		return false;
-	}
-
-	// First iteration detects if function returns promises
-	const first_result = fn();
-	const fn_is_async = is_promise(first_result);
-
-	if (fn_is_async) {
-		await first_result;
-		// Async path for remaining iterations
-		for (let i = 1; i < iterations; i++) {
-			await fn(); // eslint-disable-line no-await-in-loop
-		}
-	} else {
-		// Sync path - no await overhead
-		for (let i = 1; i < iterations; i++) {
-			fn();
-		}
-	}
-
-	return fn_is_async;
-};
-

@@ -29,6 +29,7 @@ Belt is a **foundational utility library**:
 ### Async and timing
 
 - `async.ts` - async utilities (wait, etc.)
+- `time.ts` - high-resolution timing, measurement, and formatting
 - `throttle.ts` - throttle/debounce
 - `timings.ts` - performance timing
 

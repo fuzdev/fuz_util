@@ -21,12 +21,7 @@
 
 import {is_promise, wait} from './async.js';
 import {BenchmarkStats} from './benchmark_stats.js';
-import {
-	timer_default,
-	benchmark_warmup,
-	time_unit_detect_best,
-	time_format,
-} from './benchmark_timing.js';
+import {timer_default, time_unit_detect_best, time_format} from './time.js';
 import {
 	benchmark_format_table,
 	benchmark_format_table_detailed,
@@ -47,6 +42,52 @@ const DEFAULT_WARMUP_ITERATIONS = 5;
 const DEFAULT_COOLDOWN_MS = 100;
 const DEFAULT_MIN_ITERATIONS = 10;
 const DEFAULT_MAX_ITERATIONS = 10000;
+
+/**
+ * Warmup function by running it multiple times.
+ * Detects whether the function returns promises and uses the appropriate path.
+ * Returns whether the function is async (returns promises) for use in measurement.
+ *
+ * @param fn - Function to warmup (sync or async)
+ * @param iterations - Number of warmup iterations
+ * @returns Whether the function returns promises (is async)
+ *
+ * @example
+ * ```ts
+ * const is_async = await benchmark_warmup(() => expensive_operation(), 10);
+ * // Use is_async to choose measurement strategy
+ * ```
+ */
+export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<boolean> => {
+	if (iterations <= 0) {
+		// No warmup requested - detect async with a single call
+		const result = fn();
+		if (is_promise(result)) {
+			await result;
+			return true;
+		}
+		return false;
+	}
+
+	// First iteration detects if function returns promises
+	const first_result = fn();
+	const fn_is_async = is_promise(first_result);
+
+	if (fn_is_async) {
+		await first_result;
+		// Async path for remaining iterations
+		for (let i = 1; i < iterations; i++) {
+			await fn(); // eslint-disable-line no-await-in-loop
+		}
+	} else {
+		// Sync path - no await overhead
+		for (let i = 1; i < iterations; i++) {
+			fn();
+		}
+	}
+
+	return fn_is_async;
+};
 
 /**
  * Benchmark class for measuring and comparing function performance.

@@ -4,7 +4,7 @@
  * All timing values are in nanoseconds.
  */
 
-import {TIME_NS_PER_SEC, time_format_adaptive} from './benchmark_timing.js';
+import {TIME_NS_PER_SEC, time_format_adaptive} from './time.js';
 import {
 	stats_mean,
 	stats_median,
