@@ -33,10 +33,9 @@ export const library_json: LibraryJson = {
 			test: 'gro test',
 			preview: 'vite preview',
 			deploy: 'gro deploy',
-			'benchmark-slugify': 'gro run src/benchmarks/slugify_benchmark.ts',
-			'benchmark-deep-equal': 'gro run src/benchmarks/deep_equal_benchmark.ts',
-			'benchmark-deep-equal-comparison':
-				'gro run src/benchmarks/deep_equal_benchmark_comparison.ts',
+			benchmark_slugify: 'gro run src/benchmarks/slugify.benchmark.ts',
+			benchmark_deep_equal: 'gro run src/benchmarks/deep_equal.benchmark.ts',
+			benchmark_deep_equal_comparison: 'gro run src/benchmarks/deep_equal_comparison.benchmark.ts',
 		},
 		type: 'module',
 		engines: {

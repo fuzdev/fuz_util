@@ -479,7 +479,7 @@ bench.add('async', async () => await fetch(url));
 bench.add('sync', () => compute(data));
 
 // Avoid: Mixed sync/async returns
-bench.add('mixed', () => cached ? cached : fetch(url)); // May not await!
+bench.add('mixed', () => (cached ? cached : fetch(url))); // May not await!
 ```
 
 ### Memory Considerations
