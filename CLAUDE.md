@@ -1,14 +1,14 @@
-# Belt
+# fuz_util
 
 > TypeScript utility library - foundational utilities with no UI dependencies
 
-Belt (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
+fuz_util (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
 `@ryanatkn` ecosystem. It has no UI framework dependencies (no Svelte) and
 focuses on pure TypeScript helpers.
 
 ## Scope
 
-Belt is a **foundational utility library**:
+fuz_util is a **foundational utility library**:
 
 - Pure TypeScript utilities (string, array, object, async, etc.)
 - Zod schemas for common data structures (`PackageJson`)
