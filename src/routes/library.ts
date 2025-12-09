@@ -628,7 +628,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkTask',
 						kind: 'type',
 						doc_comment: 'A benchmark task to execute.',
-						source_line: 93,
+						source_line: 96,
 						type_signature: 'BenchmarkTask',
 						properties: [
 							{
@@ -663,7 +663,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkResult',
 						kind: 'type',
 						doc_comment: 'Result from running a single benchmark task.',
-						source_line: 116,
+						source_line: 119,
 						type_signature: 'BenchmarkResult',
 						properties: [
 							{
@@ -702,7 +702,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkTableOptions',
 						kind: 'type',
 						doc_comment: 'Options for table formatting.',
-						source_line: 139,
+						source_line: 145,
 						type_signature: 'BenchmarkTableOptions',
 						properties: [
 							{
@@ -717,7 +717,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkGroup',
 						kind: 'type',
 						doc_comment: 'A group definition for organizing benchmark results.',
-						source_line: 149,
+						source_line: 155,
 						type_signature: 'BenchmarkGroup',
 						properties: [
 							{
