@@ -30,6 +30,29 @@ await bench.run();
 console.log(bench.table());
 ```
 
+## Running Benchmarks
+
+### In This Repository
+
+```bash
+# Run individual benchmarks
+npm run benchmark_slugify
+npm run benchmark_deep_equal
+npm run benchmark_deep_equal_comparison
+```
+
+### In Your Project
+
+```bash
+# Using gro task runner
+gro run src/benchmarks/my_benchmark.ts
+
+# Using Node.js directly (with GC control)
+node --expose-gc dist/benchmarks/my_benchmark.js
+```
+
+Benchmark files use the `.benchmark.ts` naming convention.
+
 ## Features
 
 ### 🎯 Comprehensive Statistics
