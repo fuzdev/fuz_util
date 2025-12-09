@@ -11,6 +11,8 @@ import {
 	warmup,
 	sleep,
 	format_time_adaptive,
+	format_time,
+	detect_best_time_unit,
 	type Timer,
 } from '$lib/benchmark_timing.js';
 
@@ -199,4 +201,47 @@ test('sleep: waits for specified duration', async ({expect}) => {
 
 	expect(elapsed_ms).toBeGreaterThanOrEqual(18); // Allow some variance
 	expect(elapsed_ms).toBeLessThan(50); // Should not take too long
+});
+
+test('detect_best_time_unit: selects nanoseconds for sub-microsecond values', ({expect}) => {
+	expect(detect_best_time_unit([100, 200, 300])).toBe('ns');
+	expect(detect_best_time_unit([999])).toBe('ns');
+});
+
+test('detect_best_time_unit: selects microseconds for microsecond-range values', ({expect}) => {
+	expect(detect_best_time_unit([1_000, 2_000, 3_000])).toBe('us');
+	expect(detect_best_time_unit([500_000, 800_000])).toBe('us');
+});
+
+test('detect_best_time_unit: selects milliseconds for millisecond-range values', ({expect}) => {
+	expect(detect_best_time_unit([1_000_000, 2_000_000])).toBe('ms');
+	expect(detect_best_time_unit([500_000_000])).toBe('ms');
+});
+
+test('detect_best_time_unit: selects seconds for second-range values', ({expect}) => {
+	expect(detect_best_time_unit([1_000_000_000, 2_000_000_000])).toBe('s');
+	expect(detect_best_time_unit([5_000_000_000])).toBe('s');
+});
+
+test('detect_best_time_unit: handles empty array', ({expect}) => {
+	// Empty array defaults to 'ms' as a sensible default
+	expect(detect_best_time_unit([])).toBe('ms');
+});
+
+test('format_time: formats with specific unit', ({expect}) => {
+	// Nanoseconds
+	expect(format_time(500, 'ns')).toBe('500.00ns');
+	expect(format_time(1234, 'ns', 0)).toBe('1234ns');
+
+	// Microseconds
+	expect(format_time(1_500, 'us')).toBe('1.50μs');
+	expect(format_time(3_870, 'us', 1)).toBe('3.9μs');
+
+	// Milliseconds
+	expect(format_time(1_500_000, 'ms')).toBe('1.50ms');
+	expect(format_time(12_345_678, 'ms', 3)).toBe('12.346ms');
+
+	// Seconds
+	expect(format_time(1_500_000_000, 's')).toBe('1.50s');
+	expect(format_time(3_210_000_000, 's', 1)).toBe('3.2s');
 });

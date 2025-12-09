@@ -2,8 +2,8 @@
 
 import {test} from 'vitest';
 
-import {Benchmark, type Timer} from '$lib/benchmark.js';
-import {sleep} from '$lib/benchmark_timing.js';
+import {Benchmark} from '$lib/benchmark.js';
+import {sleep, type Timer} from '$lib/benchmark_timing.js';
 
 test('Benchmark: basic usage with string name', async ({expect}) => {
 	const bench = new Benchmark({
@@ -556,4 +556,48 @@ test('Benchmark: table() with groups and detailed', async ({expect}) => {
 	// Detailed tables show percentile columns
 	expect(table).toContain('p50');
 	expect(table).toContain('vs Best');
+});
+
+test('Benchmark: summary() output', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+	});
+
+	bench
+		.add('fast', () => 1 + 1)
+		.add('slow', () => {
+			let sum = 0;
+			for (let i = 0; i < 1000; i++) sum += i;
+			return sum;
+		});
+
+	await bench.run();
+	const summary = bench.summary();
+
+	expect(summary).toContain('Fastest:');
+	expect(summary).toContain('Slowest:');
+	expect(summary).toContain('Speed difference:');
+	expect(summary).toContain('ops/sec');
+});
+
+test('Benchmark: summary() with no results', ({expect}) => {
+	const bench = new Benchmark();
+	expect(bench.summary()).toBe('No results');
+});
+
+test('Benchmark: summary() with single task', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+	});
+
+	bench.add('only task', () => 1 + 1);
+
+	await bench.run();
+	const summary = bench.summary();
+
+	// With single task, fastest and slowest are the same
+	expect(summary).toContain('Fastest:');
+	expect(summary).toContain('only task');
 });
