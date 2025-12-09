@@ -88,24 +88,24 @@ export const timer_default: Timer = {
 /**
  * Time units and conversions.
  */
-export const NS_PER_US = 1_000;
-export const NS_PER_MS = 1_000_000;
-export const NS_PER_SEC = 1_000_000_000;
+export const TIME_NS_PER_US = 1_000;
+export const TIME_NS_PER_MS = 1_000_000;
+export const TIME_NS_PER_SEC = 1_000_000_000;
 
 /**
  * Convert nanoseconds to microseconds.
  */
-export const ns_to_us = (ns: number): number => ns / NS_PER_US;
+export const time_ns_to_us = (ns: number): number => ns / TIME_NS_PER_US;
 
 /**
  * Convert nanoseconds to milliseconds.
  */
-export const ns_to_ms = (ns: number): number => ns / NS_PER_MS;
+export const time_ns_to_ms = (ns: number): number => ns / TIME_NS_PER_MS;
 
 /**
  * Convert nanoseconds to seconds.
  */
-export const ns_to_sec = (ns: number): number => ns / NS_PER_SEC;
+export const time_ns_to_sec = (ns: number): number => ns / TIME_NS_PER_SEC;
 
 /**
  * Time unit for formatting.
@@ -118,7 +118,7 @@ export type TimeUnit = 'ns' | 'us' | 'ms' | 's';
  * @param values_ns - Array of times in nanoseconds
  * @returns Best unit to use for all values
  */
-export const detect_best_time_unit = (values_ns: Array<number>): TimeUnit => {
+export const time_unit_detect_best = (values_ns: Array<number>): TimeUnit => {
 	if (values_ns.length === 0) return 'ms';
 
 	// Filter out invalid values
@@ -148,18 +148,18 @@ export const detect_best_time_unit = (values_ns: Array<number>): TimeUnit => {
  * @param decimals - Number of decimal places (default: 2)
  * @returns Formatted string like "3.87μs"
  */
-export const format_time = (ns: number, unit: TimeUnit, decimals: number = 2): string => {
+export const time_format = (ns: number, unit: TimeUnit, decimals: number = 2): string => {
 	if (!isFinite(ns)) return String(ns);
 
 	switch (unit) {
 		case 'ns':
 			return `${ns.toFixed(decimals)}ns`;
 		case 'us':
-			return `${ns_to_us(ns).toFixed(decimals)}μs`;
+			return `${time_ns_to_us(ns).toFixed(decimals)}μs`;
 		case 'ms':
-			return `${ns_to_ms(ns).toFixed(decimals)}ms`;
+			return `${time_ns_to_ms(ns).toFixed(decimals)}ms`;
 		case 's':
-			return `${ns_to_sec(ns).toFixed(decimals)}s`;
+			return `${time_ns_to_sec(ns).toFixed(decimals)}s`;
 	}
 };
 
@@ -177,18 +177,18 @@ export const format_time = (ns: number, unit: TimeUnit, decimals: number = 2): s
  * format_time_adaptive(1500000000) // "1.50s"
  * ```
  */
-export const format_time_adaptive = (ns: number, decimals: number = 2): string => {
+export const time_format_adaptive = (ns: number, decimals: number = 2): string => {
 	if (!isFinite(ns)) return String(ns);
 
 	// Choose unit based on magnitude
 	if (ns < 1_000) {
-		return format_time(ns, 'ns', decimals);
+		return time_format(ns, 'ns', decimals);
 	} else if (ns < 1_000_000) {
-		return format_time(ns, 'us', decimals);
+		return time_format(ns, 'us', decimals);
 	} else if (ns < 1_000_000_000) {
-		return format_time(ns, 'ms', decimals);
+		return time_format(ns, 'ms', decimals);
 	} else {
-		return format_time(ns, 's', decimals);
+		return time_format(ns, 's', decimals);
 	}
 };
 
@@ -237,8 +237,8 @@ export const time_async = async <T>(
 		result,
 		timing: {
 			elapsed_ns,
-			elapsed_us: ns_to_us(elapsed_ns),
-			elapsed_ms: ns_to_ms(elapsed_ns),
+			elapsed_us: time_ns_to_us(elapsed_ns),
+			elapsed_ms: time_ns_to_ms(elapsed_ns),
 			started_at_ns,
 			ended_at_ns,
 		},
@@ -272,8 +272,8 @@ export const time_sync = <T>(
 		result,
 		timing: {
 			elapsed_ns,
-			elapsed_us: ns_to_us(elapsed_ns),
-			elapsed_ms: ns_to_ms(elapsed_ns),
+			elapsed_us: time_ns_to_us(elapsed_ns),
+			elapsed_ms: time_ns_to_ms(elapsed_ns),
 			started_at_ns,
 			ended_at_ns,
 		},
@@ -330,7 +330,7 @@ export const time_measure = async (
  * // Use is_async to choose measurement strategy
  * ```
  */
-export const warmup = async (fn: () => unknown, iterations: number): Promise<boolean> => {
+export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<boolean> => {
 	if (iterations <= 0) {
 		// No warmup requested - detect async with a single call
 		const result = fn();
@@ -361,15 +361,3 @@ export const warmup = async (fn: () => unknown, iterations: number): Promise<boo
 	return fn_is_async;
 };
 
-/**
- * Sleep for a specified duration.
- * @param ms - Duration in milliseconds
- *
- * @example
- * ```ts
- * await sleep(100); // Wait 100ms
- * ```
- */
-export const sleep = (ms: number): Promise<void> => {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-};

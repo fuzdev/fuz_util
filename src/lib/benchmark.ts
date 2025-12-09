@@ -19,21 +19,20 @@
  * ```
  */
 
-import {is_promise} from './async.js';
+import {is_promise, wait} from './async.js';
 import {BenchmarkStats} from './benchmark_stats.js';
 import {
 	timer_default,
-	warmup,
-	sleep,
-	detect_best_time_unit,
-	format_time,
+	benchmark_warmup,
+	time_unit_detect_best,
+	time_format,
 } from './benchmark_timing.js';
 import {
-	format_table,
-	format_table_detailed,
-	format_table_grouped,
-	format_markdown,
-	format_json,
+	benchmark_format_table,
+	benchmark_format_table_detailed,
+	benchmark_format_table_grouped,
+	benchmark_format_markdown,
+	benchmark_format_json,
 } from './benchmark_format.js';
 import type {
 	BenchmarkConfig,
@@ -57,7 +56,7 @@ export class Benchmark {
 		Pick<BenchmarkConfig, 'on_iteration'>;
 	private readonly tasks: Array<BenchmarkTask> = [];
 	private _results: Array<BenchmarkResult> = [];
-	private cached_unit: ReturnType<typeof detect_best_time_unit> | null = null;
+	private cached_unit: ReturnType<typeof time_unit_detect_best> | null = null;
 
 	constructor(config: BenchmarkConfig = {}) {
 		this.config = {
@@ -123,7 +122,7 @@ export class Benchmark {
 
 			// Cooldown between tasks
 			if (this.config.cooldown_ms > 0) {
-				await sleep(this.config.cooldown_ms); // eslint-disable-line no-await-in-loop
+				await wait(this.config.cooldown_ms); // eslint-disable-line no-await-in-loop
 			}
 		}
 
@@ -134,10 +133,10 @@ export class Benchmark {
 	 * Get the best time unit for displaying results.
 	 * Caches the result for repeated calls.
 	 */
-	private get_display_unit(): ReturnType<typeof detect_best_time_unit> {
+	private get_display_unit(): ReturnType<typeof time_unit_detect_best> {
 		if (this.cached_unit === null) {
 			const mean_times = this._results.map((r) => r.stats.mean_ns);
-			this.cached_unit = detect_best_time_unit(mean_times);
+			this.cached_unit = time_unit_detect_best(mean_times);
 		}
 		return this.cached_unit;
 	}
@@ -161,7 +160,7 @@ export class Benchmark {
 
 			// Warmup - also detects if function returns promises
 			// Detection happens during warmup (not during measurement) for cleaner timing
-			const fn_is_async = await warmup(task.fn, this.config.warmup_iterations);
+			const fn_is_async = await benchmark_warmup(task.fn, this.config.warmup_iterations);
 
 			// Measurement phase
 			const target_time_ns = this.config.duration_ms * 1_000_000; // Convert ms to ns
@@ -262,12 +261,12 @@ export class Benchmark {
 		const {detailed = false, groups} = options;
 
 		if (groups) {
-			return format_table_grouped(this._results, groups, detailed);
+			return benchmark_format_table_grouped(this._results, groups, detailed);
 		}
 		if (detailed) {
-			return format_table_detailed(this._results);
+			return benchmark_format_table_detailed(this._results);
 		}
-		return format_table(this._results);
+		return benchmark_format_table(this._results);
 	}
 
 	/**
@@ -275,7 +274,7 @@ export class Benchmark {
 	 * @returns Formatted markdown string
 	 */
 	markdown(): string {
-		return format_markdown(this._results);
+		return benchmark_format_markdown(this._results);
 	}
 
 	/**
@@ -284,7 +283,7 @@ export class Benchmark {
 	 * @returns JSON string
 	 */
 	json(pretty: boolean = true): string {
-		return format_json(this._results, pretty);
+		return benchmark_format_json(this._results, pretty);
 	}
 
 	/**
@@ -349,12 +348,12 @@ export class Benchmark {
 
 		const lines: Array<string> = [];
 		lines.push(
-			`Fastest: ${fastest.name} (${fastest.stats.ops_per_second.toFixed(2)} ops/sec, ${format_time(fastest.stats.mean_ns, unit)} per op)`,
+			`Fastest: ${fastest.name} (${fastest.stats.ops_per_second.toFixed(2)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
 		);
 
 		if (this._results.length > 1) {
 			lines.push(
-				`Slowest: ${slowest.name} (${slowest.stats.ops_per_second.toFixed(2)} ops/sec, ${format_time(slowest.stats.mean_ns, unit)} per op)`,
+				`Slowest: ${slowest.name} (${slowest.stats.ops_per_second.toFixed(2)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
 			);
 			lines.push(`Speed difference: ${ratio.toFixed(2)}x`);
 		}

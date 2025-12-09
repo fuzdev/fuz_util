@@ -1,5 +1,5 @@
 import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
-import {detect_best_time_unit, format_time, type TimeUnit} from './benchmark_timing.js';
+import {time_unit_detect_best, time_format, type TimeUnit} from './benchmark_timing.js';
 
 /**
  * Format results as an ASCII table.
@@ -18,12 +18,12 @@ import {detect_best_time_unit, format_time, type TimeUnit} from './benchmark_tim
  * // └─────────┴──────────────┴────────────┴──────────┴──────────┘
  * ```
  */
-export const format_table = (results: Array<BenchmarkResult>): string => {
+export const benchmark_format_table = (results: Array<BenchmarkResult>): string => {
 	if (results.length === 0) return '(no results)';
 
 	// Detect best unit for all results
 	const mean_times = results.map((r) => r.stats.mean_ns);
-	const unit = detect_best_time_unit(mean_times);
+	const unit = time_unit_detect_best(mean_times);
 	const unit_str = unit_label(unit);
 
 	const rows: Array<Array<string>> = [];
@@ -34,7 +34,7 @@ export const format_table = (results: Array<BenchmarkResult>): string => {
 	// Data rows - all use same unit
 	results.forEach((r, i) => {
 		const ops_sec = format_number(r.stats.ops_per_second, 2);
-		const mean = format_time(r.stats.mean_ns, unit, 2).replace(unit_str, '').trim(); // Remove unit suffix
+		const mean = time_format(r.stats.mean_ns, unit, 2).replace(unit_str, '').trim(); // Remove unit suffix
 		const margin = `±${format_number(r.stats.cv * 100, 2)}%`;
 		const samples = String(r.stats.sample_size);
 
@@ -96,12 +96,12 @@ export const format_table = (results: Array<BenchmarkResult>): string => {
  * // └───┴─────────────┴────────────┴─────────┴─────────┴─────────┴─────────┴─────────┴──────────┴──────────┘
  * ```
  */
-export const format_table_detailed = (results: Array<BenchmarkResult>): string => {
+export const benchmark_format_table_detailed = (results: Array<BenchmarkResult>): string => {
 	if (results.length === 0) return '(no results)';
 
 	// Detect best unit for all results
 	const mean_times = results.map((r) => r.stats.mean_ns);
-	const unit = detect_best_time_unit(mean_times);
+	const unit = time_unit_detect_best(mean_times);
 	const unit_str = unit_label(unit);
 
 	// Find fastest for relative comparison
@@ -127,12 +127,12 @@ export const format_table_detailed = (results: Array<BenchmarkResult>): string =
 	results.forEach((r) => {
 		const tier = get_perf_tier(r.stats.ops_per_second);
 		const ops_sec = format_number(r.stats.ops_per_second, 2);
-		const p50 = format_time(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
-		const p90 = format_time(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
-		const p95 = format_time(r.stats.p95_ns, unit, 2).replace(unit_str, '').trim();
-		const p99 = format_time(r.stats.p99_ns, unit, 2).replace(unit_str, '').trim();
-		const min = format_time(r.stats.min_ns, unit, 2).replace(unit_str, '').trim();
-		const max = format_time(r.stats.max_ns, unit, 2).replace(unit_str, '').trim();
+		const p50 = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
+		const p90 = time_format(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
+		const p95 = time_format(r.stats.p95_ns, unit, 2).replace(unit_str, '').trim();
+		const p99 = time_format(r.stats.p99_ns, unit, 2).replace(unit_str, '').trim();
+		const min = time_format(r.stats.min_ns, unit, 2).replace(unit_str, '').trim();
+		const max = time_format(r.stats.max_ns, unit, 2).replace(unit_str, '').trim();
 
 		// Calculate relative performance
 		const ratio = fastest_ops / r.stats.ops_per_second;
@@ -194,12 +194,12 @@ export const format_table_detailed = (results: Array<BenchmarkResult>): string =
  * // | slugify v2| 265,941  | 3.76      | ±1.03%  | 100     |
  * ```
  */
-export const format_markdown = (results: Array<BenchmarkResult>): string => {
+export const benchmark_format_markdown = (results: Array<BenchmarkResult>): string => {
 	if (results.length === 0) return '(no results)';
 
 	// Detect best unit for all results
 	const mean_times = results.map((r) => r.stats.mean_ns);
-	const unit = detect_best_time_unit(mean_times);
+	const unit = time_unit_detect_best(mean_times);
 	const unit_str = unit_label(unit);
 
 	const rows: Array<Array<string>> = [];
@@ -210,7 +210,7 @@ export const format_markdown = (results: Array<BenchmarkResult>): string => {
 	// Data rows - all use same unit
 	results.forEach((r) => {
 		const ops_sec = format_number(r.stats.ops_per_second, 2);
-		const mean = format_time(r.stats.mean_ns, unit, 2).replace(unit_str, '').trim();
+		const mean = time_format(r.stats.mean_ns, unit, 2).replace(unit_str, '').trim();
 		const margin = `±${format_number(r.stats.cv * 100, 2)}%`;
 		const samples = String(r.stats.sample_size);
 
@@ -269,7 +269,7 @@ export const format_markdown = (results: Array<BenchmarkResult>): string => {
  * // ]
  * ```
  */
-export const format_json = (results: Array<BenchmarkResult>, pretty: boolean = true): string => {
+export const benchmark_format_json = (results: Array<BenchmarkResult>, pretty: boolean = true): string => {
 	// Flatten stats into result object for easier consumption
 	const flattened = results.map((r) => ({
 		name: r.name,
@@ -322,14 +322,14 @@ export const format_json = (results: Array<BenchmarkResult>, pretty: boolean = t
  * // └───┴─────────────┴────────────┴──┘
  * ```
  */
-export const format_table_grouped = (
+export const benchmark_format_table_grouped = (
 	results: Array<BenchmarkResult>,
 	groups: Array<BenchmarkGroup>,
 	detailed: boolean = false,
 ): string => {
 	if (results.length === 0) return '(no results)';
 
-	const format_fn = detailed ? format_table_detailed : format_table;
+	const format_fn = detailed ? benchmark_format_table_detailed : benchmark_format_table;
 	const sections: Array<string> = [];
 
 	for (const group of groups) {

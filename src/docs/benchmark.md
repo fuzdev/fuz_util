@@ -375,6 +375,35 @@ outliers are removed. If you need raw statistics without outlier removal, access
 `raw_sample_size` property to see how many samples were collected before filtering,
 and `outliers_ns` to see which values were removed.
 
+## Standalone Statistics Module
+
+The statistical functions used by the benchmark library are available as a standalone module:
+
+```ts
+import {
+	stats_mean,
+	stats_median,
+	stats_std_dev,
+	stats_variance,
+	stats_percentile,
+	stats_cv,
+	stats_min_max,
+	stats_confidence_interval,
+	stats_outliers_iqr,
+	stats_outliers_mad,
+} from '@fuzdev/fuz_util/stats.js';
+
+// Calculate statistics on any numeric array
+const values = [1.2, 1.5, 1.3, 1.4, 1.6, 10.0]; // 10.0 is an outlier
+
+const mean = stats_mean(values); // 2.83
+const median = stats_median(values); // 1.45
+const {cleaned, outliers} = stats_outliers_mad(values); // removes 10.0
+const p95 = stats_percentile(cleaned, 0.95); // 95th percentile
+```
+
+These are pure functions with zero dependencies, useful for any statistical analysis.
+
 ## API Reference
 
 ### Benchmark Class

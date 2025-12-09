@@ -74,6 +74,11 @@ See `src/docs/benchmark.md` for full documentation.
 - `git.ts` - git operations
 - `log.ts` - logging system
 
+### Statistics
+
+- `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
+  detection)
+
 ### Other
 
 - `random.ts`, `random_alea.ts` - random number generation
@@ -93,6 +98,8 @@ See `src/docs/benchmark.md` for full documentation.
 - `PascalCase` for types, class names, and Svelte components
 - explicit file extensions in imports
 - tab indentation, 100 character width
+- no re-exports - import directly from the source module
+- no backwards compatibility preservation - breaking changes are acceptable
 
 ## What belt does NOT include
 

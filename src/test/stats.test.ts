@@ -1,0 +1,142 @@
+import {test} from 'vitest';
+
+import {
+	stats_mean,
+	stats_median,
+	stats_std_dev,
+	stats_variance,
+	stats_percentile,
+	stats_cv,
+	stats_min_max,
+	stats_confidence_interval,
+	stats_outliers_iqr,
+	stats_outliers_mad,
+} from '$lib/stats.js';
+
+test('stats_mean', ({expect}) => {
+	expect(stats_mean([1, 2, 3, 4, 5])).toBe(3);
+	expect(stats_mean([10])).toBe(10);
+	expect(stats_mean([])).toBeNaN();
+	expect(stats_mean([1.5, 2.5, 3.5])).toBeCloseTo(2.5);
+});
+
+test('stats_median', ({expect}) => {
+	expect(stats_median([1, 2, 3, 4, 5])).toBe(3);
+	expect(stats_median([1, 2, 3, 4])).toBe(2.5);
+	expect(stats_median([5, 1, 3, 2, 4])).toBe(3);
+	expect(stats_median([10])).toBe(10);
+	expect(stats_median([])).toBeNaN();
+});
+
+test('stats_std_dev', ({expect}) => {
+	expect(stats_std_dev([2, 4, 4, 4, 5, 5, 7, 9])).toBeCloseTo(2, 0);
+	expect(stats_std_dev([1, 1, 1, 1])).toBe(0);
+	expect(stats_std_dev([])).toBeNaN();
+});
+
+test('stats_variance', ({expect}) => {
+	expect(stats_variance([2, 4, 4, 4, 5, 5, 7, 9])).toBeCloseTo(4, 0);
+	expect(stats_variance([1, 1, 1, 1])).toBe(0);
+	expect(stats_variance([])).toBeNaN();
+});
+
+test('stats_percentile: uses R-7 linear interpolation', ({expect}) => {
+	const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+	// p=0.5 with 10 values: index = 9 * 0.5 = 4.5, interpolate between 5 and 6
+	expect(stats_percentile(values, 0.5)).toBe(5.5);
+
+	// p=0.25 with 10 values: index = 9 * 0.25 = 2.25, interpolate between 3 and 4
+	expect(stats_percentile(values, 0.25)).toBeCloseTo(3.25, 10);
+
+	// p=0.75 with 10 values: index = 9 * 0.75 = 6.75, interpolate between 7 and 8
+	expect(stats_percentile(values, 0.75)).toBeCloseTo(7.75, 10);
+
+	// Exact index values (no interpolation needed)
+	expect(stats_percentile(values, 0)).toBe(1); // index = 0
+	expect(stats_percentile(values, 1.0)).toBe(10); // index = 9
+
+	expect(stats_percentile([], 0.5)).toBeNaN();
+});
+
+test('stats_percentile: edge cases', ({expect}) => {
+	const values = [1, 2, 3, 4, 5];
+
+	// p=0 should return first element
+	expect(stats_percentile(values, 0)).toBe(1);
+
+	// p=1.0 should return last element
+	expect(stats_percentile(values, 1.0)).toBe(5);
+
+	// p=0.5 with 5 values: index = 4 * 0.5 = 2, returns 3 (no interpolation)
+	expect(stats_percentile(values, 0.5)).toBe(3);
+
+	// Single element array
+	expect(stats_percentile([42], 0)).toBe(42);
+	expect(stats_percentile([42], 0.5)).toBe(42);
+	expect(stats_percentile([42], 1.0)).toBe(42);
+
+	// Two element array with interpolation
+	expect(stats_percentile([10, 20], 0.5)).toBe(15);
+	expect(stats_percentile([10, 20], 0.25)).toBe(12.5);
+	expect(stats_percentile([10, 20], 0.75)).toBe(17.5);
+});
+
+test('stats_cv', ({expect}) => {
+	expect(stats_cv(100, 10)).toBe(0.1);
+	expect(stats_cv(50, 5)).toBe(0.1);
+	expect(stats_cv(0, 5)).toBeNaN();
+});
+
+test('stats_min_max', ({expect}) => {
+	expect(stats_min_max([5, 1, 9, 3, 7])).toEqual({min: 1, max: 9});
+	expect(stats_min_max([42])).toEqual({min: 42, max: 42});
+	expect(stats_min_max([])).toEqual({min: NaN, max: NaN});
+});
+
+test('stats_confidence_interval', ({expect}) => {
+	const values = [10, 12, 11, 13, 10, 12, 11];
+	const [lower, upper] = stats_confidence_interval(values);
+	expect(lower).toBeCloseTo(10.5, 0);
+	expect(upper).toBeCloseTo(12.0, 0);
+	expect(stats_confidence_interval([])).toEqual([NaN, NaN]);
+});
+
+test('stats_outliers_iqr: no outliers', ({expect}) => {
+	const values = [1, 2, 3, 4, 5];
+	const result = stats_outliers_iqr(values);
+	expect(result.cleaned.length).toBe(5);
+	expect(result.outliers.length).toBe(0);
+});
+
+test('stats_outliers_iqr: with outliers', ({expect}) => {
+	const values = [1, 2, 3, 4, 5, 6, 7, 50];
+	const result = stats_outliers_iqr(values);
+	expect(result.cleaned).toContain(1);
+	expect(result.cleaned).toContain(7);
+	expect(result.outliers).toContain(50);
+	expect(result.outliers.length).toBeGreaterThan(0);
+});
+
+test('stats_outliers_iqr: small sample', ({expect}) => {
+	const values = [1, 2];
+	const result = stats_outliers_iqr(values);
+	expect(result.cleaned).toEqual(values);
+	expect(result.outliers).toEqual([]);
+});
+
+test('stats_outliers_mad: no outliers', ({expect}) => {
+	const values = [10, 11, 12, 13, 14];
+	const result = stats_outliers_mad(values);
+	expect(result.cleaned.length).toBe(5);
+	expect(result.outliers.length).toBe(0);
+});
+
+test('stats_outliers_mad: with outliers', ({expect}) => {
+	const values = [10, 11, 12, 13, 14, 100, 200];
+	const result = stats_outliers_mad(values);
+	expect(result.cleaned).toContain(10);
+	expect(result.cleaned).toContain(14);
+	expect(result.outliers).toContain(100);
+	expect(result.outliers).toContain(200);
+});

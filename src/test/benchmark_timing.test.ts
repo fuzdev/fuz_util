@@ -1,6 +1,6 @@
 import {test} from 'vitest';
 
-import {is_promise} from '$lib/async.js';
+import {is_promise, wait} from '$lib/async.js';
 import {
 	timer_node,
 	timer_browser,
@@ -8,11 +8,10 @@ import {
 	time_async,
 	time_sync,
 	time_measure,
-	warmup,
-	sleep,
-	format_time_adaptive,
-	format_time,
-	detect_best_time_unit,
+	benchmark_warmup,
+	time_format_adaptive,
+	time_format,
+	time_unit_detect_best,
 	type Timer,
 } from '$lib/benchmark_timing.js';
 
@@ -65,12 +64,12 @@ test('timer_default: auto-detects environment', ({expect}) => {
 	expect(typeof t1).toBe('number');
 });
 
-test('format_time_adaptive: formats nanoseconds', ({expect}) => {
-	expect(format_time_adaptive(500)).toBe('500.00ns');
-	expect(format_time_adaptive(1500)).toBe('1.50μs');
-	expect(format_time_adaptive(3870)).toBe('3.87μs');
-	expect(format_time_adaptive(1_500_000)).toBe('1.50ms');
-	expect(format_time_adaptive(1_500_000_000)).toBe('1.50s');
+test('time_format_adaptive: formats nanoseconds', ({expect}) => {
+	expect(time_format_adaptive(500)).toBe('500.00ns');
+	expect(time_format_adaptive(1500)).toBe('1.50μs');
+	expect(time_format_adaptive(3870)).toBe('3.87μs');
+	expect(time_format_adaptive(1_500_000)).toBe('1.50ms');
+	expect(time_format_adaptive(1_500_000_000)).toBe('1.50s');
 });
 
 test('time_sync: times synchronous function', ({expect}) => {
@@ -108,7 +107,7 @@ test('time_sync: with custom timer', ({expect}) => {
 
 test('time_async: times asynchronous function', async ({expect}) => {
 	const {result, timing} = await time_async(async () => {
-		await sleep(10);
+		await wait(10);
 		return 'done';
 	});
 
@@ -152,7 +151,7 @@ test('time_measure: measures multiple iterations', async ({expect}) => {
 
 test('time_measure: with async function', async ({expect}) => {
 	const timings = await time_measure(async () => {
-		await sleep(5);
+		await wait(5);
 	}, 3);
 
 	expect(timings).toHaveLength(3);
@@ -161,10 +160,10 @@ test('time_measure: with async function', async ({expect}) => {
 	});
 });
 
-test('warmup: runs sync function multiple times', async ({expect}) => {
+test('benchmark_warmup: runs sync function multiple times', async ({expect}) => {
 	let count = 0;
 
-	const is_async = await warmup(() => {
+	const is_async = await benchmark_warmup(() => {
 		count++;
 	}, 5);
 
@@ -172,11 +171,11 @@ test('warmup: runs sync function multiple times', async ({expect}) => {
 	expect(is_async).toBe(false);
 });
 
-test('warmup: runs async function multiple times', async ({expect}) => {
+test('benchmark_warmup: runs async function multiple times', async ({expect}) => {
 	let count = 0;
 
-	const is_async = await warmup(async () => {
-		await sleep(1);
+	const is_async = await benchmark_warmup(async () => {
+		await wait(1);
 		count++;
 	}, 3);
 
@@ -184,64 +183,54 @@ test('warmup: runs async function multiple times', async ({expect}) => {
 	expect(is_async).toBe(true);
 });
 
-test('warmup: detects async with zero iterations', async ({expect}) => {
+test('benchmark_warmup: detects async with zero iterations', async ({expect}) => {
 	// Even with 0 iterations, it should detect async
-	const is_async_true = await warmup(() => Promise.resolve(), 0);
+	const is_async_true = await benchmark_warmup(() => Promise.resolve(), 0);
 	expect(is_async_true).toBe(true);
 
-	const is_async_false = await warmup(() => 42, 0);
+	const is_async_false = await benchmark_warmup(() => 42, 0);
 	expect(is_async_false).toBe(false);
 });
 
-test('sleep: waits for specified duration', async ({expect}) => {
-	const start = timer_default.now();
-	await sleep(20);
-	const elapsed_ns = timer_default.now() - start;
-	const elapsed_ms = elapsed_ns / 1_000_000;
-
-	expect(elapsed_ms).toBeGreaterThanOrEqual(18); // Allow some variance
-	expect(elapsed_ms).toBeLessThan(50); // Should not take too long
+test('time_unit_detect_best: selects nanoseconds for sub-microsecond values', ({expect}) => {
+	expect(time_unit_detect_best([100, 200, 300])).toBe('ns');
+	expect(time_unit_detect_best([999])).toBe('ns');
 });
 
-test('detect_best_time_unit: selects nanoseconds for sub-microsecond values', ({expect}) => {
-	expect(detect_best_time_unit([100, 200, 300])).toBe('ns');
-	expect(detect_best_time_unit([999])).toBe('ns');
+test('time_unit_detect_best: selects microseconds for microsecond-range values', ({expect}) => {
+	expect(time_unit_detect_best([1_000, 2_000, 3_000])).toBe('us');
+	expect(time_unit_detect_best([500_000, 800_000])).toBe('us');
 });
 
-test('detect_best_time_unit: selects microseconds for microsecond-range values', ({expect}) => {
-	expect(detect_best_time_unit([1_000, 2_000, 3_000])).toBe('us');
-	expect(detect_best_time_unit([500_000, 800_000])).toBe('us');
+test('time_unit_detect_best: selects milliseconds for millisecond-range values', ({expect}) => {
+	expect(time_unit_detect_best([1_000_000, 2_000_000])).toBe('ms');
+	expect(time_unit_detect_best([500_000_000])).toBe('ms');
 });
 
-test('detect_best_time_unit: selects milliseconds for millisecond-range values', ({expect}) => {
-	expect(detect_best_time_unit([1_000_000, 2_000_000])).toBe('ms');
-	expect(detect_best_time_unit([500_000_000])).toBe('ms');
+test('time_unit_detect_best: selects seconds for second-range values', ({expect}) => {
+	expect(time_unit_detect_best([1_000_000_000, 2_000_000_000])).toBe('s');
+	expect(time_unit_detect_best([5_000_000_000])).toBe('s');
 });
 
-test('detect_best_time_unit: selects seconds for second-range values', ({expect}) => {
-	expect(detect_best_time_unit([1_000_000_000, 2_000_000_000])).toBe('s');
-	expect(detect_best_time_unit([5_000_000_000])).toBe('s');
-});
-
-test('detect_best_time_unit: handles empty array', ({expect}) => {
+test('time_unit_detect_best: handles empty array', ({expect}) => {
 	// Empty array defaults to 'ms' as a sensible default
-	expect(detect_best_time_unit([])).toBe('ms');
+	expect(time_unit_detect_best([])).toBe('ms');
 });
 
-test('format_time: formats with specific unit', ({expect}) => {
+test('time_format: formats with specific unit', ({expect}) => {
 	// Nanoseconds
-	expect(format_time(500, 'ns')).toBe('500.00ns');
-	expect(format_time(1234, 'ns', 0)).toBe('1234ns');
+	expect(time_format(500, 'ns')).toBe('500.00ns');
+	expect(time_format(1234, 'ns', 0)).toBe('1234ns');
 
 	// Microseconds
-	expect(format_time(1_500, 'us')).toBe('1.50μs');
-	expect(format_time(3_870, 'us', 1)).toBe('3.9μs');
+	expect(time_format(1_500, 'us')).toBe('1.50μs');
+	expect(time_format(3_870, 'us', 1)).toBe('3.9μs');
 
 	// Milliseconds
-	expect(format_time(1_500_000, 'ms')).toBe('1.50ms');
-	expect(format_time(12_345_678, 'ms', 3)).toBe('12.346ms');
+	expect(time_format(1_500_000, 'ms')).toBe('1.50ms');
+	expect(time_format(12_345_678, 'ms', 3)).toBe('12.346ms');
 
 	// Seconds
-	expect(format_time(1_500_000_000, 's')).toBe('1.50s');
-	expect(format_time(3_210_000_000, 's', 1)).toBe('3.2s');
+	expect(time_format(1_500_000_000, 's')).toBe('1.50s');
+	expect(time_format(3_210_000_000, 's', 1)).toBe('3.2s');
 });

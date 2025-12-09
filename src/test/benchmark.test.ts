@@ -3,7 +3,8 @@
 import {test} from 'vitest';
 
 import {Benchmark} from '$lib/benchmark.js';
-import {sleep, type Timer} from '$lib/benchmark_timing.js';
+import {wait} from '$lib/async.js';
+import type {Timer} from '$lib/benchmark_timing.js';
 
 test('Benchmark: basic usage with string name', async ({expect}) => {
 	const bench = new Benchmark({
@@ -107,15 +108,15 @@ test('Benchmark: async setup/teardown', async ({expect}) => {
 	bench.add({
 		name: 'async task',
 		setup: async () => {
-			await sleep(5);
+			await wait(5);
 			data = 'loaded';
 		},
 		fn: async () => {
-			await sleep(1);
+			await wait(1);
 			return data;
 		},
 		teardown: async () => {
-			await sleep(5);
+			await wait(5);
 			data = null;
 		},
 	});
