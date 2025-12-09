@@ -99,3 +99,41 @@ test('BenchmarkStats: very small values (nanoseconds)', ({expect}) => {
 	expect(stats.mean_ns).toBeCloseTo(11, 0);
 	expect(stats.ops_per_second).toBeGreaterThan(80_000_000); // > 80M ops/sec
 });
+
+test('BenchmarkStats: percentiles (p90, p95, p99)', ({expect}) => {
+	// Create a dataset where percentiles are predictable
+	// 100 values from 1 to 100
+	const timings_ns = Array.from({length: 100}, (_, i) => i + 1);
+	const stats = new BenchmarkStats(timings_ns);
+
+	// With 100 values, percentiles should be close to the value at that position
+	expect(stats.p90_ns).toBeGreaterThanOrEqual(89);
+	expect(stats.p90_ns).toBeLessThanOrEqual(91);
+	expect(stats.p95_ns).toBeGreaterThanOrEqual(94);
+	expect(stats.p95_ns).toBeLessThanOrEqual(96);
+	expect(stats.p99_ns).toBeGreaterThanOrEqual(98);
+	expect(stats.p99_ns).toBeLessThanOrEqual(100);
+});
+
+test('BenchmarkStats: confidence interval', ({expect}) => {
+	const timings_ns = [100, 102, 98, 101, 99, 100, 103, 97, 100, 101];
+	const stats = new BenchmarkStats(timings_ns);
+
+	const [lower, upper] = stats.confidence_interval_ns;
+
+	// CI should bracket the mean
+	expect(lower).toBeLessThan(stats.mean_ns);
+	expect(upper).toBeGreaterThan(stats.mean_ns);
+	// CI should be reasonable (not too wide for this low-variance data)
+	expect(upper - lower).toBeLessThan(10);
+});
+
+test('BenchmarkStats: two samples', ({expect}) => {
+	const stats = new BenchmarkStats([1000, 2000]);
+
+	expect(stats.sample_size).toBe(2);
+	expect(stats.mean_ns).toBe(1500);
+	expect(stats.median_ns).toBe(1500);
+	expect(stats.min_ns).toBe(1000);
+	expect(stats.max_ns).toBe(2000);
+});

@@ -603,3 +603,75 @@ test('Benchmark: summary() with single task', async ({expect}) => {
 	expect(summary).toContain('Fastest:');
 	expect(summary).toContain('only task');
 });
+
+test('Benchmark: table() with no results', ({expect}) => {
+	const bench = new Benchmark();
+	expect(bench.table()).toBe('(no results)');
+});
+
+test('Benchmark: markdown() with no results', ({expect}) => {
+	const bench = new Benchmark();
+	expect(bench.markdown()).toBe('(no results)');
+});
+
+test('Benchmark: json() compact output', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+	});
+
+	bench.add('task', () => 1 + 1);
+
+	await bench.run();
+	const compact = bench.json(false);
+
+	// Compact JSON has no newlines or indentation
+	expect(compact).not.toContain('\n');
+	expect(compact).toContain('task');
+});
+
+test('Benchmark: groups with description', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add('test task', () => 1 + 1);
+
+	await bench.run();
+
+	const groups = [
+		{
+			name: 'TEST GROUP',
+			description: 'This is a test description',
+			filter: () => true,
+		},
+	];
+
+	const table = bench.table({groups});
+
+	expect(table).toContain('TEST GROUP');
+	expect(table).toContain('This is a test description');
+});
+
+test('Benchmark: ungrouped results appear in Other', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+
+	bench.add('[grouped] task', () => 1 + 1);
+	bench.add('ungrouped task', () => 2 + 2);
+
+	await bench.run();
+
+	const groups = [
+		{name: 'GROUPED', filter: (r: {name: string}) => r.name.includes('[grouped]')},
+	];
+
+	const table = bench.table({groups});
+
+	expect(table).toContain('GROUPED');
+	expect(table).toContain('Other');
+	expect(table).toContain('ungrouped task');
+});
