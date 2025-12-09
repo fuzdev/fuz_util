@@ -202,31 +202,31 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
 	return lines.join('\n');
 };
 
+export interface BenchmarkFormatJsonOptions {
+	/** Whether to pretty-print (default: true) */
+	pretty?: boolean;
+	/** Whether to include raw timings array (default: false, can be large) */
+	include_timings?: boolean;
+}
+
 /**
  * Format results as JSON.
  * @param results - Array of benchmark results
- * @param pretty - Whether to pretty-print (default: true)
- * @param include_timings - Whether to include raw timings array (default: false, can be large)
+ * @param options - Formatting options
  * @returns JSON string
  *
  * @example
  * ```ts
  * console.log(format_json(results));
- * // [
- * //   {
- * //     "name": "slugify",
- * //     "ops_per_second": 312547.23,
- * //     "mean_ms": 3.20,
- * //     ...
- * //   }
- * // ]
+ * console.log(format_json(results, {pretty: false}));
+ * console.log(format_json(results, {include_timings: true}));
  * ```
  */
 export const benchmark_format_json = (
 	results: Array<BenchmarkResult>,
-	pretty: boolean = true,
-	include_timings: boolean = false,
+	options: BenchmarkFormatJsonOptions = {},
 ): string => {
+	const {pretty = true, include_timings = false} = options;
 	// Flatten stats into result object for easier consumption
 	const flattened = results.map((r) => ({
 		name: r.name,

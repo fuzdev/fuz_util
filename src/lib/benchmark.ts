@@ -28,12 +28,13 @@ import {
 	benchmark_format_markdown,
 	benchmark_format_json,
 	format_number,
+	type BenchmarkFormatJsonOptions,
 } from './benchmark_format.js';
 import type {
 	BenchmarkConfig,
 	BenchmarkTask,
 	BenchmarkResult,
-	BenchmarkTableOptions,
+	BenchmarkFormatTableOptions,
 } from './benchmark_types.js';
 
 // Default configuration values
@@ -258,7 +259,7 @@ export class Benchmark {
 	 * }));
 	 * ```
 	 */
-	table(options: BenchmarkTableOptions = {}): string {
+	table(options: BenchmarkFormatTableOptions = {}): string {
 		return options.groups
 			? benchmark_format_table_grouped(this.#results, options.groups)
 			: benchmark_format_table(this.#results);
@@ -274,12 +275,11 @@ export class Benchmark {
 
 	/**
 	 * Format results as JSON.
-	 * @param pretty - Whether to pretty-print (default: true)
-	 * @param include_timings - Whether to include raw timings array (default: false, can be large)
+	 * @param options - Formatting options (pretty, include_timings)
 	 * @returns JSON string
 	 */
-	json(pretty: boolean = true, include_timings: boolean = false): string {
-		return benchmark_format_json(this.#results, pretty, include_timings);
+	json(options: BenchmarkFormatJsonOptions = {}): string {
+		return benchmark_format_json(this.#results, options);
 	}
 
 	/**

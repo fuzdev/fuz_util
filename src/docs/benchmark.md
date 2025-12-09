@@ -125,11 +125,13 @@ Perfect for documentation and GitHub.
 #### JSON Export
 
 ```ts
-console.log(bench.json()); // Pretty-printed
-console.log(bench.json(false)); // Compact
+console.log(bench.json()); // Pretty-printed (default)
+console.log(bench.json({pretty: false})); // Compact
+console.log(bench.json({include_timings: true})); // Include raw timing data
 ```
 
-Full statistics in JSON format for programmatic analysis, tracking trends over time, or integration with other tools.
+Full statistics in JSON format for programmatic analysis, tracking trends over time,
+or integration with other tools.
 
 ### 🎨 Automatic Unit Selection
 
@@ -149,7 +151,7 @@ interface BenchmarkConfig {
 	/** Target time to run each task (default: 1000ms) */
 	duration_ms?: number;
 
-	/** Warmup iterations before measuring (default: 5) */
+	/** Warmup iterations before measuring (default: 5, minimum: 1) */
 	warmup_iterations?: number;
 
 	/** Cooldown between tasks (default: 100ms) */
@@ -158,14 +160,14 @@ interface BenchmarkConfig {
 	/** Minimum iterations (default: 10) */
 	min_iterations?: number;
 
-	/** Maximum iterations (default: 10000) */
+	/** Maximum iterations (default: 100000) */
 	max_iterations?: number;
 
 	/** Custom timer (default: auto-detect) */
 	timer?: Timer;
 
-	/** Callback after each iteration */
-	on_iteration?: (task_name: string, iteration: number) => void;
+	/** Callback after each iteration. Call abort() to stop early. */
+	on_iteration?: (task_name: string, iteration: number, abort: () => void) => void;
 }
 ```
 
@@ -400,10 +402,11 @@ class Benchmark {
 	constructor(config?: BenchmarkConfig);
 	add(name: string, fn: () => unknown): this;
 	add(task: BenchmarkTask): this;
+	remove(name: string): this;
 	run(): Promise<Array<BenchmarkResult>>;
-	table(options?: BenchmarkTableOptions): string;
+	table(options?: BenchmarkFormatTableOptions): string;
 	markdown(): string;
-	json(pretty?: boolean): string;
+	json(options?: BenchmarkFormatJsonOptions): string;
 	summary(): string;
 	results(): Array<BenchmarkResult>;
 	reset(): this;
@@ -428,6 +431,7 @@ interface BenchmarkResult {
 	stats: BenchmarkStats;
 	iterations: number;
 	total_time_ms: number;
+	timings_ns: Array<number>; // Raw timing data
 }
 ```
 
@@ -445,7 +449,7 @@ try {
 ```
 
 ```ts
-interface BenchmarkTableOptions {
+interface BenchmarkFormatTableOptions {
 	groups?: Array<BenchmarkGroup>;
 }
 

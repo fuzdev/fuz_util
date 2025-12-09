@@ -600,7 +600,7 @@ test('Benchmark: json() compact output', async ({expect}) => {
 	bench.add('task', () => 1 + 1);
 
 	await bench.run();
-	const compact = bench.json(false);
+	const compact = bench.json({pretty: false});
 
 	// Compact JSON has no newlines or indentation
 	expect(compact).not.toContain('\n');
@@ -768,7 +768,7 @@ test('Benchmark: json() with include_timings', async ({expect}) => {
 	expect(json_without).not.toContain('timings_ns');
 
 	// With include_timings
-	const json_with = bench.json(true, true);
+	const json_with = bench.json({include_timings: true});
 	expect(json_with).toContain('timings_ns');
 
 	const parsed = JSON.parse(json_with);

@@ -85,18 +85,6 @@ export interface BenchmarkConfig {
 	 * ```
 	 */
 	on_iteration?: (task_name: string, iteration: number, abort: () => void) => void;
-
-	// TODO @enhance Consider adding `remove_outliers?: boolean` (default: true) to allow
-	// users to opt-out of automatic outlier removal when they need raw statistics.
-	// Use cases: debugging timing anomalies, analyzing GC impact, or when outliers
-	// are meaningful (e.g., cold-start performance). Implementation: pass flag to
-	// BenchmarkStats constructor to conditionally skip stats_outliers_mad() call.
-
-	// TODO @enhance Consider adding early termination when measurements stabilize.
-	// Options: `stabilize?: boolean` or `stabilize_cv_threshold?: number` (e.g., 0.02).
-	// Algorithm: track rolling CV over last N samples (e.g., 100), stop when CV stays
-	// below threshold for M consecutive checks. Useful for very fast functions where
-	// thousands of samples add diminishing returns. Trade-off: less predictable runtime.
 }
 
 /**
@@ -149,7 +137,7 @@ export interface BenchmarkResult {
 /**
  * Options for table formatting.
  */
-export interface BenchmarkTableOptions {
+export interface BenchmarkFormatTableOptions {
 	/**
 	 * Group results by category using filter functions.
 	 */

@@ -363,15 +363,35 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
+						name: 'BenchmarkFormatJsonOptions',
+						kind: 'type',
+						source_line: 205,
+						type_signature: 'BenchmarkFormatJsonOptions',
+						properties: [
+							{
+								name: 'pretty',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment: 'Whether to pretty-print (default: true)',
+							},
+							{
+								name: 'include_timings',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment: 'Whether to include raw timings array (default: false, can be large)',
+							},
+						],
+					},
+					{
 						name: 'benchmark_format_json',
 						kind: 'function',
 						doc_comment: 'Format results as JSON.',
 						examples: [
-							'```ts\nconsole.log(format_json(results));\n// [\n//   {\n//     "name": "slugify",\n//     "ops_per_second": 312547.23,\n//     "mean_ms": 3.20,\n//     ...\n//   }\n// ]\n```',
+							'```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```',
 						],
 						source_line: 225,
 						type_signature:
-							'(results: BenchmarkResult[], pretty?: boolean, include_timings?: boolean): string',
+							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions): string',
 						return_type: 'string',
 						return_description: 'JSON string',
 						parameters: [
@@ -381,17 +401,10 @@ export const library_json: LibraryJson = {
 								description: '- Array of benchmark results',
 							},
 							{
-								name: 'pretty',
-								type: 'boolean',
-								description: '- Whether to pretty-print (default: true)',
-								default_value: 'true',
-							},
-							{
-								name: 'include_timings',
-								type: 'boolean',
-								description:
-									'- Whether to include raw timings array (default: false, can be large)',
-								default_value: 'false',
+								name: 'options',
+								type: 'BenchmarkFormatJsonOptions',
+								description: '- Formatting options',
+								default_value: '{}',
 							},
 						],
 					},
@@ -662,7 +675,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkTask',
 						kind: 'type',
 						doc_comment: 'A benchmark task to execute.',
-						source_line: 105,
+						source_line: 93,
 						type_signature: 'BenchmarkTask',
 						properties: [
 							{
@@ -697,7 +710,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkResult',
 						kind: 'type',
 						doc_comment: 'Result from running a single benchmark task.',
-						source_line: 128,
+						source_line: 116,
 						type_signature: 'BenchmarkResult',
 						properties: [
 							{
@@ -734,11 +747,11 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'BenchmarkTableOptions',
+						name: 'BenchmarkFormatTableOptions',
 						kind: 'type',
 						doc_comment: 'Options for table formatting.',
-						source_line: 152,
-						type_signature: 'BenchmarkTableOptions',
+						source_line: 140,
+						type_signature: 'BenchmarkFormatTableOptions',
 						properties: [
 							{
 								name: 'groups',
@@ -752,7 +765,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkGroup',
 						kind: 'type',
 						doc_comment: 'A group definition for organizing benchmark results.',
-						source_line: 162,
+						source_line: 150,
 						type_signature: 'BenchmarkGroup',
 						properties: [
 							{
@@ -786,7 +799,7 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Warmup function by running it multiple times.\nAwaits any promises returned by the function.',
 						examples: ['```ts\nawait benchmark_warmup(() => expensive_operation(), 10);\n```'],
-						source_line: 58,
+						source_line: 59,
 						type_signature: '(fn: () => unknown, iterations: number): Promise<void>',
 						return_type: 'Promise<void>',
 						parameters: [
@@ -806,7 +819,7 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 70,
+						source_line: 71,
 						members: [
 							{
 								name: 'constructor',
@@ -908,13 +921,13 @@ export const library_json: LibraryJson = {
 								kind: 'function',
 								doc_comment:
 									'Format results as an ASCII table with percentiles, min/max, and relative performance.',
-								type_signature: '(options?: BenchmarkTableOptions): string',
+								type_signature: '(options?: BenchmarkFormatTableOptions): string',
 								return_type: 'string',
 								return_description: 'Formatted table string',
 								parameters: [
 									{
 										name: 'options',
-										type: 'BenchmarkTableOptions',
+										type: 'BenchmarkFormatTableOptions',
 										description: '- Formatting options',
 										default_value: '{}',
 									},
@@ -933,22 +946,15 @@ export const library_json: LibraryJson = {
 								name: 'json',
 								kind: 'function',
 								doc_comment: 'Format results as JSON.',
-								type_signature: '(pretty?: boolean, include_timings?: boolean): string',
+								type_signature: '(options?: BenchmarkFormatJsonOptions): string',
 								return_type: 'string',
 								return_description: 'JSON string',
 								parameters: [
 									{
-										name: 'pretty',
-										type: 'boolean',
-										description: '- Whether to pretty-print (default: true)',
-										default_value: 'true',
-									},
-									{
-										name: 'include_timings',
-										type: 'boolean',
-										description:
-											'- Whether to include raw timings array (default: false, can be large)',
-										default_value: 'false',
+										name: 'options',
+										type: 'BenchmarkFormatJsonOptions',
+										description: '- Formatting options (pretty, include_timings)',
+										default_value: '{}',
 									},
 								],
 							},
