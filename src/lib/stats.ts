@@ -270,11 +270,59 @@ export const stats_outliers_mad = (
 };
 
 /**
+ * Common z-scores for confidence intervals.
+ */
+export const CONFIDENCE_Z_SCORES: Record<number, number> = {
+	0.8: 1.282,
+	0.9: 1.645,
+	0.95: 1.96,
+	0.99: 2.576,
+	0.999: 3.291,
+};
+
+/**
+ * Convert a confidence level (0-1) to a z-score.
+ * Uses a lookup table for common values, approximates others.
+ *
+ * @example
+ * ```ts
+ * confidence_level_to_z_score(0.95); // 1.96
+ * confidence_level_to_z_score(0.99); // 2.576
+ * ```
+ */
+export const confidence_level_to_z_score = (level: number): number => {
+	if (level <= 0 || level >= 1) {
+		throw new Error('Confidence level must be between 0 and 1 (exclusive)');
+	}
+
+	// Check lookup table first
+	if (level in CONFIDENCE_Z_SCORES) {
+		return CONFIDENCE_Z_SCORES[level]!;
+	}
+
+	// For confidence level c, we want z such that P(-z < Z < z) = c
+	// This means Φ(z) = (1 + c) / 2, so z = Φ⁻¹((1 + c) / 2)
+	// Using Φ⁻¹(p) = √2 * erfinv(2p - 1)
+	const p = (1 + level) / 2; // e.g., 0.95 -> 0.975
+	const x = 2 * p - 1; // Argument for erfinv, e.g., 0.975 -> 0.95
+
+	// Winitzki approximation for erfinv
+	const a = 0.147;
+	const ln_term = Math.log(1 - x * x);
+	const term1 = 2 / (Math.PI * a) + ln_term / 2;
+	const erfinv = Math.sign(x) * Math.sqrt(Math.sqrt(term1 * term1 - ln_term / a) - term1);
+
+	return Math.SQRT2 * erfinv;
+};
+
+/**
  * Configuration options for confidence interval calculation.
  */
 export interface StatsConfidenceIntervalOptions {
 	/** Z-score for confidence level (default: 1.96 for 95% CI) */
 	z_score?: number;
+	/** Confidence level (0-1), alternative to z_score. If both provided, z_score takes precedence. */
+	confidence_level?: number;
 }
 
 /**
@@ -287,7 +335,11 @@ export const stats_confidence_interval = (
 	values: Array<number>,
 	options?: StatsConfidenceIntervalOptions,
 ): [number, number] => {
-	const z_score = options?.z_score ?? DEFAULT_CONFIDENCE_Z;
+	// z_score takes precedence, then confidence_level, then default
+	const z_score =
+		options?.z_score ??
+		(options?.confidence_level ? confidence_level_to_z_score(options.confidence_level) : null) ??
+		DEFAULT_CONFIDENCE_Z;
 
 	if (values.length === 0) return [NaN, NaN];
 

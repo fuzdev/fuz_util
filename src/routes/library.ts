@@ -4975,10 +4975,35 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
+						name: 'CONFIDENCE_Z_SCORES',
+						kind: 'variable',
+						doc_comment: 'Common z-scores for confidence intervals.',
+						source_line: 275,
+						type_signature: 'Record<number, number>',
+					},
+					{
+						name: 'confidence_level_to_z_score',
+						kind: 'function',
+						doc_comment:
+							'Convert a confidence level (0-1) to a z-score.\nUses a lookup table for common values, approximates others.',
+						examples: [
+							'```ts\nconfidence_level_to_z_score(0.95); // 1.96\nconfidence_level_to_z_score(0.99); // 2.576\n```',
+						],
+						source_line: 293,
+						type_signature: '(level: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'level',
+								type: 'number',
+							},
+						],
+					},
+					{
 						name: 'StatsConfidenceIntervalOptions',
 						kind: 'type',
 						doc_comment: 'Configuration options for confidence interval calculation.',
-						source_line: 275,
+						source_line: 321,
 						type_signature: 'StatsConfidenceIntervalOptions',
 						properties: [
 							{
@@ -4987,13 +5012,20 @@ export const library_json: LibraryJson = {
 								type_signature: 'number',
 								doc_comment: 'Z-score for confidence level (default: 1.96 for 95% CI)',
 							},
+							{
+								name: 'confidence_level',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									'Confidence level (0-1), alternative to z_score. If both provided, z_score takes precedence.',
+							},
 						],
 					},
 					{
 						name: 'stats_confidence_interval',
 						kind: 'function',
 						doc_comment: 'Calculate confidence interval for the mean.',
-						source_line: 286,
+						source_line: 334,
 						type_signature:
 							'(values: number[], options?: StatsConfidenceIntervalOptions | undefined): [number, number]',
 						return_type: '[number, number]',

@@ -253,3 +253,73 @@ test('BenchmarkStats.compare: recommendation string', ({expect}) => {
 	expect(typeof comparison.recommendation).toBe('string');
 	expect(comparison.recommendation.length).toBeGreaterThan(0);
 });
+
+test('BenchmarkStats.compare: very different sample sizes', ({expect}) => {
+	// a has many samples, b has few
+	const a_values = Array.from({length: 1000}, (_, i) => 1000 + (i % 10) * 10);
+	const b_values = [2000, 2100, 2050, 1950, 2000];
+
+	const a = new BenchmarkStats(a_values);
+	const b = new BenchmarkStats(b_values);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	// Should still produce valid results
+	expect(comparison.faster).toBe('a');
+	expect(comparison.p_value).toBeGreaterThanOrEqual(0);
+	expect(comparison.p_value).toBeLessThanOrEqual(1);
+	expect(comparison.effect_size).toBeGreaterThanOrEqual(0);
+});
+
+test('BenchmarkStats.compare: small vs large sample', ({expect}) => {
+	// Very small sample (minimum for stats)
+	const a = new BenchmarkStats([1000, 1100, 1050]);
+	// Large sample
+	const b_values = Array.from({length: 500}, (_, i) => 2000 + (i % 20) * 10);
+	const b = new BenchmarkStats(b_values);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('a');
+	expect(comparison.speedup_ratio).toBeGreaterThan(1);
+	// With unequal sample sizes, Welch's t-test handles this appropriately
+	expect(typeof comparison.p_value).toBe('number');
+});
+
+test('BenchmarkStats.compare: one sample has high variance', ({expect}) => {
+	// a is consistent
+	const a = new BenchmarkStats(Array(100).fill(1000));
+	// b has high variance
+	const b_values = Array.from({length: 100}, (_, i) => 1000 + (i % 2 === 0 ? 500 : -500));
+	const b = new BenchmarkStats(b_values);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	// Both have same mean, but different variances
+	expect(comparison.effect_magnitude).toBe('negligible');
+	expect(comparison.faster).toBe('equal');
+});
+
+test('BenchmarkStats.compare: both empty', ({expect}) => {
+	const a = new BenchmarkStats([]);
+	const b = new BenchmarkStats([]);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	expect(comparison.faster).toBe('equal');
+	expect(comparison.significant).toBe(false);
+	expect(comparison.recommendation).toContain('Insufficient data');
+});
+
+test('BenchmarkStats.compare: single sample each', ({expect}) => {
+	const a = new BenchmarkStats([1000]);
+	const b = new BenchmarkStats([2000]);
+
+	const comparison = BenchmarkStats.compare(a, b);
+
+	// With single samples, std_dev is 0
+	expect(comparison.faster).toBe('a');
+	expect(comparison.speedup_ratio).toBe(2);
+	// Zero variance case should still work
+	expect(comparison.effect_magnitude).toBe('large');
+});
