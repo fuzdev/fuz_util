@@ -27,6 +27,7 @@ import {
 	benchmark_format_table_grouped,
 	benchmark_format_markdown,
 	benchmark_format_json,
+	format_number,
 } from './benchmark_format.js';
 import type {
 	BenchmarkConfig,
@@ -40,67 +41,47 @@ const DEFAULT_DURATION_MS = 1000;
 const DEFAULT_WARMUP_ITERATIONS = 5;
 const DEFAULT_COOLDOWN_MS = 100;
 const DEFAULT_MIN_ITERATIONS = 10;
-const DEFAULT_MAX_ITERATIONS = 10000;
+const DEFAULT_MAX_ITERATIONS = 100_000;
 
 /**
  * Warmup function by running it multiple times.
- * Detects whether the function returns promises and uses the appropriate path.
- * Returns whether the function is async (returns promises) for use in measurement.
+ * Awaits any promises returned by the function.
  *
  * @param fn - Function to warmup (sync or async)
  * @param iterations - Number of warmup iterations
- * @returns Whether the function returns promises (is async)
  *
  * @example
  * ```ts
- * const is_async = await benchmark_warmup(() => expensive_operation(), 10);
- * // Use is_async to choose measurement strategy
+ * await benchmark_warmup(() => expensive_operation(), 10);
  * ```
  */
-export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<boolean> => {
-	if (iterations <= 0) {
-		// No warmup requested - detect async with a single call
+export const benchmark_warmup = async (fn: () => unknown, iterations: number): Promise<void> => {
+	for (let i = 0; i < iterations; i++) {
 		const result = fn();
 		if (is_promise(result)) {
-			await result;
-			return true;
-		}
-		return false;
-	}
-
-	// First iteration detects if function returns promises
-	const first_result = fn();
-	const fn_is_async = is_promise(first_result);
-
-	if (fn_is_async) {
-		await first_result;
-		// Async path for remaining iterations
-		for (let i = 1; i < iterations; i++) {
-			await fn(); // eslint-disable-line no-await-in-loop
-		}
-	} else {
-		// Sync path - no await overhead
-		for (let i = 1; i < iterations; i++) {
-			fn();
+			await result; // eslint-disable-line no-await-in-loop
 		}
 	}
-
-	return fn_is_async;
 };
 
 /**
  * Benchmark class for measuring and comparing function performance.
  */
 export class Benchmark {
-	private readonly config: Required<Omit<BenchmarkConfig, 'on_iteration'>> &
+	readonly #config: Required<Omit<BenchmarkConfig, 'on_iteration'>> &
 		Pick<BenchmarkConfig, 'on_iteration'>;
-	private readonly tasks: Array<BenchmarkTask> = [];
-	private _results: Array<BenchmarkResult> = [];
+	readonly #tasks: Array<BenchmarkTask> = [];
+	#results: Array<BenchmarkResult> = [];
 
 	constructor(config: BenchmarkConfig = {}) {
-		this.config = {
+		const warmup_iterations = config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS;
+		if (warmup_iterations < 1) {
+			throw new Error('warmup_iterations must be at least 1');
+		}
+
+		this.#config = {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
-			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
+			warmup_iterations,
 			cooldown_ms: config.cooldown_ms ?? DEFAULT_COOLDOWN_MS,
 			min_iterations: config.min_iterations ?? DEFAULT_MIN_ITERATIONS,
 			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
@@ -134,16 +115,39 @@ export class Benchmark {
 		const task_name = typeof name_or_task === 'string' ? name_or_task : name_or_task.name;
 
 		// Validate unique task names
-		if (this.tasks.some((t) => t.name === task_name)) {
+		if (this.#tasks.some((t) => t.name === task_name)) {
 			throw new Error(`Task "${task_name}" already exists`);
 		}
 
 		if (typeof name_or_task === 'string') {
 			if (!fn) throw new Error('Function required when name is string');
-			this.tasks.push({name: name_or_task, fn});
+			this.#tasks.push({name: name_or_task, fn});
 		} else {
-			this.tasks.push(name_or_task);
+			this.#tasks.push(name_or_task);
 		}
+		return this;
+	}
+
+	/**
+	 * Remove a benchmark task by name.
+	 * @param name - Name of the task to remove
+	 * @returns This Benchmark instance for chaining
+	 * @throws Error if task with given name doesn't exist
+	 *
+	 * @example
+	 * ```ts
+	 * bench.add('task1', () => fn1());
+	 * bench.add('task2', () => fn2());
+	 * bench.remove('task1');
+	 * // Only task2 remains
+	 * ```
+	 */
+	remove(name: string): this {
+		const index = this.#tasks.findIndex((t) => t.name === name);
+		if (index === -1) {
+			throw new Error(`Task "${name}" not found`);
+		}
+		this.#tasks.splice(index, 1);
 		return this;
 	}
 
@@ -152,101 +156,78 @@ export class Benchmark {
 	 * @returns Array of benchmark results
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
-		this._results = [];
+		this.#results = [];
 
-		for (const task of this.tasks) {
-			const result = await this.run_task(task); // eslint-disable-line no-await-in-loop
-			this._results.push(result);
+		for (const task of this.#tasks) {
+			const result = await this.#run_task(task); // eslint-disable-line no-await-in-loop
+			this.#results.push(result);
 
 			// Cooldown between tasks
-			if (this.config.cooldown_ms > 0) {
-				await wait(this.config.cooldown_ms); // eslint-disable-line no-await-in-loop
+			if (this.#config.cooldown_ms > 0) {
+				await wait(this.#config.cooldown_ms); // eslint-disable-line no-await-in-loop
 			}
 		}
 
-		return this._results;
+		return this.#results;
 	}
 
 	/**
 	 * Run a single benchmark task.
-	 * Returns a result even if the task fails - check the `error` property.
+	 * Throws if the task fails during setup, warmup, or measurement.
 	 */
-	private async run_task(task: BenchmarkTask): Promise<BenchmarkResult> {
-		const suite_start_ns = this.config.timer.now();
+	async #run_task(task: BenchmarkTask): Promise<BenchmarkResult> {
+		const suite_start_ns = this.#config.timer.now();
 		const timings_ns: Array<number> = [];
-		let setup_completed = false;
-		let error: Error | undefined;
 
 		try {
 			// Setup
 			if (task.setup) {
 				await task.setup();
 			}
-			setup_completed = true;
 
-			// Warmup - also detects if function returns promises
-			// Detection happens during warmup (not during measurement) for cleaner timing
-			const fn_is_async = await benchmark_warmup(task.fn, this.config.warmup_iterations);
+			// Warmup
+			await benchmark_warmup(task.fn, this.#config.warmup_iterations);
 
 			// Measurement phase
-			const target_time_ns = this.config.duration_ms * 1_000_000; // Convert ms to ns
-			const min_iterations = this.config.min_iterations;
-			const max_iterations = this.config.max_iterations;
+			const target_time_ns = this.#config.duration_ms * 1_000_000; // Convert ms to ns
+			const min_iterations = this.#config.min_iterations;
+			const max_iterations = this.#config.max_iterations;
 
 			let iteration = 0;
-			const measurement_start_ns = this.config.timer.now();
+			let aborted = false as boolean;
+			const abort = (): void => {
+				aborted = true;
+			};
+			const measurement_start_ns = this.#config.timer.now();
 
-			if (fn_is_async) {
-				// Async path - check each return value and await if promise
-				while (iteration < max_iterations) {
-					const iter_start_ns = this.config.timer.now();
-					const result = task.fn();
-					if (is_promise(result)) {
-						await result; // eslint-disable-line no-await-in-loop
-					}
-					const iter_end_ns = this.config.timer.now();
-					timings_ns.push(iter_end_ns - iter_start_ns);
-					iteration++;
-					this.config.on_iteration?.(task.name, iteration);
-
-					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
-					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
-						break;
-					}
+			// eslint-disable-next-line no-unmodified-loop-condition
+			while (iteration < max_iterations && !aborted) {
+				const iter_start_ns = this.#config.timer.now();
+				const result = task.fn();
+				if (is_promise(result)) {
+					await result; // eslint-disable-line no-await-in-loop
 				}
-			} else {
-				// Sync path - no await overhead for maximum accuracy
-				while (iteration < max_iterations) {
-					const iter_start_ns = this.config.timer.now();
-					task.fn();
-					const iter_end_ns = this.config.timer.now();
-					timings_ns.push(iter_end_ns - iter_start_ns);
-					iteration++;
-					this.config.on_iteration?.(task.name, iteration);
+				const iter_end_ns = this.#config.timer.now();
+				timings_ns.push(iter_end_ns - iter_start_ns);
+				iteration++;
+				this.#config.on_iteration?.(task.name, iteration, abort);
 
-					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
-					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
-						break;
-					}
+				const total_elapsed_ns = iter_end_ns - measurement_start_ns;
+				if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
+					break;
 				}
 			}
-		} catch (e) {
-			error = e instanceof Error ? e : new Error(String(e));
 		} finally {
-			// Always run teardown if setup completed
-			if (setup_completed && task.teardown) {
-				try {
-					await task.teardown();
-				} catch {
-					// Ignore teardown errors if we already have an error
-				}
+			// Always run teardown
+			if (task.teardown) {
+				await task.teardown();
 			}
 		}
 
-		const suite_end_ns = this.config.timer.now();
+		const suite_end_ns = this.#config.timer.now();
 		const total_time_ms = (suite_end_ns - suite_start_ns) / 1_000_000; // Convert back to ms for display
 
-		// Analyze results (may have partial data if error occurred mid-run)
+		// Analyze results
 		const stats = new BenchmarkStats(timings_ns);
 
 		return {
@@ -254,7 +235,7 @@ export class Benchmark {
 			stats,
 			iterations: timings_ns.length,
 			total_time_ms,
-			error,
+			timings_ns,
 		};
 	}
 
@@ -279,8 +260,8 @@ export class Benchmark {
 	 */
 	table(options: BenchmarkTableOptions = {}): string {
 		return options.groups
-			? benchmark_format_table_grouped(this._results, options.groups)
-			: benchmark_format_table(this._results);
+			? benchmark_format_table_grouped(this.#results, options.groups)
+			: benchmark_format_table(this.#results);
 	}
 
 	/**
@@ -288,16 +269,17 @@ export class Benchmark {
 	 * @returns Formatted markdown string
 	 */
 	markdown(): string {
-		return benchmark_format_markdown(this._results);
+		return benchmark_format_markdown(this.#results);
 	}
 
 	/**
 	 * Format results as JSON.
 	 * @param pretty - Whether to pretty-print (default: true)
+	 * @param include_timings - Whether to include raw timings array (default: false, can be large)
 	 * @returns JSON string
 	 */
-	json(pretty: boolean = true): string {
-		return benchmark_format_json(this._results, pretty);
+	json(pretty: boolean = true, include_timings: boolean = false): string {
+		return benchmark_format_json(this.#results, pretty, include_timings);
 	}
 
 	/**
@@ -306,7 +288,7 @@ export class Benchmark {
 	 * @returns Array of benchmark results
 	 */
 	results(): Array<BenchmarkResult> {
-		return [...this._results];
+		return [...this.#results];
 	}
 
 	/**
@@ -315,7 +297,7 @@ export class Benchmark {
 	 * @returns This Benchmark instance for chaining
 	 */
 	reset(): this {
-		this._results = [];
+		this.#results = [];
 		return this;
 	}
 
@@ -325,8 +307,8 @@ export class Benchmark {
 	 * @returns This Benchmark instance for chaining
 	 */
 	clear(): this {
-		this._results = [];
-		this.tasks.length = 0;
+		this.#results = [];
+		this.#tasks.length = 0;
 		return this;
 	}
 
@@ -337,36 +319,36 @@ export class Benchmark {
 	 * @example
 	 * ```ts
 	 * console.log(bench.summary());
-	 * // "Fastest: slugify_v2 (1,285,515 ops/sec, 786.52ns per op)"
-	 * // "Slowest: slugify (252,955 ops/sec, 3.95μs per op)"
+	 * // "Fastest: slugify_v2 (1,285,515.00 ops/sec, 786.52ns per op)"
+	 * // "Slowest: slugify (252,955.00 ops/sec, 3.95μs per op)"
 	 * // "Speed difference: 5.08x"
 	 * ```
 	 */
 	summary(): string {
-		if (this._results.length === 0) return 'No results';
+		if (this.#results.length === 0) return 'No results';
 
-		const fastest = this._results.reduce((a, b) =>
+		const fastest = this.#results.reduce((a, b) =>
 			a.stats.ops_per_second > b.stats.ops_per_second ? a : b,
 		);
 
-		const slowest = this._results.reduce((a, b) =>
+		const slowest = this.#results.reduce((a, b) =>
 			a.stats.ops_per_second < b.stats.ops_per_second ? a : b,
 		);
 
 		const ratio = fastest.stats.ops_per_second / slowest.stats.ops_per_second;
 
 		// Detect best unit for consistent display
-		const mean_times = this._results.map((r) => r.stats.mean_ns);
+		const mean_times = this.#results.map((r) => r.stats.mean_ns);
 		const unit = time_unit_detect_best(mean_times);
 
 		const lines: Array<string> = [];
 		lines.push(
-			`Fastest: ${fastest.name} (${fastest.stats.ops_per_second.toFixed(2)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
+			`Fastest: ${fastest.name} (${format_number(fastest.stats.ops_per_second)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
 		);
 
-		if (this._results.length > 1) {
+		if (this.#results.length > 1) {
 			lines.push(
-				`Slowest: ${slowest.name} (${slowest.stats.ops_per_second.toFixed(2)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
+				`Slowest: ${slowest.name} (${format_number(slowest.stats.ops_per_second)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
 			);
 			lines.push(`Speed difference: ${ratio.toFixed(2)}x`);
 		}

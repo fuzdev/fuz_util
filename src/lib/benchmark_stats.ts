@@ -32,6 +32,8 @@ export class BenchmarkStats {
 	readonly min_ns: number;
 	/** Maximum time in nanoseconds */
 	readonly max_ns: number;
+	/** 75th percentile in nanoseconds */
+	readonly p75_ns: number;
 	/** 90th percentile in nanoseconds */
 	readonly p90_ns: number;
 	/** 95th percentile in nanoseconds */
@@ -78,6 +80,7 @@ export class BenchmarkStats {
 			this.std_dev_ns = NaN;
 			this.min_ns = NaN;
 			this.max_ns = NaN;
+			this.p75_ns = NaN;
 			this.p90_ns = NaN;
 			this.p95_ns = NaN;
 			this.p99_ns = NaN;
@@ -107,6 +110,7 @@ export class BenchmarkStats {
 		this.min_ns = min;
 		this.max_ns = max;
 
+		this.p75_ns = stats_percentile(sorted_cleaned, 0.75);
 		this.p90_ns = stats_percentile(sorted_cleaned, 0.9);
 		this.p95_ns = stats_percentile(sorted_cleaned, 0.95);
 		this.p99_ns = stats_percentile(sorted_cleaned, 0.99);

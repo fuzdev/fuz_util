@@ -35,7 +35,7 @@ export interface BenchmarkConfig {
 	/**
 	 * Maximum number of iterations to run.
 	 * Prevents infinite loops if function is extremely fast.
-	 * Default: 10000
+	 * Default: 100000
 	 */
 	max_iterations?: number;
 
@@ -47,7 +47,8 @@ export interface BenchmarkConfig {
 
 	/**
 	 * Callback invoked after each iteration completes.
-	 * Useful for triggering garbage collection, logging progress, or custom instrumentation.
+	 * Useful for triggering garbage collection, logging progress, early termination,
+	 * or custom instrumentation.
 	 *
 	 * **Note**: The callback time is NOT included in iteration measurements - it runs
 	 * after the timing capture. However, frequent GC calls will slow overall benchmark
@@ -55,6 +56,7 @@ export interface BenchmarkConfig {
 	 *
 	 * @param task_name - Name of the current task being benchmarked
 	 * @param iteration - Current iteration number (1-indexed)
+	 * @param abort - Call to stop the benchmark early for this task
 	 *
 	 * @example
 	 * ```ts
@@ -73,9 +75,16 @@ export interface BenchmarkConfig {
 	 *     }
 	 *   }
 	 * })
+	 *
+	 * // Stop early when converged
+	 * new Benchmark({
+	 *   on_iteration: (name, iteration, abort) => {
+	 *     if (iteration > 1000 && has_stabilized()) abort();
+	 *   }
+	 * })
 	 * ```
 	 */
-	on_iteration?: (task_name: string, iteration: number) => void;
+	on_iteration?: (task_name: string, iteration: number, abort: () => void) => void;
 
 	// TODO @enhance Consider adding `remove_outliers?: boolean` (default: true) to allow
 	// users to opt-out of automatic outlier removal when they need raw statistics.
@@ -129,14 +138,12 @@ export interface BenchmarkResult {
 	/** Total time spent benchmarking (including warmup) in milliseconds */
 	total_time_ms: number;
 
-	/** Error if the task failed during execution */
-	error?: Error;
-
-	// TODO @enhance Consider adding `timings_ns?: Array<number>` for raw timing data exposure.
-	// Use cases: custom statistical analysis, histogram generation, percentile calculations
-	// beyond p99, or exporting to external tools. Trade-off: memory usage scales with
-	// iterations (8 bytes per sample × potentially 100K+ samples per task). Implementation:
-	// add `expose_timings?: boolean` to BenchmarkConfig, conditionally attach array here.
+	/**
+	 * Raw timing data for each iteration in nanoseconds.
+	 * Useful for custom statistical analysis, histogram generation,
+	 * or exporting to external tools.
+	 */
+	timings_ns: Array<number>;
 }
 
 /**

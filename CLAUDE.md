@@ -49,9 +49,9 @@ bench
   .add('test 2', () => fn2());
 
 await bench.run();
-console.log(bench.table());                    // ASCII table
-console.log(bench.table({detailed: true}));    // With percentiles, min/max
-console.log(bench.summary());                  // Fastest/slowest comparison
+console.log(bench.table());     // ASCII table with all percentiles
+console.log(bench.markdown());  // Markdown table
+console.log(bench.summary());   // Fastest/slowest comparison
 ```
 
 See `src/docs/benchmark.md` for full documentation.

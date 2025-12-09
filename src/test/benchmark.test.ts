@@ -132,7 +132,7 @@ test('Benchmark: on_iteration callback', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 50,
 		min_iterations: 5,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 		on_iteration: (name, iteration) => {
 			cycles.push({name, iteration});
 		},
@@ -161,7 +161,7 @@ test('Benchmark: custom timer', async ({expect}) => {
 		timer: custom_timer,
 		duration_ms: 100,
 		min_iterations: 5,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 		cooldown_ms: 0,
 	});
 
@@ -177,7 +177,7 @@ test('Benchmark: respects min_iterations', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 1,
 		min_iterations: 20,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 	});
 
 	bench.add('test', () => {});
@@ -192,7 +192,7 @@ test('Benchmark: respects max_iterations', async ({expect}) => {
 		duration_ms: 10000,
 		min_iterations: 5,
 		max_iterations: 10,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 	});
 
 	bench.add('test', () => {});
@@ -216,7 +216,7 @@ test('Benchmark: table() output', async ({expect}) => {
 	expect(table).toContain('task 1');
 	expect(table).toContain('task 2');
 	expect(table).toContain('ops/sec');
-	expect(table).toContain('p50');
+	expect(table).toContain('median');
 	expect(table).toContain('vs Best');
 });
 
@@ -420,38 +420,21 @@ test('Benchmark: handles function that returns a value', async ({expect}) => {
 	});
 });
 
-test('Benchmark: captures errors without stopping suite', async ({expect}) => {
+test('Benchmark: throws on task error', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 50,
 		min_iterations: 3,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 	});
 
-	bench.add('succeeds', () => 1 + 1);
 	bench.add('fails', () => {
 		throw new Error('test error');
 	});
-	bench.add('also succeeds', () => 2 + 2);
 
-	const results = await bench.run();
-
-	// All tasks run despite error
-	expect(results).toHaveLength(3);
-
-	// First task succeeded
-	expect(results[0]!.error).toBeUndefined();
-	expect(results[0]!.iterations).toBeGreaterThan(0);
-
-	// Second task failed
-	expect(results[1]!.error).toBeDefined();
-	expect(results[1]!.error!.message).toBe('test error');
-
-	// Third task succeeded
-	expect(results[2]!.error).toBeUndefined();
-	expect(results[2]!.iterations).toBeGreaterThan(0);
+	await expect(bench.run()).rejects.toThrow('test error');
 });
 
-test('Benchmark: error in setup still runs teardown', async ({expect}) => {
+test('Benchmark: error in setup throws', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 50,
 		min_iterations: 3,
@@ -470,19 +453,16 @@ test('Benchmark: error in setup still runs teardown', async ({expect}) => {
 		},
 	});
 
-	const results = await bench.run();
-
-	expect(results[0]!.error).toBeDefined();
-	expect(results[0]!.error!.message).toBe('setup error');
-	// Teardown not called because setup didn't complete
-	expect(teardown_called).toBe(false);
+	await expect(bench.run()).rejects.toThrow('setup error');
+	// Teardown still runs via finally
+	expect(teardown_called).toBe(true);
 });
 
 test('Benchmark: teardown runs even when fn throws', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 50,
 		min_iterations: 1,
-		warmup_iterations: 0,
+		warmup_iterations: 1,
 	});
 
 	let teardown_called = false;
@@ -498,11 +478,8 @@ test('Benchmark: teardown runs even when fn throws', async ({expect}) => {
 		},
 	});
 
-	const results = await bench.run();
-
-	expect(results[0]!.error).toBeDefined();
-	expect(results[0]!.error!.message).toBe('fn error');
-	// Teardown should be called because setup completed
+	await expect(bench.run()).rejects.toThrow('fn error');
+	// Teardown should be called because of finally block
 	expect(teardown_called).toBe(true);
 });
 
@@ -556,7 +533,7 @@ test('Benchmark: table() with groups shows percentiles', async ({expect}) => {
 	expect(table).toContain('GROUP A');
 	expect(table).toContain('GROUP B');
 	// Tables show percentile columns
-	expect(table).toContain('p50');
+	expect(table).toContain('median');
 	expect(table).toContain('vs Best');
 });
 
@@ -665,13 +642,136 @@ test('Benchmark: ungrouped results appear in Other', async ({expect}) => {
 
 	await bench.run();
 
-	const groups = [
-		{name: 'GROUPED', filter: (r: {name: string}) => r.name.includes('[grouped]')},
-	];
+	const groups = [{name: 'GROUPED', filter: (r: {name: string}) => r.name.includes('[grouped]')}];
 
 	const table = bench.table({groups});
 
 	expect(table).toContain('GROUPED');
 	expect(table).toContain('Other');
 	expect(table).toContain('ungrouped task');
+});
+
+test('Benchmark: remove() removes task by name', ({expect}) => {
+	const bench = new Benchmark();
+
+	bench.add('task1', () => {});
+	bench.add('task2', () => {});
+	bench.add('task3', () => {});
+
+	bench.remove('task2');
+
+	// Can't add task2 again if it wasn't removed
+	bench.add('task2', () => {});
+
+	// Verify task1 still exists
+	expect(() => bench.add('task1', () => {})).toThrow('Task "task1" already exists');
+});
+
+test('Benchmark: remove() throws for non-existent task', ({expect}) => {
+	const bench = new Benchmark();
+
+	bench.add('task1', () => {});
+
+	expect(() => bench.remove('nonexistent')).toThrow('Task "nonexistent" not found');
+});
+
+test('Benchmark: remove() returns this for chaining', ({expect}) => {
+	const bench = new Benchmark();
+
+	bench.add('task1', () => {});
+	bench.add('task2', () => {});
+
+	const result = bench.remove('task1');
+	expect(result).toBe(bench);
+});
+
+test('Benchmark: warmup_iterations must be at least 1', ({expect}) => {
+	expect(() => new Benchmark({warmup_iterations: 0})).toThrow(
+		'warmup_iterations must be at least 1',
+	);
+
+	expect(() => new Benchmark({warmup_iterations: -1})).toThrow(
+		'warmup_iterations must be at least 1',
+	);
+});
+
+test('Benchmark: p75 percentile in output', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 5,
+	});
+
+	bench.add('test', () => 1 + 1);
+
+	await bench.run();
+	const table = bench.table();
+	const json = bench.json();
+
+	expect(table).toContain('p75');
+	expect(json).toContain('p75_ns');
+
+	const results = bench.results();
+	expect(results[0]!.stats.p75_ns).toBeGreaterThan(0);
+});
+
+test('Benchmark: timings_ns exposed on result', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 10,
+	});
+
+	bench.add('test', () => 1 + 1);
+
+	const results = await bench.run();
+
+	expect(results[0]!.timings_ns).toBeInstanceOf(Array);
+	expect(results[0]!.timings_ns.length).toBeGreaterThanOrEqual(10);
+	expect(results[0]!.timings_ns[0]).toBeGreaterThan(0);
+	// Should match iterations count
+	expect(results[0]!.timings_ns.length).toBe(results[0]!.iterations);
+});
+
+test('Benchmark: on_iteration abort stops early', async ({expect}) => {
+	let iteration_count = 0;
+
+	const bench = new Benchmark({
+		duration_ms: 10000, // Long duration - should be aborted
+		min_iterations: 5,
+		max_iterations: 10000,
+		on_iteration: (_name, iteration, abort) => {
+			iteration_count = iteration;
+			if (iteration >= 50) abort();
+		},
+	});
+
+	bench.add('test', () => 1 + 1);
+
+	const results = await bench.run();
+
+	// Should have stopped at 50 iterations due to abort
+	expect(results[0]!.iterations).toBe(50);
+	expect(iteration_count).toBe(50);
+});
+
+test('Benchmark: json() with include_timings', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 10,
+	});
+
+	bench.add('test', () => 1 + 1);
+
+	await bench.run();
+
+	// Without include_timings
+	const json_without = bench.json();
+	expect(json_without).not.toContain('timings_ns');
+
+	// With include_timings
+	const json_with = bench.json(true, true);
+	expect(json_with).toContain('timings_ns');
+
+	const parsed = JSON.parse(json_with);
+	expect(parsed[0].timings_ns).toBeInstanceOf(Array);
+	expect(parsed[0].timings_ns.length).toBeGreaterThanOrEqual(10);
 });

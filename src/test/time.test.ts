@@ -163,33 +163,33 @@ test('time_measure: with async function', async ({expect}) => {
 test('benchmark_warmup: runs sync function multiple times', async ({expect}) => {
 	let count = 0;
 
-	const is_async = await benchmark_warmup(() => {
+	await benchmark_warmup(() => {
 		count++;
 	}, 5);
 
 	expect(count).toBe(5);
-	expect(is_async).toBe(false);
 });
 
 test('benchmark_warmup: runs async function multiple times', async ({expect}) => {
 	let count = 0;
 
-	const is_async = await benchmark_warmup(async () => {
+	await benchmark_warmup(async () => {
 		await wait(1);
 		count++;
 	}, 3);
 
 	expect(count).toBe(3);
-	expect(is_async).toBe(true);
 });
 
-test('benchmark_warmup: detects async with zero iterations', async ({expect}) => {
-	// Even with 0 iterations, it should detect async
-	const is_async_true = await benchmark_warmup(() => Promise.resolve(), 0);
-	expect(is_async_true).toBe(true);
+test('benchmark_warmup: handles zero iterations', async ({expect}) => {
+	let count = 0;
 
-	const is_async_false = await benchmark_warmup(() => 42, 0);
-	expect(is_async_false).toBe(false);
+	await benchmark_warmup(() => {
+		count++;
+	}, 0);
+
+	// With 0 iterations, function is never called
+	expect(count).toBe(0);
 });
 
 test('time_unit_detect_best: selects nanoseconds for sub-microsecond values', ({expect}) => {

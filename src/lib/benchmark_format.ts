@@ -10,12 +10,12 @@ import {time_unit_detect_best, time_format, type TimeUnit} from './time.js';
  * @example
  * ```ts
  * console.log(benchmark_format_table(results));
- * // ┌────┬─────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
- * // │    │ Task Name   │  ops/sec   │ p50 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │
- * // ├────┼─────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
- * // │ 🐇 │ slugify v2  │ 1,237,144  │   0.81   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │
- * // │ 🐢 │ slugify     │   261,619  │   3.82   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │
- * // └────┴─────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+ * // ┌────┬─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+ * // │    │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │
+ * // ├────┼─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+ * // │ 🐇 │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │
+ * // │ 🐢 │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │
+ * // └────┴─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
  * ```
  *
  * **Performance tier animals:**
@@ -42,7 +42,8 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 		'',
 		'Task Name',
 		'ops/sec',
-		`p50 (${unit_str})`,
+		`median (${unit_str})`,
+		`p75 (${unit_str})`,
 		`p90 (${unit_str})`,
 		`p95 (${unit_str})`,
 		`p99 (${unit_str})`,
@@ -55,7 +56,8 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 	results.forEach((r) => {
 		const tier = get_perf_tier(r.stats.ops_per_second);
 		const ops_sec = format_number(r.stats.ops_per_second, 2);
-		const p50 = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
+		const median = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
+		const p75 = time_format(r.stats.p75_ns, unit, 2).replace(unit_str, '').trim();
 		const p90 = time_format(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
 		const p95 = time_format(r.stats.p95_ns, unit, 2).replace(unit_str, '').trim();
 		const p99 = time_format(r.stats.p99_ns, unit, 2).replace(unit_str, '').trim();
@@ -66,7 +68,7 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 		const ratio = fastest_ops / r.stats.ops_per_second;
 		const vs_best = ratio === 1.0 ? 'baseline' : `${ratio.toFixed(2)}x`;
 
-		rows.push([tier, r.name, ops_sec, p50, p90, p95, p99, min, max, vs_best]);
+		rows.push([tier, r.name, ops_sec, median, p75, p90, p95, p99, min, max, vs_best]);
 	});
 
 	// Calculate column widths
@@ -116,10 +118,10 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
  * @example
  * ```ts
  * console.log(benchmark_format_markdown(results));
- * // | Task Name  | ops/sec    | p50 (μs) | p99 (μs) | Margin  | vs Best  |
- * // |------------|------------|----------|----------|---------|----------|
- * // | slugify v2 | 1,237,144  | 0.81     | 1.20     | ±3.00%  | baseline |
- * // | slugify    |   261,619  | 3.82     | 5.10     | ±0.84%  | 4.73x    |
+ * // | Task Name  | ops/sec    | median (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |
+ * // |------------|------------|-------------|----------|----------|----------|----------|----------|----------|----------|
+ * // | slugify v2 | 1,237,144  | 0.81        | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |
+ * // | slugify    |   261,619  | 3.82        | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |
  * ```
  */
 export const benchmark_format_markdown = (results: Array<BenchmarkResult>): string => {
@@ -139,24 +141,32 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
 	rows.push([
 		'Task Name',
 		'ops/sec',
-		`p50 (${unit_str})`,
+		`median (${unit_str})`,
+		`p75 (${unit_str})`,
+		`p90 (${unit_str})`,
+		`p95 (${unit_str})`,
 		`p99 (${unit_str})`,
-		'Margin',
+		`min (${unit_str})`,
+		`max (${unit_str})`,
 		'vs Best',
 	]);
 
 	// Data rows - all use same unit
 	results.forEach((r) => {
 		const ops_sec = format_number(r.stats.ops_per_second, 2);
-		const p50 = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
+		const median = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
+		const p75 = time_format(r.stats.p75_ns, unit, 2).replace(unit_str, '').trim();
+		const p90 = time_format(r.stats.p90_ns, unit, 2).replace(unit_str, '').trim();
+		const p95 = time_format(r.stats.p95_ns, unit, 2).replace(unit_str, '').trim();
 		const p99 = time_format(r.stats.p99_ns, unit, 2).replace(unit_str, '').trim();
-		const margin = `±${format_number(r.stats.cv * 100, 2)}%`;
+		const min = time_format(r.stats.min_ns, unit, 2).replace(unit_str, '').trim();
+		const max = time_format(r.stats.max_ns, unit, 2).replace(unit_str, '').trim();
 
 		// Calculate relative performance
 		const ratio = fastest_ops / r.stats.ops_per_second;
 		const vs_best = ratio === 1.0 ? 'baseline' : `${ratio.toFixed(2)}x`;
 
-		rows.push([r.name, ops_sec, p50, p99, margin, vs_best]);
+		rows.push([r.name, ops_sec, median, p75, p90, p95, p99, min, max, vs_best]);
 	});
 
 	// Calculate column widths
@@ -196,6 +206,7 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
  * Format results as JSON.
  * @param results - Array of benchmark results
  * @param pretty - Whether to pretty-print (default: true)
+ * @param include_timings - Whether to include raw timings array (default: false, can be large)
  * @returns JSON string
  *
  * @example
@@ -214,6 +225,7 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
 export const benchmark_format_json = (
 	results: Array<BenchmarkResult>,
 	pretty: boolean = true,
+	include_timings: boolean = false,
 ): string => {
 	// Flatten stats into result object for easier consumption
 	const flattened = results.map((r) => ({
@@ -226,6 +238,7 @@ export const benchmark_format_json = (
 		std_dev_ns: r.stats.std_dev_ns,
 		min_ns: r.stats.min_ns,
 		max_ns: r.stats.max_ns,
+		p75_ns: r.stats.p75_ns,
 		p90_ns: r.stats.p90_ns,
 		p95_ns: r.stats.p95_ns,
 		p99_ns: r.stats.p99_ns,
@@ -236,6 +249,7 @@ export const benchmark_format_json = (
 		sample_size: r.stats.sample_size,
 		raw_sample_size: r.stats.raw_sample_size,
 		failed_iterations: r.stats.failed_iterations,
+		...(include_timings ? {timings_ns: r.timings_ns} : {}),
 	}));
 
 	return pretty ? JSON.stringify(flattened, null, 2) : JSON.stringify(flattened);
@@ -291,7 +305,7 @@ export const benchmark_format_table_grouped = (
 	const ungrouped = results.filter((r) => !grouped_names.has(r.name));
 
 	if (ungrouped.length > 0) {
-		sections.push('\n📦 Other\n');
+		sections.push('\n📦 Other');
 		sections.push(benchmark_format_table(ungrouped));
 	}
 
@@ -301,7 +315,7 @@ export const benchmark_format_table_grouped = (
 /**
  * Format a number with fixed decimal places and thousands separators.
  */
-const format_number = (n: number, decimals: number = 2): string => {
+export const format_number = (n: number, decimals: number = 2): string => {
 	if (!isFinite(n)) return String(n);
 	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };

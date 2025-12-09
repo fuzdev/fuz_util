@@ -328,7 +328,7 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Format results as an ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌────┬─────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │    │ Task Name   │  ops/sec   │ p50 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├────┼─────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ 🐇 │ slugify v2  │ 1,237,144  │   0.81   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ 🐢 │ slugify     │   261,619  │   3.82   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └────┴─────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```\n\n**Performance tier animals:**\n- 🐆 Cheetah: >1M ops/sec (extremely fast)\n- 🐇 Rabbit: >100K ops/sec (fast)\n- 🐢 Turtle: >10K ops/sec (moderate)\n- 🐌 Snail: <10K ops/sec (slow)',
+							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌────┬─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │    │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├────┼─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ 🐇 │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ 🐢 │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └────┴─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```\n\n**Performance tier animals:**\n- 🐆 Cheetah: >1M ops/sec (extremely fast)\n- 🐇 Rabbit: >100K ops/sec (fast)\n- 🐢 Turtle: >10K ops/sec (moderate)\n- 🐌 Snail: <10K ops/sec (slow)',
 						],
 						source_line: 27,
 						type_signature: '(results: BenchmarkResult[]): string',
@@ -348,9 +348,9 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Format results as a Markdown table with key metrics.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | p50 (μs) | p99 (μs) | Margin  | vs Best  |\n// |------------|------------|----------|----------|---------|----------|\n// | slugify v2 | 1,237,144  | 0.81     | 1.20     | ±3.00%  | baseline |\n// | slugify    |   261,619  | 3.82     | 5.10     | ±0.84%  | 4.73x    |\n```',
+							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | median (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|-------------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81        | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82        | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```',
 						],
-						source_line: 125,
+						source_line: 127,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
@@ -369,8 +369,9 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\n// [\n//   {\n//     "name": "slugify",\n//     "ops_per_second": 312547.23,\n//     "mean_ms": 3.20,\n//     ...\n//   }\n// ]\n```',
 						],
-						source_line: 214,
-						type_signature: '(results: BenchmarkResult[], pretty?: boolean): string',
+						source_line: 225,
+						type_signature:
+							'(results: BenchmarkResult[], pretty?: boolean, include_timings?: boolean): string',
 						return_type: 'string',
 						return_description: 'JSON string',
 						parameters: [
@@ -385,6 +386,13 @@ export const library_json: LibraryJson = {
 								description: '- Whether to pretty-print (default: true)',
 								default_value: 'true',
 							},
+							{
+								name: 'include_timings',
+								type: 'boolean',
+								description:
+									'- Whether to include raw timings array (default: false, can be large)',
+								default_value: 'false',
+							},
 						],
 					},
 					{
@@ -394,7 +402,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 269,
+						source_line: 283,
 						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
@@ -408,6 +416,25 @@ export const library_json: LibraryJson = {
 								name: 'groups',
 								type: 'BenchmarkGroup[]',
 								description: '- Array of group definitions',
+							},
+						],
+					},
+					{
+						name: 'format_number',
+						kind: 'function',
+						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
+						source_line: 318,
+						type_signature: '(n: number, decimals?: number): string',
+						return_type: 'string',
+						parameters: [
+							{
+								name: 'n',
+								type: 'number',
+							},
+							{
+								name: 'decimals',
+								type: 'number',
+								default_value: '2',
 							},
 						],
 					},
@@ -458,6 +485,13 @@ export const library_json: LibraryJson = {
 								kind: 'variable',
 								modifiers: ['readonly'],
 								doc_comment: 'Maximum time in nanoseconds',
+								type_signature: 'number',
+							},
+							{
+								name: 'p75_ns',
+								kind: 'variable',
+								modifiers: ['readonly'],
+								doc_comment: '75th percentile in nanoseconds',
 								type_signature: 'number',
 							},
 							{
@@ -606,7 +640,7 @@ export const library_json: LibraryJson = {
 								kind: 'variable',
 								type_signature: 'number',
 								doc_comment:
-									'Maximum number of iterations to run.\nPrevents infinite loops if function is extremely fast.\nDefault: 10000',
+									'Maximum number of iterations to run.\nPrevents infinite loops if function is extremely fast.\nDefault: 100000',
 							},
 							{
 								name: 'timer',
@@ -618,9 +652,9 @@ export const library_json: LibraryJson = {
 							{
 								name: 'on_iteration',
 								kind: 'variable',
-								type_signature: '(task_name: string, iteration: number) => void',
+								type_signature: '(task_name: string, iteration: number, abort: () => void) => void',
 								doc_comment:
-									'Callback invoked after each iteration completes.\nUseful for triggering garbage collection, logging progress, or custom instrumentation.\n\n**Note**: The callback time is NOT included in iteration measurements - it runs\nafter the timing capture. However, frequent GC calls will slow overall benchmark\nexecution time.',
+									'Callback invoked after each iteration completes.\nUseful for triggering garbage collection, logging progress, early termination,\nor custom instrumentation.\n\n**Note**: The callback time is NOT included in iteration measurements - it runs\nafter the timing capture. However, frequent GC calls will slow overall benchmark\nexecution time.',
 							},
 						],
 					},
@@ -628,7 +662,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkTask',
 						kind: 'type',
 						doc_comment: 'A benchmark task to execute.',
-						source_line: 96,
+						source_line: 105,
 						type_signature: 'BenchmarkTask',
 						properties: [
 							{
@@ -663,7 +697,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkResult',
 						kind: 'type',
 						doc_comment: 'Result from running a single benchmark task.',
-						source_line: 119,
+						source_line: 128,
 						type_signature: 'BenchmarkResult',
 						properties: [
 							{
@@ -691,10 +725,11 @@ export const library_json: LibraryJson = {
 								doc_comment: 'Total time spent benchmarking (including warmup) in milliseconds',
 							},
 							{
-								name: 'error',
+								name: 'timings_ns',
 								kind: 'variable',
-								type_signature: 'Error',
-								doc_comment: 'Error if the task failed during execution',
+								type_signature: 'Array<number>',
+								doc_comment:
+									'Raw timing data for each iteration in nanoseconds.\nUseful for custom statistical analysis, histogram generation,\nor exporting to external tools.',
 							},
 						],
 					},
@@ -702,7 +737,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkTableOptions',
 						kind: 'type',
 						doc_comment: 'Options for table formatting.',
-						source_line: 145,
+						source_line: 152,
 						type_signature: 'BenchmarkTableOptions',
 						properties: [
 							{
@@ -717,7 +752,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkGroup',
 						kind: 'type',
 						doc_comment: 'A group definition for organizing benchmark results.',
-						source_line: 155,
+						source_line: 162,
 						type_signature: 'BenchmarkGroup',
 						properties: [
 							{
@@ -749,14 +784,11 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_warmup',
 						kind: 'function',
 						doc_comment:
-							'Warmup function by running it multiple times.\nDetects whether the function returns promises and uses the appropriate path.\nReturns whether the function is async (returns promises) for use in measurement.',
-						examples: [
-							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n// Use is_async to choose measurement strategy\n```',
-						],
-						source_line: 60,
-						type_signature: '(fn: () => unknown, iterations: number): Promise<boolean>',
-						return_type: 'Promise<boolean>',
-						return_description: 'Whether the function returns promises (is async)',
+							'Warmup function by running it multiple times.\nAwaits any promises returned by the function.',
+						examples: ['```ts\nawait benchmark_warmup(() => expensive_operation(), 10);\n```'],
+						source_line: 58,
+						type_signature: '(fn: () => unknown, iterations: number): Promise<void>',
+						return_type: 'Promise<void>',
 						parameters: [
 							{
 								name: 'fn',
@@ -774,27 +806,8 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 94,
+						source_line: 70,
 						members: [
-							{
-								name: 'config',
-								kind: 'variable',
-								modifiers: ['private', 'readonly'],
-								type_signature:
-									"Required<Omit<BenchmarkConfig, 'on_iteration'>> &\n\t\tPick<BenchmarkConfig, 'on_iteration'>",
-							},
-							{
-								name: 'tasks',
-								kind: 'variable',
-								modifiers: ['private', 'readonly'],
-								type_signature: 'Array<BenchmarkTask>',
-							},
-							{
-								name: '_results',
-								kind: 'variable',
-								modifiers: ['private'],
-								type_signature: 'Array<BenchmarkResult>',
-							},
 							{
 								name: 'constructor',
 								kind: 'constructor',
@@ -861,6 +874,27 @@ export const library_json: LibraryJson = {
 								],
 							},
 							{
+								name: 'remove',
+								kind: 'function',
+								doc_comment: 'Remove a benchmark task by name.',
+								type_signature: '(name: string): this',
+								return_type: 'this',
+								return_description: 'This Benchmark instance for chaining',
+								parameters: [
+									{
+										name: 'name',
+										type: 'string',
+										description: '- Name of the task to remove',
+									},
+								],
+								throws: [
+									{
+										type: 'Error',
+										description: "if task with given name doesn't exist",
+									},
+								],
+							},
+							{
 								name: 'run',
 								kind: 'function',
 								doc_comment: 'Run all benchmark tasks.',
@@ -868,21 +902,6 @@ export const library_json: LibraryJson = {
 								return_type: 'Promise<BenchmarkResult[]>',
 								return_description: 'Array of benchmark results',
 								parameters: [],
-							},
-							{
-								name: 'run_task',
-								kind: 'function',
-								modifiers: ['private'],
-								doc_comment:
-									'Run a single benchmark task.\nReturns a result even if the task fails - check the `error` property.',
-								type_signature: '(task: BenchmarkTask): Promise<BenchmarkResult>',
-								return_type: 'Promise<BenchmarkResult>',
-								parameters: [
-									{
-										name: 'task',
-										type: 'BenchmarkTask',
-									},
-								],
 							},
 							{
 								name: 'table',
@@ -914,7 +933,7 @@ export const library_json: LibraryJson = {
 								name: 'json',
 								kind: 'function',
 								doc_comment: 'Format results as JSON.',
-								type_signature: '(pretty?: boolean): string',
+								type_signature: '(pretty?: boolean, include_timings?: boolean): string',
 								return_type: 'string',
 								return_description: 'JSON string',
 								parameters: [
@@ -923,6 +942,13 @@ export const library_json: LibraryJson = {
 										type: 'boolean',
 										description: '- Whether to pretty-print (default: true)',
 										default_value: 'true',
+									},
+									{
+										name: 'include_timings',
+										type: 'boolean',
+										description:
+											'- Whether to include raw timings array (default: false, can be large)',
+										default_value: 'false',
 									},
 								],
 							},
@@ -5298,18 +5324,6 @@ export const library_json: LibraryJson = {
 								type_signature: 'number | undefined',
 							},
 							{
-								name: 'timings',
-								kind: 'variable',
-								modifiers: ['private', 'readonly'],
-								type_signature: 'Map<TimingsKey, number | undefined>',
-							},
-							{
-								name: 'stopwatches',
-								kind: 'variable',
-								modifiers: ['private', 'readonly'],
-								type_signature: 'Map<TimingsKey, Stopwatch>',
-							},
-							{
 								name: 'constructor',
 								kind: 'constructor',
 								type_signature: '(decimals?: number | undefined): Timings',
@@ -5336,33 +5350,6 @@ export const library_json: LibraryJson = {
 										name: 'decimals',
 										type: 'number | undefined',
 										default_value: 'this.decimals',
-									},
-								],
-							},
-							{
-								name: 'next_key',
-								kind: 'function',
-								modifiers: ['private'],
-								type_signature: '(key: TimingsKey): TimingsKey',
-								return_type: 'TimingsKey',
-								parameters: [
-									{
-										name: 'key',
-										type: 'TimingsKey',
-									},
-								],
-							},
-							{
-								name: 'stop',
-								kind: 'function',
-								modifiers: ['private'],
-								doc_comment: 'Stops a timing operation and records the elapsed time.',
-								type_signature: '(key: TimingsKey): number',
-								return_type: 'number',
-								parameters: [
-									{
-										name: 'key',
-										type: 'TimingsKey',
 									},
 								],
 							},

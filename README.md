@@ -47,35 +47,8 @@ Docs at [util.fuz.dev/docs](https://util.fuz.dev/docs).
 
 ### Benchmarking
 
-Zero-dependency performance benchmarking with comprehensive statistics:
-
-```ts
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
-
-const bench = new Benchmark({duration_ms: 5000});
-
-bench
-	.add('Array.map', () => [1, 2, 3].map((x) => x * 2))
-	.add('for loop', () => {
-		const arr = [1, 2, 3];
-		const result = [];
-		for (let i = 0; i < arr.length; i++) result.push(arr[i]! * 2);
-	});
-
-await bench.run();
-console.log(bench.table({detailed: true}));
-```
-
-Output includes:
-
-- 🐆 **Percentiles** (p50, p90, p95, p99) - understand tail latency
-- 📊 **Min/Max times** - spot variance and outliers
-- ⚡ **Relative performance** - compare to baseline
-- 🎯 **Performance tiers** - visual speed indicators
-- 📦 **Grouped tables** - organize related benchmarks
-- 📈 **Multiple formats** - table, detailed, markdown, JSON
-
-See [`src/docs/benchmark.md`](src/docs/benchmark.md) for full documentation.
+Zero-dependency performance benchmarking with comprehensive statistics.
+See [`src/docs/benchmark.md`](src/docs/benchmark.md) for documentation.
 
 ## build
 
