@@ -102,7 +102,7 @@ See `src/docs/benchmark.md` for full documentation.
 - no re-exports - import directly from the source module
 - no backwards compatibility preservation - breaking changes are acceptable
 
-## What belt does NOT include
+## What fuz_util does NOT include
 
 - UI components (use fuz)
 - Svelte-specific code (use fuz)
