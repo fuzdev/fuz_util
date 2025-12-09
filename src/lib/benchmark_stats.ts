@@ -125,8 +125,13 @@ export class BenchmarkStats {
 		return `BenchmarkStats(mean=${time_format_adaptive(this.mean_ns)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${this.sample_size})`;
 	}
 
-	// TODO: Consider adding a static `compare(a: BenchmarkStats, b: BenchmarkStats)` method
-	// that performs statistical significance testing (e.g., Welch's t-test) to determine
-	// if two benchmark results are significantly different. Would be useful for CI/CD
-	// to detect performance regressions with confidence.
+	// TODO @enhance Consider adding a static `compare(a: BenchmarkStats, b: BenchmarkStats)` method
+	// for statistical significance testing between benchmark runs.
+	// Use cases: CI/CD regression detection, A/B performance comparisons, before/after analysis.
+	// Implementation options:
+	//   - Welch's t-test: handles unequal variances, returns p-value
+	//   - Effect size (Cohen's d): magnitude of difference independent of sample size
+	//   - Confidence interval overlap: simpler, visual interpretation
+	// Return type could be: { significant: boolean; p_value: number; effect_size: number;
+	//   faster: 'a' | 'b' | 'equal'; speedup_ratio: number }
 }

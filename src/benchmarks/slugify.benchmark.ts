@@ -24,7 +24,7 @@ bench
 await bench.run();
 
 console.log('\n📊 Slugify Benchmark Results\n');
-console.log(bench.table({detailed: true}));
+console.log(bench.table());
 
 console.log('\n📈 Summary\n');
 console.log(bench.summary());

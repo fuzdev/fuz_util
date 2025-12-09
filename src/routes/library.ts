@@ -326,31 +326,11 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_format_table',
 						kind: 'function',
 						doc_comment:
-							'Format results as an ASCII table.\nAll mean times use the same unit for easy comparison.',
+							'Format results as an ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(format_table(results));\n// ┌─────────┬──────────────┬────────────┬──────────┬──────────┐\n// │  Index  │  Task Name   │  ops/sec   │ Mean (μs)│  Margin  │\n// ├─────────┼──────────────┼────────────┼──────────┼──────────┤\n// │    0    │  slugify     │  312,547   │  3.20    │  ±0.39%  │\n// │    1    │  slugify v2  │  265,941   │  3.76    │  ±1.03%  │\n// └─────────┴──────────────┴────────────┴──────────┴──────────┘\n```',
+							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌────┬─────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │    │ Task Name   │  ops/sec   │ p50 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├────┼─────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ 🐇 │ slugify v2  │ 1,237,144  │   0.81   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ 🐢 │ slugify     │   261,619  │   3.82   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └────┴─────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```\n\n**Performance tier animals:**\n- 🐆 Cheetah: >1M ops/sec (extremely fast)\n- 🐇 Rabbit: >100K ops/sec (fast)\n- 🐢 Turtle: >10K ops/sec (moderate)\n- 🐌 Snail: <10K ops/sec (slow)',
 						],
-						source_line: 21,
-						type_signature: '(results: BenchmarkResult[]): string',
-						return_type: 'string',
-						return_description: 'Formatted table string',
-						parameters: [
-							{
-								name: 'results',
-								type: 'BenchmarkResult[]',
-								description: '- Array of benchmark results',
-							},
-						],
-					},
-					{
-						name: 'benchmark_format_table_detailed',
-						kind: 'function',
-						doc_comment:
-							'Format results as a detailed ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
-						examples: [
-							'```ts\nconsole.log(format_table_detailed(results));\n// ┌───┬─────────────┬────────────┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┬──────────┐\n// │ 🐆│  Task Name  │  ops/sec   │ p50(μs) │ p90(μs) │ p95(μs) │ p99(μs) │ min(μs) │ max(μs)  │ vs Best  │\n// ├───┼─────────────┼────────────┼─────────┼─────────┼─────────┼─────────┼─────────┼──────────┼──────────┤\n// │ 🐇│  slugify v2 │ 1,237,144  │  0.81   │  0.89   │  0.95   │  1.20   │  0.72   │   2.45   │ baseline │\n// │ 🐢│  slugify    │   261,619  │  3.82   │  4.12   │  4.35   │  5.10   │  3.21   │  12.45   │  4.73x   │\n// └───┴─────────────┴────────────┴─────────┴─────────┴─────────┴─────────┴─────────┴──────────┴──────────┘\n```',
-						],
-						source_line: 99,
+						source_line: 27,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with enhanced metrics',
@@ -366,11 +346,11 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_format_markdown',
 						kind: 'function',
 						doc_comment:
-							'Format results as a Markdown table.\nAll mean times use the same unit for easy comparison.',
+							'Format results as a Markdown table with key metrics.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(format_markdown(results));\n// | Task Name | ops/sec  | Mean (μs) | Margin  | Samples |\n// |-----------|----------|-----------|---------|---------|\n// | slugify   | 312,547  | 3.20      | ±0.39%  | 100     |\n// | slugify v2| 265,941  | 3.76      | ±1.03%  | 100     |\n```',
+							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | p50 (μs) | p99 (μs) | Margin  | vs Best  |\n// |------------|------------|----------|----------|---------|----------|\n// | slugify v2 | 1,237,144  | 0.81     | 1.20     | ±3.00%  | baseline |\n// | slugify    |   261,619  | 3.82     | 5.10     | ±0.84%  | 4.73x    |\n```',
 						],
-						source_line: 197,
+						source_line: 125,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
@@ -389,7 +369,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\n// [\n//   {\n//     "name": "slugify",\n//     "ops_per_second": 312547.23,\n//     "mean_ms": 3.20,\n//     ...\n//   }\n// ]\n```',
 						],
-						source_line: 272,
+						source_line: 214,
 						type_signature: '(results: BenchmarkResult[], pretty?: boolean): string',
 						return_type: 'string',
 						return_description: 'JSON string',
@@ -412,11 +392,10 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment: 'Format results as a grouped table with visual separators between groups.',
 						examples: [
-							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(format_table_grouped(results, groups));\n// ┌─────────────────────────────────┐\n// │ 📦 FAST PATHS                   │\n// ├───┬─────────────┬────────────┬──┤\n// │ 🐆│ fast test 1 │ 1,237,144  │..│\n// │ 🐇│ fast test 2 │   261,619  │..│\n// ├───┴─────────────┴────────────┴──┤\n// │ 📦 SLOW PATHS                   │\n// ├───┬─────────────┬────────────┬──┤\n// │ 🐢│ slow test 1 │    10,123  │..│\n// └───┴─────────────┴────────────┴──┘\n```",
+							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 325,
-						type_signature:
-							'(results: BenchmarkResult[], groups: BenchmarkGroup[], detailed?: boolean): string',
+						source_line: 269,
+						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
 						parameters: [
@@ -429,13 +408,6 @@ export const library_json: LibraryJson = {
 								name: 'groups',
 								type: 'BenchmarkGroup[]',
 								description: '- Array of group definitions',
-							},
-							{
-								name: 'detailed',
-								type: 'boolean',
-								description:
-									'- Whether to show detailed stats (percentiles, min/max). Default: true',
-								default_value: 'false',
 							},
 						],
 					},
@@ -734,13 +706,6 @@ export const library_json: LibraryJson = {
 						type_signature: 'BenchmarkTableOptions',
 						properties: [
 							{
-								name: 'detailed',
-								kind: 'variable',
-								type_signature: 'boolean',
-								doc_comment:
-									'Show detailed statistics (percentiles, min/max, relative performance).\nDefault: false',
-							},
-							{
 								name: 'groups',
 								kind: 'variable',
 								type_signature: 'Array<BenchmarkGroup>',
@@ -752,7 +717,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkGroup',
 						kind: 'type',
 						doc_comment: 'A group definition for organizing benchmark results.',
-						source_line: 155,
+						source_line: 149,
 						type_signature: 'BenchmarkGroup',
 						properties: [
 							{
@@ -788,7 +753,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n// Use is_async to choose measurement strategy\n```',
 						],
-						source_line: 61,
+						source_line: 60,
 						type_signature: '(fn: () => unknown, iterations: number): Promise<boolean>',
 						return_type: 'Promise<boolean>',
 						return_description: 'Whether the function returns promises (is async)',
@@ -809,7 +774,7 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 95,
+						source_line: 94,
 						members: [
 							{
 								name: 'config',
@@ -829,12 +794,6 @@ export const library_json: LibraryJson = {
 								kind: 'variable',
 								modifiers: ['private'],
 								type_signature: 'Array<BenchmarkResult>',
-							},
-							{
-								name: 'cached_unit',
-								kind: 'variable',
-								modifiers: ['private'],
-								type_signature: 'ReturnType<typeof time_unit_detect_best> | null',
 							},
 							{
 								name: 'constructor',
@@ -911,16 +870,6 @@ export const library_json: LibraryJson = {
 								parameters: [],
 							},
 							{
-								name: 'get_display_unit',
-								kind: 'function',
-								modifiers: ['private'],
-								doc_comment:
-									'Get the best time unit for displaying results.\nCaches the result for repeated calls.',
-								type_signature: '(): TimeUnit',
-								return_type: 'TimeUnit',
-								parameters: [],
-							},
-							{
 								name: 'run_task',
 								kind: 'function',
 								modifiers: ['private'],
@@ -938,7 +887,8 @@ export const library_json: LibraryJson = {
 							{
 								name: 'table',
 								kind: 'function',
-								doc_comment: 'Format results as an ASCII table.',
+								doc_comment:
+									'Format results as an ASCII table with percentiles, min/max, and relative performance.',
 								type_signature: '(options?: BenchmarkTableOptions): string',
 								return_type: 'string',
 								return_description: 'Formatted table string',

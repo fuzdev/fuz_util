@@ -24,7 +24,6 @@ import {BenchmarkStats} from './benchmark_stats.js';
 import {timer_default, time_unit_detect_best, time_format} from './time.js';
 import {
 	benchmark_format_table,
-	benchmark_format_table_detailed,
 	benchmark_format_table_grouped,
 	benchmark_format_markdown,
 	benchmark_format_json,
@@ -97,7 +96,6 @@ export class Benchmark {
 		Pick<BenchmarkConfig, 'on_iteration'>;
 	private readonly tasks: Array<BenchmarkTask> = [];
 	private _results: Array<BenchmarkResult> = [];
-	private cached_unit: ReturnType<typeof time_unit_detect_best> | null = null;
 
 	constructor(config: BenchmarkConfig = {}) {
 		this.config = {
@@ -155,7 +153,6 @@ export class Benchmark {
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this._results = [];
-		this.cached_unit = null; // Invalidate cache
 
 		for (const task of this.tasks) {
 			const result = await this.run_task(task); // eslint-disable-line no-await-in-loop
@@ -168,18 +165,6 @@ export class Benchmark {
 		}
 
 		return this._results;
-	}
-
-	/**
-	 * Get the best time unit for displaying results.
-	 * Caches the result for repeated calls.
-	 */
-	private get_display_unit(): ReturnType<typeof time_unit_detect_best> {
-		if (this.cached_unit === null) {
-			const mean_times = this._results.map((r) => r.stats.mean_ns);
-			this.cached_unit = time_unit_detect_best(mean_times);
-		}
-		return this.cached_unit;
 	}
 
 	/**
@@ -274,7 +259,7 @@ export class Benchmark {
 	}
 
 	/**
-	 * Format results as an ASCII table.
+	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
 	 * @param options - Formatting options
 	 * @returns Formatted table string
 	 *
@@ -283,9 +268,6 @@ export class Benchmark {
 	 * // Standard table
 	 * console.log(bench.table());
 	 *
-	 * // Detailed table with percentiles
-	 * console.log(bench.table({ detailed: true }));
-	 *
 	 * // Grouped by category
 	 * console.log(bench.table({
 	 *   groups: [
@@ -293,21 +275,12 @@ export class Benchmark {
 	 *     { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },
 	 *   ]
 	 * }));
-	 *
-	 * // Both detailed and grouped
-	 * console.log(bench.table({ detailed: true, groups }));
 	 * ```
 	 */
 	table(options: BenchmarkTableOptions = {}): string {
-		const {detailed = false, groups} = options;
-
-		if (groups) {
-			return benchmark_format_table_grouped(this._results, groups, detailed);
-		}
-		if (detailed) {
-			return benchmark_format_table_detailed(this._results);
-		}
-		return benchmark_format_table(this._results);
+		return options.groups
+			? benchmark_format_table_grouped(this._results, options.groups)
+			: benchmark_format_table(this._results);
 	}
 
 	/**
@@ -343,7 +316,6 @@ export class Benchmark {
 	 */
 	reset(): this {
 		this._results = [];
-		this.cached_unit = null;
 		return this;
 	}
 
@@ -354,7 +326,6 @@ export class Benchmark {
 	 */
 	clear(): this {
 		this._results = [];
-		this.cached_unit = null;
 		this.tasks.length = 0;
 		return this;
 	}
@@ -384,8 +355,9 @@ export class Benchmark {
 
 		const ratio = fastest.stats.ops_per_second / slowest.stats.ops_per_second;
 
-		// Use cached unit for consistent display
-		const unit = this.get_display_unit();
+		// Detect best unit for consistent display
+		const mean_times = this._results.map((r) => r.stats.mean_ns);
+		const unit = time_unit_detect_best(mean_times);
 
 		const lines: Array<string> = [];
 		lines.push(

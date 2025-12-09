@@ -77,14 +77,17 @@ export interface BenchmarkConfig {
 	 */
 	on_iteration?: (task_name: string, iteration: number) => void;
 
-	// TODO: Consider adding `remove_outliers?: boolean` (default: true) to allow users
-	// to opt-out of automatic outlier removal when they need raw statistics.
-	// Would require changes to BenchmarkStats to conditionally skip outlier detection.
+	// TODO @enhance Consider adding `remove_outliers?: boolean` (default: true) to allow
+	// users to opt-out of automatic outlier removal when they need raw statistics.
+	// Use cases: debugging timing anomalies, analyzing GC impact, or when outliers
+	// are meaningful (e.g., cold-start performance). Implementation: pass flag to
+	// BenchmarkStats constructor to conditionally skip stats_outliers_mad() call.
 
-	// TODO: Consider adding a "stabilization check" that detects when measurements have
-	// stabilized (low CV over last N samples) and optionally stops early. Useful for
-	// very fast functions where thousands of samples add noise without value.
-	// Could be: `stabilize?: boolean` or `stabilize_threshold?: number` (CV threshold).
+	// TODO @enhance Consider adding early termination when measurements stabilize.
+	// Options: `stabilize?: boolean` or `stabilize_cv_threshold?: number` (e.g., 0.02).
+	// Algorithm: track rolling CV over last N samples (e.g., 100), stop when CV stays
+	// below threshold for M consecutive checks. Useful for very fast functions where
+	// thousands of samples add diminishing returns. Trade-off: less predictable runtime.
 }
 
 /**
@@ -129,20 +132,17 @@ export interface BenchmarkResult {
 	/** Error if the task failed during execution */
 	error?: Error;
 
-	// TODO: Consider adding `timings_ns: Array<number>` for raw timing data exposure.
-	// Would allow custom analysis but increases memory usage. Could be opt-in via config.
+	// TODO @enhance Consider adding `timings_ns?: Array<number>` for raw timing data exposure.
+	// Use cases: custom statistical analysis, histogram generation, percentile calculations
+	// beyond p99, or exporting to external tools. Trade-off: memory usage scales with
+	// iterations (8 bytes per sample × potentially 100K+ samples per task). Implementation:
+	// add `expose_timings?: boolean` to BenchmarkConfig, conditionally attach array here.
 }
 
 /**
  * Options for table formatting.
  */
 export interface BenchmarkTableOptions {
-	/**
-	 * Show detailed statistics (percentiles, min/max, relative performance).
-	 * Default: false
-	 */
-	detailed?: boolean;
-
 	/**
 	 * Group results by category using filter functions.
 	 */

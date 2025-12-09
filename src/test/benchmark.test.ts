@@ -216,7 +216,8 @@ test('Benchmark: table() output', async ({expect}) => {
 	expect(table).toContain('task 1');
 	expect(table).toContain('task 2');
 	expect(table).toContain('ops/sec');
-	expect(table).toContain('Mean');
+	expect(table).toContain('p50');
+	expect(table).toContain('vs Best');
 });
 
 test('Benchmark: markdown() output', async ({expect}) => {
@@ -535,7 +536,7 @@ test('Benchmark: table() with groups', async ({expect}) => {
 	expect(table).toContain('[slow] operation 1');
 });
 
-test('Benchmark: table() with groups and detailed', async ({expect}) => {
+test('Benchmark: table() with groups shows percentiles', async ({expect}) => {
 	const bench = new Benchmark({
 		duration_ms: 50,
 		min_iterations: 3,
@@ -550,11 +551,11 @@ test('Benchmark: table() with groups and detailed', async ({expect}) => {
 		{name: 'GROUP B', filter: (r: {name: string}) => r.name.includes('[b]')},
 	];
 
-	const table = bench.table({groups, detailed: true});
+	const table = bench.table({groups});
 
 	expect(table).toContain('GROUP A');
 	expect(table).toContain('GROUP B');
-	// Detailed tables show percentile columns
+	// Tables show percentile columns
 	expect(table).toContain('p50');
 	expect(table).toContain('vs Best');
 });
