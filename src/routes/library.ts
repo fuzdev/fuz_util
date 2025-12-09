@@ -74,6 +74,7 @@ export const library_json: LibraryJson = {
 			eslint: '^9.39.1',
 			'eslint-plugin-svelte': '^3.13.1',
 			'esm-env': '^1.2.2',
+			'fast-deep-equal': '^3.1.3',
 			prettier: '^3.7.4',
 			'prettier-plugin-svelte': '^3.4.0',
 			svelte: '^5.45.6',
@@ -329,7 +330,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_table(results));\n// ┌─────────┬──────────────┬────────────┬──────────┬──────────┐\n// │  Index  │  Task Name   │  ops/sec   │ Mean (μs)│  Margin  │\n// ├─────────┼──────────────┼────────────┼──────────┼──────────┤\n// │    0    │  slugify     │  312,547   │  3.20    │  ±0.39%  │\n// │    1    │  slugify v2  │  265,941   │  3.76    │  ±1.03%  │\n// └─────────┴──────────────┴────────────┴──────────┴──────────┘\n```',
 						],
-						source_line: 55,
+						source_line: 21,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string',
@@ -340,7 +341,6 @@ export const library_json: LibraryJson = {
 								description: '- Array of benchmark results',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_table_detailed',
@@ -350,7 +350,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_table_detailed(results));\n// ┌───┬─────────────┬────────────┬─────────┬─────────┬─────────┬─────────┬─────────┬──────────┬──────────┐\n// │ 🐆│  Task Name  │  ops/sec   │ p50(μs) │ p90(μs) │ p95(μs) │ p99(μs) │ min(μs) │ max(μs)  │ vs Best  │\n// ├───┼─────────────┼────────────┼─────────┼─────────┼─────────┼─────────┼─────────┼──────────┼──────────┤\n// │ 🐇│  slugify v2 │ 1,237,144  │  0.81   │  0.89   │  0.95   │  1.20   │  0.72   │   2.45   │ baseline │\n// │ 🐢│  slugify    │   261,619  │  3.82   │  4.12   │  4.35   │  5.10   │  3.21   │  12.45   │  4.73x   │\n// └───┴─────────────┴────────────┴─────────┴─────────┴─────────┴─────────┴─────────┴──────────┴──────────┘\n```',
 						],
-						source_line: 133,
+						source_line: 99,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with enhanced metrics',
@@ -361,7 +361,6 @@ export const library_json: LibraryJson = {
 								description: '- Array of benchmark results',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_markdown',
@@ -371,7 +370,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_markdown(results));\n// | Task Name | ops/sec  | Mean (μs) | Margin  | Samples |\n// |-----------|----------|-----------|---------|---------|\n// | slugify   | 312,547  | 3.20      | ±0.39%  | 100     |\n// | slugify v2| 265,941  | 3.76      | ±1.03%  | 100     |\n```',
 						],
-						source_line: 231,
+						source_line: 197,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
@@ -382,7 +381,6 @@ export const library_json: LibraryJson = {
 								description: '- Array of benchmark results',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_json',
@@ -391,7 +389,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\n// [\n//   {\n//     "name": "slugify",\n//     "ops_per_second": 312547.23,\n//     "mean_ms": 3.20,\n//     ...\n//   }\n// ]\n```',
 						],
-						source_line: 306,
+						source_line: 272,
 						type_signature: '(results: BenchmarkResult[], pretty?: boolean): string',
 						return_type: 'string',
 						return_description: 'JSON string',
@@ -408,7 +406,6 @@ export const library_json: LibraryJson = {
 								default_value: 'true',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_table_grouped',
@@ -417,7 +414,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(format_table_grouped(results, groups));\n// ┌─────────────────────────────────┐\n// │ 📦 FAST PATHS                   │\n// ├───┬─────────────┬────────────┬──┤\n// │ 🐆│ fast test 1 │ 1,237,144  │..│\n// │ 🐇│ fast test 2 │   261,619  │..│\n// ├───┴─────────────┴────────────┴──┤\n// │ 📦 SLOW PATHS                   │\n// ├───┬─────────────┬────────────┬──┤\n// │ 🐢│ slow test 1 │    10,123  │..│\n// └───┴─────────────┴────────────┴──┘\n```",
 						],
-						source_line: 359,
+						source_line: 325,
 						type_signature:
 							'(results: BenchmarkResult[], groups: BenchmarkGroup[], detailed?: boolean): string',
 						return_type: 'string',
@@ -441,7 +438,6 @@ export const library_json: LibraryJson = {
 								default_value: 'false',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 				],
 				dependencies: ['benchmark_timing.ts'],
@@ -778,7 +774,6 @@ export const library_json: LibraryJson = {
 								parameters: [],
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 				],
 				module_comment:
@@ -804,7 +799,6 @@ export const library_json: LibraryJson = {
 								doc_comment: 'Get current time in nanoseconds',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'timer_node',
@@ -836,21 +830,18 @@ export const library_json: LibraryJson = {
 						doc_comment: 'Time units and conversions.',
 						source_line: 91,
 						type_signature: '1000',
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'NS_PER_MS',
 						kind: 'variable',
 						source_line: 92,
 						type_signature: '1000000',
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'NS_PER_SEC',
 						kind: 'variable',
 						source_line: 93,
 						type_signature: '1000000000',
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'ns_to_us',
@@ -865,7 +856,6 @@ export const library_json: LibraryJson = {
 								type: 'number',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'ns_to_ms',
@@ -880,7 +870,6 @@ export const library_json: LibraryJson = {
 								type: 'number',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'ns_to_sec',
@@ -895,7 +884,6 @@ export const library_json: LibraryJson = {
 								type: 'number',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'TimeUnit',
@@ -903,7 +891,6 @@ export const library_json: LibraryJson = {
 						doc_comment: 'Time unit for formatting.',
 						source_line: 113,
 						type_signature: 'TimeUnit',
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'detect_best_time_unit',
@@ -921,7 +908,6 @@ export const library_json: LibraryJson = {
 								description: '- Array of times in nanoseconds',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_time',
@@ -949,7 +935,6 @@ export const library_json: LibraryJson = {
 								default_value: '2',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'format_time_adaptive',
@@ -975,7 +960,6 @@ export const library_json: LibraryJson = {
 								default_value: '2',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'TimingResult',
@@ -1205,7 +1189,6 @@ export const library_json: LibraryJson = {
 									'Callback invoked after each iteration completes.\nUseful for triggering garbage collection, logging progress, or custom instrumentation.\n\n**Note**: The callback time is NOT included in iteration measurements - it runs\nafter the timing capture. However, frequent GC calls will slow overall benchmark\nexecution time.',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'BenchmarkTask',
@@ -1241,7 +1224,6 @@ export const library_json: LibraryJson = {
 									'Optional teardown function run after benchmarking this task.\nNot included in timing measurements.',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'BenchmarkResult',
@@ -1281,7 +1263,6 @@ export const library_json: LibraryJson = {
 								doc_comment: 'Error if the task failed during execution',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'BenchmarkTableOptions',
@@ -1304,7 +1285,6 @@ export const library_json: LibraryJson = {
 								doc_comment: 'Group results by category using filter functions.',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 					{
 						name: 'BenchmarkGroup',
@@ -1332,7 +1312,6 @@ export const library_json: LibraryJson = {
 								doc_comment: 'Filter function to determine which results belong to this group',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 				],
 			},

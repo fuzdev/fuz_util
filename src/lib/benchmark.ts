@@ -362,32 +362,3 @@ export class Benchmark {
 		return lines.join('\n');
 	}
 }
-
-// Re-export types and utilities for convenience
-export type {
-	BenchmarkConfig,
-	BenchmarkTask,
-	BenchmarkResult,
-	BenchmarkTableOptions,
-	BenchmarkGroup,
-} from './benchmark_types.js';
-export type {Timer, TimeUnit} from './benchmark_timing.js';
-export {BenchmarkStats} from './benchmark_stats.js';
-export {
-	format_table,
-	format_table_detailed,
-	format_table_grouped,
-	format_markdown,
-	format_json,
-} from './benchmark_format.js';
-export {
-	format_time_adaptive,
-	format_time,
-	detect_best_time_unit,
-	NS_PER_US,
-	NS_PER_MS,
-	NS_PER_SEC,
-	ns_to_us,
-	ns_to_ms,
-	ns_to_sec,
-} from './benchmark_timing.js';

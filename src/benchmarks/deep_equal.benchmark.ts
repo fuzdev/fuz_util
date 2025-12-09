@@ -1,5 +1,6 @@
 import {Benchmark} from '$lib/benchmark.js';
 import {deep_equal} from '$lib/deep_equal.js';
+import type {BenchmarkGroup} from '$lib/benchmark_types.js';
 
 /* eslint-disable no-console, no-new-wrappers */
 
@@ -259,7 +260,7 @@ console.log('\n📊 deep_equal Performance Benchmarks\n');
 console.log(bench.table());
 
 console.log('\n📊 Grouped by Category (Detailed)\n');
-const groups: Array<import('$lib/benchmark.js').BenchmarkGroup> = [
+const groups: Array<BenchmarkGroup> = [
 	{
 		name: 'FAST PATHS (baseline)',
 		filter: (r) =>

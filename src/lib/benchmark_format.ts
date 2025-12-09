@@ -2,40 +2,6 @@ import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
 import {detect_best_time_unit, format_time, type TimeUnit} from './benchmark_timing.js';
 
 /**
- * Format a number with fixed decimal places and thousands separators.
- */
-const format_number = (n: number, decimals: number = 2): string => {
-	if (!isFinite(n)) return String(n);
-	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
-
-/**
- * Get performance tier symbol based on ops/sec.
- */
-const get_perf_tier = (ops_per_sec: number): string => {
-	if (ops_per_sec >= 1_000_000) return '🐆'; // > 1M ops/sec (cheetah - extremely fast)
-	if (ops_per_sec >= 100_000) return '🐇'; // > 100K ops/sec (rabbit - fast)
-	if (ops_per_sec >= 10_000) return '🐢'; // > 10K ops/sec (turtle - moderate)
-	return '🐌'; // < 10K ops/sec (snail - slow)
-};
-
-/**
- * Get unit label for display.
- */
-const unit_label = (unit: TimeUnit): string => {
-	switch (unit) {
-		case 'ns':
-			return 'ns';
-		case 'us':
-			return 'μs';
-		case 'ms':
-			return 'ms';
-		case 's':
-			return 's';
-	}
-};
-
-/**
  * Format results as an ASCII table.
  * All mean times use the same unit for easy comparison.
  * @param results - Array of benchmark results
@@ -392,4 +358,38 @@ export const format_table_grouped = (
 	}
 
 	return sections.join('\n');
+};
+
+/**
+ * Format a number with fixed decimal places and thousands separators.
+ */
+const format_number = (n: number, decimals: number = 2): string => {
+	if (!isFinite(n)) return String(n);
+	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+/**
+ * Get performance tier symbol based on ops/sec.
+ */
+const get_perf_tier = (ops_per_sec: number): string => {
+	if (ops_per_sec >= 1_000_000) return '🐆'; // > 1M ops/sec (cheetah - extremely fast)
+	if (ops_per_sec >= 100_000) return '🐇'; // > 100K ops/sec (rabbit - fast)
+	if (ops_per_sec >= 10_000) return '🐢'; // > 10K ops/sec (turtle - moderate)
+	return '🐌'; // < 10K ops/sec (snail - slow)
+};
+
+/**
+ * Get unit label for display.
+ */
+const unit_label = (unit: TimeUnit): string => {
+	switch (unit) {
+		case 'ns':
+			return 'ns';
+		case 'us':
+			return 'μs';
+		case 'ms':
+			return 'ms';
+		case 's':
+			return 's';
+	}
 };
