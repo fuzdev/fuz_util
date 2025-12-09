@@ -1,23 +1,14 @@
-import {Bench} from 'tinybench';
-
-import {slugify} from '$lib/path.ts';
+import {Benchmark} from '$lib/benchmark.js';
+import {slugify} from '$lib/path.js';
 
 /* eslint-disable no-console */
 
 /*
 
-This implementation from Stackoverflow is slower than Belt's.
-It also doesn't quite pass our tests because of leading/trailing `-` and underscore handling,
-and conforming would only make it slower.
-
-┌─────────┬───────────────────┬───────────┬────────────────────┬──────────┬─────────┐
-│ (index) │ Task Name         │ ops/sec   │ Average Time (ns)  │ Margin   │ Samples │
-├─────────┼───────────────────┼───────────┼────────────────────┼──────────┼─────────┤
-│ 0       │ 'slugify current' │ '312,547' │ 3199.514706889348  │ '±0.39%' │ 3125474 │
-│ 1       │ 'slugify slower'  │ '265,941' │ 3760.2206429301086 │ '±1.03%' │ 2659419 │
-└─────────┴───────────────────┴───────────┴────────────────────┴──────────┴─────────┘
+Benchmarks the slugify function using Belt's Benchmark class.
 
 */
+
 /**
  * @see https://stackoverflow.com/questions/1053902/how-to-convert-a-title-to-a-url-slug-in-jquery/5782563#5782563
  */
@@ -31,6 +22,7 @@ const slugify_slower = (str: string): string => {
 		.replace(/\s+/g, '-')
 		.replace(/-+/g, '-');
 };
+
 const special_char_from = 'áäâàãåÆþčçćďđéěëèêẽĕȇğíìîïıňñóöòôõøðřŕšşßťúůüùûýÿž';
 const special_char_to = 'aaaaaaabcccddeeeeeeeegiiiiinnooooooorrssstuuuuuyyz';
 let special_char_mappers: Array<(s: string) => string> | undefined;
@@ -45,12 +37,16 @@ const get_special_char_mappers = (): Array<(s: string) => string> => {
 	return special_char_mappers;
 };
 
-const bench = new Bench({time: 5000, warmup: true});
+const bench = new Benchmark({
+	duration_ms: 5000,
+	warmup_iterations: 10,
+});
 
 const title = 'this Is a Test of Things to Do';
 
-const results1 = [];
-const results2 = [];
+const results1: Array<string> = [];
+const results2: Array<string> = [];
+const results3: Array<string> = [];
 
 bench
 	.add('slugify current', () => {
@@ -60,13 +56,25 @@ bench
 		results2.push(slugify(title, false));
 	})
 	.add('slugify slower', () => {
-		results2.push(slugify_slower(title));
+		results3.push(slugify_slower(title));
 	});
-// .todo('unimplemented bench');
 
 await bench.run();
 
-console.table(bench.table());
+console.log('\n📊 Slugify Benchmark Results (Standard)\n');
+console.log(bench.table());
 
-console.log(`results1.length`, results1.length);
-console.log(`results2.length`, results2.length);
+console.log('\n📊 Detailed Results (with percentiles, min/max, relative performance)\n');
+console.log(bench.table({detailed: true}));
+
+console.log('\n📈 Summary\n');
+console.log(bench.summary());
+
+console.log('\n📋 JSON Export Available:\n');
+console.log('  bench.json() - Full statistics in JSON format');
+console.log('  bench.markdown() - Markdown table for documentation\n');
+
+console.log('Verification:');
+console.log(`results1.length: ${results1.length}`);
+console.log(`results2.length: ${results2.length}`);
+console.log(`results3.length: ${results3.length}`);

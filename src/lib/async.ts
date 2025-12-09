@@ -7,10 +7,10 @@ export const wait = (duration = 0): Promise<void> =>
 	new Promise((resolve) => setTimeout(resolve, duration));
 
 /**
- * Checks if `value` is a `Promise`.
+ * Checks if `value` is a `Promise` (or thenable).
  */
-export const is_promise = (value: any): value is Promise<any> =>
-	value && typeof value.then === 'function';
+export const is_promise = (value: unknown): value is Promise<unknown> =>
+	value != null && typeof (value as Promise<unknown>).then === 'function';
 
 /**
  * Creates a deferred object with a promise and its resolve/reject handlers.

@@ -32,6 +32,29 @@ Belt is a **foundational utility library**:
 - `throttle.ts` - throttle/debounce
 - `timings.ts` - performance timing
 
+### Benchmarking
+
+Zero-dependency benchmarking library with nanosecond precision timing,
+comprehensive statistics (mean, median, percentiles, outlier detection), and
+multiple output formats (ASCII table, Markdown, JSON).
+
+```typescript
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+
+const bench = new Benchmark({duration_ms: 5000, warmup_iterations: 10});
+
+bench
+  .add('test 1', () => fn1())
+  .add('test 2', () => fn2());
+
+await bench.run();
+console.log(bench.table());                    // ASCII table
+console.log(bench.table({detailed: true}));    // With percentiles, min/max
+console.log(bench.summary());                  // Fastest/slowest comparison
+```
+
+See `src/docs/benchmark.md` for full documentation.
+
 ### Types and validation
 
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
