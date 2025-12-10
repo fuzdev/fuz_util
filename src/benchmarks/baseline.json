@@ -1,0 +1,93 @@
+{
+	"version": 1,
+	"timestamp": "2025-12-10T01:25:12.558Z",
+	"git_commit": "d7f6b20b28e95477fcc407478246cbe66a82cd49",
+	"git_branch": "benchmark",
+	"node_version": "v24.9.0",
+	"entries": [
+		{
+			"name": "slugify",
+			"mean_ns": 3665.475653737013,
+			"median_ns": 3657,
+			"std_dev_ns": 50.28222687317187,
+			"min_ns": 3547,
+			"max_ns": 3868,
+			"p75_ns": 3687,
+			"p90_ns": 3737,
+			"p95_ns": 3767,
+			"p99_ns": 3817,
+			"ops_per_second": 272815.8892504124,
+			"sample_size": 88453
+		},
+		{
+			"name": "slugify (no special chars)",
+			"mean_ns": 616.106291453879,
+			"median_ns": 611,
+			"std_dev_ns": 12.856097573331498,
+			"min_ns": 561,
+			"max_ns": 662,
+			"p75_ns": 621,
+			"p90_ns": 631,
+			"p95_ns": 641,
+			"p99_ns": 661,
+			"ops_per_second": 1623096.5563429226,
+			"sample_size": 94382
+		},
+		{
+			"name": "deep_equal: small objects",
+			"mean_ns": 168.63468320947223,
+			"median_ns": 170,
+			"std_dev_ns": 7.491132656529719,
+			"min_ns": 150,
+			"max_ns": 211,
+			"p75_ns": 171,
+			"p90_ns": 180,
+			"p95_ns": 181,
+			"p99_ns": 190,
+			"ops_per_second": 5929978.228487163,
+			"sample_size": 95268
+		},
+		{
+			"name": "deep_equal: nested objects",
+			"mean_ns": 278.1574127471108,
+			"median_ns": 271,
+			"std_dev_ns": 9.955269866198599,
+			"min_ns": 260,
+			"max_ns": 321,
+			"p75_ns": 281,
+			"p90_ns": 291,
+			"p95_ns": 301,
+			"p99_ns": 311,
+			"ops_per_second": 3595086.6458092867,
+			"sample_size": 86702
+		},
+		{
+			"name": "deep_equal: arrays",
+			"mean_ns": 110.87953300077976,
+			"median_ns": 110,
+			"std_dev_ns": 9.569136404004764,
+			"min_ns": 100,
+			"max_ns": 161,
+			"p75_ns": 120,
+			"p90_ns": 121,
+			"p95_ns": 121,
+			"p99_ns": 140,
+			"ops_per_second": 9018797.003708227,
+			"sample_size": 93619
+		},
+		{
+			"name": "deep_equal: same reference",
+			"mean_ns": 62.81995478268219,
+			"median_ns": 60,
+			"std_dev_ns": 4.734412811236363,
+			"min_ns": 60,
+			"max_ns": 81,
+			"p75_ns": 70,
+			"p90_ns": 70,
+			"p95_ns": 70,
+			"p99_ns": 80,
+			"ops_per_second": 15918508.75186675,
+			"sample_size": 94654
+		}
+	]
+}

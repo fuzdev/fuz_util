@@ -35,7 +35,7 @@ fuz_util is a **foundational utility library**:
 
 ### Benchmarking
 
-Zero-dependency benchmarking library with nanosecond precision timing,
+Benchmarking library with nanosecond precision timing,
 comprehensive statistics (mean, median, percentiles, outlier detection), and
 multiple output formats (ASCII table, Markdown, JSON).
 
