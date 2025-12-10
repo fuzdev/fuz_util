@@ -685,13 +685,8 @@ test('Benchmark: remove() returns this for chaining', ({expect}) => {
 	expect(result).toBe(bench);
 });
 
-test('Benchmark: warmup_iterations can be any non-negative number', ({expect}) => {
-	// 0 is allowed (skips warmup)
+test('Benchmark: warmup_iterations can be 0 (skips warmup)', ({expect}) => {
 	expect(() => new Benchmark({warmup_iterations: 0})).not.toThrow();
-
-	// Negative is still invalid conceptually but doesn't throw
-	// (the for loop just won't iterate)
-	expect(() => new Benchmark({warmup_iterations: -1})).not.toThrow();
 });
 
 test('Benchmark: p75 percentile in output', async ({expect}) => {
@@ -954,4 +949,42 @@ test('Benchmark: warmup_iterations can be 0', async ({expect}) => {
 
 	expect(results).toHaveLength(1);
 	expect(results[0]!.iterations).toBeGreaterThanOrEqual(5);
+});
+
+// Config validation tests
+
+test('Benchmark: throws on negative duration_ms', ({expect}) => {
+	expect(() => new Benchmark({duration_ms: -1})).toThrow('duration_ms must be positive');
+});
+
+test('Benchmark: throws on zero duration_ms', ({expect}) => {
+	expect(() => new Benchmark({duration_ms: 0})).toThrow('duration_ms must be positive');
+});
+
+test('Benchmark: throws on negative warmup_iterations', ({expect}) => {
+	expect(() => new Benchmark({warmup_iterations: -1})).toThrow(
+		'warmup_iterations must be non-negative',
+	);
+});
+
+test('Benchmark: throws on negative cooldown_ms', ({expect}) => {
+	expect(() => new Benchmark({cooldown_ms: -1})).toThrow('cooldown_ms must be non-negative');
+});
+
+test('Benchmark: throws on zero min_iterations', ({expect}) => {
+	expect(() => new Benchmark({min_iterations: 0})).toThrow('min_iterations must be at least 1');
+});
+
+test('Benchmark: throws on zero max_iterations', ({expect}) => {
+	expect(() => new Benchmark({max_iterations: 0})).toThrow('max_iterations must be at least 1');
+});
+
+test('Benchmark: throws on min > max iterations', ({expect}) => {
+	expect(() => new Benchmark({min_iterations: 100, max_iterations: 10})).toThrow(
+		'min_iterations (100) cannot exceed max_iterations (10)',
+	);
+});
+
+test('Benchmark: allows cooldown_ms of 0', ({expect}) => {
+	expect(() => new Benchmark({cooldown_ms: 0})).not.toThrow();
 });

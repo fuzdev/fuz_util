@@ -1,5 +1,7 @@
 # Benchmark Library
 
+⚠️ AI generated
+
 > Zero-dependency performance benchmarking for TypeScript/JavaScript
 
 Comprehensive statistical analysis, percentile tracking, and rich output formatting.
@@ -11,7 +13,6 @@ import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
 
 const bench = new Benchmark({
 	duration_ms: 5000, // Run each task for 5 seconds
-	warmup_iterations: 10, // 10 warmup iterations
 });
 
 bench
@@ -151,7 +152,7 @@ interface BenchmarkConfig {
 	/** Target time to run each task (default: 1000ms) */
 	duration_ms?: number;
 
-	/** Warmup iterations before measuring (default: 5) */
+	/** Warmup iterations before measuring (default: 10) */
 	warmup_iterations?: number;
 
 	/** Cooldown between tasks (default: 100ms) */
@@ -544,25 +545,27 @@ class BenchmarkStats {
 	raw_sample_size: number;
 	ops_per_second: number;
 	failed_iterations: number;
-
-	// Compare two benchmarks for statistical significance
-	static compare(
-		a: BenchmarkStats,
-		b: BenchmarkStats,
-		options?: {alpha?: number},
-	): BenchmarkComparison;
 }
+
+// Compare two benchmarks for statistical significance
+function benchmark_stats_compare(
+	a: BenchmarkStats,
+	b: BenchmarkStats,
+	options?: {alpha?: number},
+): BenchmarkComparison;
 ```
 
 ### Comparing Results
 
-Use `BenchmarkStats.compare()` to determine if performance differences are statistically significant:
+Use `benchmark_stats_compare()` to determine if performance differences are statistically significant:
 
 ```ts
+import {benchmark_stats_compare} from '@fuzdev/fuz_util/benchmark_stats.js';
+
 const results = await bench.run();
 const [result_a, result_b] = results;
 
-const comparison = BenchmarkStats.compare(result_a.stats, result_b.stats);
+const comparison = benchmark_stats_compare(result_a.stats, result_b.stats);
 
 console.log(comparison.faster); // 'a', 'b', or 'equal'
 console.log(comparison.speedup_ratio); // e.g., 1.5 means 1.5x faster
@@ -592,16 +595,96 @@ interface BenchmarkComparison {
 }
 ```
 
+### Baseline Storage and Regression Detection
+
+Save benchmark results to disk and compare against baselines for CI/CD regression detection:
+
+```ts
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+import {
+	benchmark_baseline_save,
+	benchmark_baseline_compare,
+	benchmark_baseline_format,
+	benchmark_baseline_format_json,
+} from '@fuzdev/fuz_util/benchmark_baseline.js';
+
+const bench = new Benchmark();
+bench.add('parse', () => parse(input));
+bench.add('format', () => format(data));
+await bench.run();
+
+// Save current results as baseline
+await benchmark_baseline_save(bench.results());
+
+// Compare against saved baseline
+const comparison = await benchmark_baseline_compare(bench.results(), {
+	regression_threshold: 1.05, // Only flag regressions 5%+ slower
+	staleness_warning_days: 7, // Warn if baseline > 7 days old
+});
+
+if (comparison.regressions.length > 0) {
+	console.log(benchmark_baseline_format(comparison));
+	process.exit(1); // Fail CI
+}
+
+// JSON output for programmatic use
+console.log(benchmark_baseline_format_json(comparison, {pretty: true}));
+```
+
+**Storage location**: `.gro/benchmarks/baseline.json`
+
+**Features:**
+
+- Auto-detects git commit and branch
+- Validates with Zod schemas (warns and auto-cleans corrupted files)
+- Categorizes results: regressions, improvements, unchanged, new, removed
+- Uses statistical significance testing (not just raw numbers)
+- Configurable regression threshold to reduce noise
+- Staleness warnings for old baselines
+- Regressions sorted by effect size (most severe first)
+- JSON output format for CI integration
+
+**API:**
+
+```ts
+// Save baseline (auto-detects git info)
+await benchmark_baseline_save(results, {
+	path?: string,         // default: '.gro/benchmarks'
+	git_commit?: string,   // auto-detected
+	git_branch?: string,   // auto-detected
+});
+
+// Load baseline (returns null if missing/invalid)
+const baseline = await benchmark_baseline_load({path?: string});
+
+// Compare with options
+const result = await benchmark_baseline_compare(results, {
+	path?: string,
+	regression_threshold?: number,     // minimum ratio to flag (default: 1.0)
+	staleness_warning_days?: number,   // warn if older than N days
+});
+// result.regressions (sorted by severity), result.improvements,
+// result.unchanged, result.new_tasks, result.removed_tasks,
+// result.baseline_age_days, result.baseline_stale
+
+// Human-readable summary
+console.log(benchmark_baseline_format(result));
+
+// JSON for CI/programmatic use
+console.log(benchmark_baseline_format_json(result, {pretty?: boolean}));
+```
+
 ## Tips for Accurate Benchmarks
 
 1. **Run for sufficient time**: At least 1-5 seconds per task
-2. **Use warmup iterations**: Let JIT compile the code first (5-10 iterations)
+2. **Use warmup iterations**: Let JIT compile the code first (10-50 iterations for complex functions)
 3. **Close other applications**: Reduce CPU contention
 4. **Run multiple times**: Compare results across runs for consistency
 5. **Check p99 percentile**: Don't just look at averages
 6. **Use GC control**: Trigger GC between tasks for fairness
 7. **Avoid side effects**: Don't modify external state in benchmarks
 8. **Test realistic workloads**: Use real data, not just toy examples
+9. **Avoid allocations in `on_iteration`**: The callback runs between measurements, but allocations can trigger GC before the next iteration
 
 ### Browser Timing Precision
 
@@ -726,3 +809,114 @@ for (const r of results) {
 ```
 
 Common causes: function throws errors, no valid samples collected, or all samples were outliers.
+
+## V8 Optimization Considerations
+
+Understanding how V8's JIT compiler works helps explain benchmark behavior.
+
+### V8's Compilation Tiers
+
+V8 (Node.js's JavaScript engine) compiles code through multiple tiers:
+
+1. **Ignition (Interpreter)**: First execution - interprets bytecode directly. Slowest but starts immediately.
+2. **Sparkplug (Baseline)**: After a few calls - generates simple machine code without optimization. Fast startup, moderate performance.
+3. **TurboFan (Optimizing)**: After many calls (~100-1000+) - generates highly optimized machine code based on type feedback. Fastest, but takes time to compile.
+
+**Why this matters for benchmarks:**
+
+- The first few iterations may be 10-100x slower than optimized code
+- Warmup iterations allow V8 to reach TurboFan optimization before measurement
+- Default 10 warmup iterations is sufficient for most functions, but complex ones may need more
+
+**Recommendation**: For complex functions, use 20-50 warmup iterations:
+
+```ts
+const bench = new Benchmark({
+	warmup_iterations: 50,
+});
+```
+
+### Deoptimization
+
+V8's TurboFan makes optimistic assumptions about types. If these assumptions are violated, V8 "deoptimizes" - falling back to slower code:
+
+```ts
+// This function might deoptimize if called with different types
+function process(value) {
+	return value.x + 1;
+}
+
+// V8 assumes 'value' is always the same shape
+process({x: 1}); // Optimized for this shape
+process({x: 2, y: 3}); // Different shape - may trigger deoptimization!
+```
+
+**Symptoms in benchmarks:**
+
+- Sudden timing spikes mid-benchmark
+- Inconsistent results between runs
+- High variance that outlier detection doesn't fully explain
+
+**Solutions:**
+
+- Use consistent data types throughout the benchmark
+- Ensure warmup uses representative data
+- Check for "polymorphic" call sites (same function called with different types)
+
+### Checking Optimization Status (Advanced)
+
+For debugging, you can inspect V8's optimization status:
+
+```bash
+node --allow-natives-syntax your-benchmark.js
+```
+
+```ts
+function check_optimization(fn) {
+	// Force optimization attempt
+	%OptimizeFunctionOnNextCall(fn);
+	fn();
+
+	const status = %GetOptimizationStatus(fn);
+	// Status is a bitmask:
+	// 1 = is function
+	// 2 = is never optimized
+	// 4 = is always optimized
+	// 8 = is maybe deoptimized
+	// 16 = is optimized
+	// 32 = is optimized by TurboFan
+	// 64 = is interpreted
+	// 128 = is marked for optimization
+	// 256 = is marked for concurrent optimization
+	// 512 = is executing
+
+	if (status & 16) console.log('Function is optimized');
+	if (status & 64) console.log('Function is interpreted');
+	if (status & 8) console.log('Function was deoptimized');
+}
+```
+
+**Note**: `--allow-natives-syntax` exposes internal V8 functions and should only be used for debugging, not in production code.
+
+### Timer Overhead
+
+Each iteration requires two `timer.now()` calls. On Node.js with `process.hrtime.bigint()`, this overhead is typically 20-50ns. For functions taking:
+
+- **>1μs**: Timer overhead is <5% - negligible
+- **100ns-1μs**: Timer overhead is 5-50% - noticeable
+- **<100ns**: Timer overhead dominates - consider batching (future feature)
+
+The library pre-allocates the timing array to avoid GC pressure during measurement, but timer overhead cannot be eliminated.
+
+### Other Sources of Variance
+
+| Source                    | Impact                      | Mitigation                                           |
+| ------------------------- | --------------------------- | ---------------------------------------------------- |
+| **Garbage Collection**    | 1-100ms pauses              | Use `--expose-gc` and trigger between tasks          |
+| **CPU Frequency Scaling** | Variable clock speed        | Let CPU warm up, disable turbo boost for consistency |
+| **Background Processes**  | Sporadic interference       | Close other applications, check system load          |
+| **Thermal Throttling**    | Performance drops over time | Allow cooling between benchmark runs                 |
+| **Memory Pressure**       | GC triggers more frequently | Monitor memory usage, increase heap size             |
+| **Cache Effects**         | Cold vs warm cache          | Warmup iterations, consistent data access patterns   |
+
+For the most accurate results, run benchmarks on a quiet system with consistent conditions.

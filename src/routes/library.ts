@@ -320,6 +320,318 @@ export const library_json: LibraryJson = {
 				dependents: ['benchmark.ts', 'throttle.ts'],
 			},
 			{
+				path: 'benchmark_baseline.ts',
+				declarations: [
+					{
+						name: 'Benchmark_Baseline_Entry',
+						kind: 'type',
+						doc_comment: 'Schema for a single benchmark entry in the baseline.',
+						source_line: 25,
+						type_signature:
+							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; median_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
+					},
+					{
+						name: 'Benchmark_Baseline',
+						kind: 'type',
+						doc_comment: 'Schema for the complete baseline file.',
+						source_line: 44,
+						type_signature:
+							'ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>',
+					},
+					{
+						name: 'Benchmark_Baseline_Save_Options',
+						kind: 'type',
+						doc_comment: 'Options for saving a baseline.',
+						source_line: 57,
+						type_signature: 'Benchmark_Baseline_Save_Options',
+						properties: [
+							{
+								name: 'path',
+								kind: 'variable',
+								type_signature: 'string',
+								doc_comment: "Directory to store baselines (default: '.gro/benchmarks')",
+							},
+							{
+								name: 'git_commit',
+								kind: 'variable',
+								type_signature: 'string | null',
+								doc_comment: 'Git commit hash (auto-detected if not provided)',
+							},
+							{
+								name: 'git_branch',
+								kind: 'variable',
+								type_signature: 'string | null',
+								doc_comment: 'Git branch name (auto-detected if not provided)',
+							},
+						],
+					},
+					{
+						name: 'Benchmark_Baseline_Load_Options',
+						kind: 'type',
+						doc_comment: 'Options for loading a baseline.',
+						source_line: 69,
+						type_signature: 'Benchmark_Baseline_Load_Options',
+						properties: [
+							{
+								name: 'path',
+								kind: 'variable',
+								type_signature: 'string',
+								doc_comment: "Directory to load baseline from (default: '.gro/benchmarks')",
+							},
+						],
+					},
+					{
+						name: 'Benchmark_Baseline_Compare_Options',
+						kind: 'type',
+						doc_comment: 'Options for comparing against a baseline.',
+						source_line: 77,
+						type_signature: 'Benchmark_Baseline_Compare_Options',
+						extends: ['Benchmark_Baseline_Load_Options'],
+						properties: [
+							{
+								name: 'regression_threshold',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									'Minimum speedup ratio to consider a regression.\nFor example, 1.05 means only flag regressions that are 5% or more slower.\nDefault: 1.0 (any statistically significant slowdown is a regression)',
+							},
+							{
+								name: 'staleness_warning_days',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment:
+									'Number of days after which to warn about stale baseline.\nDefault: undefined (no staleness warning)',
+							},
+						],
+					},
+					{
+						name: 'Benchmark_Baseline_Comparison_Result',
+						kind: 'type',
+						doc_comment: 'Result of comparing current results against a baseline.',
+						source_line: 94,
+						type_signature: 'Benchmark_Baseline_Comparison_Result',
+						properties: [
+							{
+								name: 'baseline_found',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment: 'Whether a baseline was found',
+							},
+							{
+								name: 'baseline_timestamp',
+								kind: 'variable',
+								type_signature: 'string | null',
+								doc_comment: 'Timestamp of the baseline',
+							},
+							{
+								name: 'baseline_commit',
+								kind: 'variable',
+								type_signature: 'string | null',
+								doc_comment: 'Git commit of the baseline',
+							},
+							{
+								name: 'baseline_age_days',
+								kind: 'variable',
+								type_signature: 'number | null',
+								doc_comment: 'Age of the baseline in days',
+							},
+							{
+								name: 'baseline_stale',
+								kind: 'variable',
+								type_signature: 'boolean',
+								doc_comment:
+									'Whether the baseline is considered stale based on staleness_warning_days option',
+							},
+							{
+								name: 'comparisons',
+								kind: 'variable',
+								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								doc_comment: 'Individual task comparisons',
+							},
+							{
+								name: 'regressions',
+								kind: 'variable',
+								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								doc_comment:
+									'Tasks that regressed (slower with statistical significance), sorted by effect size (largest first)',
+							},
+							{
+								name: 'improvements',
+								kind: 'variable',
+								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								doc_comment:
+									'Tasks that improved (faster with statistical significance), sorted by effect size (largest first)',
+							},
+							{
+								name: 'unchanged',
+								kind: 'variable',
+								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								doc_comment: 'Tasks with no significant change',
+							},
+							{
+								name: 'new_tasks',
+								kind: 'variable',
+								type_signature: 'Array<string>',
+								doc_comment: 'Tasks in current run but not in baseline',
+							},
+							{
+								name: 'removed_tasks',
+								kind: 'variable',
+								type_signature: 'Array<string>',
+								doc_comment: 'Tasks in baseline but not in current run',
+							},
+						],
+					},
+					{
+						name: 'Benchmark_Baseline_Task_Comparison',
+						kind: 'type',
+						doc_comment: 'Comparison result for a single task.',
+						source_line: 122,
+						type_signature: 'Benchmark_Baseline_Task_Comparison',
+						properties: [
+							{
+								name: 'name',
+								kind: 'variable',
+								type_signature: 'string',
+							},
+							{
+								name: 'baseline',
+								kind: 'variable',
+								type_signature: 'Benchmark_Baseline_Entry',
+							},
+							{
+								name: 'current',
+								kind: 'variable',
+								type_signature: 'Benchmark_Baseline_Entry',
+							},
+							{
+								name: 'comparison',
+								kind: 'variable',
+								type_signature: 'BenchmarkComparison',
+							},
+						],
+					},
+					{
+						name: 'benchmark_baseline_save',
+						kind: 'function',
+						doc_comment: 'Save benchmark results as the current baseline.',
+						examples: [
+							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```",
+						],
+						source_line: 203,
+						type_signature:
+							'(results: BenchmarkResult[], options?: Benchmark_Baseline_Save_Options): Promise<void>',
+						return_type: 'Promise<void>',
+						parameters: [
+							{
+								name: 'results',
+								type: 'BenchmarkResult[]',
+								description: '- Benchmark results to save',
+							},
+							{
+								name: 'options',
+								type: 'Benchmark_Baseline_Save_Options',
+								description: '- Save options',
+								default_value: '{}',
+							},
+						],
+					},
+					{
+						name: 'benchmark_baseline_load',
+						kind: 'function',
+						doc_comment: 'Load the current baseline from disk.',
+						examples: [
+							'```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```',
+						],
+						source_line: 246,
+						type_signature:
+							'(options?: Benchmark_Baseline_Load_Options): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
+						return_type:
+							'Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; median_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>',
+						return_description: 'The baseline, or null if not found or invalid',
+						parameters: [
+							{
+								name: 'options',
+								type: 'Benchmark_Baseline_Load_Options',
+								description: '- Load options',
+								default_value: '{}',
+							},
+						],
+					},
+					{
+						name: 'benchmark_baseline_compare',
+						kind: 'function',
+						doc_comment: 'Compare benchmark results against the stored baseline.',
+						examples: [
+							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```",
+						],
+						source_line: 309,
+						type_signature:
+							'(results: BenchmarkResult[], options?: Benchmark_Baseline_Compare_Options): Promise<Benchmark_Baseline_Comparison_Result>',
+						return_type: 'Promise<Benchmark_Baseline_Comparison_Result>',
+						return_description:
+							'Comparison result with regressions, improvements, and unchanged tasks',
+						parameters: [
+							{
+								name: 'results',
+								type: 'BenchmarkResult[]',
+								description: '- Current benchmark results',
+							},
+							{
+								name: 'options',
+								type: 'Benchmark_Baseline_Compare_Options',
+								description:
+									'- Comparison options including regression threshold and staleness warning',
+								default_value: '{}',
+							},
+						],
+					},
+					{
+						name: 'benchmark_baseline_format',
+						kind: 'function',
+						doc_comment: 'Format a baseline comparison result as a human-readable string.',
+						source_line: 451,
+						type_signature: '(result: Benchmark_Baseline_Comparison_Result): string',
+						return_type: 'string',
+						return_description: 'Formatted string summary',
+						parameters: [
+							{
+								name: 'result',
+								type: 'Benchmark_Baseline_Comparison_Result',
+								description: '- Comparison result from benchmark_baseline_compare',
+							},
+						],
+					},
+					{
+						name: 'benchmark_baseline_format_json',
+						kind: 'function',
+						doc_comment:
+							'Format a baseline comparison result as JSON for programmatic consumption.',
+						source_line: 532,
+						type_signature:
+							'(result: Benchmark_Baseline_Comparison_Result, options?: { pretty?: boolean | undefined; }): string',
+						return_type: 'string',
+						return_description: 'JSON string',
+						parameters: [
+							{
+								name: 'result',
+								type: 'Benchmark_Baseline_Comparison_Result',
+								description: '- Comparison result from benchmark_baseline_compare',
+							},
+							{
+								name: 'options',
+								type: '{ pretty?: boolean | undefined; }',
+								description: '- Formatting options',
+								default_value: '{}',
+							},
+						],
+					},
+				],
+				module_comment:
+					'Benchmark baseline storage and comparison utilities.\nSave benchmark results to disk and compare against baselines for regression detection.\n@module',
+				dependencies: ['benchmark_stats.ts', 'fs.ts'],
+			},
+			{
 				path: 'benchmark_format.ts',
 				declarations: [
 					{
@@ -459,17 +771,47 @@ export const library_json: LibraryJson = {
 				path: 'benchmark_stats.ts',
 				declarations: [
 					{
+						name: 'BenchmarkStatsComparable',
+						kind: 'type',
+						doc_comment:
+							'Minimal stats interface for comparison.\nThis allows comparing stats from different sources (e.g., loaded baselines).',
+						source_line: 23,
+						type_signature: 'BenchmarkStatsComparable',
+						properties: [
+							{
+								name: 'mean_ns',
+								kind: 'variable',
+								type_signature: 'number',
+							},
+							{
+								name: 'std_dev_ns',
+								kind: 'variable',
+								type_signature: 'number',
+							},
+							{
+								name: 'sample_size',
+								kind: 'variable',
+								type_signature: 'number',
+							},
+							{
+								name: 'confidence_interval_ns',
+								kind: 'variable',
+								type_signature: '[number, number]',
+							},
+						],
+					},
+					{
 						name: 'EffectMagnitude',
 						kind: 'type',
 						doc_comment: "Effect size magnitude interpretation (Cohen's d).",
-						source_line: 22,
+						source_line: 33,
 						type_signature: 'EffectMagnitude',
 					},
 					{
 						name: 'BenchmarkComparison',
 						kind: 'type',
 						doc_comment: 'Result from comparing two benchmark stats.',
-						source_line: 27,
+						source_line: 38,
 						type_signature: 'BenchmarkComparison',
 						properties: [
 							{
@@ -530,7 +872,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkCompareOptions',
 						kind: 'type',
 						doc_comment: 'Options for benchmark comparison.',
-						source_line: 49,
+						source_line: 60,
 						type_signature: 'BenchmarkCompareOptions',
 						properties: [
 							{
@@ -546,7 +888,7 @@ export const library_json: LibraryJson = {
 						kind: 'class',
 						doc_comment:
 							'Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.',
-						source_line: 59,
+						source_line: 70,
 						members: [
 							{
 								name: 'mean_ns',
@@ -686,43 +1028,47 @@ export const library_json: LibraryJson = {
 								return_type: 'string',
 								parameters: [],
 							},
+						],
+					},
+					{
+						name: 'benchmark_stats_compare',
+						kind: 'function',
+						doc_comment:
+							"Compare two benchmark results for statistical significance.\nUses Welch's t-test (handles unequal variances) and Cohen's d effect size.",
+						examples: [
+							'```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```',
+						],
+						source_line: 196,
+						type_signature:
+							'(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison',
+						return_type: 'BenchmarkComparison',
+						return_description:
+							'Comparison result with significance, effect size, and recommendation',
+						parameters: [
 							{
-								name: 'compare',
-								kind: 'function',
-								modifiers: ['static'],
-								doc_comment:
-									"Compare two benchmark results for statistical significance.\nUses Welch's t-test (handles unequal variances) and Cohen's d effect size.",
-								type_signature:
-									'(a: BenchmarkStats, b: BenchmarkStats, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison',
-								return_type: 'BenchmarkComparison',
-								return_description:
-									'Comparison result with significance, effect size, and recommendation',
-								parameters: [
-									{
-										name: 'a',
-										type: 'BenchmarkStats',
-										description: '- First benchmark stats',
-									},
-									{
-										name: 'b',
-										type: 'BenchmarkStats',
-										description: '- Second benchmark stats',
-									},
-									{
-										name: 'options',
-										type: 'BenchmarkCompareOptions | undefined',
-										optional: true,
-										description: '- Comparison options',
-									},
-								],
+								name: 'a',
+								type: 'BenchmarkStatsComparable',
+								description: '- First benchmark stats (or any object with required properties)',
+							},
+							{
+								name: 'b',
+								type: 'BenchmarkStatsComparable',
+								description: '- Second benchmark stats (or any object with required properties)',
+							},
+							{
+								name: 'options',
+								type: 'BenchmarkCompareOptions | undefined',
+								optional: true,
+								description: '- Comparison options',
 							},
 						],
+						also_exported_from: ['benchmark.ts'],
 					},
 				],
 				module_comment:
 					'Benchmark-specific statistical analysis.\nUses the general stats utilities from stats.ts for timing/performance analysis.\nAll timing values are in nanoseconds.',
 				dependencies: ['stats.ts', 'time.ts'],
-				dependents: ['benchmark.ts'],
+				dependents: ['benchmark.ts', 'benchmark_baseline.ts'],
 			},
 			{
 				path: 'benchmark_types.ts',
@@ -942,7 +1288,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```',
 						],
-						source_line: 69,
+						source_line: 103,
 						type_signature:
 							'(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
@@ -970,7 +1316,7 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 103,
+						source_line: 137,
 						members: [
 							{
 								name: 'constructor',
@@ -1979,7 +2325,7 @@ export const library_json: LibraryJson = {
 					},
 				],
 				dependencies: ['array.ts', 'object.ts', 'string.ts'],
-				dependents: ['git.ts'],
+				dependents: ['benchmark_baseline.ts', 'git.ts'],
 			},
 			{
 				path: 'function.ts',

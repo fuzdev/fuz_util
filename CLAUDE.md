@@ -99,7 +99,8 @@ See `src/docs/benchmark.md` for full documentation.
 - `PascalCase` for types, class names, and Svelte components
 - explicit file extensions in imports
 - tab indentation, 100 character width
-- no re-exports - import directly from the source module
+- no re-exports - import directly from the source module (e.g., import baseline
+  functions from `benchmark_baseline.js`, not from `benchmark.js`)
 - no backwards compatibility preservation - breaking changes are acceptable
 
 ## What fuz_util does NOT include

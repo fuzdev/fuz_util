@@ -17,6 +17,17 @@ import {
 } from './stats.js';
 
 /**
+ * Minimal stats interface for comparison.
+ * This allows comparing stats from different sources (e.g., loaded baselines).
+ */
+export interface BenchmarkStatsComparable {
+	mean_ns: number;
+	std_dev_ns: number;
+	sample_size: number;
+	confidence_interval_ns: [number, number];
+}
+
+/**
  * Effect size magnitude interpretation (Cohen's d).
  */
 export type EffectMagnitude = 'negligible' | 'small' | 'medium' | 'large';
@@ -163,139 +174,139 @@ export class BenchmarkStats {
 	toString(): string {
 		return `BenchmarkStats(mean=${time_format_adaptive(this.mean_ns)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${this.sample_size})`;
 	}
+}
 
-	/**
-	 * Compare two benchmark results for statistical significance.
-	 * Uses Welch's t-test (handles unequal variances) and Cohen's d effect size.
-	 *
-	 * @param a - First benchmark stats
-	 * @param b - Second benchmark stats
-	 * @param options - Comparison options
-	 * @returns Comparison result with significance, effect size, and recommendation
-	 *
-	 * @example
-	 * ```ts
-	 * const comparison = BenchmarkStats.compare(result_a.stats, result_b.stats);
-	 * if (comparison.significant) {
-	 *   console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);
-	 * }
-	 * ```
-	 */
-	static compare(
-		a: BenchmarkStats,
-		b: BenchmarkStats,
-		options?: BenchmarkCompareOptions,
-	): BenchmarkComparison {
-		const alpha = options?.alpha ?? 0.05;
+/**
+ * Compare two benchmark results for statistical significance.
+ * Uses Welch's t-test (handles unequal variances) and Cohen's d effect size.
+ *
+ * @param a - First benchmark stats (or any object with required properties)
+ * @param b - Second benchmark stats (or any object with required properties)
+ * @param options - Comparison options
+ * @returns Comparison result with significance, effect size, and recommendation
+ *
+ * @example
+ * ```ts
+ * const comparison = benchmark_stats_compare(result_a.stats, result_b.stats);
+ * if (comparison.significant) {
+ *   console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);
+ * }
+ * ```
+ */
+export const benchmark_stats_compare = (
+	a: BenchmarkStatsComparable,
+	b: BenchmarkStatsComparable,
+	options?: BenchmarkCompareOptions,
+): BenchmarkComparison => {
+	const alpha = options?.alpha ?? 0.05;
 
-		// Handle edge cases
-		if (a.sample_size === 0 || b.sample_size === 0) {
-			return {
-				faster: 'equal',
-				speedup_ratio: 1,
-				significant: false,
-				p_value: 1,
-				effect_size: 0,
-				effect_magnitude: 'negligible',
-				ci_overlap: true,
-				recommendation: 'Insufficient data for comparison',
-			};
-		}
-
-		// Calculate speedup ratio (lower time = faster, so compare by time not ops/sec)
-		const speedup_ratio = a.mean_ns < b.mean_ns ? b.mean_ns / a.mean_ns : a.mean_ns / b.mean_ns;
-		const faster: 'a' | 'b' | 'equal' =
-			a.mean_ns < b.mean_ns ? 'a' : a.mean_ns > b.mean_ns ? 'b' : 'equal';
-
-		// Welch's t-test (handles unequal variances)
-		// Special case: if both have zero variance, t-test is undefined
-		let p_value: number;
-		if (a.std_dev_ns === 0 && b.std_dev_ns === 0) {
-			// When there's no variance, any difference is 100% reliable (p=0) or identical (p=1)
-			p_value = a.mean_ns === b.mean_ns ? 1 : 0;
-		} else {
-			const {t_statistic, degrees_of_freedom} = welch_t_test(
-				a.mean_ns,
-				a.std_dev_ns,
-				a.sample_size,
-				b.mean_ns,
-				b.std_dev_ns,
-				b.sample_size,
-			);
-			// Calculate two-tailed p-value using t-distribution approximation
-			p_value = t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
-		}
-
-		// Cohen's d effect size
-		const pooled_std_dev = Math.sqrt(
-			((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
-				(a.sample_size + b.sample_size - 2),
-		);
-
-		// When pooled_std_dev is 0 but means differ, effect is maximal (infinite)
-		// When means are equal, effect is 0
-		let effect_size: number;
-		let effect_magnitude: EffectMagnitude;
-
-		if (pooled_std_dev === 0) {
-			// Zero variance case - if means differ, it's a definitive difference
-			if (a.mean_ns === b.mean_ns) {
-				effect_size = 0;
-				effect_magnitude = 'negligible';
-			} else {
-				// Any difference is 100% reliable when there's no variance
-				effect_size = Infinity;
-				effect_magnitude = 'large';
-			}
-		} else {
-			effect_size = Math.abs(a.mean_ns - b.mean_ns) / pooled_std_dev;
-			// Interpret effect size (Cohen's conventions)
-			effect_magnitude =
-				effect_size < 0.2
-					? 'negligible'
-					: effect_size < 0.5
-						? 'small'
-						: effect_size < 0.8
-							? 'medium'
-							: 'large';
-		}
-
-		// Check confidence interval overlap
-		const ci_overlap =
-			a.confidence_interval_ns[0] <= b.confidence_interval_ns[1] &&
-			b.confidence_interval_ns[0] <= a.confidence_interval_ns[1];
-
-		// Determine significance
-		const significant = p_value < alpha;
-
-		// Generate recommendation
-		let recommendation: string;
-		if (!significant) {
-			recommendation =
-				effect_magnitude === 'negligible'
-					? 'No meaningful difference detected'
-					: `Difference not statistically significant (p=${p_value.toFixed(3)}), but effect size suggests ${effect_magnitude} practical difference`;
-		} else if (effect_magnitude === 'negligible') {
-			recommendation = `Statistically significant but negligible practical difference (${speedup_ratio.toFixed(2)}x)`;
-		} else {
-			recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (p=${p_value.toFixed(3)})`;
-		}
-
-		// Adjust 'faster' to 'equal' if effect is negligible
-		const adjusted_faster = effect_magnitude === 'negligible' ? 'equal' : faster;
-
+	// Handle edge cases
+	if (a.sample_size === 0 || b.sample_size === 0) {
 		return {
-			faster: adjusted_faster,
-			speedup_ratio,
-			significant,
-			p_value,
-			effect_size,
-			effect_magnitude,
-			ci_overlap,
-			recommendation,
+			faster: 'equal',
+			speedup_ratio: 1,
+			significant: false,
+			p_value: 1,
+			effect_size: 0,
+			effect_magnitude: 'negligible',
+			ci_overlap: true,
+			recommendation: 'Insufficient data for comparison',
 		};
 	}
-}
+
+	// Calculate speedup ratio (lower time = faster, so compare by time not ops/sec)
+	const speedup_ratio = a.mean_ns < b.mean_ns ? b.mean_ns / a.mean_ns : a.mean_ns / b.mean_ns;
+	const faster: 'a' | 'b' | 'equal' =
+		a.mean_ns < b.mean_ns ? 'a' : a.mean_ns > b.mean_ns ? 'b' : 'equal';
+
+	// Welch's t-test (handles unequal variances)
+	// Special case: if both have zero variance, t-test is undefined
+	let p_value: number;
+	if (a.std_dev_ns === 0 && b.std_dev_ns === 0) {
+		// When there's no variance, any difference is 100% reliable (p=0) or identical (p=1)
+		p_value = a.mean_ns === b.mean_ns ? 1 : 0;
+	} else {
+		const {t_statistic, degrees_of_freedom} = welch_t_test(
+			a.mean_ns,
+			a.std_dev_ns,
+			a.sample_size,
+			b.mean_ns,
+			b.std_dev_ns,
+			b.sample_size,
+		);
+		// Calculate two-tailed p-value using t-distribution approximation
+		p_value = t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
+	}
+
+	// Cohen's d effect size
+	const pooled_std_dev = Math.sqrt(
+		((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
+			(a.sample_size + b.sample_size - 2),
+	);
+
+	// When pooled_std_dev is 0 but means differ, effect is maximal (infinite)
+	// When means are equal, effect is 0
+	let effect_size: number;
+	let effect_magnitude: EffectMagnitude;
+
+	if (pooled_std_dev === 0) {
+		// Zero variance case - if means differ, it's a definitive difference
+		if (a.mean_ns === b.mean_ns) {
+			effect_size = 0;
+			effect_magnitude = 'negligible';
+		} else {
+			// Any difference is 100% reliable when there's no variance
+			effect_size = Infinity;
+			effect_magnitude = 'large';
+		}
+	} else {
+		effect_size = Math.abs(a.mean_ns - b.mean_ns) / pooled_std_dev;
+		// Interpret effect size (Cohen's conventions)
+		effect_magnitude =
+			effect_size < 0.2
+				? 'negligible'
+				: effect_size < 0.5
+					? 'small'
+					: effect_size < 0.8
+						? 'medium'
+						: 'large';
+	}
+
+	// Check confidence interval overlap
+	const ci_overlap =
+		a.confidence_interval_ns[0] <= b.confidence_interval_ns[1] &&
+		b.confidence_interval_ns[0] <= a.confidence_interval_ns[1];
+
+	// Determine significance
+	const significant = p_value < alpha;
+
+	// Generate recommendation
+	let recommendation: string;
+	if (!significant) {
+		recommendation =
+			effect_magnitude === 'negligible'
+				? 'No meaningful difference detected'
+				: `Difference not statistically significant (p=${p_value.toFixed(3)}), but effect size suggests ${effect_magnitude} practical difference`;
+	} else if (effect_magnitude === 'negligible') {
+		recommendation = `Statistically significant but negligible practical difference (${speedup_ratio.toFixed(2)}x)`;
+	} else {
+		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (p=${p_value.toFixed(3)})`;
+	}
+
+	// Adjust 'faster' to 'equal' if effect is negligible
+	const adjusted_faster = effect_magnitude === 'negligible' ? 'equal' : faster;
+
+	return {
+		faster: adjusted_faster,
+		speedup_ratio,
+		significant,
+		p_value,
+		effect_size,
+		effect_magnitude,
+		ci_overlap,
+		recommendation,
+	};
+};
 
 /**
  * Calculate Welch's t-test statistic and degrees of freedom.

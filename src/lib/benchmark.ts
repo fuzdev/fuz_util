@@ -20,7 +20,10 @@
  */
 
 import {is_promise, wait} from './async.js';
-import {BenchmarkStats} from './benchmark_stats.js';
+import {BenchmarkStats, benchmark_stats_compare} from './benchmark_stats.js';
+
+// Re-export for convenience
+export {benchmark_stats_compare};
 import {timer_default, time_unit_detect_best, time_format} from './time.js';
 import {
 	benchmark_format_table,
@@ -39,10 +42,41 @@ import type {
 
 // Default configuration values
 const DEFAULT_DURATION_MS = 1000;
-const DEFAULT_WARMUP_ITERATIONS = 5;
+const DEFAULT_WARMUP_ITERATIONS = 10;
 const DEFAULT_COOLDOWN_MS = 100;
 const DEFAULT_MIN_ITERATIONS = 10;
 const DEFAULT_MAX_ITERATIONS = 100_000;
+
+/**
+ * Validate and normalize benchmark configuration.
+ * Throws if configuration is invalid.
+ */
+const validate_config = (config: BenchmarkConfig): void => {
+	if (config.duration_ms !== undefined && config.duration_ms <= 0) {
+		throw new Error(`duration_ms must be positive, got ${config.duration_ms}`);
+	}
+	if (config.warmup_iterations !== undefined && config.warmup_iterations < 0) {
+		throw new Error(`warmup_iterations must be non-negative, got ${config.warmup_iterations}`);
+	}
+	if (config.cooldown_ms !== undefined && config.cooldown_ms < 0) {
+		throw new Error(`cooldown_ms must be non-negative, got ${config.cooldown_ms}`);
+	}
+	if (config.min_iterations !== undefined && config.min_iterations < 1) {
+		throw new Error(`min_iterations must be at least 1, got ${config.min_iterations}`);
+	}
+	if (config.max_iterations !== undefined && config.max_iterations < 1) {
+		throw new Error(`max_iterations must be at least 1, got ${config.max_iterations}`);
+	}
+	if (
+		config.min_iterations !== undefined &&
+		config.max_iterations !== undefined &&
+		config.min_iterations > config.max_iterations
+	) {
+		throw new Error(
+			`min_iterations (${config.min_iterations}) cannot exceed max_iterations (${config.max_iterations})`,
+		);
+	}
+};
 
 /**
  * Internal task representation with detected async status.
@@ -107,6 +141,7 @@ export class Benchmark {
 	#results: Array<BenchmarkResult> = [];
 
 	constructor(config: BenchmarkConfig = {}) {
+		validate_config(config);
 		this.#config = {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
 			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
@@ -265,7 +300,11 @@ export class Benchmark {
 	 */
 	async #run_task(task: BenchmarkTaskInternal): Promise<BenchmarkResult> {
 		const suite_start_ns = this.#config.timer.now();
-		const timings_ns: Array<number> = [];
+
+		// Pre-allocate array to avoid GC pressure during measurement
+		const max_iterations = this.#config.max_iterations;
+		const timings_ns: Array<number> = new Array(max_iterations);
+		let timing_count = 0;
 
 		try {
 			// Setup
@@ -280,9 +319,7 @@ export class Benchmark {
 			// Measurement phase
 			const target_time_ns = this.#config.duration_ms * 1_000_000; // Convert ms to ns
 			const min_iterations = this.#config.min_iterations;
-			const max_iterations = this.#config.max_iterations;
 
-			let iteration = 0;
 			let aborted = false as boolean;
 			const abort = (): void => {
 				aborted = true;
@@ -293,32 +330,30 @@ export class Benchmark {
 			if (is_async) {
 				// Async code path - await each iteration
 				// eslint-disable-next-line no-unmodified-loop-condition
-				while (iteration < max_iterations && !aborted) {
+				while (timing_count < max_iterations && !aborted) {
 					const iter_start_ns = this.#config.timer.now();
 					await task.fn(); // eslint-disable-line no-await-in-loop
 					const iter_end_ns = this.#config.timer.now();
-					timings_ns.push(iter_end_ns - iter_start_ns);
-					iteration++;
-					this.#config.on_iteration?.(task.name, iteration, abort);
+					timings_ns[timing_count++] = iter_end_ns - iter_start_ns;
+					this.#config.on_iteration?.(task.name, timing_count, abort);
 
 					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
-					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
+					if (timing_count >= min_iterations && total_elapsed_ns >= target_time_ns) {
 						break;
 					}
 				}
 			} else {
 				// Sync code path - no promise checking overhead
 				// eslint-disable-next-line no-unmodified-loop-condition
-				while (iteration < max_iterations && !aborted) {
+				while (timing_count < max_iterations && !aborted) {
 					const iter_start_ns = this.#config.timer.now();
 					task.fn();
 					const iter_end_ns = this.#config.timer.now();
-					timings_ns.push(iter_end_ns - iter_start_ns);
-					iteration++;
-					this.#config.on_iteration?.(task.name, iteration, abort);
+					timings_ns[timing_count++] = iter_end_ns - iter_start_ns;
+					this.#config.on_iteration?.(task.name, timing_count, abort);
 
 					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
-					if (iteration >= min_iterations && total_elapsed_ns >= target_time_ns) {
+					if (timing_count >= min_iterations && total_elapsed_ns >= target_time_ns) {
 						break;
 					}
 				}
@@ -330,6 +365,9 @@ export class Benchmark {
 			}
 		}
 
+		// Trim array to actual size
+		timings_ns.length = timing_count;
+
 		const suite_end_ns = this.#config.timer.now();
 		const total_time_ms = (suite_end_ns - suite_start_ns) / 1_000_000; // Convert back to ms for display
 
@@ -339,7 +377,7 @@ export class Benchmark {
 		return {
 			name: task.name,
 			stats,
-			iterations: timings_ns.length,
+			iterations: timing_count,
 			total_time_ms,
 			timings_ns,
 		};
