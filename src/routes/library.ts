@@ -644,7 +644,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌────┬─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │    │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├────┼─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ 🐇 │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ 🐢 │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └────┴─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```\n\n**Performance tier animals:**\n- 🐆 Cheetah: >1M ops/sec (extremely fast)\n- 🐇 Rabbit: >100K ops/sec (fast)\n- 🐢 Turtle: >10K ops/sec (moderate)\n- 🐌 Snail: <10K ops/sec (slow)',
 						],
-						source_line: 27,
+						source_line: 66,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with enhanced metrics',
@@ -664,7 +664,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | median (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|-------------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81        | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82        | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```',
 						],
-						source_line: 127,
+						source_line: 166,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
@@ -679,7 +679,7 @@ export const library_json: LibraryJson = {
 					{
 						name: 'BenchmarkFormatJsonOptions',
 						kind: 'type',
-						source_line: 205,
+						source_line: 244,
 						type_signature: 'BenchmarkFormatJsonOptions',
 						properties: [
 							{
@@ -703,7 +703,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```',
 						],
-						source_line: 225,
+						source_line: 264,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string',
 						return_type: 'string',
@@ -729,7 +729,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 284,
+						source_line: 323,
 						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
@@ -750,7 +750,7 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_format_number',
 						kind: 'function',
 						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
-						source_line: 320,
+						source_line: 359,
 						type_signature: '(n: number, decimals?: number): string',
 						return_type: 'string',
 						parameters: [
