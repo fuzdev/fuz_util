@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_util",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "modules": [
     {
       "path": "array.ts",
@@ -53,6 +53,155 @@
         {
           "name": "map_concurrent_settled",
           "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "benchmark_baseline.ts",
+      "declarations": [
+        {
+          "name": "BenchmarkBaselineEntry",
+          "kind": "variable"
+        },
+        {
+          "name": "BenchmarkBaseline",
+          "kind": "variable"
+        },
+        {
+          "name": "BenchmarkBaselineSaveOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkBaselineLoadOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkBaselineCompareOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkBaselineComparisonResult",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkBaselineTaskComparison",
+          "kind": "type"
+        },
+        {
+          "name": "benchmark_baseline_save",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_baseline_load",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_baseline_compare",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_baseline_format",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_baseline_format_json",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "benchmark_format.ts",
+      "declarations": [
+        {
+          "name": "benchmark_format_table",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_format_markdown",
+          "kind": "function"
+        },
+        {
+          "name": "BenchmarkFormatJsonOptions",
+          "kind": "type"
+        },
+        {
+          "name": "benchmark_format_json",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_format_table_grouped",
+          "kind": "function"
+        },
+        {
+          "name": "benchmark_format_number",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "benchmark_stats.ts",
+      "declarations": [
+        {
+          "name": "BenchmarkStatsComparable",
+          "kind": "type"
+        },
+        {
+          "name": "EffectMagnitude",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkComparison",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkCompareOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkStats",
+          "kind": "class"
+        },
+        {
+          "name": "benchmark_stats_compare",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "benchmark_types.ts",
+      "declarations": [
+        {
+          "name": "BenchmarkConfig",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkTask",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkResult",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkFormatTableOptions",
+          "kind": "type"
+        },
+        {
+          "name": "BenchmarkGroup",
+          "kind": "type"
+        }
+      ]
+    },
+    {
+      "path": "benchmark.ts",
+      "declarations": [
+        {
+          "name": "benchmark_warmup",
+          "kind": "function"
+        },
+        {
+          "name": "Benchmark",
+          "kind": "class"
         }
       ]
     },
@@ -995,6 +1144,75 @@
       ]
     },
     {
+      "path": "stats.ts",
+      "declarations": [
+        {
+          "name": "stats_mean",
+          "kind": "function"
+        },
+        {
+          "name": "stats_median",
+          "kind": "function"
+        },
+        {
+          "name": "stats_std_dev",
+          "kind": "function"
+        },
+        {
+          "name": "stats_variance",
+          "kind": "function"
+        },
+        {
+          "name": "stats_percentile",
+          "kind": "function"
+        },
+        {
+          "name": "stats_cv",
+          "kind": "function"
+        },
+        {
+          "name": "stats_min_max",
+          "kind": "function"
+        },
+        {
+          "name": "StatsOutlierResult",
+          "kind": "type"
+        },
+        {
+          "name": "StatsOutliersIqrOptions",
+          "kind": "type"
+        },
+        {
+          "name": "stats_outliers_iqr",
+          "kind": "function"
+        },
+        {
+          "name": "StatsOutliersMadOptions",
+          "kind": "type"
+        },
+        {
+          "name": "stats_outliers_mad",
+          "kind": "function"
+        },
+        {
+          "name": "CONFIDENCE_Z_SCORES",
+          "kind": "variable"
+        },
+        {
+          "name": "confidence_level_to_z_score",
+          "kind": "function"
+        },
+        {
+          "name": "StatsConfidenceIntervalOptions",
+          "kind": "type"
+        },
+        {
+          "name": "stats_confidence_interval",
+          "kind": "function"
+        }
+      ]
+    },
+    {
       "path": "string.ts",
       "declarations": [
         {
@@ -1056,6 +1274,83 @@
         },
         {
           "name": "throttle",
+          "kind": "function"
+        }
+      ]
+    },
+    {
+      "path": "time.ts",
+      "declarations": [
+        {
+          "name": "Timer",
+          "kind": "type"
+        },
+        {
+          "name": "timer_node",
+          "kind": "variable"
+        },
+        {
+          "name": "timer_browser",
+          "kind": "variable"
+        },
+        {
+          "name": "timer_default",
+          "kind": "variable"
+        },
+        {
+          "name": "TIME_NS_PER_US",
+          "kind": "variable"
+        },
+        {
+          "name": "TIME_NS_PER_MS",
+          "kind": "variable"
+        },
+        {
+          "name": "TIME_NS_PER_SEC",
+          "kind": "variable"
+        },
+        {
+          "name": "time_ns_to_us",
+          "kind": "function"
+        },
+        {
+          "name": "time_ns_to_ms",
+          "kind": "function"
+        },
+        {
+          "name": "time_ns_to_sec",
+          "kind": "function"
+        },
+        {
+          "name": "TimeUnit",
+          "kind": "type"
+        },
+        {
+          "name": "time_unit_detect_best",
+          "kind": "function"
+        },
+        {
+          "name": "time_format",
+          "kind": "function"
+        },
+        {
+          "name": "time_format_adaptive",
+          "kind": "function"
+        },
+        {
+          "name": "TimeResult",
+          "kind": "type"
+        },
+        {
+          "name": "time_async",
+          "kind": "function"
+        },
+        {
+          "name": "time_sync",
+          "kind": "function"
+        },
+        {
+          "name": "time_measure",
           "kind": "function"
         }
       ]
