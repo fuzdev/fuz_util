@@ -1541,7 +1541,7 @@ export const library_json: LibraryJson = {
 					},
 				],
 				module_comment:
-					"Zero-dependency benchmarking library for measuring function performance.\n\n@example\n```ts\nimport {Benchmark} from '@fuzdev/fuz_util/benchmark.js';\n\nconst bench = new Benchmark({\n  duration_ms: 5000,\n  warmup_iterations: 5,\n});\n\nbench\n  .add('slugify', () => slugify(title))\n  .add('slugify_slower', () => slugify_slower(title));\n\nconst results = await bench.run();\nconsole.log(bench.table());\n```",
+					"Benchmarking library.\n\n@example\n```ts\nimport {Benchmark} from '@fuzdev/fuz_util/benchmark.js';\n\nconst bench = new Benchmark({\n  duration_ms: 5000,\n  warmup_iterations: 5,\n});\n\nbench\n  .add('slugify', () => slugify(title))\n  .add('slugify_slower', () => slugify_slower(title));\n\nconst results = await bench.run();\nconsole.log(bench.table());\n```",
 				dependencies: ['async.ts', 'benchmark_format.ts', 'benchmark_stats.ts', 'time.ts'],
 			},
 			{

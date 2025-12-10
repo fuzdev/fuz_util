@@ -1,5 +1,5 @@
 /**
- * Zero-dependency benchmarking library for measuring function performance.
+ * Benchmarking library.
  *
  * @example
  * ```ts

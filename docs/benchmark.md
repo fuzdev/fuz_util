@@ -2,7 +2,7 @@
 
 ⚠️ AI generated
 
-> Zero-dependency performance benchmarking for TypeScript/JavaScript
+> performance benchmarking for TypeScript/JS
 
 Comprehensive statistical analysis, percentile tracking, and rich output formatting.
 
@@ -816,7 +816,7 @@ Understanding how V8's JIT compiler works helps explain benchmark behavior.
 
 ### V8's Compilation Tiers
 
-V8 (Node.js's JavaScript engine) compiles code through multiple tiers:
+V8 (Node.js's JS engine) compiles code through multiple tiers:
 
 1. **Ignition (Interpreter)**: First execution - interprets bytecode directly. Slowest but starts immediately.
 2. **Sparkplug (Baseline)**: After a few calls - generates simple machine code without optimization. Fast startup, moderate performance.

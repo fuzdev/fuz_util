@@ -18,7 +18,7 @@ design:
   see <a href="https://github.com/fuz-dev/fuz">@fuzdev/fuz_ui</a>
 - complements the modern web platform, drops legacy quickly
 - kinda minimal in many ways but also not, treeshakes well
-- includes a **zero-dependency** benchmarking library with rich statistical analysis
+- includes a benchmarking library with rich statistical analysis
 
 ## usage
 
