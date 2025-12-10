@@ -2,6 +2,45 @@ import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
 import {time_unit_detect_best, time_format, type TimeUnit} from './time.js';
 
 /**
+ * Calculate the display width of a string in terminal columns.
+ * Emojis and other wide characters take 2 columns.
+ */
+const string_display_width = (str: string): number => {
+	let width = 0;
+	for (const char of str) {
+		const code = char.codePointAt(0)!;
+		// Emoji and other wide characters (rough heuristic)
+		// - Most emoji are in range 0x1F300-0x1FAFF
+		// - Some are in 0x2600-0x27BF (misc symbols)
+		// - CJK characters 0x4E00-0x9FFF also double-width but not handling here
+		if (
+			(code >= 0x1f300 && code <= 0x1faff) ||
+			(code >= 0x2600 && code <= 0x27bf) ||
+			(code >= 0x1f600 && code <= 0x1f64f) ||
+			(code >= 0x1f680 && code <= 0x1f6ff)
+		) {
+			width += 2;
+		} else {
+			width += 1;
+		}
+	}
+	return width;
+};
+
+/**
+ * Pad a string to a target display width (accounting for wide characters).
+ */
+const pad_to_width = (str: string, target_width: number, align: 'left' | 'right' = 'left'): string => {
+	const current_width = string_display_width(str);
+	const padding = Math.max(0, target_width - current_width);
+	if (align === 'left') {
+		return str + ' '.repeat(padding);
+	} else {
+		return ' '.repeat(padding) + str;
+	}
+};
+
+/**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
  * All times use the same unit for easy comparison.
  * @param results - Array of benchmark results
@@ -71,23 +110,23 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 		rows.push([tier, r.name, ops_sec, median, p75, p90, p95, p99, min, max, vs_best]);
 	});
 
-	// Calculate column widths
+	// Calculate column widths (using display width for proper emoji handling)
 	const widths = rows[0]!.map((_, col_i) => {
-		return Math.max(...rows.map((row) => row[col_i]!.length));
+		return Math.max(...rows.map((row) => string_display_width(row[col_i]!)));
 	});
 
 	// Build table
 	const lines: Array<string> = [];
 
 	// Top border
-	lines.push('┌─' + widths.map((w) => '─'.repeat(w + 2)).join('─┬─') + '─┐');
+	lines.push('┌' + widths.map((w) => '─'.repeat(w + 2)).join('┬') + '┐');
 
 	// Header
-	const header = rows[0]!.map((cell, i) => ' ' + cell.padEnd(widths[i]!) + ' ').join('│');
+	const header = rows[0]!.map((cell, i) => ' ' + pad_to_width(cell, widths[i]!) + ' ').join('│');
 	lines.push('│' + header + '│');
 
 	// Header separator
-	lines.push('├─' + widths.map((w) => '─'.repeat(w + 2)).join('─┼─') + '─┤');
+	lines.push('├' + widths.map((w) => '─'.repeat(w + 2)).join('┼') + '┤');
 
 	// Data rows
 	for (let i = 1; i < rows.length; i++) {
@@ -95,16 +134,16 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 			const width = widths[col_i]!;
 			// Left-align tier emoji and task name, right-align numbers
 			if (col_i === 0 || col_i === 1) {
-				return ' ' + cell.padEnd(width) + ' ';
+				return ' ' + pad_to_width(cell, width, 'left') + ' ';
 			} else {
-				return ' ' + cell.padStart(width) + ' ';
+				return ' ' + pad_to_width(cell, width, 'right') + ' ';
 			}
 		}).join('│');
 		lines.push('│' + row + '│');
 	}
 
 	// Bottom border
-	lines.push('└─' + widths.map((w) => '─'.repeat(w + 2)).join('─┴─') + '─┘');
+	lines.push('└' + widths.map((w) => '─'.repeat(w + 2)).join('┴') + '┘');
 
 	return lines.join('\n');
 };

@@ -54,6 +54,15 @@ console.log(bench.markdown());  // Markdown table
 console.log(bench.summary());   // Fastest/slowest comparison
 ```
 
+**Workflow:**
+
+```bash
+npm run benchmark        # Run and compare against baseline
+npm run benchmark:save   # Save new baseline (after intentional changes)
+```
+
+Baseline stored in `src/benchmarks/baseline.json` (committed to repo).
+
 See `src/docs/benchmark.md` for full documentation.
 
 ### Types and validation
