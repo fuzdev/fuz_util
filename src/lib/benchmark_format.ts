@@ -30,7 +30,11 @@ const string_display_width = (str: string): number => {
 /**
  * Pad a string to a target display width (accounting for wide characters).
  */
-const pad_to_width = (str: string, target_width: number, align: 'left' | 'right' = 'left'): string => {
+const pad_to_width = (
+	str: string,
+	target_width: number,
+	align: 'left' | 'right' = 'left',
+): string => {
 	const current_width = string_display_width(str);
 	const padding = Math.max(0, target_width - current_width);
 	if (align === 'left') {
