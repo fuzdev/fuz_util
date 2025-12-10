@@ -1,5 +1,5 @@
 ---
-'@fuzdev/fuz_util': patch
+'@fuzdev/fuz_util': minor
 ---
 
 add benchmark lib
