@@ -21,7 +21,6 @@
 
 import {is_promise, wait} from './async.js';
 import {BenchmarkStats} from './benchmark_stats.js';
-
 import {timer_default, time_unit_detect_best, time_format} from './time.js';
 import {
 	benchmark_format_table,
