@@ -20,10 +20,8 @@
  */
 
 import {is_promise, wait} from './async.js';
-import {BenchmarkStats, benchmark_stats_compare} from './benchmark_stats.js';
+import {BenchmarkStats} from './benchmark_stats.js';
 
-// Re-export for convenience
-export {benchmark_stats_compare};
 import {timer_default, time_unit_detect_best, time_format} from './time.js';
 import {
 	benchmark_format_table,

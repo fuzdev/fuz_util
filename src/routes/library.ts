@@ -1064,7 +1064,6 @@ export const library_json: LibraryJson = {
 								description: '- Comparison options',
 							},
 						],
-						also_exported_from: ['benchmark.ts'],
 					},
 				],
 				module_comment:
@@ -1290,7 +1289,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```',
 						],
-						source_line: 103,
+						source_line: 101,
 						type_signature:
 							'(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
@@ -1318,7 +1317,7 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 137,
+						source_line: 135,
 						members: [
 							{
 								name: 'constructor',
