@@ -325,7 +325,7 @@ export const library_json: LibraryJson = {
 				path: 'benchmark_baseline.ts',
 				declarations: [
 					{
-						name: 'Benchmark_Baseline_Entry',
+						name: 'BenchmarkBaselineEntry',
 						kind: 'type',
 						doc_comment: 'Schema for a single benchmark entry in the baseline.',
 						source_line: 25,
@@ -333,7 +333,7 @@ export const library_json: LibraryJson = {
 							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; median_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
 					},
 					{
-						name: 'Benchmark_Baseline',
+						name: 'BenchmarkBaseline',
 						kind: 'type',
 						doc_comment: 'Schema for the complete baseline file.',
 						source_line: 44,
@@ -341,11 +341,11 @@ export const library_json: LibraryJson = {
 							'ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>',
 					},
 					{
-						name: 'Benchmark_Baseline_Save_Options',
+						name: 'BenchmarkBaselineSaveOptions',
 						kind: 'type',
 						doc_comment: 'Options for saving a baseline.',
 						source_line: 57,
-						type_signature: 'Benchmark_Baseline_Save_Options',
+						type_signature: 'BenchmarkBaselineSaveOptions',
 						properties: [
 							{
 								name: 'path',
@@ -368,11 +368,11 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'Benchmark_Baseline_Load_Options',
+						name: 'BenchmarkBaselineLoadOptions',
 						kind: 'type',
 						doc_comment: 'Options for loading a baseline.',
 						source_line: 69,
-						type_signature: 'Benchmark_Baseline_Load_Options',
+						type_signature: 'BenchmarkBaselineLoadOptions',
 						properties: [
 							{
 								name: 'path',
@@ -383,12 +383,12 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'Benchmark_Baseline_Compare_Options',
+						name: 'BenchmarkBaselineCompareOptions',
 						kind: 'type',
 						doc_comment: 'Options for comparing against a baseline.',
 						source_line: 77,
-						type_signature: 'Benchmark_Baseline_Compare_Options',
-						extends: ['Benchmark_Baseline_Load_Options'],
+						type_signature: 'BenchmarkBaselineCompareOptions',
+						extends: ['BenchmarkBaselineLoadOptions'],
 						properties: [
 							{
 								name: 'regression_threshold',
@@ -407,11 +407,11 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'Benchmark_Baseline_Comparison_Result',
+						name: 'BenchmarkBaselineComparisonResult',
 						kind: 'type',
 						doc_comment: 'Result of comparing current results against a baseline.',
 						source_line: 94,
-						type_signature: 'Benchmark_Baseline_Comparison_Result',
+						type_signature: 'BenchmarkBaselineComparisonResult',
 						properties: [
 							{
 								name: 'baseline_found',
@@ -447,27 +447,27 @@ export const library_json: LibraryJson = {
 							{
 								name: 'comparisons',
 								kind: 'variable',
-								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								type_signature: 'Array<BenchmarkBaselineTaskComparison>',
 								doc_comment: 'Individual task comparisons',
 							},
 							{
 								name: 'regressions',
 								kind: 'variable',
-								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								type_signature: 'Array<BenchmarkBaselineTaskComparison>',
 								doc_comment:
 									'Tasks that regressed (slower with statistical significance), sorted by effect size (largest first)',
 							},
 							{
 								name: 'improvements',
 								kind: 'variable',
-								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								type_signature: 'Array<BenchmarkBaselineTaskComparison>',
 								doc_comment:
 									'Tasks that improved (faster with statistical significance), sorted by effect size (largest first)',
 							},
 							{
 								name: 'unchanged',
 								kind: 'variable',
-								type_signature: 'Array<Benchmark_Baseline_Task_Comparison>',
+								type_signature: 'Array<BenchmarkBaselineTaskComparison>',
 								doc_comment: 'Tasks with no significant change',
 							},
 							{
@@ -485,11 +485,11 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'Benchmark_Baseline_Task_Comparison',
+						name: 'BenchmarkBaselineTaskComparison',
 						kind: 'type',
 						doc_comment: 'Comparison result for a single task.',
 						source_line: 122,
-						type_signature: 'Benchmark_Baseline_Task_Comparison',
+						type_signature: 'BenchmarkBaselineTaskComparison',
 						properties: [
 							{
 								name: 'name',
@@ -499,12 +499,12 @@ export const library_json: LibraryJson = {
 							{
 								name: 'baseline',
 								kind: 'variable',
-								type_signature: 'Benchmark_Baseline_Entry',
+								type_signature: 'BenchmarkBaselineEntry',
 							},
 							{
 								name: 'current',
 								kind: 'variable',
-								type_signature: 'Benchmark_Baseline_Entry',
+								type_signature: 'BenchmarkBaselineEntry',
 							},
 							{
 								name: 'comparison',
@@ -522,7 +522,7 @@ export const library_json: LibraryJson = {
 						],
 						source_line: 203,
 						type_signature:
-							'(results: BenchmarkResult[], options?: Benchmark_Baseline_Save_Options): Promise<void>',
+							'(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>',
 						return_type: 'Promise<void>',
 						parameters: [
 							{
@@ -532,7 +532,7 @@ export const library_json: LibraryJson = {
 							},
 							{
 								name: 'options',
-								type: 'Benchmark_Baseline_Save_Options',
+								type: 'BenchmarkBaselineSaveOptions',
 								description: '- Save options',
 								default_value: '{}',
 							},
@@ -547,14 +547,14 @@ export const library_json: LibraryJson = {
 						],
 						source_line: 246,
 						type_signature:
-							'(options?: Benchmark_Baseline_Load_Options): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
+							'(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
 						return_type:
 							'Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; median_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>',
 						return_description: 'The baseline, or null if not found or invalid',
 						parameters: [
 							{
 								name: 'options',
-								type: 'Benchmark_Baseline_Load_Options',
+								type: 'BenchmarkBaselineLoadOptions',
 								description: '- Load options',
 								default_value: '{}',
 							},
@@ -569,8 +569,8 @@ export const library_json: LibraryJson = {
 						],
 						source_line: 309,
 						type_signature:
-							'(results: BenchmarkResult[], options?: Benchmark_Baseline_Compare_Options): Promise<Benchmark_Baseline_Comparison_Result>',
-						return_type: 'Promise<Benchmark_Baseline_Comparison_Result>',
+							'(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>',
+						return_type: 'Promise<BenchmarkBaselineComparisonResult>',
 						return_description:
 							'Comparison result with regressions, improvements, and unchanged tasks',
 						parameters: [
@@ -581,7 +581,7 @@ export const library_json: LibraryJson = {
 							},
 							{
 								name: 'options',
-								type: 'Benchmark_Baseline_Compare_Options',
+								type: 'BenchmarkBaselineCompareOptions',
 								description:
 									'- Comparison options including regression threshold and staleness warning',
 								default_value: '{}',
@@ -593,13 +593,13 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment: 'Format a baseline comparison result as a human-readable string.',
 						source_line: 451,
-						type_signature: '(result: Benchmark_Baseline_Comparison_Result): string',
+						type_signature: '(result: BenchmarkBaselineComparisonResult): string',
 						return_type: 'string',
 						return_description: 'Formatted string summary',
 						parameters: [
 							{
 								name: 'result',
-								type: 'Benchmark_Baseline_Comparison_Result',
+								type: 'BenchmarkBaselineComparisonResult',
 								description: '- Comparison result from benchmark_baseline_compare',
 							},
 						],
@@ -611,13 +611,13 @@ export const library_json: LibraryJson = {
 							'Format a baseline comparison result as JSON for programmatic consumption.',
 						source_line: 532,
 						type_signature:
-							'(result: Benchmark_Baseline_Comparison_Result, options?: { pretty?: boolean | undefined; }): string',
+							'(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string',
 						return_type: 'string',
 						return_description: 'JSON string',
 						parameters: [
 							{
 								name: 'result',
-								type: 'Benchmark_Baseline_Comparison_Result',
+								type: 'BenchmarkBaselineComparisonResult',
 								description: '- Comparison result from benchmark_baseline_compare',
 							},
 							{

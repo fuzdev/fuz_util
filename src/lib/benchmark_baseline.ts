@@ -22,7 +22,7 @@ const BASELINE_VERSION = 1;
 /**
  * Schema for a single benchmark entry in the baseline.
  */
-export const Benchmark_Baseline_Entry = z.object({
+export const BenchmarkBaselineEntry = z.object({
 	name: z.string(),
 	mean_ns: z.number(),
 	median_ns: z.number(),
@@ -36,25 +36,25 @@ export const Benchmark_Baseline_Entry = z.object({
 	ops_per_second: z.number(),
 	sample_size: z.number(),
 });
-export type Benchmark_Baseline_Entry = z.infer<typeof Benchmark_Baseline_Entry>;
+export type BenchmarkBaselineEntry = z.infer<typeof BenchmarkBaselineEntry>;
 
 /**
  * Schema for the complete baseline file.
  */
-export const Benchmark_Baseline = z.object({
+export const BenchmarkBaseline = z.object({
 	version: z.number(),
 	timestamp: z.string(),
 	git_commit: z.string().nullable(),
 	git_branch: z.string().nullable(),
 	node_version: z.string(),
-	entries: z.array(Benchmark_Baseline_Entry),
+	entries: z.array(BenchmarkBaselineEntry),
 });
-export type Benchmark_Baseline = z.infer<typeof Benchmark_Baseline>;
+export type BenchmarkBaseline = z.infer<typeof BenchmarkBaseline>;
 
 /**
  * Options for saving a baseline.
  */
-export interface Benchmark_Baseline_Save_Options {
+export interface BenchmarkBaselineSaveOptions {
 	/** Directory to store baselines (default: '.gro/benchmarks') */
 	path?: string;
 	/** Git commit hash (auto-detected if not provided) */
@@ -66,7 +66,7 @@ export interface Benchmark_Baseline_Save_Options {
 /**
  * Options for loading a baseline.
  */
-export interface Benchmark_Baseline_Load_Options {
+export interface BenchmarkBaselineLoadOptions {
 	/** Directory to load baseline from (default: '.gro/benchmarks') */
 	path?: string;
 }
@@ -74,7 +74,7 @@ export interface Benchmark_Baseline_Load_Options {
 /**
  * Options for comparing against a baseline.
  */
-export interface Benchmark_Baseline_Compare_Options extends Benchmark_Baseline_Load_Options {
+export interface BenchmarkBaselineCompareOptions extends BenchmarkBaselineLoadOptions {
 	/**
 	 * Minimum speedup ratio to consider a regression.
 	 * For example, 1.05 means only flag regressions that are 5% or more slower.
@@ -91,7 +91,7 @@ export interface Benchmark_Baseline_Compare_Options extends Benchmark_Baseline_L
 /**
  * Result of comparing current results against a baseline.
  */
-export interface Benchmark_Baseline_Comparison_Result {
+export interface BenchmarkBaselineComparisonResult {
 	/** Whether a baseline was found */
 	baseline_found: boolean;
 	/** Timestamp of the baseline */
@@ -103,13 +103,13 @@ export interface Benchmark_Baseline_Comparison_Result {
 	/** Whether the baseline is considered stale based on staleness_warning_days option */
 	baseline_stale: boolean;
 	/** Individual task comparisons */
-	comparisons: Array<Benchmark_Baseline_Task_Comparison>;
+	comparisons: Array<BenchmarkBaselineTaskComparison>;
 	/** Tasks that regressed (slower with statistical significance), sorted by effect size (largest first) */
-	regressions: Array<Benchmark_Baseline_Task_Comparison>;
+	regressions: Array<BenchmarkBaselineTaskComparison>;
 	/** Tasks that improved (faster with statistical significance), sorted by effect size (largest first) */
-	improvements: Array<Benchmark_Baseline_Task_Comparison>;
+	improvements: Array<BenchmarkBaselineTaskComparison>;
 	/** Tasks with no significant change */
-	unchanged: Array<Benchmark_Baseline_Task_Comparison>;
+	unchanged: Array<BenchmarkBaselineTaskComparison>;
 	/** Tasks in current run but not in baseline */
 	new_tasks: Array<string>;
 	/** Tasks in baseline but not in current run */
@@ -119,10 +119,10 @@ export interface Benchmark_Baseline_Comparison_Result {
 /**
  * Comparison result for a single task.
  */
-export interface Benchmark_Baseline_Task_Comparison {
+export interface BenchmarkBaselineTaskComparison {
 	name: string;
-	baseline: Benchmark_Baseline_Entry;
-	current: Benchmark_Baseline_Entry;
+	baseline: BenchmarkBaselineEntry;
+	current: BenchmarkBaselineEntry;
 	comparison: BenchmarkComparison;
 }
 
@@ -147,7 +147,7 @@ const calculate_confidence_interval = (
 /**
  * Convert benchmark results to baseline entries.
  */
-const results_to_entries = (results: Array<BenchmarkResult>): Array<Benchmark_Baseline_Entry> => {
+const results_to_entries = (results: Array<BenchmarkResult>): Array<BenchmarkBaselineEntry> => {
 	return results.map((r) => ({
 		name: r.name,
 		mean_ns: r.stats.mean_ns,
@@ -202,7 +202,7 @@ const get_git_info = async (): Promise<{commit: string | null; branch: string | 
  */
 export const benchmark_baseline_save = async (
 	results: Array<BenchmarkResult>,
-	options: Benchmark_Baseline_Save_Options = {},
+	options: BenchmarkBaselineSaveOptions = {},
 ): Promise<void> => {
 	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
 
@@ -215,7 +215,7 @@ export const benchmark_baseline_save = async (
 		git_branch ??= git_info.branch;
 	}
 
-	const baseline: Benchmark_Baseline = {
+	const baseline: BenchmarkBaseline = {
 		version: BASELINE_VERSION,
 		timestamp: new Date().toISOString(),
 		git_commit,
@@ -244,8 +244,8 @@ export const benchmark_baseline_save = async (
  * ```
  */
 export const benchmark_baseline_load = async (
-	options: Benchmark_Baseline_Load_Options = {},
-): Promise<Benchmark_Baseline | null> => {
+	options: BenchmarkBaselineLoadOptions = {},
+): Promise<BenchmarkBaseline | null> => {
 	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
 	const filepath = join(base_path, BASELINE_FILENAME);
 
@@ -256,7 +256,7 @@ export const benchmark_baseline_load = async (
 	try {
 		const contents = await readFile(filepath, 'utf-8');
 		const parsed = JSON.parse(contents);
-		const baseline = Benchmark_Baseline.parse(parsed);
+		const baseline = BenchmarkBaseline.parse(parsed);
 
 		// Check version compatibility
 		if (baseline.version !== BASELINE_VERSION) {
@@ -308,8 +308,8 @@ export const benchmark_baseline_load = async (
  */
 export const benchmark_baseline_compare = async (
 	results: Array<BenchmarkResult>,
-	options: Benchmark_Baseline_Compare_Options = {},
-): Promise<Benchmark_Baseline_Comparison_Result> => {
+	options: BenchmarkBaselineCompareOptions = {},
+): Promise<BenchmarkBaselineComparisonResult> => {
 	const baseline = await benchmark_baseline_load(options);
 	const regression_threshold = options.regression_threshold ?? 1.0;
 
@@ -341,10 +341,10 @@ export const benchmark_baseline_compare = async (
 	const baseline_map = new Map(baseline.entries.map((e) => [e.name, e]));
 	const current_map = new Map(current_entries.map((e) => [e.name, e]));
 
-	const comparisons: Array<Benchmark_Baseline_Task_Comparison> = [];
-	const regressions: Array<Benchmark_Baseline_Task_Comparison> = [];
-	const improvements: Array<Benchmark_Baseline_Task_Comparison> = [];
-	const unchanged: Array<Benchmark_Baseline_Task_Comparison> = [];
+	const comparisons: Array<BenchmarkBaselineTaskComparison> = [];
+	const regressions: Array<BenchmarkBaselineTaskComparison> = [];
+	const improvements: Array<BenchmarkBaselineTaskComparison> = [];
+	const unchanged: Array<BenchmarkBaselineTaskComparison> = [];
 	const new_tasks: Array<string> = [];
 	const removed_tasks: Array<string> = [];
 
@@ -380,7 +380,7 @@ export const benchmark_baseline_compare = async (
 
 		const comparison = benchmark_stats_compare(baseline_stats, current_stats);
 
-		const task_comparison: Benchmark_Baseline_Task_Comparison = {
+		const task_comparison: BenchmarkBaselineTaskComparison = {
 			name: current.name,
 			baseline: baseline_entry,
 			current,
@@ -420,8 +420,8 @@ export const benchmark_baseline_compare = async (
 
 	// Sort regressions and improvements by effect size (largest first)
 	const sort_by_effect_size = (
-		a: Benchmark_Baseline_Task_Comparison,
-		b: Benchmark_Baseline_Task_Comparison,
+		a: BenchmarkBaselineTaskComparison,
+		b: BenchmarkBaselineTaskComparison,
 	) => b.comparison.effect_size - a.comparison.effect_size;
 
 	regressions.sort(sort_by_effect_size);
@@ -448,7 +448,7 @@ export const benchmark_baseline_compare = async (
  * @param result - Comparison result from benchmark_baseline_compare
  * @returns Formatted string summary
  */
-export const benchmark_baseline_format = (result: Benchmark_Baseline_Comparison_Result): string => {
+export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonResult): string => {
 	if (!result.baseline_found) {
 		return 'No baseline found. Call benchmark_baseline_save() to create one.';
 	}
@@ -530,7 +530,7 @@ export const benchmark_baseline_format = (result: Benchmark_Baseline_Comparison_
  * @returns JSON string
  */
 export const benchmark_baseline_format_json = (
-	result: Benchmark_Baseline_Comparison_Result,
+	result: BenchmarkBaselineComparisonResult,
 	options: {pretty?: boolean} = {},
 ): string => {
 	const output = {
