@@ -6,7 +6,10 @@ import {tmpdir} from 'node:os';
 import {fs_exists, fs_empty_dir, fs_search} from '$lib/fs.ts';
 
 const create_temp_dir = async (): Promise<string> => {
-	const dir = join(tmpdir(), `belt-fs-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const dir = join(
+		tmpdir(),
+		`fuz-util-fs-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+	);
 	await mkdir(dir, {recursive: true});
 	return dir;
 };

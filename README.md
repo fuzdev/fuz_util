@@ -18,6 +18,7 @@ design:
   see <a href="https://github.com/fuz-dev/fuz">@fuzdev/fuz_ui</a>
 - complements the modern web platform, drops legacy quickly
 - kinda minimal in many ways but also not, treeshakes well
+- includes a benchmarking library with rich statistical analysis
 
 ## usage
 
@@ -41,6 +42,12 @@ import {deep_equal} from '@fuzdev/fuz_util/deep_equal.ts';
 ```
 
 Docs at [util.fuz.dev/docs](https://util.fuz.dev/docs).
+
+## features
+
+### Benchmarking
+
+See [`docs/benchmark.md`](docs/benchmark.md).
 
 ## build
 

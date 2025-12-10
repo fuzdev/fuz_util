@@ -13,7 +13,7 @@
 <main class="box mb_xl5">
 	<section>
 		<LibrarySummary {library}>
-			{#snippet repo_name()}<h1 class="mt_xl mb_xl">belt</h1>{/snippet}
+			{#snippet repo_name()}<h1 class="mt_xl mb_xl">fuz_util</h1>{/snippet}
 			{#snippet logo()}<div class="logo"><Svg data={logo_fuz_util} /></div>{/snippet}
 		</LibrarySummary>
 	</section>

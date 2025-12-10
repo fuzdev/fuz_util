@@ -1,28 +1,16 @@
-import {Bench, hrtimeNow} from 'tinybench';
-
-import {deep_equal} from '$lib/deep_equal.ts';
+import {Benchmark} from '$lib/benchmark.js';
+import {deep_equal} from '$lib/deep_equal.js';
+import type {BenchmarkGroup} from '$lib/benchmark_types.js';
 
 /* eslint-disable no-console, no-new-wrappers */
 
 // Benchmark deep_equal performance across common use cases
 // Focus: constructor check overhead, instanceof optimization potential, typed arrays
 
-// Enable GC if available (requires --expose-gc flag)
-const gc = globalThis.gc;
-
-const bench = new Bench({
-	time: 1000, // 1000ms per benchmark for good balance of accuracy and memory usage
-	now: hrtimeNow, // Use high-resolution timer for more accurate results in Node.js
+const bench = new Benchmark({
+	duration_ms: 1000, // 1000ms per benchmark for good balance of accuracy and memory usage
+	warmup_iterations: 10, // Warmup iterations before measuring
 });
-
-// Add GC after each task to keep memory clean and prevent accumulation
-// GC runs between tasks (after cycle completes), not during iterations
-// This ensures each task starts with a clean memory state without affecting measurements
-if (gc) {
-	bench.addEventListener('cycle', () => {
-		gc();
-	});
-}
 
 // =============================================================================
 // 1. FAST PATHS (should be nanoseconds - baseline)
@@ -80,7 +68,7 @@ bench.add('small array: not equal (last element)', () => {
 });
 
 // =============================================================================
-// 3. TYPED ARRAYS (the TODO focus!)
+// 3. TYPED ARRAYS
 // =============================================================================
 
 const uint8_a = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
@@ -266,33 +254,35 @@ bench.add('Set: equal (5 elements)', () => {
 // Run and report
 // =============================================================================
 
-try {
-	await bench.run();
+await bench.run();
 
-	console.log('\n📊 deep_equal Performance Benchmarks\n');
-	// Use tinybench's built-in table() method for comprehensive statistics
-	console.table(bench.table());
+console.log('\n📊 deep_equal Performance Benchmarks\n');
+console.log(bench.table());
 
-	// Calculate some insights
-	const fastest = bench.tasks.reduce((a, b) => {
-		const a_hz = a.result?.throughput.mean ?? 0;
-		const b_hz = b.result?.throughput.mean ?? 0;
-		return a_hz > b_hz ? a : b;
-	});
+console.log('\n📊 Grouped by Category (Detailed)\n');
+const groups: Array<BenchmarkGroup> = [
+	{
+		name: 'FAST PATHS (baseline)',
+		filter: (r) =>
+			r.name.includes('same reference') ||
+			r.name.includes('primitives') ||
+			r.name.includes('constructor mismatch'),
+	},
+	{name: 'SMALL DATA STRUCTURES', filter: (r) => r.name.startsWith('small ')},
+	{name: 'TYPED ARRAYS', filter: (r) => r.name.startsWith('typed array')},
+	{
+		name: 'SPECIAL TYPES (Date, Error, etc.)',
+		filter: (r) =>
+			r.name.includes('Date:') ||
+			r.name.includes('Error:') ||
+			r.name.includes('ArrayBuffer') ||
+			r.name.includes('boxed'),
+	},
+	{name: 'NESTED STRUCTURES', filter: (r) => r.name.startsWith('nested ')},
+	{name: 'STRESS TESTS', filter: (r) => r.name.startsWith('large ')},
+	{name: 'COLLECTIONS', filter: (r) => r.name.includes('Map:') || r.name.includes('Set:')},
+];
+console.log(bench.table({groups}));
 
-	const slowest = bench.tasks.reduce((a, b) => {
-		const a_hz = a.result?.throughput.mean ?? Infinity;
-		const b_hz = b.result?.throughput.mean ?? Infinity;
-		return a_hz < b_hz ? a : b;
-	});
-
-	console.log('\n📈 Insights:');
-	console.log(`  Fastest: ${fastest.name} (${fastest.result?.throughput.mean.toFixed(0)} ops/sec)`);
-	console.log(`  Slowest: ${slowest.name} (${slowest.result?.throughput.mean.toFixed(0)} ops/sec)`);
-	console.log(
-		`  Speed ratio: ${((fastest.result?.throughput.mean ?? 0) / (slowest.result?.throughput.mean ?? 1)).toFixed(0)}x\n`,
-	);
-} catch (error) {
-	console.error('Benchmark failed:', error);
-	process.exit(1);
-}
+console.log('\n📈 Summary\n');
+console.log(bench.summary());

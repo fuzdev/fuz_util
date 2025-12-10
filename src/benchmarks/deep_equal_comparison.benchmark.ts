@@ -1,30 +1,22 @@
-import {Bench, hrtimeNow} from 'tinybench';
+import {Benchmark} from '$lib/benchmark.js';
 import {dequal} from 'dequal';
 import fastDeepEqual from 'fast-deep-equal';
 
-import {deep_equal} from '$lib/deep_equal.ts';
+import {deep_equal} from '$lib/deep_equal.js';
 
 /* eslint-disable no-console */
 
 // Benchmark deep_equal vs popular libraries: dequal and fast-deep-equal
 // Focus: Common use cases to understand relative performance
 
-// Enable GC if available (requires --expose-gc flag)
-const gc = globalThis.gc;
-
-const bench = new Bench({
-	time: 1000, // 1000ms per benchmark for good balance of accuracy and memory usage
-	now: hrtimeNow, // Use high-resolution timer for more accurate results in Node.js
+const bench = new Benchmark({
+	duration_ms: 1000, // 1000ms per benchmark for good balance of accuracy and memory usage
+	warmup_iterations: 5,
+	on_iteration: () => {
+		// Trigger GC between iterations if available (requires --expose-gc flag)
+		if (globalThis.gc) globalThis.gc();
+	},
 });
-
-// Add GC after each task to keep memory clean and prevent accumulation
-// GC runs between tasks (after cycle completes), not during iterations
-// This ensures each task starts with a clean memory state without affecting measurements
-if (gc) {
-	bench.addEventListener('cycle', () => {
-		gc();
-	});
-}
 
 // =============================================================================
 // Test data - comprehensive coverage of realistic patterns and sizes
@@ -247,73 +239,70 @@ bench.add('constructor mismatch {} vs []: fast-deep-equal', () =>
 // Run and report
 // =============================================================================
 
-try {
-	await bench.run();
+await bench.run();
 
-	// Group results by test case
-	const groups: Map<string, Array<any>> = new Map();
-	for (const task of bench.tasks) {
-		const [testCase, library] = task.name.split(': ');
-		if (!groups.has(testCase!)) {
-			groups.set(testCase!, []);
-		}
-		groups.get(testCase!)!.push({
-			library,
-			hz: task.result?.throughput.mean ?? 0,
-			mean_ns: task.result?.latency.mean ? task.result.latency.mean * 1_000_000 : 0,
-		});
+const results = bench.results();
+
+// Group results by test case
+const groups: Map<string, Array<any>> = new Map();
+for (const result of results) {
+	const [testCase, library] = result.name.split(': ');
+	if (!groups.has(testCase!)) {
+		groups.set(testCase!, []);
 	}
+	groups.get(testCase!)!.push({
+		library,
+		hz: result.stats.ops_per_second,
+		mean_ns: result.stats.mean_ns,
+	});
+}
 
-	console.log('\n📊 Library Comparison: deep_equal vs dequal vs fast-deep-equal\n');
+console.log('\n📊 Library Comparison: deep_equal vs dequal vs fast-deep-equal\n');
 
-	for (const [testCase, results] of groups) {
-		console.log(`\n${testCase}:`);
+for (const [testCase, results] of groups) {
+	console.log(`\n${testCase}:`);
 
-		// Sort by speed (fastest first)
-		results.sort((a, b) => b.hz - a.hz);
+	// Sort by speed (fastest first)
+	results.sort((a, b) => b.hz - a.hz);
 
-		const fastest = results[0];
-		for (const result of results) {
-			const ratio = fastest.hz / result.hz;
-			const speed_marker = result === fastest ? '🏆' : '  ';
-			const ops_per_sec = result.hz.toFixed(0).padStart(10);
-			const relative = ratio === 1 ? 'baseline' : `${ratio.toFixed(2)}x slower`;
+	const fastest = results[0];
+	for (const result of results) {
+		const ratio = fastest.hz / result.hz;
+		const speed_marker = result === fastest ? '🏆' : '  ';
+		const ops_per_sec = result.hz.toFixed(0).padStart(10);
+		const relative = ratio === 1 ? 'baseline' : `${ratio.toFixed(2)}x slower`;
 
-			console.log(
-				`  ${speed_marker} ${result.library.padEnd(20)} ${ops_per_sec} ops/sec  (${relative})`,
-			);
-		}
-	}
-
-	console.log('\n📈 Summary:\n');
-
-	// Overall stats per library
-	const library_stats: Map<string, {total_hz: number; wins: number; count: number}> = new Map();
-	for (const task of bench.tasks) {
-		const library = task.name.split(': ')[1]!;
-		if (!library_stats.has(library)) {
-			library_stats.set(library, {total_hz: 0, wins: 0, count: 0});
-		}
-		const stats = library_stats.get(library)!;
-		stats.total_hz += task.result?.throughput.mean ?? 0;
-		stats.count++;
-	}
-
-	// Count wins
-	for (const [, results] of groups) {
-		const fastest = results.reduce((a, b) => (a.hz > b.hz ? a : b));
-		library_stats.get(fastest.library)!.wins++;
-	}
-
-	for (const [library, stats] of library_stats) {
-		const avg_hz = stats.total_hz / stats.count;
 		console.log(
-			`  ${library.padEnd(20)} avg: ${avg_hz.toFixed(0).padStart(10)} ops/sec  |  wins: ${stats.wins}/${groups.size}`,
+			`  ${speed_marker} ${result.library.padEnd(20)} ${ops_per_sec} ops/sec  (${relative})`,
 		);
 	}
-
-	console.log('');
-} catch (error) {
-	console.error('Benchmark failed:', error);
-	process.exit(1);
 }
+
+console.log('\n📈 Summary:\n');
+
+// Overall stats per library
+const library_stats: Map<string, {total_hz: number; wins: number; count: number}> = new Map();
+for (const result of results) {
+	const library = result.name.split(': ')[1]!;
+	if (!library_stats.has(library)) {
+		library_stats.set(library, {total_hz: 0, wins: 0, count: 0});
+	}
+	const stats = library_stats.get(library)!;
+	stats.total_hz += result.stats.ops_per_second;
+	stats.count++;
+}
+
+// Count wins
+for (const [, results] of groups) {
+	const fastest = results.reduce((a, b) => (a.hz > b.hz ? a : b));
+	library_stats.get(fastest.library)!.wins++;
+}
+
+for (const [library, stats] of library_stats) {
+	const avg_hz = stats.total_hz / stats.count;
+	console.log(
+		`  ${library.padEnd(20)} avg: ${avg_hz.toFixed(0).padStart(10)} ops/sec  |  wins: ${stats.wins}/${groups.size}`,
+	);
+}
+
+console.log('');

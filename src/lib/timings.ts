@@ -24,8 +24,8 @@ export type TimingsKey = string | number;
 export class Timings {
 	readonly decimals: number | undefined;
 
-	private readonly timings: Map<TimingsKey, number | undefined> = new Map();
-	private readonly stopwatches: Map<TimingsKey, Stopwatch> = new Map();
+	readonly #timings: Map<TimingsKey, number | undefined> = new Map();
+	readonly #stopwatches: Map<TimingsKey, Stopwatch> = new Map();
 
 	constructor(decimals?: number) {
 		this.decimals = decimals;
@@ -35,41 +35,41 @@ export class Timings {
 	 * Starts a timing operation for the given key.
 	 */
 	start(key: TimingsKey, decimals = this.decimals): () => number {
-		const final_key = this.next_key(key);
-		this.stopwatches.set(final_key, create_stopwatch(decimals));
-		this.timings.set(final_key, undefined); // initializing to preserve order
-		return () => this.stop(final_key);
+		const final_key = this.#next_key(key);
+		this.#stopwatches.set(final_key, create_stopwatch(decimals));
+		this.#timings.set(final_key, undefined); // initializing to preserve order
+		return () => this.#stop(final_key);
 	}
 
-	private next_key(key: TimingsKey): TimingsKey {
-		if (!this.stopwatches.has(key)) return key;
+	#next_key(key: TimingsKey): TimingsKey {
+		if (!this.#stopwatches.has(key)) return key;
 		let i = 2;
 		while (true) {
 			const next = key + '_' + i++;
-			if (!this.stopwatches.has(next)) return next;
+			if (!this.#stopwatches.has(next)) return next;
 		}
 	}
 
 	/**
 	 * Stops a timing operation and records the elapsed time.
 	 */
-	private stop(key: TimingsKey): number {
-		const stopwatch = this.stopwatches.get(key);
+	#stop(key: TimingsKey): number {
+		const stopwatch = this.#stopwatches.get(key);
 		if (!stopwatch) return 0; // TODO maybe warn?
-		this.stopwatches.delete(key);
+		this.#stopwatches.delete(key);
 		const timing = stopwatch();
-		this.timings.set(key, timing);
+		this.#timings.set(key, timing);
 		return timing;
 	}
 
 	get(key: TimingsKey): number {
-		const timing = this.timings.get(key);
+		const timing = this.#timings.get(key);
 		if (timing === undefined) return 0; // TODO maybe warn?
 		return timing;
 	}
 
 	entries(): IterableIterator<[TimingsKey, number | undefined]> {
-		return this.timings.entries();
+		return this.#timings.entries();
 	}
 
 	/**
@@ -78,9 +78,9 @@ export class Timings {
 	 */
 	merge(timings: Timings): void {
 		for (const [key, timing] of timings.entries()) {
-			this.timings.set(
+			this.#timings.set(
 				key,
-				timing === undefined ? undefined : (this.timings.get(key) ?? 0) + timing,
+				timing === undefined ? undefined : (this.#timings.get(key) ?? 0) + timing,
 			);
 		}
 	}

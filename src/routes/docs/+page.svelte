@@ -12,6 +12,6 @@
 
 <DocsContent {tomes} {library}>
 	{#snippet repo_name()}
-		<h1 class="mb_sm">belt</h1>
+		<h1 class="mb_sm">fuz_util</h1>
 	{/snippet}
 </DocsContent>

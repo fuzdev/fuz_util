@@ -1,14 +1,14 @@
-# Belt
+# fuz_util
 
 > TypeScript utility library - foundational utilities with no UI dependencies
 
-Belt (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
+fuz_util (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
 `@ryanatkn` ecosystem. It has no UI framework dependencies (no Svelte) and
 focuses on pure TypeScript helpers.
 
 ## Scope
 
-Belt is a **foundational utility library**:
+fuz_util is a **foundational utility library**:
 
 - Pure TypeScript utilities (string, array, object, async, etc.)
 - Zod schemas for common data structures (`PackageJson`)
@@ -29,8 +29,41 @@ Belt is a **foundational utility library**:
 ### Async and timing
 
 - `async.ts` - async utilities (wait, etc.)
+- `time.ts` - high-resolution timing, measurement, and formatting
 - `throttle.ts` - throttle/debounce
 - `timings.ts` - performance timing
+
+### Benchmarking
+
+Benchmarking library with nanosecond precision timing,
+comprehensive statistics (mean, median, percentiles, outlier detection), and
+multiple output formats (ASCII table, Markdown, JSON).
+
+```typescript
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+
+const bench = new Benchmark({duration_ms: 5000, warmup_iterations: 10});
+
+bench
+  .add('test 1', () => fn1())
+  .add('test 2', () => fn2());
+
+await bench.run();
+console.log(bench.table());     // ASCII table with all percentiles
+console.log(bench.markdown());  // Markdown table
+console.log(bench.summary());   // Fastest/slowest comparison
+```
+
+**Workflow:**
+
+```bash
+npm run benchmark        # Run and compare against baseline
+npm run benchmark:save   # Save new baseline (after intentional changes)
+```
+
+Baseline stored in `src/benchmarks/baseline.json` (committed to repo).
+
+See `docs/benchmark.md` for full documentation.
 
 ### Types and validation
 
@@ -51,6 +84,11 @@ Belt is a **foundational utility library**:
 - `git.ts` - git operations
 - `log.ts` - logging system
 
+### Statistics
+
+- `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
+  detection)
+
 ### Other
 
 - `random.ts`, `random_alea.ts` - random number generation
@@ -70,8 +108,11 @@ Belt is a **foundational utility library**:
 - `PascalCase` for types, class names, and Svelte components
 - explicit file extensions in imports
 - tab indentation, 100 character width
+- no re-exports - import directly from the source module (e.g., import baseline
+  functions from `benchmark_baseline.js`, not from `benchmark.js`)
+- no backwards compatibility preservation - breaking changes are acceptable
 
-## What belt does NOT include
+## What fuz_util does NOT include
 
 - UI components (use fuz)
 - Svelte-specific code (use fuz)
