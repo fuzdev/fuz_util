@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.43.0
+
+### Minor Changes
+
+- change `is_promise` to return a boolean ([#61](https://github.com/fuzdev/fuz_util/pull/61))
+- add benchmark lib ([#61](https://github.com/fuzdev/fuz_util/pull/61))
+
 ## 0.42.0
 
 ### Minor Changes
