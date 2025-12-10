@@ -47,7 +47,7 @@ Docs at [util.fuz.dev/docs](https://util.fuz.dev/docs).
 
 ### Benchmarking
 
-See [`src/docs/benchmark.md`](src/docs/benchmark.md).
+See [`docs/benchmark.md`](docs/benchmark.md).
 
 ## build
 

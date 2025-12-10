@@ -63,7 +63,7 @@ npm run benchmark:save   # Save new baseline (after intentional changes)
 
 Baseline stored in `src/benchmarks/baseline.json` (committed to repo).
 
-See `src/docs/benchmark.md` for full documentation.
+See `docs/benchmark.md` for full documentation.
 
 ### Types and validation
 
