@@ -4,8 +4,6 @@
  * Usage:
  *   gro run src/benchmarks/run.ts          # run and compare against baseline
  *   gro run src/benchmarks/run.ts --save   # run and save as new baseline
- *
- * @module
  */
 
 /* eslint-disable no-console */

@@ -328,7 +328,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineEntry',
 						kind: 'type',
 						doc_comment: 'Schema for a single benchmark entry in the baseline.',
-						source_line: 25,
+						source_line: 24,
 						type_signature:
 							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; median_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
 					},
@@ -336,7 +336,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaseline',
 						kind: 'type',
 						doc_comment: 'Schema for the complete baseline file.',
-						source_line: 44,
+						source_line: 43,
 						type_signature:
 							'ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>',
 					},
@@ -344,7 +344,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineSaveOptions',
 						kind: 'type',
 						doc_comment: 'Options for saving a baseline.',
-						source_line: 57,
+						source_line: 56,
 						type_signature: 'BenchmarkBaselineSaveOptions',
 						properties: [
 							{
@@ -371,7 +371,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineLoadOptions',
 						kind: 'type',
 						doc_comment: 'Options for loading a baseline.',
-						source_line: 69,
+						source_line: 68,
 						type_signature: 'BenchmarkBaselineLoadOptions',
 						properties: [
 							{
@@ -386,7 +386,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineCompareOptions',
 						kind: 'type',
 						doc_comment: 'Options for comparing against a baseline.',
-						source_line: 77,
+						source_line: 76,
 						type_signature: 'BenchmarkBaselineCompareOptions',
 						extends: ['BenchmarkBaselineLoadOptions'],
 						properties: [
@@ -410,7 +410,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineComparisonResult',
 						kind: 'type',
 						doc_comment: 'Result of comparing current results against a baseline.',
-						source_line: 94,
+						source_line: 93,
 						type_signature: 'BenchmarkBaselineComparisonResult',
 						properties: [
 							{
@@ -488,7 +488,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineTaskComparison',
 						kind: 'type',
 						doc_comment: 'Comparison result for a single task.',
-						source_line: 122,
+						source_line: 121,
 						type_signature: 'BenchmarkBaselineTaskComparison',
 						properties: [
 							{
@@ -520,7 +520,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```",
 						],
-						source_line: 203,
+						source_line: 202,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>',
 						return_type: 'Promise<void>',
@@ -545,7 +545,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```',
 						],
-						source_line: 246,
+						source_line: 245,
 						type_signature:
 							'(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
 						return_type:
@@ -567,7 +567,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```",
 						],
-						source_line: 309,
+						source_line: 308,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>',
 						return_type: 'Promise<BenchmarkBaselineComparisonResult>',
@@ -592,7 +592,7 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_baseline_format',
 						kind: 'function',
 						doc_comment: 'Format a baseline comparison result as a human-readable string.',
-						source_line: 451,
+						source_line: 450,
 						type_signature: '(result: BenchmarkBaselineComparisonResult): string',
 						return_type: 'string',
 						return_description: 'Formatted string summary',
@@ -609,7 +609,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Format a baseline comparison result as JSON for programmatic consumption.',
-						source_line: 532,
+						source_line: 531,
 						type_signature:
 							'(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string',
 						return_type: 'string',
@@ -630,7 +630,7 @@ export const library_json: LibraryJson = {
 					},
 				],
 				module_comment:
-					'Benchmark baseline storage and comparison utilities.\nSave benchmark results to disk and compare against baselines for regression detection.\n@module',
+					'Benchmark baseline storage and comparison utilities.\nSave benchmark results to disk and compare against baselines for regression detection.',
 				dependencies: ['benchmark_stats.ts', 'fs.ts'],
 			},
 			{

@@ -1,7 +1,6 @@
 /**
  * Benchmark baseline storage and comparison utilities.
  * Save benchmark results to disk and compare against baselines for regression detection.
- * @module
  */
 
 import {readFile, writeFile, mkdir, rm} from 'node:fs/promises';
