@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.44.0
+
+### Minor Changes
+
+- rework and clean up some APIs ([57842f0](https://github.com/fuzdev/fuz_util/commit/57842f0))
+
 ## 0.43.0
 
 ### Minor Changes
