@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_util",
-  "version": "0.43.0",
+  "version": "0.44.0",
   "modules": [
     {
       "path": "array.ts",
@@ -453,6 +453,14 @@
       "path": "git.ts",
       "declarations": [
         {
+          "name": "GitInfo",
+          "kind": "type"
+        },
+        {
+          "name": "git_info_get",
+          "kind": "function"
+        },
+        {
           "name": "GitOrigin",
           "kind": "variable"
         },
@@ -774,6 +782,10 @@
         {
           "name": "GR_9i",
           "kind": "variable"
+        },
+        {
+          "name": "format_number",
+          "kind": "function"
         }
       ]
     },
@@ -1195,11 +1207,11 @@
           "kind": "function"
         },
         {
-          "name": "CONFIDENCE_Z_SCORES",
+          "name": "STATS_CONFIDENCE_Z_SCORES",
           "kind": "variable"
         },
         {
-          "name": "confidence_level_to_z_score",
+          "name": "stats_confidence_level_to_z_score",
           "kind": "function"
         },
         {
@@ -1208,6 +1220,34 @@
         },
         {
           "name": "stats_confidence_interval",
+          "kind": "function"
+        },
+        {
+          "name": "stats_confidence_interval_from_summary",
+          "kind": "function"
+        },
+        {
+          "name": "StatsWelchTTestResult",
+          "kind": "type"
+        },
+        {
+          "name": "stats_welch_t_test",
+          "kind": "function"
+        },
+        {
+          "name": "stats_normal_cdf",
+          "kind": "function"
+        },
+        {
+          "name": "stats_ln_gamma",
+          "kind": "function"
+        },
+        {
+          "name": "stats_incomplete_beta",
+          "kind": "function"
+        },
+        {
+          "name": "stats_t_distribution_p_value",
           "kind": "function"
         }
       ]
@@ -1261,6 +1301,14 @@
         },
         {
           "name": "stringify",
+          "kind": "function"
+        },
+        {
+          "name": "string_display_width",
+          "kind": "function"
+        },
+        {
+          "name": "pad_width",
           "kind": "function"
         }
       ]
@@ -1324,6 +1372,10 @@
         {
           "name": "TimeUnit",
           "kind": "type"
+        },
+        {
+          "name": "TIME_UNIT_DISPLAY",
+          "kind": "variable"
         },
         {
           "name": "time_unit_detect_best",
