@@ -6,6 +6,30 @@ import type {Flavored} from './types.js';
 import {to_file_path} from './path.js';
 import {fs_exists} from './fs.js';
 
+/**
+ * Basic git repository info.
+ */
+export interface GitInfo {
+	commit: string | null;
+	branch: string | null;
+}
+
+/**
+ * Get basic git info (commit hash and branch name) without throwing.
+ * Returns null values if git commands fail (e.g., not in a git repo).
+ */
+export const git_info_get = async (options?: SpawnOptions): Promise<GitInfo> => {
+	const [commit_result, branch_result] = await Promise.all([
+		spawn_out('git', ['rev-parse', 'HEAD'], options).catch(() => ({stdout: null})),
+		spawn_out('git', ['rev-parse', '--abbrev-ref', 'HEAD'], options).catch(() => ({stdout: null})),
+	]);
+
+	return {
+		commit: commit_result.stdout?.trim() || null,
+		branch: branch_result.stdout?.trim() || null,
+	};
+};
+
 export const GitOrigin = z.string();
 export type GitOrigin = Flavored<string, 'GitOrigin'>;
 

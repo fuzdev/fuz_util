@@ -1,48 +1,7 @@
 import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
-import {time_unit_detect_best, time_format, type TimeUnit} from './time.js';
-
-/**
- * Calculate the display width of a string in terminal columns.
- * Emojis and other wide characters take 2 columns.
- */
-const string_display_width = (str: string): number => {
-	let width = 0;
-	for (const char of str) {
-		const code = char.codePointAt(0)!;
-		// Emoji and other wide characters (rough heuristic)
-		// - Most emoji are in range 0x1F300-0x1FAFF
-		// - Some are in 0x2600-0x27BF (misc symbols)
-		// - CJK characters 0x4E00-0x9FFF also double-width but not handling here
-		if (
-			(code >= 0x1f300 && code <= 0x1faff) ||
-			(code >= 0x2600 && code <= 0x27bf) ||
-			(code >= 0x1f600 && code <= 0x1f64f) ||
-			(code >= 0x1f680 && code <= 0x1f6ff)
-		) {
-			width += 2;
-		} else {
-			width += 1;
-		}
-	}
-	return width;
-};
-
-/**
- * Pad a string to a target display width (accounting for wide characters).
- */
-const pad_to_width = (
-	str: string,
-	target_width: number,
-	align: 'left' | 'right' = 'left',
-): string => {
-	const current_width = string_display_width(str);
-	const padding = Math.max(0, target_width - current_width);
-	if (align === 'left') {
-		return str + ' '.repeat(padding);
-	} else {
-		return ' '.repeat(padding) + str;
-	}
-};
+import {time_unit_detect_best, time_format, TIME_UNIT_DISPLAY} from './time.js';
+import {string_display_width, pad_width} from './string.js';
+import {format_number} from './maths.js';
 
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
@@ -53,19 +12,13 @@ const pad_to_width = (
  * @example
  * ```ts
  * console.log(benchmark_format_table(results));
- * // ┌────┬─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
- * // │    │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │
- * // ├────┼─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
- * // │ 🐇 │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │
- * // │ 🐢 │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │
- * // └────┴─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+ * // ┌─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+ * // │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │
+ * // ├─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+ * // │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │
+ * // │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │
+ * // └─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
  * ```
- *
- * **Performance tier animals:**
- * - 🐆 Cheetah: >1M ops/sec (extremely fast)
- * - 🐇 Rabbit: >100K ops/sec (fast)
- * - 🐢 Turtle: >10K ops/sec (moderate)
- * - 🐌 Snail: <10K ops/sec (slow)
  */
 export const benchmark_format_table = (results: Array<BenchmarkResult>): string => {
 	if (results.length === 0) return '(no results)';
@@ -73,7 +26,7 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 	// Detect best unit for all results
 	const mean_times = results.map((r) => r.stats.mean_ns);
 	const unit = time_unit_detect_best(mean_times);
-	const unit_str = UNIT_LABELS[unit];
+	const unit_str = TIME_UNIT_DISPLAY[unit];
 
 	// Find fastest for relative comparison
 	const fastest_ops = Math.max(...results.map((r) => r.stats.ops_per_second));
@@ -82,7 +35,6 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 
 	// Header with unit
 	rows.push([
-		'',
 		'Task Name',
 		'ops/sec',
 		`median (${unit_str})`,
@@ -97,7 +49,6 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 
 	// Data rows - all use same unit
 	results.forEach((r) => {
-		const tier = get_perf_tier(r.stats.ops_per_second);
 		const ops_sec = benchmark_format_number(r.stats.ops_per_second, 2);
 		const median = time_format(r.stats.median_ns, unit, 2).replace(unit_str, '').trim();
 		const p75 = time_format(r.stats.p75_ns, unit, 2).replace(unit_str, '').trim();
@@ -111,7 +62,7 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 		const ratio = fastest_ops / r.stats.ops_per_second;
 		const vs_best = ratio === 1.0 ? 'baseline' : `${ratio.toFixed(2)}x`;
 
-		rows.push([tier, r.name, ops_sec, median, p75, p90, p95, p99, min, max, vs_best]);
+		rows.push([r.name, ops_sec, median, p75, p90, p95, p99, min, max, vs_best]);
 	});
 
 	// Calculate column widths (using display width for proper emoji handling)
@@ -126,7 +77,7 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 	lines.push('┌' + widths.map((w) => '─'.repeat(w + 2)).join('┬') + '┐');
 
 	// Header
-	const header = rows[0]!.map((cell, i) => ' ' + pad_to_width(cell, widths[i]!) + ' ').join('│');
+	const header = rows[0]!.map((cell, i) => ' ' + pad_width(cell, widths[i]!) + ' ').join('│');
 	lines.push('│' + header + '│');
 
 	// Header separator
@@ -136,11 +87,11 @@ export const benchmark_format_table = (results: Array<BenchmarkResult>): string 
 	for (let i = 1; i < rows.length; i++) {
 		const row = rows[i]!.map((cell, col_i) => {
 			const width = widths[col_i]!;
-			// Left-align tier emoji and task name, right-align numbers
-			if (col_i === 0 || col_i === 1) {
-				return ' ' + pad_to_width(cell, width, 'left') + ' ';
+			// Left-align task name, right-align numbers
+			if (col_i === 0) {
+				return ' ' + pad_width(cell, width, 'left') + ' ';
 			} else {
-				return ' ' + pad_to_width(cell, width, 'right') + ' ';
+				return ' ' + pad_width(cell, width, 'right') + ' ';
 			}
 		}).join('│');
 		lines.push('│' + row + '│');
@@ -173,7 +124,7 @@ export const benchmark_format_markdown = (results: Array<BenchmarkResult>): stri
 	// Detect best unit for all results
 	const mean_times = results.map((r) => r.stats.mean_ns);
 	const unit = time_unit_detect_best(mean_times);
-	const unit_str = UNIT_LABELS[unit];
+	const unit_str = TIME_UNIT_DISPLAY[unit];
 
 	// Find fastest for relative comparison
 	const fastest_ops = Math.max(...results.map((r) => r.stats.ops_per_second));
@@ -356,24 +307,8 @@ export const benchmark_format_table_grouped = (
 	return sections.join('\n');
 };
 
-// TODO consider extracting to a general format utility module when more formatters are needed
 /**
  * Format a number with fixed decimal places and thousands separators.
+ * @see {@link format_number} in maths.ts for the underlying implementation.
  */
-export const benchmark_format_number = (n: number, decimals: number = 2): string => {
-	if (!isFinite(n)) return String(n);
-	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-};
-
-/**
- * Get performance tier symbol based on ops/sec.
- */
-const get_perf_tier = (ops_per_sec: number): string => {
-	if (ops_per_sec >= 1_000_000) return '🐆'; // > 1M ops/sec (cheetah - extremely fast)
-	if (ops_per_sec >= 100_000) return '🐇'; // > 100K ops/sec (rabbit - fast)
-	if (ops_per_sec >= 10_000) return '🐢'; // > 10K ops/sec (turtle - moderate)
-	return '🐌'; // < 10K ops/sec (snail - slow)
-};
-
-/** Unit labels for display (μs instead of us). */
-const UNIT_LABELS: Record<TimeUnit, string> = {ns: 'ns', us: 'μs', ms: 'ms', s: 's'};
+export const benchmark_format_number = format_number;

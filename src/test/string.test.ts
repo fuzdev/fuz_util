@@ -12,6 +12,8 @@ import {
 	deindent,
 	count_graphemes,
 	strip_ansi,
+	string_display_width,
+	pad_width,
 } from '$lib/string.ts';
 
 describe('truncate', () => {
@@ -335,5 +337,87 @@ describe('strip_ansi', () => {
 			'  Yellow on black  ',
 		);
 		assert.strictEqual(strip_ansi('/[39msrc[39m/'), '/src/');
+	});
+});
+
+describe('string_display_width', () => {
+	test('basic ASCII strings', () => {
+		assert.strictEqual(string_display_width('hello'), 5);
+		assert.strictEqual(string_display_width(''), 0);
+		assert.strictEqual(string_display_width('a'), 1);
+	});
+
+	test('simple emoji take 2 columns', () => {
+		assert.strictEqual(string_display_width('🐆'), 2);
+		assert.strictEqual(string_display_width('🐇'), 2);
+		assert.strictEqual(string_display_width('🐢'), 2);
+		assert.strictEqual(string_display_width('🐌'), 2);
+	});
+
+	test('compound emoji (ZWJ sequences) take 2 columns', () => {
+		// Family emoji is a ZWJ sequence but displays as one character
+		assert.strictEqual(string_display_width('👨‍👩‍👧‍👦'), 2);
+		// Man raising hand
+		assert.strictEqual(string_display_width('🙋‍♂️'), 2);
+	});
+
+	test('mixed strings', () => {
+		assert.strictEqual(string_display_width('abc🐆'), 5); // 3 + 2
+		assert.strictEqual(string_display_width('🐆🐇'), 4); // 2 + 2
+		assert.strictEqual(string_display_width('Task Name'), 9);
+	});
+
+	test('CJK characters take 2 columns', () => {
+		assert.strictEqual(string_display_width('中'), 2);
+		assert.strictEqual(string_display_width('日本'), 4);
+	});
+
+	test('tab characters take 4 columns', () => {
+		assert.strictEqual(string_display_width('\t'), 4);
+		assert.strictEqual(string_display_width('a\tb'), 6); // 1 + 4 + 1
+		assert.strictEqual(string_display_width('\t\t'), 8);
+	});
+
+	test('newlines and other control characters have 0 width', () => {
+		assert.strictEqual(string_display_width('\n'), 0);
+		assert.strictEqual(string_display_width('hello\nworld'), 10); // 5 + 0 + 5
+		assert.strictEqual(string_display_width('\r'), 0);
+		assert.strictEqual(string_display_width('\x00'), 0); // NUL
+	});
+
+	test('ANSI escape codes are stripped (0 width)', () => {
+		assert.strictEqual(string_display_width('\x1B[31mred\x1B[0m'), 3);
+		assert.strictEqual(string_display_width('\x1B[1;33;40mhello\x1B[0m'), 5);
+		assert.strictEqual(string_display_width('\x1B[31m🐆\x1B[0m'), 2);
+	});
+});
+
+describe('pad_width', () => {
+	test('left-align padding (default)', () => {
+		assert.strictEqual(pad_width('foo', 6), 'foo   ');
+		assert.strictEqual(pad_width('hello', 5), 'hello');
+		assert.strictEqual(pad_width('hi', 4), 'hi  ');
+	});
+
+	test('right-align padding', () => {
+		assert.strictEqual(pad_width('foo', 6, 'right'), '   foo');
+		assert.strictEqual(pad_width('hello', 5, 'right'), 'hello');
+		assert.strictEqual(pad_width('hi', 4, 'right'), '  hi');
+	});
+
+	test('handles strings longer than target width', () => {
+		assert.strictEqual(pad_width('hello', 3), 'hello');
+		assert.strictEqual(pad_width('hello', 3, 'right'), 'hello');
+	});
+
+	test('handles emoji (double-width characters)', () => {
+		// 🐆 is 2 columns, so pad to 4 needs 2 more spaces
+		assert.strictEqual(pad_width('🐆', 4), '🐆  ');
+		assert.strictEqual(pad_width('🐆', 4, 'right'), '  🐆');
+	});
+
+	test('handles mixed content', () => {
+		// 'a🐆' = 1 + 2 = 3 columns, pad to 5 needs 2 more
+		assert.strictEqual(pad_width('a🐆', 5), 'a🐆  ');
 	});
 });

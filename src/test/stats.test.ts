@@ -9,10 +9,16 @@ import {
 	stats_cv,
 	stats_min_max,
 	stats_confidence_interval,
+	stats_confidence_interval_from_summary,
 	stats_outliers_iqr,
 	stats_outliers_mad,
-	confidence_level_to_z_score,
-	CONFIDENCE_Z_SCORES,
+	stats_confidence_level_to_z_score,
+	STATS_CONFIDENCE_Z_SCORES,
+	stats_welch_t_test,
+	stats_normal_cdf,
+	stats_ln_gamma,
+	stats_incomplete_beta,
+	stats_t_distribution_p_value,
 } from '$lib/stats.js';
 
 test('stats_mean', ({expect}) => {
@@ -262,41 +268,153 @@ test('stats_confidence_interval: z_score takes precedence over confidence_level'
 	expect(ci[1]).toBeCloseTo(ci_z[1], 10);
 });
 
-// confidence_level_to_z_score tests
+// stats_confidence_level_to_z_score tests
 
-test('confidence_level_to_z_score: lookup table values', ({expect}) => {
-	expect(confidence_level_to_z_score(0.8)).toBe(CONFIDENCE_Z_SCORES[0.8]);
-	expect(confidence_level_to_z_score(0.9)).toBe(CONFIDENCE_Z_SCORES[0.9]);
-	expect(confidence_level_to_z_score(0.95)).toBe(CONFIDENCE_Z_SCORES[0.95]);
-	expect(confidence_level_to_z_score(0.99)).toBe(CONFIDENCE_Z_SCORES[0.99]);
-	expect(confidence_level_to_z_score(0.999)).toBe(CONFIDENCE_Z_SCORES[0.999]);
+test('stats_confidence_level_to_z_score: lookup table values', ({expect}) => {
+	expect(stats_confidence_level_to_z_score(0.8)).toBe(STATS_CONFIDENCE_Z_SCORES[0.8]);
+	expect(stats_confidence_level_to_z_score(0.9)).toBe(STATS_CONFIDENCE_Z_SCORES[0.9]);
+	expect(stats_confidence_level_to_z_score(0.95)).toBe(STATS_CONFIDENCE_Z_SCORES[0.95]);
+	expect(stats_confidence_level_to_z_score(0.99)).toBe(STATS_CONFIDENCE_Z_SCORES[0.99]);
+	expect(stats_confidence_level_to_z_score(0.999)).toBe(STATS_CONFIDENCE_Z_SCORES[0.999]);
 });
 
-test('confidence_level_to_z_score: approximation for non-lookup values', ({expect}) => {
+test('stats_confidence_level_to_z_score: approximation for non-lookup values', ({expect}) => {
 	// 0.85 is not in lookup table, should approximate
-	const z_85 = confidence_level_to_z_score(0.85);
+	const z_85 = stats_confidence_level_to_z_score(0.85);
 	// Should be between 80% and 90% z-scores
-	expect(z_85).toBeGreaterThan(CONFIDENCE_Z_SCORES[0.8]!);
-	expect(z_85).toBeLessThan(CONFIDENCE_Z_SCORES[0.9]!);
+	expect(z_85).toBeGreaterThan(STATS_CONFIDENCE_Z_SCORES[0.8]!);
+	expect(z_85).toBeLessThan(STATS_CONFIDENCE_Z_SCORES[0.9]!);
 });
 
-test('confidence_level_to_z_score: edge cases throw', ({expect}) => {
-	expect(() => confidence_level_to_z_score(0)).toThrow();
-	expect(() => confidence_level_to_z_score(1)).toThrow();
-	expect(() => confidence_level_to_z_score(-0.5)).toThrow();
-	expect(() => confidence_level_to_z_score(1.5)).toThrow();
+test('stats_confidence_level_to_z_score: edge cases throw', ({expect}) => {
+	expect(() => stats_confidence_level_to_z_score(0)).toThrow();
+	expect(() => stats_confidence_level_to_z_score(1)).toThrow();
+	expect(() => stats_confidence_level_to_z_score(-0.5)).toThrow();
+	expect(() => stats_confidence_level_to_z_score(1.5)).toThrow();
 });
 
-test('confidence_level_to_z_score: reasonable approximations', ({expect}) => {
+test('stats_confidence_level_to_z_score: reasonable approximations', ({expect}) => {
 	// Test that approximation produces reasonable values
 	// Higher confidence = higher z-score
-	const z_70 = confidence_level_to_z_score(0.7);
-	const z_75 = confidence_level_to_z_score(0.75);
-	const z_80 = confidence_level_to_z_score(0.8);
+	const z_70 = stats_confidence_level_to_z_score(0.7);
+	const z_75 = stats_confidence_level_to_z_score(0.75);
+	const z_80 = stats_confidence_level_to_z_score(0.8);
 
 	expect(z_70).toBeLessThan(z_75);
 	expect(z_75).toBeLessThan(z_80);
 
 	// z-scores should be positive for all reasonable confidence levels
 	expect(z_70).toBeGreaterThan(0);
+});
+
+// stats_confidence_interval_from_summary tests
+
+test('stats_confidence_interval_from_summary: basic', ({expect}) => {
+	// Should produce same result as stats_confidence_interval with same inputs
+	const values = [10, 12, 11, 13, 10, 12, 11];
+	const mean = stats_mean(values);
+	const std_dev = stats_std_dev(values, mean);
+
+	const ci_from_values = stats_confidence_interval(values);
+	const ci_from_summary = stats_confidence_interval_from_summary(mean, std_dev, values.length);
+
+	expect(ci_from_summary[0]).toBeCloseTo(ci_from_values[0], 10);
+	expect(ci_from_summary[1]).toBeCloseTo(ci_from_values[1], 10);
+});
+
+test('stats_confidence_interval_from_summary: zero sample size', ({expect}) => {
+	const ci = stats_confidence_interval_from_summary(100, 10, 0);
+	expect(ci).toEqual([NaN, NaN]);
+});
+
+test('stats_confidence_interval_from_summary: custom z_score', ({expect}) => {
+	const ci_95 = stats_confidence_interval_from_summary(100, 10, 100);
+	const ci_99 = stats_confidence_interval_from_summary(100, 10, 100, {z_score: 2.576});
+
+	const width_95 = ci_95[1] - ci_95[0];
+	const width_99 = ci_99[1] - ci_99[0];
+
+	expect(width_99).toBeGreaterThan(width_95);
+});
+
+// Hypothesis testing utilities tests
+
+test('stats_welch_t_test: equal means', ({expect}) => {
+	const result = stats_welch_t_test(100, 10, 50, 100, 10, 50);
+	expect(result.t_statistic).toBe(0);
+	expect(result.degrees_of_freedom).toBeGreaterThan(0);
+});
+
+test('stats_welch_t_test: different means', ({expect}) => {
+	const result = stats_welch_t_test(100, 10, 50, 110, 10, 50);
+	expect(result.t_statistic).toBeLessThan(0); // First mean is lower
+	expect(Math.abs(result.t_statistic)).toBeGreaterThan(0);
+	expect(result.degrees_of_freedom).toBeGreaterThan(0);
+});
+
+test('stats_welch_t_test: unequal variances', ({expect}) => {
+	// Welch's test handles unequal variances
+	const result = stats_welch_t_test(100, 5, 30, 100, 20, 30);
+	expect(result.t_statistic).toBe(0);
+	// Degrees of freedom should be less than n1 + n2 - 2 due to unequal variances
+	expect(result.degrees_of_freedom).toBeLessThan(58);
+});
+
+test('stats_normal_cdf: known values', ({expect}) => {
+	// z = 0 should give 0.5
+	expect(stats_normal_cdf(0)).toBeCloseTo(0.5, 3);
+	// z = 1.96 should give ~0.975 (97.5th percentile)
+	expect(stats_normal_cdf(1.96)).toBeCloseTo(0.975, 2);
+	// z = -1.96 should give ~0.025
+	expect(stats_normal_cdf(-1.96)).toBeCloseTo(0.025, 2);
+	// Extreme values
+	expect(stats_normal_cdf(3)).toBeGreaterThan(0.99);
+	expect(stats_normal_cdf(-3)).toBeLessThan(0.01);
+});
+
+test('stats_ln_gamma: known values', ({expect}) => {
+	// ln(Γ(1)) = ln(0!) = ln(1) = 0
+	expect(stats_ln_gamma(1)).toBeCloseTo(0, 5);
+	// ln(Γ(2)) = ln(1!) = ln(1) = 0
+	expect(stats_ln_gamma(2)).toBeCloseTo(0, 5);
+	// ln(Γ(3)) = ln(2!) = ln(2) ≈ 0.693
+	expect(stats_ln_gamma(3)).toBeCloseTo(Math.log(2), 3);
+	// ln(Γ(4)) = ln(3!) = ln(6) ≈ 1.79
+	expect(stats_ln_gamma(4)).toBeCloseTo(Math.log(6), 3);
+});
+
+test('stats_incomplete_beta: edge cases', ({expect}) => {
+	// x = 0 should return 0
+	expect(stats_incomplete_beta(0, 5, 5)).toBe(0);
+	// x = 1 should return 1
+	expect(stats_incomplete_beta(1, 5, 5)).toBe(1);
+	// Monotonic: larger x should give larger result
+	const low = stats_incomplete_beta(0.3, 5, 5);
+	const high = stats_incomplete_beta(0.7, 5, 5);
+	expect(high).toBeGreaterThan(low);
+	// Result should be in [0, 1]
+	expect(stats_incomplete_beta(0.5, 5, 5)).toBeGreaterThan(0);
+	expect(stats_incomplete_beta(0.5, 5, 5)).toBeLessThan(1);
+});
+
+test('stats_t_distribution_p_value: known values', ({expect}) => {
+	// Large df approaches normal distribution
+	// t = 1.96 with large df should give p ≈ 0.05 (two-tailed)
+	expect(stats_t_distribution_p_value(1.96, 1000)).toBeCloseTo(0.05, 1);
+
+	// t = 0 should give p = 1 (no difference)
+	expect(stats_t_distribution_p_value(0, 50)).toBeCloseTo(1, 1);
+
+	// Larger t should give smaller p
+	const p_small = stats_t_distribution_p_value(2, 50);
+	const p_large = stats_t_distribution_p_value(4, 50);
+	expect(p_large).toBeLessThan(p_small);
+});
+
+test('stats_t_distribution_p_value: small df', ({expect}) => {
+	// With small df, the t-distribution has heavier tails
+	// Same t-value should give larger p with smaller df
+	const p_small_df = stats_t_distribution_p_value(2, 5);
+	const p_large_df = stats_t_distribution_p_value(2, 100);
+	expect(p_small_df).toBeGreaterThan(p_large_df);
 });

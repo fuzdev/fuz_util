@@ -97,3 +97,69 @@ export const strip_ansi = (str: string): string => str.replaceAll(/\x1B\[[0-9;]*
  */
 export const stringify = (value: unknown): string =>
 	typeof value === 'bigint' ? value + 'n' : (JSON.stringify(value) ?? String(value)); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+
+/**
+ * Calculate the display width of a string in terminal columns.
+ * - Strips ANSI escape codes (they have 0 width)
+ * - Emojis and other wide characters take 2 columns
+ * - Tab characters take 4 columns
+ * - Newlines and other control characters take 0 columns
+ * - Uses `Intl.Segmenter` to properly handle grapheme clusters (e.g., family emoji "👨‍👩‍👧‍👦")
+ */
+export const string_display_width = (str: string): number => {
+	// Strip ANSI codes first (they have 0 display width)
+	const clean = strip_ansi(str);
+
+	let width = 0;
+	const segmenter = new Intl.Segmenter();
+	for (const {segment} of segmenter.segment(clean)) {
+		const code = segment.codePointAt(0)!;
+
+		// Handle control characters
+		if (code === 0x09) {
+			// Tab = 4 columns
+			width += 4;
+			continue;
+		}
+		if (code < 0x20 || (code >= 0x7f && code < 0xa0)) {
+			// Other control characters (including newline) = 0 width
+			continue;
+		}
+
+		// Emoji and other wide characters (rough heuristic)
+		// - Most emoji are in range 0x1F300-0x1FAFF
+		// - Some are in 0x2600-0x27BF (misc symbols)
+		// - CJK characters 0x4E00-0x9FFF also double-width
+		// - Grapheme clusters with multiple code points (like ZWJ sequences) are typically emoji
+		if (
+			segment.length > 1 || // Multi-codepoint graphemes (ZWJ sequences, etc.)
+			(code >= 0x1f300 && code <= 0x1faff) ||
+			(code >= 0x2600 && code <= 0x27bf) ||
+			(code >= 0x1f600 && code <= 0x1f64f) ||
+			(code >= 0x1f680 && code <= 0x1f6ff) ||
+			(code >= 0x4e00 && code <= 0x9fff) // CJK
+		) {
+			width += 2;
+		} else {
+			width += 1;
+		}
+	}
+	return width;
+};
+
+/**
+ * Pad a string to a target display width (accounting for wide characters).
+ */
+export const pad_width = (
+	str: string,
+	target_width: number,
+	align: 'left' | 'right' = 'left',
+): string => {
+	const current_width = string_display_width(str);
+	const padding = Math.max(0, target_width - current_width);
+	if (align === 'left') {
+		return str + ' '.repeat(padding);
+	} else {
+		return ' '.repeat(padding) + str;
+	}
+};

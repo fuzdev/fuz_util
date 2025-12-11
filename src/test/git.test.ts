@@ -7,6 +7,7 @@ import {
 	git_current_branch_first_commit_hash,
 	git_current_branch_name,
 	git_current_commit_hash,
+	git_info_get,
 	git_parse_workspace_status,
 	git_workspace_status_message,
 	git_workspace_is_clean,
@@ -523,5 +524,33 @@ describe('git_current_branch_first_commit_hash', () => {
 		const first_commit_hash = await git_current_branch_first_commit_hash();
 		assert.ok(first_commit_hash);
 		assert.strictEqual(typeof first_commit_hash, 'string');
+	});
+});
+
+describe('git_info_get', () => {
+	test('returns commit and branch info', async () => {
+		const info = await git_info_get();
+		assert.ok(typeof info === 'object');
+		assert.ok(info.commit === null || typeof info.commit === 'string');
+		assert.ok(info.branch === null || typeof info.branch === 'string');
+	});
+
+	test('returns valid commit hash when in git repo', async () => {
+		const info = await git_info_get();
+		// In this repo, both should be available
+		if (info.commit) {
+			// Commit hash should be 40 characters (full SHA)
+			assert.strictEqual(info.commit.length, 40);
+			// Should be hexadecimal
+			assert.ok(/^[0-9a-f]+$/.test(info.commit));
+		}
+	});
+
+	test('returns valid branch name when in git repo', async () => {
+		const info = await git_info_get();
+		if (info.branch) {
+			// Branch name should be a non-empty string
+			assert.ok(info.branch.length > 0);
+		}
 	});
 });

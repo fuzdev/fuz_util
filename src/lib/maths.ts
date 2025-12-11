@@ -89,3 +89,11 @@ export const GR_9 = 76.01315561749645;
  * golden ratio/mean constants, `1/(GR**9)`, useful for scaling: https://wikipedia.org/wiki/Golden_ratio
  */
 export const GR_9i = 0.013155617496424835;
+
+/**
+ * Format a number with fixed decimal places and thousands separators.
+ */
+export const format_number = (n: number, decimals: number = 2): string => {
+	if (!isFinite(n)) return String(n);
+	return n.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};

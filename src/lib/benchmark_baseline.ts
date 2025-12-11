@@ -8,12 +8,14 @@ import {join} from 'node:path';
 import {z} from 'zod';
 
 import {fs_exists} from './fs.js';
+import {git_info_get} from './git.js';
 import type {BenchmarkResult} from './benchmark_types.js';
 import {
 	benchmark_stats_compare,
 	type BenchmarkComparison,
 	type BenchmarkStatsComparable,
 } from './benchmark_stats.js';
+import {stats_confidence_interval_from_summary} from './stats.js';
 
 // Version for forward compatibility - increment when schema changes
 const BASELINE_VERSION = 1;
@@ -128,21 +130,6 @@ export interface BenchmarkBaselineTaskComparison {
 const DEFAULT_BASELINE_PATH = '.gro/benchmarks';
 const BASELINE_FILENAME = 'baseline.json';
 
-/** Z-score for 95% confidence interval */
-const Z_95 = 1.96;
-
-/**
- * Calculate 95% confidence interval from mean, std_dev, and sample_size.
- */
-const calculate_confidence_interval = (
-	mean: number,
-	std_dev: number,
-	sample_size: number,
-): [number, number] => {
-	const margin = Z_95 * (std_dev / Math.sqrt(sample_size));
-	return [mean - margin, mean + margin];
-};
-
 /**
  * Convert benchmark results to baseline entries.
  */
@@ -161,28 +148,6 @@ const results_to_entries = (results: Array<BenchmarkResult>): Array<BenchmarkBas
 		ops_per_second: r.stats.ops_per_second,
 		sample_size: r.stats.sample_size,
 	}));
-};
-
-/**
- * Try to get git info from the environment or git commands.
- */
-const get_git_info = async (): Promise<{commit: string | null; branch: string | null}> => {
-	try {
-		const {promisify} = await import('node:util');
-		const exec = promisify((await import('node:child_process')).exec);
-
-		const [commit_result, branch_result] = await Promise.all([
-			exec('git rev-parse HEAD').catch(() => ({stdout: ''})),
-			exec('git rev-parse --abbrev-ref HEAD').catch(() => ({stdout: ''})),
-		]);
-
-		return {
-			commit: commit_result.stdout.trim() || null,
-			branch: branch_result.stdout.trim() || null,
-		};
-	} catch {
-		return {commit: null, branch: null};
-	}
 };
 
 /**
@@ -209,7 +174,7 @@ export const benchmark_baseline_save = async (
 	let git_commit = options.git_commit;
 	let git_branch = options.git_branch;
 	if (git_commit === undefined || git_branch === undefined) {
-		const git_info = await get_git_info();
+		const git_info = await git_info_get();
 		git_commit ??= git_info.commit;
 		git_branch ??= git_info.branch;
 	}
@@ -360,7 +325,7 @@ export const benchmark_baseline_compare = async (
 			mean_ns: baseline_entry.mean_ns,
 			std_dev_ns: baseline_entry.std_dev_ns,
 			sample_size: baseline_entry.sample_size,
-			confidence_interval_ns: calculate_confidence_interval(
+			confidence_interval_ns: stats_confidence_interval_from_summary(
 				baseline_entry.mean_ns,
 				baseline_entry.std_dev_ns,
 				baseline_entry.sample_size,
@@ -370,7 +335,7 @@ export const benchmark_baseline_compare = async (
 			mean_ns: current.mean_ns,
 			std_dev_ns: current.std_dev_ns,
 			sample_size: current.sample_size,
-			confidence_interval_ns: calculate_confidence_interval(
+			confidence_interval_ns: stats_confidence_interval_from_summary(
 				current.mean_ns,
 				current.std_dev_ns,
 				current.sample_size,

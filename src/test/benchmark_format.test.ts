@@ -91,33 +91,6 @@ describe('benchmark_format_table', () => {
 		}
 	});
 
-	test('emoji tier indicators are properly aligned', () => {
-		const results = [
-			create_result('cheetah speed', 2_000_000), // 🐆
-			create_result('rabbit speed', 500_000), // 🐇
-			create_result('turtle speed', 50_000), // 🐢
-			create_result('snail speed', 5_000), // 🐌
-		];
-
-		const table = benchmark_format_table(results);
-
-		// Should contain all tier emojis
-		expect(table).toContain('🐆');
-		expect(table).toContain('🐇');
-		expect(table).toContain('🐢');
-		expect(table).toContain('🐌');
-
-		// Table should be properly formatted (no alignment issues)
-		const lines = table.split('\n');
-		// Data rows start at index 3 (after top border, header, separator)
-		for (let i = 3; i < lines.length - 1; i++) {
-			const line = lines[i]!;
-			// Each data row should start and end with │
-			expect(line.startsWith('│')).toBe(true);
-			expect(line.endsWith('│')).toBe(true);
-		}
-	});
-
 	test('empty results returns placeholder', () => {
 		const table = benchmark_format_table([]);
 		expect(table).toBe('(no results)');

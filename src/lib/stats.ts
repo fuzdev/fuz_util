@@ -272,7 +272,7 @@ export const stats_outliers_mad = (
 /**
  * Common z-scores for confidence intervals.
  */
-export const CONFIDENCE_Z_SCORES: Record<number, number> = {
+export const STATS_CONFIDENCE_Z_SCORES: Record<number, number> = {
 	0.8: 1.282,
 	0.9: 1.645,
 	0.95: 1.96,
@@ -286,18 +286,18 @@ export const CONFIDENCE_Z_SCORES: Record<number, number> = {
  *
  * @example
  * ```ts
- * confidence_level_to_z_score(0.95); // 1.96
- * confidence_level_to_z_score(0.99); // 2.576
+ * stats_confidence_level_to_z_score(0.95); // 1.96
+ * stats_confidence_level_to_z_score(0.99); // 2.576
  * ```
  */
-export const confidence_level_to_z_score = (level: number): number => {
+export const stats_confidence_level_to_z_score = (level: number): number => {
 	if (level <= 0 || level >= 1) {
 		throw new Error('Confidence level must be between 0 and 1 (exclusive)');
 	}
 
 	// Check lookup table first
-	if (level in CONFIDENCE_Z_SCORES) {
-		return CONFIDENCE_Z_SCORES[level]!;
+	if (level in STATS_CONFIDENCE_Z_SCORES) {
+		return STATS_CONFIDENCE_Z_SCORES[level]!;
 	}
 
 	// For confidence level c, we want z such that P(-z < Z < z) = c
@@ -335,19 +335,200 @@ export const stats_confidence_interval = (
 	values: Array<number>,
 	options?: StatsConfidenceIntervalOptions,
 ): [number, number] => {
-	// z_score takes precedence, then confidence_level, then default
-	const z_score =
-		options?.z_score ??
-		(options?.confidence_level ? confidence_level_to_z_score(options.confidence_level) : null) ??
-		DEFAULT_CONFIDENCE_Z;
-
 	if (values.length === 0) return [NaN, NaN];
 
 	const mean = stats_mean(values);
 	const std_dev = stats_std_dev(values, mean);
 
-	const se = std_dev / Math.sqrt(values.length);
+	return stats_confidence_interval_from_summary(mean, std_dev, values.length, options);
+};
+
+/**
+ * Calculate confidence interval from summary statistics (mean, std_dev, sample_size).
+ * Useful when raw data is not available.
+ * @param mean - Mean of the data
+ * @param std_dev - Standard deviation of the data
+ * @param sample_size - Number of samples
+ * @param options - Configuration options
+ * @returns [lower_bound, upper_bound]
+ */
+export const stats_confidence_interval_from_summary = (
+	mean: number,
+	std_dev: number,
+	sample_size: number,
+	options?: StatsConfidenceIntervalOptions,
+): [number, number] => {
+	// z_score takes precedence, then confidence_level, then default
+	const z_score =
+		options?.z_score ??
+		(options?.confidence_level
+			? stats_confidence_level_to_z_score(options.confidence_level)
+			: null) ??
+		DEFAULT_CONFIDENCE_Z;
+
+	if (sample_size === 0) return [NaN, NaN];
+
+	const se = std_dev / Math.sqrt(sample_size);
 	const margin = z_score * se;
 
 	return [mean - margin, mean + margin];
+};
+
+// Hypothesis Testing Utilities
+// These functions support statistical significance testing (t-tests, p-values, etc.)
+
+/**
+ * Result from Welch's t-test calculation.
+ */
+export interface StatsWelchTTestResult {
+	/** The t-statistic */
+	t_statistic: number;
+	/** Welch-Satterthwaite degrees of freedom */
+	degrees_of_freedom: number;
+}
+
+/**
+ * Calculate Welch's t-test statistic and degrees of freedom.
+ * Welch's t-test is more robust than Student's t-test when variances are unequal.
+ *
+ * @param mean1 - Mean of first sample
+ * @param std1 - Standard deviation of first sample
+ * @param n1 - Size of first sample
+ * @param mean2 - Mean of second sample
+ * @param std2 - Standard deviation of second sample
+ * @param n2 - Size of second sample
+ */
+export const stats_welch_t_test = (
+	mean1: number,
+	std1: number,
+	n1: number,
+	mean2: number,
+	std2: number,
+	n2: number,
+): StatsWelchTTestResult => {
+	const var1 = std1 ** 2;
+	const var2 = std2 ** 2;
+
+	const se1 = var1 / n1;
+	const se2 = var2 / n2;
+
+	const t_statistic = (mean1 - mean2) / Math.sqrt(se1 + se2);
+
+	// Welch-Satterthwaite degrees of freedom
+	const numerator = (se1 + se2) ** 2;
+	const denominator = se1 ** 2 / (n1 - 1) + se2 ** 2 / (n2 - 1);
+	const degrees_of_freedom = numerator / denominator;
+
+	return {t_statistic, degrees_of_freedom};
+};
+
+/**
+ * Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).
+ */
+export const stats_normal_cdf = (x: number): number => {
+	const t = 1 / (1 + 0.2316419 * Math.abs(x));
+	const d = 0.3989423 * Math.exp((-x * x) / 2);
+	const p =
+		d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+	return x > 0 ? 1 - p : p;
+};
+
+/**
+ * Log gamma function approximation (Lanczos approximation).
+ */
+export const stats_ln_gamma = (z: number): number => {
+	const g = 7;
+	const c = [
+		0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+		-176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6,
+		1.5056327351493116e-7,
+	];
+
+	if (z < 0.5) {
+		return Math.log(Math.PI / Math.sin(Math.PI * z)) - stats_ln_gamma(1 - z);
+	}
+
+	const z_adj = z - 1;
+	let x = c[0]!;
+	for (let i = 1; i < g + 2; i++) {
+		x += c[i]! / (z_adj + i);
+	}
+	const t = z_adj + g + 0.5;
+	return 0.5 * Math.log(2 * Math.PI) + (z_adj + 0.5) * Math.log(t) - t + Math.log(x);
+};
+
+/**
+ * Approximate regularized incomplete beta function for p-value calculation.
+ * Uses continued fraction expansion for reasonable accuracy.
+ */
+export const stats_incomplete_beta = (x: number, a: number, b: number): number => {
+	// Simple approximation using the relationship between beta and normal distributions
+	// For our use case (t-distribution p-values), this provides sufficient accuracy
+	if (x <= 0) return 0;
+	if (x >= 1) return 1;
+
+	// Use symmetry if needed
+	if (x > (a + 1) / (a + b + 2)) {
+		return 1 - stats_incomplete_beta(1 - x, b, a);
+	}
+
+	// Continued fraction approximation (first few terms)
+	const lnBeta = stats_ln_gamma(a) + stats_ln_gamma(b) - stats_ln_gamma(a + b);
+	const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+
+	// Simple continued fraction (limited iterations for speed)
+	let f = 1;
+	let c = 1;
+	let d = 0;
+
+	for (let m = 1; m <= 100; m++) {
+		const m2 = 2 * m;
+
+		// Even step
+		let aa = (m * (b - m) * x) / ((a + m2 - 1) * (a + m2));
+		d = 1 + aa * d;
+		if (Math.abs(d) < 1e-30) d = 1e-30;
+		c = 1 + aa / c;
+		if (Math.abs(c) < 1e-30) c = 1e-30;
+		d = 1 / d;
+		f *= d * c;
+
+		// Odd step
+		aa = (-(a + m) * (a + b + m) * x) / ((a + m2) * (a + m2 + 1));
+		d = 1 + aa * d;
+		if (Math.abs(d) < 1e-30) d = 1e-30;
+		c = 1 + aa / c;
+		if (Math.abs(c) < 1e-30) c = 1e-30;
+		d = 1 / d;
+		const delta = d * c;
+		f *= delta;
+
+		if (Math.abs(delta - 1) < 1e-8) break;
+	}
+
+	return front * f;
+};
+
+/**
+ * Approximate two-tailed p-value from t-distribution.
+ * For large df (>100), uses normal approximation.
+ * For smaller df, uses incomplete beta function.
+ *
+ * @param t - Absolute value of t-statistic
+ * @param df - Degrees of freedom
+ * @returns Two-tailed p-value
+ */
+export const stats_t_distribution_p_value = (t: number, df: number): number => {
+	// Use normal approximation for large df
+	if (df > 100) {
+		return 2 * (1 - stats_normal_cdf(t));
+	}
+
+	// For smaller df, use a more accurate approximation
+	// Based on the incomplete beta function relationship
+	const x = df / (df + t * t);
+	const a = df / 2;
+	const b = 0.5;
+
+	return stats_incomplete_beta(x, a, b);
 };

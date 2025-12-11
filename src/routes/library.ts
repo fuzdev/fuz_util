@@ -328,7 +328,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineEntry',
 						kind: 'type',
 						doc_comment: 'Schema for a single benchmark entry in the baseline.',
-						source_line: 24,
+						source_line: 26,
 						type_signature:
 							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; median_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
 					},
@@ -336,7 +336,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaseline',
 						kind: 'type',
 						doc_comment: 'Schema for the complete baseline file.',
-						source_line: 43,
+						source_line: 45,
 						type_signature:
 							'ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>',
 					},
@@ -344,7 +344,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineSaveOptions',
 						kind: 'type',
 						doc_comment: 'Options for saving a baseline.',
-						source_line: 56,
+						source_line: 58,
 						type_signature: 'BenchmarkBaselineSaveOptions',
 						properties: [
 							{
@@ -371,7 +371,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineLoadOptions',
 						kind: 'type',
 						doc_comment: 'Options for loading a baseline.',
-						source_line: 68,
+						source_line: 70,
 						type_signature: 'BenchmarkBaselineLoadOptions',
 						properties: [
 							{
@@ -386,7 +386,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineCompareOptions',
 						kind: 'type',
 						doc_comment: 'Options for comparing against a baseline.',
-						source_line: 76,
+						source_line: 78,
 						type_signature: 'BenchmarkBaselineCompareOptions',
 						extends: ['BenchmarkBaselineLoadOptions'],
 						properties: [
@@ -410,7 +410,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineComparisonResult',
 						kind: 'type',
 						doc_comment: 'Result of comparing current results against a baseline.',
-						source_line: 93,
+						source_line: 95,
 						type_signature: 'BenchmarkBaselineComparisonResult',
 						properties: [
 							{
@@ -488,7 +488,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkBaselineTaskComparison',
 						kind: 'type',
 						doc_comment: 'Comparison result for a single task.',
-						source_line: 121,
+						source_line: 123,
 						type_signature: 'BenchmarkBaselineTaskComparison',
 						properties: [
 							{
@@ -520,7 +520,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```",
 						],
-						source_line: 202,
+						source_line: 167,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>',
 						return_type: 'Promise<void>',
@@ -545,7 +545,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```',
 						],
-						source_line: 245,
+						source_line: 210,
 						type_signature:
 							'(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
 						return_type:
@@ -567,7 +567,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```",
 						],
-						source_line: 308,
+						source_line: 273,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>',
 						return_type: 'Promise<BenchmarkBaselineComparisonResult>',
@@ -592,7 +592,7 @@ export const library_json: LibraryJson = {
 						name: 'benchmark_baseline_format',
 						kind: 'function',
 						doc_comment: 'Format a baseline comparison result as a human-readable string.',
-						source_line: 450,
+						source_line: 415,
 						type_signature: '(result: BenchmarkBaselineComparisonResult): string',
 						return_type: 'string',
 						return_description: 'Formatted string summary',
@@ -609,7 +609,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Format a baseline comparison result as JSON for programmatic consumption.',
-						source_line: 531,
+						source_line: 496,
 						type_signature:
 							'(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string',
 						return_type: 'string',
@@ -631,7 +631,7 @@ export const library_json: LibraryJson = {
 				],
 				module_comment:
 					'Benchmark baseline storage and comparison utilities.\nSave benchmark results to disk and compare against baselines for regression detection.',
-				dependencies: ['benchmark_stats.ts', 'fs.ts'],
+				dependencies: ['benchmark_stats.ts', 'fs.ts', 'git.ts', 'stats.ts'],
 			},
 			{
 				path: 'benchmark_format.ts',
@@ -642,9 +642,9 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Format results as an ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌────┬─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │    │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├────┼─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ 🐇 │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ 🐢 │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └────┴─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```\n\n**Performance tier animals:**\n- 🐆 Cheetah: >1M ops/sec (extremely fast)\n- 🐇 Rabbit: >100K ops/sec (fast)\n- 🐢 Turtle: >10K ops/sec (moderate)\n- 🐌 Snail: <10K ops/sec (slow)',
+							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```',
 						],
-						source_line: 70,
+						source_line: 23,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with enhanced metrics',
@@ -664,7 +664,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | median (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|-------------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81        | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82        | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```',
 						],
-						source_line: 170,
+						source_line: 121,
 						type_signature: '(results: BenchmarkResult[]): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
@@ -679,7 +679,7 @@ export const library_json: LibraryJson = {
 					{
 						name: 'BenchmarkFormatJsonOptions',
 						kind: 'type',
-						source_line: 248,
+						source_line: 199,
 						type_signature: 'BenchmarkFormatJsonOptions',
 						properties: [
 							{
@@ -703,7 +703,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```',
 						],
-						source_line: 268,
+						source_line: 219,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string',
 						return_type: 'string',
@@ -729,7 +729,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 327,
+						source_line: 278,
 						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
@@ -748,25 +748,14 @@ export const library_json: LibraryJson = {
 					},
 					{
 						name: 'benchmark_format_number',
-						kind: 'function',
+						kind: 'variable',
 						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
-						source_line: 363,
-						type_signature: '(n: number, decimals?: number): string',
-						return_type: 'string',
-						parameters: [
-							{
-								name: 'n',
-								type: 'number',
-							},
-							{
-								name: 'decimals',
-								type: 'number',
-								default_value: '2',
-							},
-						],
+						see_also: ['`{@link format_number} in maths.ts for the underlying implementation.`'],
+						source_line: 314,
+						type_signature: '(n: number, decimals?: number) => string',
 					},
 				],
-				dependencies: ['time.ts'],
+				dependencies: ['maths.ts', 'string.ts', 'time.ts'],
 				dependents: ['benchmark.ts'],
 			},
 			{
@@ -777,7 +766,7 @@ export const library_json: LibraryJson = {
 						kind: 'type',
 						doc_comment:
 							'Minimal stats interface for comparison.\nThis allows comparing stats from different sources (e.g., loaded baselines).',
-						source_line: 23,
+						source_line: 25,
 						type_signature: 'BenchmarkStatsComparable',
 						properties: [
 							{
@@ -806,14 +795,14 @@ export const library_json: LibraryJson = {
 						name: 'EffectMagnitude',
 						kind: 'type',
 						doc_comment: "Effect size magnitude interpretation (Cohen's d).",
-						source_line: 33,
+						source_line: 35,
 						type_signature: 'EffectMagnitude',
 					},
 					{
 						name: 'BenchmarkComparison',
 						kind: 'type',
 						doc_comment: 'Result from comparing two benchmark stats.',
-						source_line: 38,
+						source_line: 40,
 						type_signature: 'BenchmarkComparison',
 						properties: [
 							{
@@ -874,7 +863,7 @@ export const library_json: LibraryJson = {
 						name: 'BenchmarkCompareOptions',
 						kind: 'type',
 						doc_comment: 'Options for benchmark comparison.',
-						source_line: 60,
+						source_line: 62,
 						type_signature: 'BenchmarkCompareOptions',
 						properties: [
 							{
@@ -890,7 +879,7 @@ export const library_json: LibraryJson = {
 						kind: 'class',
 						doc_comment:
 							'Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.',
-						source_line: 70,
+						source_line: 72,
 						members: [
 							{
 								name: 'mean_ns',
@@ -1040,7 +1029,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```',
 						],
-						source_line: 196,
+						source_line: 198,
 						type_signature:
 							'(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison',
 						return_type: 'BenchmarkComparison',
@@ -2414,22 +2403,57 @@ export const library_json: LibraryJson = {
 				path: 'git.ts',
 				declarations: [
 					{
+						name: 'GitInfo',
+						kind: 'type',
+						doc_comment: 'Basic git repository info.',
+						source_line: 12,
+						type_signature: 'GitInfo',
+						properties: [
+							{
+								name: 'commit',
+								kind: 'variable',
+								type_signature: 'string | null',
+							},
+							{
+								name: 'branch',
+								kind: 'variable',
+								type_signature: 'string | null',
+							},
+						],
+					},
+					{
+						name: 'git_info_get',
+						kind: 'function',
+						doc_comment:
+							'Get basic git info (commit hash and branch name) without throwing.\nReturns null values if git commands fail (e.g., not in a git repo).',
+						source_line: 21,
+						type_signature: '(options?: SpawnOptions | undefined): Promise<GitInfo>',
+						return_type: 'Promise<GitInfo>',
+						parameters: [
+							{
+								name: 'options',
+								type: 'SpawnOptions | undefined',
+								optional: true,
+							},
+						],
+					},
+					{
 						name: 'GitOrigin',
 						kind: 'type',
-						source_line: 9,
+						source_line: 33,
 						type_signature: 'ZodString',
 					},
 					{
 						name: 'GitBranch',
 						kind: 'type',
-						source_line: 12,
+						source_line: 36,
 						type_signature: 'ZodString',
 					},
 					{
 						name: 'git_current_branch_name',
 						kind: 'function',
 						doc_comment: 'Returns the current git branch name or throws if something goes wrong.',
-						source_line: 18,
+						source_line: 42,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<GitBranch>',
 						return_type: 'Promise<GitBranch>',
 						parameters: [
@@ -2444,7 +2468,7 @@ export const library_json: LibraryJson = {
 						name: 'git_remote_branch_exists',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 28,
+						source_line: 52,
 						type_signature:
 							'(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
@@ -2471,7 +2495,7 @@ export const library_json: LibraryJson = {
 						name: 'git_local_branch_exists',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 56,
+						source_line: 80,
 						type_signature:
 							'(branch: GitBranch, options?: SpawnOptions | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
@@ -2493,7 +2517,7 @@ export const library_json: LibraryJson = {
 						kind: 'type',
 						doc_comment:
 							'Git workspace status flags indicating which types of changes are present.',
-						source_line: 70,
+						source_line: 94,
 						type_signature: 'GitWorkspaceStatus',
 						properties: [
 							{
@@ -2518,7 +2542,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Parses the output of `git status --porcelain -z` (v1 format) into a status object.\nThis is a pure function that can be tested independently.\n\nFormat: XY path\\0 where:\n- X = staged status (index)\n- Y = unstaged status (work tree)\n- path = file path (unescaped with -z)\n\nSupported status codes:\n- M = modified\n- A = added\n- D = deleted\n- R = renamed\n- C = copied\n- T = type changed (regular file, symbolic link or submodule)\n- U = unmerged\n- ? = untracked\n- ! = ignored\n\nFor renames/copies: XY new\\0old\\0 (two NUL-separated paths)\n\nNote: This implementation treats submodules the same as regular files.\nSubmodule-specific status codes (lowercase m, ?) are interpreted as changes.',
-						source_line: 104,
+						source_line: 128,
 						type_signature: '(stdout: string | null): GitWorkspaceStatus',
 						return_type: 'GitWorkspaceStatus',
 						return_description:
@@ -2536,7 +2560,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Checks the git workspace status using a single `git status --porcelain -z` call.\nThe -z format provides more reliable parsing by using NUL separators and avoiding escaping.',
-						source_line: 154,
+						source_line: 178,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<GitWorkspaceStatus>',
 						return_type: 'Promise<GitWorkspaceStatus>',
 						return_description:
@@ -2553,7 +2577,7 @@ export const library_json: LibraryJson = {
 						name: 'git_workspace_is_clean',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 162,
+						source_line: 186,
 						type_signature: '(status: GitWorkspaceStatus): boolean',
 						return_type: 'boolean',
 						return_description: '`true` if the workspace has no changes at all',
@@ -2568,7 +2592,7 @@ export const library_json: LibraryJson = {
 						name: 'git_workspace_is_fully_staged',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 168,
+						source_line: 192,
 						type_signature: '(status: GitWorkspaceStatus): boolean',
 						return_type: 'boolean',
 						return_description:
@@ -2584,7 +2608,7 @@ export const library_json: LibraryJson = {
 						name: 'git_workspace_status_message',
 						kind: 'function',
 						doc_comment: 'Converts a workspace status to a human-readable message.',
-						source_line: 174,
+						source_line: 198,
 						type_signature: '(status: GitWorkspaceStatus): string',
 						return_type: 'string',
 						parameters: [
@@ -2598,7 +2622,7 @@ export const library_json: LibraryJson = {
 						name: 'git_check_clean_workspace',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 186,
+						source_line: 210,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<string | null>',
 						return_type: 'Promise<string | null>',
 						return_description:
@@ -2615,7 +2639,7 @@ export const library_json: LibraryJson = {
 						name: 'git_check_fully_staged_workspace',
 						kind: 'function',
 						doc_comment: '',
-						source_line: 194,
+						source_line: 218,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<string | null>',
 						return_type: 'Promise<string | null>',
 						return_description:
@@ -2632,7 +2656,7 @@ export const library_json: LibraryJson = {
 						name: 'git_fetch',
 						kind: 'function',
 						doc_comment: 'Calls `git fetch` and throws if anything goes wrong.',
-						source_line: 204,
+						source_line: 228,
 						type_signature:
 							'(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2658,7 +2682,7 @@ export const library_json: LibraryJson = {
 						name: 'git_checkout',
 						kind: 'function',
 						doc_comment: 'Calls `git checkout` and throws if anything goes wrong.',
-						source_line: 223,
+						source_line: 247,
 						type_signature:
 							'(branch: GitBranch, options?: SpawnOptions | undefined): Promise<GitBranch | null>',
 						return_type: 'Promise<GitBranch | null>',
@@ -2679,7 +2703,7 @@ export const library_json: LibraryJson = {
 						name: 'git_pull',
 						kind: 'function',
 						doc_comment: 'Calls `git pull` and throws if anything goes wrong.',
-						source_line: 241,
+						source_line: 265,
 						type_signature:
 							'(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2705,7 +2729,7 @@ export const library_json: LibraryJson = {
 						name: 'git_push',
 						kind: 'function',
 						doc_comment: 'Calls `git push` and throws if anything goes wrong.',
-						source_line: 257,
+						source_line: 281,
 						type_signature:
 							'(origin: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined, set_upstream?: boolean): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2735,7 +2759,7 @@ export const library_json: LibraryJson = {
 						name: 'git_push_to_create',
 						kind: 'function',
 						doc_comment: 'Calls `git push` and throws if anything goes wrong.',
-						source_line: 275,
+						source_line: 299,
 						type_signature:
 							'(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2761,7 +2785,7 @@ export const library_json: LibraryJson = {
 						name: 'git_delete_local_branch',
 						kind: 'function',
 						doc_comment: 'Deletes a branch locally and throws if anything goes wrong.',
-						source_line: 297,
+						source_line: 321,
 						type_signature:
 							'(branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2781,7 +2805,7 @@ export const library_json: LibraryJson = {
 						name: 'git_delete_remote_branch',
 						kind: 'function',
 						doc_comment: 'Deletes a branch remotely and throws if anything goes wrong.',
-						source_line: 310,
+						source_line: 334,
 						type_signature:
 							'(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2806,7 +2830,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Resets the `target` branch back to its first commit both locally and remotely.',
-						source_line: 324,
+						source_line: 348,
 						type_signature:
 							'(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2831,7 +2855,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							"Returns the branch's latest commit hash or throws if something goes wrong.",
-						source_line: 341,
+						source_line: 365,
 						type_signature:
 							'(branch?: string | undefined, options?: SpawnOptions | undefined): Promise<string | null>',
 						return_type: 'Promise<string | null>',
@@ -2853,7 +2877,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							"Returns the hash of the current branch's first commit or throws if something goes wrong.",
-						source_line: 354,
+						source_line: 378,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<string>',
 						return_type: 'Promise<string>',
 						parameters: [
@@ -2868,7 +2892,7 @@ export const library_json: LibraryJson = {
 						name: 'git_check_setting_pull_rebase',
 						kind: 'function',
 						doc_comment: 'Returns the global git config setting for `pull.rebase`.',
-						source_line: 369,
+						source_line: 393,
 						type_signature: '(options?: SpawnOptions | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
 						parameters: [
@@ -2884,7 +2908,7 @@ export const library_json: LibraryJson = {
 						kind: 'function',
 						doc_comment:
 							'Clones a branch locally to another directory and updates the origin to match the source.',
-						source_line: 377,
+						source_line: 401,
 						type_signature:
 							'(origin: GitOrigin, branch: GitBranch, source_dir: string, target_dir: string, options?: SpawnOptions | undefined): Promise<void>',
 						return_type: 'Promise<void>',
@@ -2914,6 +2938,7 @@ export const library_json: LibraryJson = {
 					},
 				],
 				dependencies: ['fs.ts', 'path.ts', 'process.ts'],
+				dependents: ['benchmark_baseline.ts'],
 			},
 			{
 				path: 'id.ts',
@@ -3742,8 +3767,27 @@ export const library_json: LibraryJson = {
 						source_line: 91,
 						type_signature: '0.013155617496424835',
 					},
+					{
+						name: 'format_number',
+						kind: 'function',
+						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
+						source_line: 96,
+						type_signature: '(n: number, decimals?: number): string',
+						return_type: 'string',
+						parameters: [
+							{
+								name: 'n',
+								type: 'number',
+							},
+							{
+								name: 'decimals',
+								type: 'number',
+								default_value: '2',
+							},
+						],
+					},
 				],
-				dependents: ['colors.ts', 'timings.ts'],
+				dependents: ['benchmark_format.ts', 'colors.ts', 'timings.ts'],
 			},
 			{
 				path: 'object.ts',
@@ -5322,19 +5366,19 @@ export const library_json: LibraryJson = {
 						],
 					},
 					{
-						name: 'CONFIDENCE_Z_SCORES',
+						name: 'STATS_CONFIDENCE_Z_SCORES',
 						kind: 'variable',
 						doc_comment: 'Common z-scores for confidence intervals.',
 						source_line: 275,
 						type_signature: 'Record<number, number>',
 					},
 					{
-						name: 'confidence_level_to_z_score',
+						name: 'stats_confidence_level_to_z_score',
 						kind: 'function',
 						doc_comment:
 							'Convert a confidence level (0-1) to a z-score.\nUses a lookup table for common values, approximates others.',
 						examples: [
-							'```ts\nconfidence_level_to_z_score(0.95); // 1.96\nconfidence_level_to_z_score(0.99); // 2.576\n```',
+							'```ts\nstats_confidence_level_to_z_score(0.95); // 1.96\nstats_confidence_level_to_z_score(0.99); // 2.576\n```',
 						],
 						source_line: 293,
 						type_signature: '(level: number): number',
@@ -5391,10 +5435,181 @@ export const library_json: LibraryJson = {
 							},
 						],
 					},
+					{
+						name: 'stats_confidence_interval_from_summary',
+						kind: 'function',
+						doc_comment:
+							'Calculate confidence interval from summary statistics (mean, std_dev, sample_size).\nUseful when raw data is not available.',
+						source_line: 355,
+						type_signature:
+							'(mean: number, std_dev: number, sample_size: number, options?: StatsConfidenceIntervalOptions | undefined): [number, number]',
+						return_type: '[number, number]',
+						return_description: '[lower_bound, upper_bound]',
+						parameters: [
+							{
+								name: 'mean',
+								type: 'number',
+								description: '- Mean of the data',
+							},
+							{
+								name: 'std_dev',
+								type: 'number',
+								description: '- Standard deviation of the data',
+							},
+							{
+								name: 'sample_size',
+								type: 'number',
+								description: '- Number of samples',
+							},
+							{
+								name: 'options',
+								type: 'StatsConfidenceIntervalOptions | undefined',
+								optional: true,
+								description: '- Configuration options',
+							},
+						],
+					},
+					{
+						name: 'StatsWelchTTestResult',
+						kind: 'type',
+						doc_comment: "Result from Welch's t-test calculation.",
+						source_line: 383,
+						type_signature: 'StatsWelchTTestResult',
+						properties: [
+							{
+								name: 't_statistic',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'The t-statistic',
+							},
+							{
+								name: 'degrees_of_freedom',
+								kind: 'variable',
+								type_signature: 'number',
+								doc_comment: 'Welch-Satterthwaite degrees of freedom',
+							},
+						],
+					},
+					{
+						name: 'stats_welch_t_test',
+						kind: 'function',
+						doc_comment:
+							"Calculate Welch's t-test statistic and degrees of freedom.\nWelch's t-test is more robust than Student's t-test when variances are unequal.",
+						source_line: 401,
+						type_signature:
+							'(mean1: number, std1: number, n1: number, mean2: number, std2: number, n2: number): StatsWelchTTestResult',
+						return_type: 'StatsWelchTTestResult',
+						parameters: [
+							{
+								name: 'mean1',
+								type: 'number',
+								description: '- Mean of first sample',
+							},
+							{
+								name: 'std1',
+								type: 'number',
+								description: '- Standard deviation of first sample',
+							},
+							{
+								name: 'n1',
+								type: 'number',
+								description: '- Size of first sample',
+							},
+							{
+								name: 'mean2',
+								type: 'number',
+								description: '- Mean of second sample',
+							},
+							{
+								name: 'std2',
+								type: 'number',
+								description: '- Standard deviation of second sample',
+							},
+							{
+								name: 'n2',
+								type: 'number',
+								description: '- Size of second sample',
+							},
+						],
+					},
+					{
+						name: 'stats_normal_cdf',
+						kind: 'function',
+						doc_comment:
+							'Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).',
+						source_line: 428,
+						type_signature: '(x: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'x',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'stats_ln_gamma',
+						kind: 'function',
+						doc_comment: 'Log gamma function approximation (Lanczos approximation).',
+						source_line: 439,
+						type_signature: '(z: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'z',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'stats_incomplete_beta',
+						kind: 'function',
+						doc_comment:
+							'Approximate regularized incomplete beta function for p-value calculation.\nUses continued fraction expansion for reasonable accuracy.',
+						source_line: 464,
+						type_signature: '(x: number, a: number, b: number): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'x',
+								type: 'number',
+							},
+							{
+								name: 'a',
+								type: 'number',
+							},
+							{
+								name: 'b',
+								type: 'number',
+							},
+						],
+					},
+					{
+						name: 'stats_t_distribution_p_value',
+						kind: 'function',
+						doc_comment:
+							'Approximate two-tailed p-value from t-distribution.\nFor large df (>100), uses normal approximation.\nFor smaller df, uses incomplete beta function.',
+						source_line: 521,
+						type_signature: '(t: number, df: number): number',
+						return_type: 'number',
+						return_description: 'Two-tailed p-value',
+						parameters: [
+							{
+								name: 't',
+								type: 'number',
+								description: '- Absolute value of t-statistic',
+							},
+							{
+								name: 'df',
+								type: 'number',
+								description: '- Degrees of freedom',
+							},
+						],
+					},
 				],
 				module_comment:
 					'Statistical analysis utilities.\nPure functions with zero dependencies - can be used standalone for any data analysis.',
-				dependents: ['benchmark_stats.ts'],
+				dependents: ['benchmark_baseline.ts', 'benchmark_stats.ts'],
 			},
 			{
 				path: 'string.ts',
@@ -5610,9 +5825,53 @@ export const library_json: LibraryJson = {
 							},
 						],
 					},
+					{
+						name: 'string_display_width',
+						kind: 'function',
+						doc_comment:
+							'Calculate the display width of a string in terminal columns.\n- Strips ANSI escape codes (they have 0 width)\n- Emojis and other wide characters take 2 columns\n- Tab characters take 4 columns\n- Newlines and other control characters take 0 columns\n- Uses `Intl.Segmenter` to properly handle grapheme clusters (e.g., family emoji "👨‍👩‍👧‍👦")',
+						source_line: 109,
+						type_signature: '(str: string): number',
+						return_type: 'number',
+						parameters: [
+							{
+								name: 'str',
+								type: 'string',
+							},
+						],
+					},
+					{
+						name: 'pad_width',
+						kind: 'function',
+						doc_comment: 'Pad a string to a target display width (accounting for wide characters).',
+						source_line: 153,
+						type_signature: '(str: string, target_width: number, align?: "left" | "right"): string',
+						return_type: 'string',
+						parameters: [
+							{
+								name: 'str',
+								type: 'string',
+							},
+							{
+								name: 'target_width',
+								type: 'number',
+							},
+							{
+								name: 'align',
+								type: '"left" | "right"',
+								default_value: "'left'",
+							},
+						],
+					},
 				],
 				dependencies: ['iterator.ts'],
-				dependents: ['fs.ts', 'library_json.ts', 'package_json.ts', 'url.ts'],
+				dependents: [
+					'benchmark_format.ts',
+					'fs.ts',
+					'library_json.ts',
+					'package_json.ts',
+					'url.ts',
+				],
 			},
 			{
 				path: 'throttle.ts',
@@ -5775,11 +6034,18 @@ export const library_json: LibraryJson = {
 						type_signature: 'TimeUnit',
 					},
 					{
+						name: 'TIME_UNIT_DISPLAY',
+						kind: 'variable',
+						doc_comment: 'Display labels for time units (uses proper Unicode μ for microseconds).',
+						source_line: 116,
+						type_signature: 'Record<TimeUnit, string>',
+					},
+					{
 						name: 'time_unit_detect_best',
 						kind: 'function',
 						doc_comment:
 							'Detect the best time unit for a set of nanosecond values.\nChooses the unit where most values fall in the range 1-9999.',
-						source_line: 119,
+						source_line: 124,
 						type_signature: '(values_ns: number[]): TimeUnit',
 						return_type: 'TimeUnit',
 						return_description: 'Best unit to use for all values',
@@ -5795,7 +6061,7 @@ export const library_json: LibraryJson = {
 						name: 'time_format',
 						kind: 'function',
 						doc_comment: 'Format time with a specific unit.',
-						source_line: 149,
+						source_line: 154,
 						type_signature: '(ns: number, unit: TimeUnit, decimals?: number): string',
 						return_type: 'string',
 						return_description: 'Formatted string like "3.87μs"',
@@ -5825,7 +6091,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\ntime_format_adaptive(1500) // "1.50μs"\ntime_format_adaptive(3870) // "3.87μs"\ntime_format_adaptive(1500000) // "1.50ms"\ntime_format_adaptive(1500000000) // "1.50s"\n```',
 						],
-						source_line: 178,
+						source_line: 183,
 						type_signature: '(ns: number, decimals?: number): string',
 						return_type: 'string',
 						return_description: 'Formatted string like "3.87μs" or "1.23ms"',
@@ -5848,7 +6114,7 @@ export const library_json: LibraryJson = {
 						kind: 'type',
 						doc_comment:
 							'Result from timing a function execution.\nAll times in nanoseconds for maximum precision.',
-						source_line: 197,
+						source_line: 202,
 						type_signature: 'TimeResult',
 						properties: [
 							{
@@ -5890,7 +6156,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```",
 						],
-						source_line: 225,
+						source_line: 230,
 						type_signature:
 							'<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>',
 						return_type: 'Promise<{ result: T; timing: TimeResult; }>',
@@ -5916,7 +6182,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst {result, timing} = time_sync(() => {\n  return expensive_computation();\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```',
 						],
-						source_line: 260,
+						source_line: 265,
 						type_signature: '<T>(fn: () => T, timer?: Timer): { result: T; timing: TimeResult; }',
 						return_type: '{ result: T; timing: TimeResult; }',
 						return_description: 'Object containing the function result and timing information',
@@ -5941,7 +6207,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst timings_ns = await time_measure(async () => {\n  await process_data();\n}, 100);\n\nimport {BenchmarkStats} from './benchmark_stats.js';\nconst stats = new BenchmarkStats(timings_ns);\nconsole.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);\n```",
 						],
-						source_line: 299,
+						source_line: 304,
 						type_signature:
 							'(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>',
 						return_type: 'Promise<number[]>',

@@ -111,6 +111,11 @@ export const time_ns_to_sec = (ns: number): number => ns / TIME_NS_PER_SEC;
 export type TimeUnit = 'ns' | 'us' | 'ms' | 's';
 
 /**
+ * Display labels for time units (uses proper Unicode μ for microseconds).
+ */
+export const TIME_UNIT_DISPLAY: Record<TimeUnit, string> = {ns: 'ns', us: 'μs', ms: 'ms', s: 's'};
+
+/**
  * Detect the best time unit for a set of nanosecond values.
  * Chooses the unit where most values fall in the range 1-9999.
  * @param values_ns - Array of times in nanoseconds
