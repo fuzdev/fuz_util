@@ -205,3 +205,17 @@ export const spawn_restartable_process = (
 	void restart();
 	return {restart, kill};
 };
+
+/**
+ * Check if a PID is still running.
+ */
+export const process_is_pid_running = (pid: number): boolean => {
+	try {
+		// Sending signal 0 doesn't actually send a signal, just checks if process exists
+		process.kill(pid, 0);
+		return true;
+	} catch (err: any) {
+		// ESRCH = no such process, EPERM = exists but no permission
+		return err.code === 'EPERM';
+	}
+};

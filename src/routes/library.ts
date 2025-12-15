@@ -4654,6 +4654,20 @@ export const library_json: LibraryJson = {
 							},
 						],
 					},
+					{
+						name: 'process_is_pid_running',
+						kind: 'function',
+						doc_comment: 'Check if a PID is still running.',
+						source_line: 212,
+						type_signature: '(pid: number): boolean',
+						return_type: 'boolean',
+						parameters: [
+							{
+								name: 'pid',
+								type: 'number',
+							},
+						],
+					},
 				],
 				dependencies: ['log.ts', 'print.ts'],
 				dependents: ['git.ts'],
