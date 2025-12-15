@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.44.1
+
+### Patch Changes
+
+- add `process_is_pid_running` to `process.ts` ([f1ee638](https://github.com/fuzdev/fuz_util/commit/f1ee638))
+
 ## 0.44.0
 
 ### Minor Changes
