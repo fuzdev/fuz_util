@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_util",
-  "version": "0.44.0",
+  "version": "0.44.1",
   "modules": [
     {
       "path": "array.ts",
@@ -1026,6 +1026,10 @@
         },
         {
           "name": "spawn_restartable_process",
+          "kind": "function"
+        },
+        {
+          "name": "process_is_pid_running",
           "kind": "function"
         }
       ]
