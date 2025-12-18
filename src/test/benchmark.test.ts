@@ -216,7 +216,7 @@ test('Benchmark: table() output', async ({expect}) => {
 	expect(table).toContain('task 1');
 	expect(table).toContain('task 2');
 	expect(table).toContain('ops/sec');
-	expect(table).toContain('median');
+	expect(table).toContain('p50');
 	expect(table).toContain('vs Best');
 });
 
@@ -533,7 +533,7 @@ test('Benchmark: table() with groups shows percentiles', async ({expect}) => {
 	expect(table).toContain('GROUP A');
 	expect(table).toContain('GROUP B');
 	// Tables show percentile columns
-	expect(table).toContain('median');
+	expect(table).toContain('p50');
 	expect(table).toContain('vs Best');
 });
 
@@ -987,4 +987,104 @@ test('Benchmark: throws on min > max iterations', ({expect}) => {
 
 test('Benchmark: allows cooldown_ms of 0', ({expect}) => {
 	expect(() => new Benchmark({cooldown_ms: 0})).not.toThrow();
+});
+
+test('Benchmark: has_results is false before run', ({expect}) => {
+	const bench = new Benchmark();
+	bench.add('test', () => {});
+
+	expect(bench.has_results).toBe(false);
+});
+
+test('Benchmark: has_results is true after run', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+	bench.add('test', () => {});
+
+	await bench.run();
+
+	expect(bench.has_results).toBe(true);
+});
+
+test('Benchmark: has_results is false after reset', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+	bench.add('test', () => {});
+
+	await bench.run();
+	expect(bench.has_results).toBe(true);
+
+	bench.reset();
+	expect(bench.has_results).toBe(false);
+});
+
+test('Benchmark: results_by_name returns empty map before run', ({expect}) => {
+	const bench = new Benchmark();
+	bench.add('test', () => {});
+
+	const map = bench.results_by_name();
+
+	expect(map.size).toBe(0);
+});
+
+test('Benchmark: results_by_name returns map with results after run', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+	bench.add('task1', () => {});
+	bench.add('task2', () => {});
+
+	await bench.run();
+	const map = bench.results_by_name();
+
+	expect(map.size).toBe(2);
+	expect(map.has('task1')).toBe(true);
+	expect(map.has('task2')).toBe(true);
+	expect(map.get('task1')!.name).toBe('task1');
+	expect(map.get('task2')!.name).toBe('task2');
+});
+
+test('Benchmark: results_by_name returns new map each call', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+	bench.add('test', () => {});
+
+	await bench.run();
+
+	const map1 = bench.results_by_name();
+	const map2 = bench.results_by_name();
+
+	expect(map1).not.toBe(map2);
+	expect(map1.get('test')).toBe(map2.get('test')); // same result object
+});
+
+test('Benchmark: markdown with groups uses baseline', async ({expect}) => {
+	const bench = new Benchmark({
+		duration_ms: 50,
+		min_iterations: 3,
+	});
+	bench.add('format/prettier', () => {});
+	bench.add('format/tsv', () => {});
+
+	await bench.run();
+
+	const markdown = bench.markdown({
+		groups: [
+			{
+				name: 'Format',
+				filter: (r) => r.name.startsWith('format/'),
+				baseline: 'format/prettier',
+			},
+		],
+	});
+
+	expect(markdown).toContain('### Format');
+	expect(markdown).toContain('vs format/prettier');
 });

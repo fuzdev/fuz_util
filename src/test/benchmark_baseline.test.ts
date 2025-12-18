@@ -177,7 +177,7 @@ test('benchmark_baseline_format: with results', ({expect}) => {
 				baseline: {
 					name: 'slow_task',
 					mean_ns: 1000,
-					median_ns: 1000,
+					p50_ns: 1000,
 					std_dev_ns: 100,
 					min_ns: 900,
 					max_ns: 1100,
@@ -191,7 +191,7 @@ test('benchmark_baseline_format: with results', ({expect}) => {
 				current: {
 					name: 'slow_task',
 					mean_ns: 2000,
-					median_ns: 2000,
+					p50_ns: 2000,
 					std_dev_ns: 100,
 					min_ns: 1900,
 					max_ns: 2100,
@@ -405,7 +405,7 @@ test('benchmark_baseline_format_json: produces valid JSON', ({expect}) => {
 				baseline: {
 					name: 'slow_task',
 					mean_ns: 1000,
-					median_ns: 1000,
+					p50_ns: 1000,
 					std_dev_ns: 100,
 					min_ns: 900,
 					max_ns: 1100,
@@ -419,7 +419,7 @@ test('benchmark_baseline_format_json: produces valid JSON', ({expect}) => {
 				current: {
 					name: 'slow_task',
 					mean_ns: 2000,
-					median_ns: 2000,
+					p50_ns: 2000,
 					std_dev_ns: 100,
 					min_ns: 1900,
 					max_ns: 2100,

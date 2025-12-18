@@ -9,6 +9,7 @@ node_modules
 /target
 /.gro
 /.zzz
+src/benchmarks/baseline.json
 
 # Env
 .env*

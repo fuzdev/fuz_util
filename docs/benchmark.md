@@ -529,7 +529,7 @@ interface BenchmarkGroup {
 ```ts
 class BenchmarkStats {
 	mean_ns: number;
-	median_ns: number;
+	p50_ns: number;
 	std_dev_ns: number;
 	min_ns: number;
 	max_ns: number;

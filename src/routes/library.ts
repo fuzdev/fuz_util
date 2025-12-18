@@ -11,7 +11,6 @@ export const library_json: LibraryJson = {
 		logo: 'logo.svg',
 		logo_alt: 'a green sauropod wearing a brown utility belt',
 		motto: 'ancient not extinct',
-		public: true,
 		license: 'MIT',
 		homepage: 'https://util.fuz.dev/',
 		author: {
@@ -330,7 +329,7 @@ export const library_json: LibraryJson = {
 						doc_comment: 'Schema for a single benchmark entry in the baseline.',
 						source_line: 26,
 						type_signature:
-							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; median_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
+							'ZodObject<{ name: ZodString; mean_ns: ZodNumber; p50_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>',
 					},
 					{
 						name: 'BenchmarkBaseline',
@@ -549,7 +548,7 @@ export const library_json: LibraryJson = {
 						type_signature:
 							'(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>',
 						return_type:
-							'Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; median_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>',
+							'Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>',
 						return_description: 'The baseline, or null if not found or invalid',
 						parameters: [
 							{
@@ -642,10 +641,10 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Format results as an ASCII table with percentiles, min/max, and relative performance.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌─────────────┬────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │ Task Name   │  ops/sec   │ median(μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├─────────────┼────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ slugify v2  │ 1,237,144  │    0.81    │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │    2.45  │ baseline │\n// │ slugify     │   261,619  │    3.82    │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │   12.45  │   4.73x  │\n// └─────────────┴────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```',
+							'```ts\nconsole.log(benchmark_format_table(results));\n// ┌─────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │ Task Name   │  ops/sec   │ p50 (μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├─────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ slugify v2  │ 1,237,144  │   0.81   │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │   2.45   │ baseline │\n// │ slugify     │   261,619  │   3.82   │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │  12.45   │   4.73x  │\n// └─────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```',
 						],
-						source_line: 23,
-						type_signature: '(results: BenchmarkResult[]): string',
+						source_line: 24,
+						type_signature: '(results: BenchmarkResult[], baseline?: string | undefined): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with enhanced metrics',
 						parameters: [
@@ -653,6 +652,13 @@ export const library_json: LibraryJson = {
 								name: 'results',
 								type: 'BenchmarkResult[]',
 								description: '- Array of benchmark results',
+							},
+							{
+								name: 'baseline',
+								type: 'string | undefined',
+								optional: true,
+								description:
+									'- Optional task name to use as baseline for comparison (defaults to fastest)',
 							},
 						],
 					},
@@ -662,10 +668,10 @@ export const library_json: LibraryJson = {
 						doc_comment:
 							'Format results as a Markdown table with key metrics.\nAll times use the same unit for easy comparison.',
 						examples: [
-							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | median (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|-------------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81        | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82        | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```',
+							'```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | p50 (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|----------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81     | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82     | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```',
 						],
-						source_line: 121,
-						type_signature: '(results: BenchmarkResult[]): string',
+						source_line: 142,
+						type_signature: '(results: BenchmarkResult[], baseline?: string | undefined): string',
 						return_type: 'string',
 						return_description: 'Formatted markdown table string',
 						parameters: [
@@ -674,12 +680,43 @@ export const library_json: LibraryJson = {
 								type: 'BenchmarkResult[]',
 								description: '- Array of benchmark results',
 							},
+							{
+								name: 'baseline',
+								type: 'string | undefined',
+								optional: true,
+								description:
+									'- Optional task name to use as baseline for comparison (defaults to fastest)',
+							},
+						],
+					},
+					{
+						name: 'benchmark_format_markdown_grouped',
+						kind: 'function',
+						doc_comment: 'Format results as grouped Markdown tables with headers between groups.',
+						examples: [
+							"```ts\nconst groups = [\n  { name: 'Fast Paths', filter: (r) => r.name.includes('fast'), baseline: 'fast/reference' },\n  { name: 'Slow Paths', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_markdown_grouped(results, groups));\n// ### Fast Paths\n// | Task Name | ops/sec | ... | vs fast/reference |\n// |-----------|---------|-----|-------------------|\n// | ...       | ...     | ... | ...               |\n//\n// ### Slow Paths\n// | Task Name | ops/sec | ... | vs Best |\n// |-----------|---------|-----|---------|\n// | ...       | ...     | ... | ...     |\n```",
+						],
+						source_line: 263,
+						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
+						return_type: 'string',
+						return_description: 'Formatted markdown string with group headers and tables',
+						parameters: [
+							{
+								name: 'results',
+								type: 'BenchmarkResult[]',
+								description: '- Array of benchmark results',
+							},
+							{
+								name: 'groups',
+								type: 'BenchmarkGroup[]',
+								description: '- Array of group definitions',
+							},
 						],
 					},
 					{
 						name: 'BenchmarkFormatJsonOptions',
 						kind: 'type',
-						source_line: 199,
+						source_line: 295,
 						type_signature: 'BenchmarkFormatJsonOptions',
 						properties: [
 							{
@@ -703,7 +740,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```',
 						],
-						source_line: 219,
+						source_line: 315,
 						type_signature:
 							'(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string',
 						return_type: 'string',
@@ -729,7 +766,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```",
 						],
-						source_line: 278,
+						source_line: 374,
 						type_signature: '(results: BenchmarkResult[], groups: BenchmarkGroup[]): string',
 						return_type: 'string',
 						return_description: 'Formatted table string with group separators',
@@ -751,7 +788,7 @@ export const library_json: LibraryJson = {
 						kind: 'variable',
 						doc_comment: 'Format a number with fixed decimal places and thousands separators.',
 						see_also: ['`{@link format_number} in maths.ts for the underlying implementation.`'],
-						source_line: 314,
+						source_line: 410,
 						type_signature: '(n: number, decimals?: number) => string',
 					},
 				],
@@ -889,10 +926,10 @@ export const library_json: LibraryJson = {
 								type_signature: 'number',
 							},
 							{
-								name: 'median_ns',
+								name: 'p50_ns',
 								kind: 'variable',
 								modifiers: ['readonly'],
-								doc_comment: 'Median time in nanoseconds',
+								doc_comment: '50th percentile (median) time in nanoseconds',
 								type_signature: 'number',
 							},
 							{
@@ -1263,6 +1300,13 @@ export const library_json: LibraryJson = {
 								type_signature: '(result: BenchmarkResult) => boolean',
 								doc_comment: 'Filter function to determine which results belong to this group',
 							},
+							{
+								name: 'baseline',
+								kind: 'variable',
+								type_signature: 'string',
+								doc_comment:
+									'Task name to use as baseline for the "vs" column.\nWhen specified, ratios are computed against this task instead of the fastest.\nIf the baseline task is not found in the group, falls back to "vs Best" with a warning.',
+							},
 						],
 					},
 				],
@@ -1278,7 +1322,7 @@ export const library_json: LibraryJson = {
 						examples: [
 							'```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```',
 						],
-						source_line: 100,
+						source_line: 101,
 						type_signature:
 							'(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>',
 						return_type: 'Promise<boolean>',
@@ -1306,7 +1350,7 @@ export const library_json: LibraryJson = {
 						name: 'Benchmark',
 						kind: 'class',
 						doc_comment: 'Benchmark class for measuring and comparing function performance.',
-						source_line: 134,
+						source_line: 135,
 						members: [
 							{
 								name: 'constructor',
@@ -1466,10 +1510,18 @@ export const library_json: LibraryJson = {
 								name: 'markdown',
 								kind: 'function',
 								doc_comment: 'Format results as a Markdown table.',
-								type_signature: '(): string',
+								type_signature: '(options?: BenchmarkFormatTableOptions | undefined): string',
 								return_type: 'string',
 								return_description: 'Formatted markdown string',
-								parameters: [],
+								parameters: [
+									{
+										name: 'options',
+										type: 'BenchmarkFormatTableOptions | undefined',
+										optional: true,
+										description:
+											'- Formatting options (groups for organized output with optional baselines)',
+									},
+								],
 							},
 							{
 								name: 'json',
@@ -1495,6 +1547,16 @@ export const library_json: LibraryJson = {
 								type_signature: '(): BenchmarkResult[]',
 								return_type: 'BenchmarkResult[]',
 								return_description: 'Array of benchmark results',
+								parameters: [],
+							},
+							{
+								name: 'results_by_name',
+								kind: 'function',
+								doc_comment:
+									'Get results as a map for convenient lookup by task name.\nReturns a new Map each call to prevent external mutation.',
+								type_signature: '(): Map<string, BenchmarkResult>',
+								return_type: 'Map<string, BenchmarkResult>',
+								return_description: 'Map of task name to benchmark result',
 								parameters: [],
 							},
 							{
@@ -3205,12 +3267,12 @@ export const library_json: LibraryJson = {
 							'Creates a `LibraryJson` with computed properties from package.json and source metadata.',
 						source_line: 37,
 						type_signature:
-							'(package_json: { [x: string]: unknown; name: string; version: string; private?: boolean | undefined; public?: boolean | undefined; description?: string | undefined; motto?: string | undefined; glyph?: string | undefined; ... 24 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson',
+							'(package_json: { [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; motto?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson',
 						return_type: 'LibraryJson',
 						parameters: [
 							{
 								name: 'package_json',
-								type: '{ [x: string]: unknown; name: string; version: string; private?: boolean | undefined; public?: boolean | undefined; description?: string | undefined; motto?: string | undefined; glyph?: string | undefined; ... 24 more ...; exports?: string | ... 2 more ... | undefined; }',
+								type: '{ [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; motto?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }',
 							},
 							{
 								name: 'source_json',
@@ -3992,7 +4054,7 @@ export const library_json: LibraryJson = {
 						see_also: ['https://docs.npmjs.com/cli/v10/configuring-npm/package-json'],
 						source_line: 66,
 						type_signature:
-							'ZodObject<{ name: ZodString; version: ZodString; private: ZodOptional<ZodBoolean>; public: ZodOptional<ZodBoolean>; ... 27 more ...; exports: ZodOptional<...>; }, $loose>',
+							'ZodObject<{ name: ZodString; version: ZodString; private: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 26 more ...; exports: ZodOptional<...>; }, $loose>',
 					},
 				],
 				dependencies: ['object.ts', 'string.ts', 'url.ts'],

@@ -18,7 +18,7 @@ import {
 import {stats_confidence_interval_from_summary} from './stats.js';
 
 // Version for forward compatibility - increment when schema changes
-const BASELINE_VERSION = 1;
+const BASELINE_VERSION = 2;
 
 /**
  * Schema for a single benchmark entry in the baseline.
@@ -26,7 +26,7 @@ const BASELINE_VERSION = 1;
 export const BenchmarkBaselineEntry = z.object({
 	name: z.string(),
 	mean_ns: z.number(),
-	median_ns: z.number(),
+	p50_ns: z.number(),
 	std_dev_ns: z.number(),
 	min_ns: z.number(),
 	max_ns: z.number(),
@@ -137,7 +137,7 @@ const results_to_entries = (results: Array<BenchmarkResult>): Array<BenchmarkBas
 	return results.map((r) => ({
 		name: r.name,
 		mean_ns: r.stats.mean_ns,
-		median_ns: r.stats.median_ns,
+		p50_ns: r.stats.p50_ns,
 		std_dev_ns: r.stats.std_dev_ns,
 		min_ns: r.stats.min_ns,
 		max_ns: r.stats.max_ns,

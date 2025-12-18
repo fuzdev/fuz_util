@@ -1,5 +1,10 @@
 import {test, expect, describe} from 'vitest';
-import {benchmark_format_table} from '$lib/benchmark_format.js';
+import {
+	benchmark_format_table,
+	benchmark_format_markdown,
+	benchmark_format_table_grouped,
+	benchmark_format_markdown_grouped,
+} from '$lib/benchmark_format.js';
 import type {BenchmarkResult} from '$lib/benchmark_types.js';
 
 // Helper to create minimal benchmark results for testing
@@ -10,7 +15,7 @@ const create_result = (name: string, ops_per_second: number): BenchmarkResult =>
 	timings_ns: [],
 	stats: {
 		mean_ns: 1_000_000_000 / ops_per_second,
-		median_ns: 1_000_000_000 / ops_per_second,
+		p50_ns: 1_000_000_000 / ops_per_second,
 		std_dev_ns: 100,
 		min_ns: 900,
 		max_ns: 1100,
@@ -94,5 +99,145 @@ describe('benchmark_format_table', () => {
 	test('empty results returns placeholder', () => {
 		const table = benchmark_format_table([]);
 		expect(table).toBe('(no results)');
+	});
+
+	test('baseline parameter changes comparison column header', () => {
+		const results = [create_result('prettier', 500_000), create_result('tsv', 2_000_000)];
+
+		const table = benchmark_format_table(results, 'prettier');
+
+		// Should have "vs prettier" instead of "vs Best"
+		expect(table).toContain('vs prettier');
+		expect(table).not.toContain('vs Best');
+	});
+
+	test('baseline parameter computes ratios against baseline task', () => {
+		const results = [
+			create_result('prettier', 500_000), // baseline
+			create_result('tsv', 2_000_000), // 4x faster than prettier
+		];
+
+		const table = benchmark_format_table(results, 'prettier');
+
+		// prettier should show "baseline" (1.0x)
+		// tsv is 4x faster, so ratio = 500000/2000000 = 0.25x
+		expect(table).toContain('baseline');
+		expect(table).toContain('0.25x');
+	});
+
+	test('throws error when baseline task not found', () => {
+		const results = [create_result('task1', 1_000_000), create_result('task2', 500_000)];
+
+		expect(() => benchmark_format_table(results, 'nonexistent')).toThrow(
+			'Baseline task "nonexistent" not found in results. Available tasks: task1, task2',
+		);
+	});
+});
+
+describe('benchmark_format_markdown', () => {
+	test('baseline parameter changes comparison column header', () => {
+		const results = [create_result('prettier', 500_000), create_result('tsv', 2_000_000)];
+
+		const markdown = benchmark_format_markdown(results, 'prettier');
+
+		expect(markdown).toContain('vs prettier');
+		expect(markdown).not.toContain('vs Best');
+	});
+
+	test('throws error when baseline task not found', () => {
+		const results = [create_result('task1', 1_000_000)];
+
+		expect(() => benchmark_format_markdown(results, 'nonexistent')).toThrow(
+			'Baseline task "nonexistent" not found',
+		);
+	});
+});
+
+describe('benchmark_format_table_grouped', () => {
+	test('passes baseline to group tables', () => {
+		const results = [
+			create_result('format/prettier', 500_000),
+			create_result('format/tsv', 2_000_000),
+			create_result('parse/babel', 100_000),
+		];
+
+		const table = benchmark_format_table_grouped(results, [
+			{
+				name: 'Format',
+				filter: (r) => r.name.startsWith('format/'),
+				baseline: 'format/prettier',
+			},
+			{
+				name: 'Parse',
+				filter: (r) => r.name.startsWith('parse/'),
+			},
+		]);
+
+		// Format group should use "vs format/prettier"
+		expect(table).toContain('vs format/prettier');
+		// Parse group should use "vs Best" (no baseline specified)
+		expect(table).toContain('vs Best');
+	});
+
+	test('throws when group baseline not found in group results', () => {
+		const results = [create_result('format/tsv', 2_000_000)];
+
+		expect(() =>
+			benchmark_format_table_grouped(results, [
+				{
+					name: 'Format',
+					filter: (r) => r.name.startsWith('format/'),
+					baseline: 'format/prettier', // not in results
+				},
+			]),
+		).toThrow('Baseline task "format/prettier" not found');
+	});
+});
+
+describe('benchmark_format_markdown_grouped', () => {
+	test('creates grouped markdown with headers', () => {
+		const results = [
+			create_result('format/prettier', 500_000),
+			create_result('format/tsv', 2_000_000),
+			create_result('parse/babel', 100_000),
+		];
+
+		const markdown = benchmark_format_markdown_grouped(results, [
+			{
+				name: 'Format',
+				filter: (r) => r.name.startsWith('format/'),
+				baseline: 'format/prettier',
+			},
+			{
+				name: 'Parse',
+				filter: (r) => r.name.startsWith('parse/'),
+			},
+		]);
+
+		// Should have markdown headers
+		expect(markdown).toContain('### Format');
+		expect(markdown).toContain('### Parse');
+		// Format group should use baseline
+		expect(markdown).toContain('vs format/prettier');
+	});
+
+	test('includes group description when provided', () => {
+		const results = [create_result('test', 1_000_000)];
+
+		const markdown = benchmark_format_markdown_grouped(results, [
+			{
+				name: 'Test Group',
+				description: 'This is a description',
+				filter: () => true,
+			},
+		]);
+
+		expect(markdown).toContain('### Test Group');
+		expect(markdown).toContain('This is a description');
+	});
+
+	test('empty results returns placeholder', () => {
+		const markdown = benchmark_format_markdown_grouped([], []);
+		expect(markdown).toBe('(no results)');
 	});
 });

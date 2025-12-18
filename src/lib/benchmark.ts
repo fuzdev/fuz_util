@@ -26,6 +26,7 @@ import {
 	benchmark_format_table,
 	benchmark_format_table_grouped,
 	benchmark_format_markdown,
+	benchmark_format_markdown_grouped,
 	benchmark_format_json,
 	benchmark_format_number,
 	type BenchmarkFormatJsonOptions,
@@ -407,10 +408,27 @@ export class Benchmark {
 
 	/**
 	 * Format results as a Markdown table.
+	 * @param options - Formatting options (groups for organized output with optional baselines)
 	 * @returns Formatted markdown string
+	 *
+	 * @example
+	 * ```ts
+	 * // Standard table
+	 * console.log(bench.markdown());
+	 *
+	 * // Grouped by category with custom baseline
+	 * console.log(bench.markdown({
+	 *   groups: [
+	 *     { name: 'Format', filter: (r) => r.name.startsWith('format/'), baseline: 'format/prettier' },
+	 *     { name: 'Parse', filter: (r) => r.name.startsWith('parse/') },
+	 *   ]
+	 * }));
+	 * ```
 	 */
-	markdown(): string {
-		return benchmark_format_markdown(this.#results);
+	markdown(options?: BenchmarkFormatTableOptions): string {
+		return options?.groups
+			? benchmark_format_markdown_grouped(this.#results, options.groups)
+			: benchmark_format_markdown(this.#results);
 	}
 
 	/**
@@ -429,6 +447,39 @@ export class Benchmark {
 	 */
 	results(): Array<BenchmarkResult> {
 		return [...this.#results];
+	}
+
+	/**
+	 * Check if the benchmark has been run and has results.
+	 * @returns True if results are available
+	 *
+	 * @example
+	 * ```ts
+	 * if (bench.has_results) {
+	 *   console.log(bench.table());
+	 * }
+	 * ```
+	 */
+	get has_results(): boolean {
+		return this.#results.length > 0;
+	}
+
+	/**
+	 * Get results as a map for convenient lookup by task name.
+	 * Returns a new Map each call to prevent external mutation.
+	 * @returns Map of task name to benchmark result
+	 *
+	 * @example
+	 * ```ts
+	 * const results_map = bench.results_by_name();
+	 * const slugify_result = results_map.get('slugify');
+	 * if (slugify_result) {
+	 *   console.log(`slugify: ${slugify_result.stats.ops_per_second} ops/sec`);
+	 * }
+	 * ```
+	 */
+	results_by_name(): Map<string, BenchmarkResult> {
+		return new Map(this.#results.map((r) => [r.name, r]));
 	}
 
 	/**

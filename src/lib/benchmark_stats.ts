@@ -72,8 +72,8 @@ export interface BenchmarkCompareOptions {
 export class BenchmarkStats {
 	/** Mean (average) time in nanoseconds */
 	readonly mean_ns: number;
-	/** Median time in nanoseconds */
-	readonly median_ns: number;
+	/** 50th percentile (median) time in nanoseconds */
+	readonly p50_ns: number;
 	/** Standard deviation in nanoseconds */
 	readonly std_dev_ns: number;
 	/** Minimum time in nanoseconds */
@@ -124,7 +124,7 @@ export class BenchmarkStats {
 		// If no valid timings, return empty stats
 		if (valid_timings.length === 0) {
 			this.mean_ns = NaN;
-			this.median_ns = NaN;
+			this.p50_ns = NaN;
 			this.std_dev_ns = NaN;
 			this.min_ns = NaN;
 			this.max_ns = NaN;
@@ -151,7 +151,7 @@ export class BenchmarkStats {
 
 		// Calculate statistics on cleaned data
 		this.mean_ns = stats_mean(cleaned);
-		this.median_ns = stats_median(sorted_cleaned);
+		this.p50_ns = stats_median(sorted_cleaned);
 		this.std_dev_ns = stats_std_dev(cleaned, this.mean_ns);
 
 		const {min, max} = stats_min_max(sorted_cleaned);

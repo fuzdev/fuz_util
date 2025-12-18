@@ -10,7 +10,7 @@ test('BenchmarkStats: basic usage', ({expect}) => {
 	expect(stats.raw_sample_size).toBe(7);
 	expect(stats.failed_iterations).toBe(0);
 	expect(stats.mean_ns).toBeCloseTo(1285.7, 1);
-	expect(stats.median_ns).toBeCloseTo(1300, 0);
+	expect(stats.p50_ns).toBeCloseTo(1300, 0);
 	expect(stats.min_ns).toBeCloseTo(1100, 0);
 	expect(stats.max_ns).toBeCloseTo(1500, 0);
 	expect(stats.ops_per_second).toBeGreaterThan(0);
@@ -40,7 +40,7 @@ test('BenchmarkStats: empty input', ({expect}) => {
 	const stats = new BenchmarkStats([]);
 
 	expect(stats.mean_ns).toBeNaN();
-	expect(stats.median_ns).toBeNaN();
+	expect(stats.p50_ns).toBeNaN();
 	expect(stats.ops_per_second).toBe(0);
 	expect(stats.sample_size).toBe(0);
 });
@@ -68,7 +68,7 @@ test('BenchmarkStats: single sample', ({expect}) => {
 
 	expect(stats.sample_size).toBe(1);
 	expect(stats.mean_ns).toBe(5000);
-	expect(stats.median_ns).toBe(5000);
+	expect(stats.p50_ns).toBe(5000);
 	expect(stats.min_ns).toBe(5000);
 	expect(stats.max_ns).toBe(5000);
 	expect(stats.std_dev_ns).toBe(0);
@@ -79,7 +79,7 @@ test('BenchmarkStats: all same values (zero variance)', ({expect}) => {
 	const stats = new BenchmarkStats([1000, 1000, 1000, 1000, 1000]);
 
 	expect(stats.mean_ns).toBe(1000);
-	expect(stats.median_ns).toBe(1000);
+	expect(stats.p50_ns).toBe(1000);
 	expect(stats.std_dev_ns).toBe(0);
 	expect(stats.cv).toBe(0);
 	expect(stats.outliers_ns).toHaveLength(0);
@@ -133,7 +133,7 @@ test('BenchmarkStats: two samples', ({expect}) => {
 
 	expect(stats.sample_size).toBe(2);
 	expect(stats.mean_ns).toBe(1500);
-	expect(stats.median_ns).toBe(1500);
+	expect(stats.p50_ns).toBe(1500);
 	expect(stats.min_ns).toBe(1000);
 	expect(stats.max_ns).toBe(2000);
 });

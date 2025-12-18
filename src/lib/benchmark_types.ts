@@ -194,4 +194,11 @@ export interface BenchmarkGroup {
 
 	/** Filter function to determine which results belong to this group */
 	filter: (result: BenchmarkResult) => boolean;
+
+	/**
+	 * Task name to use as baseline for the "vs" column.
+	 * When specified, ratios are computed against this task instead of the fastest.
+	 * If the baseline task is not found in the group, falls back to "vs Best" with a warning.
+	 */
+	baseline?: string;
 }

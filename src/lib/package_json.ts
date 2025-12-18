@@ -71,13 +71,6 @@ export const PackageJson = z.looseObject({
 		.boolean()
 		.meta({description: 'disallow publishing to the configured registry'})
 		.optional(),
-	public: z
-		.boolean()
-		.meta({
-			description:
-				'a Gro extension that enables publishing `.well-known/package.json` and `.well-known/src`',
-		})
-		.optional(),
 	description: z.string().optional(),
 	motto: z
 		.string()
