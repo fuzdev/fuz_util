@@ -5,7 +5,7 @@ import type {LibraryJson} from './library_json.js';
 export const library_json: LibraryJson = {
 	package_json: {
 		name: '@fuzdev/fuz_util',
-		version: '0.44.1',
+		version: '0.45.0',
 		description: 'utility belt for JS',
 		glyph: '🦕',
 		logo: 'logo.svg',
@@ -117,7 +117,7 @@ export const library_json: LibraryJson = {
 	},
 	source_json: {
 		name: '@fuzdev/fuz_util',
-		version: '0.44.1',
+		version: '0.45.0',
 		modules: [
 			{
 				path: 'array.ts',

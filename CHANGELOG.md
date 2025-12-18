@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.45.0
+
+### Minor Changes
+
+- add baseline to benchmark helpers and improve grouping ([2550d9e](https://github.com/fuzdev/fuz_util/commit/2550d9e))
+
 ## 0.44.1
 
 ### Patch Changes
