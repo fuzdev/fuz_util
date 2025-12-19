@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.45.1
+
+### Patch Changes
+
+- change `library.json` property order ([af50855](https://github.com/fuzdev/fuz_util/commit/af50855))
+
 ## 0.45.0
 
 ### Minor Changes
