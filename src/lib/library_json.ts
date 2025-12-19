@@ -11,8 +11,6 @@ import type {Url} from './url.js';
  * A library's package.json and source metadata with computed properties.
  */
 export interface LibraryJson {
-	package_json: PackageJson;
-	source_json: SourceJson;
 	/** Package name, e.g. `@fuzdev/fuz_ui`. */
 	name: string;
 	/** Name without scope, e.g. `fuz`. */
@@ -29,6 +27,8 @@ export interface LibraryJson {
 	changelog_url: Url | null;
 	/** True if has exports and version is not `0.0.1`. */
 	published: boolean;
+	package_json: PackageJson;
+	source_json: SourceJson;
 }
 
 /**
@@ -79,8 +79,6 @@ export const library_json_parse = (
 	const logo_alt = package_json.logo_alt ?? `logo for ${repo_name}`;
 
 	return {
-		package_json,
-		source_json,
 		name,
 		repo_name,
 		repo_url,
@@ -91,6 +89,8 @@ export const library_json_parse = (
 		npm_url,
 		changelog_url,
 		published,
+		package_json,
+		source_json,
 	};
 };
 

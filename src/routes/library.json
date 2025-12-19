@@ -3067,16 +3067,6 @@
 						"type_signature": "LibraryJson",
 						"properties": [
 							{
-								"name": "package_json",
-								"kind": "variable",
-								"type_signature": "PackageJson"
-							},
-							{
-								"name": "source_json",
-								"kind": "variable",
-								"type_signature": "SourceJson"
-							},
-							{
 								"name": "name",
 								"kind": "variable",
 								"type_signature": "string",
@@ -3131,6 +3121,16 @@
 								"kind": "variable",
 								"type_signature": "boolean",
 								"doc_comment": "True if has exports and version is not `0.0.1`."
+							},
+							{
+								"name": "package_json",
+								"kind": "variable",
+								"type_signature": "PackageJson"
+							},
+							{
+								"name": "source_json",
+								"kind": "variable",
+								"type_signature": "SourceJson"
 							}
 						]
 					},
