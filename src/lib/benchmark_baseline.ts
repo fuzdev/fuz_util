@@ -233,11 +233,11 @@ export const benchmark_baseline_load = async (
 		}
 
 		return baseline;
-	} catch (err) {
+	} catch (error) {
 		// eslint-disable-next-line no-console
 		console.warn(
 			`Invalid or corrupted benchmark baseline file. Removing: ${filepath}`,
-			err instanceof Error ? err.message : err,
+			error instanceof Error ? error.message : error,
 		);
 		await rm(filepath, {force: true});
 		return null;
