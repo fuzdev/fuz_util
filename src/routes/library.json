@@ -1,4 +1,14 @@
 {
+	"name": "@fuzdev/fuz_util",
+	"repo_name": "fuz_util",
+	"repo_url": "https://github.com/fuzdev/fuz_util",
+	"owner_name": "fuzdev",
+	"homepage_url": "https://util.fuz.dev/",
+	"logo_url": "https://util.fuz.dev/logo.svg",
+	"logo_alt": "a green sauropod wearing a brown utility belt",
+	"npm_url": "https://www.npmjs.com/package/@fuzdev/fuz_util",
+	"changelog_url": "https://github.com/fuzdev/fuz_util/blob/main/CHANGELOG.md",
+	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
 		"version": "0.45.1",
@@ -58,8 +68,8 @@
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
 			"@fuzdev/fuz_code": "^0.38.0",
-			"@fuzdev/fuz_css": "^0.42.1",
-			"@fuzdev/fuz_ui": "^0.174.0",
+			"@fuzdev/fuz_css": "^0.43.0",
+			"@fuzdev/fuz_ui": "^0.175.0",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@ryanatkn/gro": "^0.184.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -6400,15 +6410,5 @@
 				"dependents": ["package_json.ts"]
 			}
 		]
-	},
-	"name": "@fuzdev/fuz_util",
-	"repo_name": "fuz_util",
-	"repo_url": "https://github.com/fuzdev/fuz_util",
-	"owner_name": "fuzdev",
-	"homepage_url": "https://util.fuz.dev/",
-	"logo_url": "https://util.fuz.dev/logo.svg",
-	"logo_alt": "a green sauropod wearing a brown utility belt",
-	"npm_url": "https://www.npmjs.com/package/@fuzdev/fuz_util",
-	"changelog_url": "https://github.com/fuzdev/fuz_util/blob/main/CHANGELOG.md",
-	"published": true
+	}
 }
