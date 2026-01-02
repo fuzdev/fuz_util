@@ -1,6 +1,8 @@
 /**
  * Time utilities.
  * Provides cross-platform high-resolution timing and measurement helpers.
+ *
+ * @module
  */
 
 /**

@@ -1,6 +1,8 @@
 /**
  * Statistical analysis utilities.
  * Pure functions with zero dependencies - can be used standalone for any data analysis.
+ *
+ * @module
  */
 
 // Statistical constants (defaults)

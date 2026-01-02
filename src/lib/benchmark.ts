@@ -17,6 +17,8 @@
  * const results = await bench.run();
  * console.log(bench.table());
  * ```
+ *
+ * @module
  */
 
 import {is_promise, wait} from './async.js';

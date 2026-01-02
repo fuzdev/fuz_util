@@ -6,6 +6,8 @@
  * Used for generating API documentation and enabling code search.
  *
  * Hierarchy: SourceJson → ModuleJson → DeclarationJson
+ *
+ * @module
  */
 
 import {z} from 'zod';
@@ -102,7 +104,7 @@ export const DeclarationJson = z.looseObject({
 	examples: z.array(z.string()).optional(),
 	/** Deprecation message from `@deprecated` tag. */
 	deprecated_message: z.string().optional(),
-	/** Related items from `@see` tags, in mdz format. */
+	/** Related items from `@see` tags, in raw TSDoc format. */
 	see_also: z.array(z.string()).optional(),
 	/** Exceptions from `@throws` tags. */
 	throws: z.array(z.looseObject({type: z.string().optional(), description: z.string()})).optional(),
@@ -152,6 +154,11 @@ export const ModuleJson = z.looseObject({
 	dependencies: z.array(z.string()).optional(),
 	/** Modules that import this (paths relative to src/lib). */
 	dependents: z.array(z.string()).optional(),
+	/**
+	 * Modules fully re-exported via `export * from './module'`.
+	 * Paths are relative to src/lib.
+	 */
+	star_exports: z.array(z.string()).optional(),
 });
 export type ModuleJson = z.infer<typeof ModuleJson>;
 

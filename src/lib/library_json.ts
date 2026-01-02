@@ -1,5 +1,7 @@
 /**
  * Library metadata combining package.json with analyzed source.
+ *
+ * @module
  */
 
 import {ensure_end, strip_end, strip_start} from './string.js';

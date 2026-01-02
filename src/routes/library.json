@@ -69,7 +69,7 @@
 			"@changesets/changelog-git": "^0.2.1",
 			"@fuzdev/fuz_code": "^0.38.0",
 			"@fuzdev/fuz_css": "^0.43.0",
-			"@fuzdev/fuz_ui": "^0.175.0",
+			"@fuzdev/fuz_ui": "^0.177.0",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@ryanatkn/gro": "^0.184.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -327,21 +327,21 @@
 						"name": "BenchmarkBaselineEntry",
 						"kind": "type",
 						"doc_comment": "Schema for a single benchmark entry in the baseline.",
-						"source_line": 26,
+						"source_line": 28,
 						"type_signature": "ZodObject<{ name: ZodString; mean_ns: ZodNumber; p50_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>"
 					},
 					{
 						"name": "BenchmarkBaseline",
 						"kind": "type",
 						"doc_comment": "Schema for the complete baseline file.",
-						"source_line": 45,
+						"source_line": 47,
 						"type_signature": "ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>"
 					},
 					{
 						"name": "BenchmarkBaselineSaveOptions",
 						"kind": "type",
 						"doc_comment": "Options for saving a baseline.",
-						"source_line": 58,
+						"source_line": 60,
 						"type_signature": "BenchmarkBaselineSaveOptions",
 						"properties": [
 							{
@@ -368,7 +368,7 @@
 						"name": "BenchmarkBaselineLoadOptions",
 						"kind": "type",
 						"doc_comment": "Options for loading a baseline.",
-						"source_line": 70,
+						"source_line": 72,
 						"type_signature": "BenchmarkBaselineLoadOptions",
 						"properties": [
 							{
@@ -383,7 +383,7 @@
 						"name": "BenchmarkBaselineCompareOptions",
 						"kind": "type",
 						"doc_comment": "Options for comparing against a baseline.",
-						"source_line": 78,
+						"source_line": 80,
 						"type_signature": "BenchmarkBaselineCompareOptions",
 						"extends": ["BenchmarkBaselineLoadOptions"],
 						"properties": [
@@ -405,7 +405,7 @@
 						"name": "BenchmarkBaselineComparisonResult",
 						"kind": "type",
 						"doc_comment": "Result of comparing current results against a baseline.",
-						"source_line": 95,
+						"source_line": 97,
 						"type_signature": "BenchmarkBaselineComparisonResult",
 						"properties": [
 							{
@@ -480,7 +480,7 @@
 						"name": "BenchmarkBaselineTaskComparison",
 						"kind": "type",
 						"doc_comment": "Comparison result for a single task.",
-						"source_line": 123,
+						"source_line": 125,
 						"type_signature": "BenchmarkBaselineTaskComparison",
 						"properties": [
 							{
@@ -512,7 +512,7 @@
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```"
 						],
-						"source_line": 167,
+						"source_line": 169,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -536,7 +536,7 @@
 						"examples": [
 							"```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```"
 						],
-						"source_line": 210,
+						"source_line": 212,
 						"type_signature": "(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>",
 						"return_type": "Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>",
 						"return_description": "The baseline, or null if not found or invalid",
@@ -556,7 +556,7 @@
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```"
 						],
-						"source_line": 273,
+						"source_line": 275,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>",
 						"return_type": "Promise<BenchmarkBaselineComparisonResult>",
 						"return_description": "Comparison result with regressions, improvements, and unchanged tasks",
@@ -578,7 +578,7 @@
 						"name": "benchmark_baseline_format",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as a human-readable string.",
-						"source_line": 415,
+						"source_line": 417,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult): string",
 						"return_type": "string",
 						"return_description": "Formatted string summary",
@@ -594,7 +594,7 @@
 						"name": "benchmark_baseline_format_json",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as JSON for programmatic consumption.",
-						"source_line": 496,
+						"source_line": 498,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string",
 						"return_type": "string",
 						"return_description": "JSON string",
@@ -766,7 +766,7 @@
 						"name": "benchmark_format_number",
 						"kind": "variable",
 						"doc_comment": "Format a number with fixed decimal places and thousands separators.",
-						"see_also": ["`{@link format_number} in maths.ts for the underlying implementation.`"],
+						"see_also": ["{@link format_number} in maths.ts for the underlying implementation."],
 						"source_line": 410,
 						"type_signature": "(n: number, decimals?: number) => string"
 					}
@@ -781,7 +781,7 @@
 						"name": "BenchmarkStatsComparable",
 						"kind": "type",
 						"doc_comment": "Minimal stats interface for comparison.\nThis allows comparing stats from different sources (e.g., loaded baselines).",
-						"source_line": 25,
+						"source_line": 27,
 						"type_signature": "BenchmarkStatsComparable",
 						"properties": [
 							{
@@ -810,14 +810,14 @@
 						"name": "EffectMagnitude",
 						"kind": "type",
 						"doc_comment": "Effect size magnitude interpretation (Cohen's d).",
-						"source_line": 35,
+						"source_line": 37,
 						"type_signature": "EffectMagnitude"
 					},
 					{
 						"name": "BenchmarkComparison",
 						"kind": "type",
 						"doc_comment": "Result from comparing two benchmark stats.",
-						"source_line": 40,
+						"source_line": 42,
 						"type_signature": "BenchmarkComparison",
 						"properties": [
 							{
@@ -874,7 +874,7 @@
 						"name": "BenchmarkCompareOptions",
 						"kind": "type",
 						"doc_comment": "Options for benchmark comparison.",
-						"source_line": 62,
+						"source_line": 64,
 						"type_signature": "BenchmarkCompareOptions",
 						"properties": [
 							{
@@ -889,7 +889,7 @@
 						"name": "BenchmarkStats",
 						"kind": "class",
 						"doc_comment": "Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.",
-						"source_line": 72,
+						"source_line": 74,
 						"members": [
 							{
 								"name": "mean_ns",
@@ -1038,7 +1038,7 @@
 						"examples": [
 							"```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```"
 						],
-						"source_line": 198,
+						"source_line": 200,
 						"type_signature": "(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison",
 						"return_type": "BenchmarkComparison",
 						"return_description": "Comparison result with significance, effect size, and recommendation",
@@ -1276,7 +1276,7 @@
 						"examples": [
 							"```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```"
 						],
-						"source_line": 101,
+						"source_line": 103,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "Whether the function is async",
@@ -1303,7 +1303,7 @@
 						"name": "Benchmark",
 						"kind": "class",
 						"doc_comment": "Benchmark class for measuring and comparing function performance.",
-						"source_line": 135,
+						"source_line": 137,
 						"members": [
 							{
 								"name": "constructor",
@@ -3073,7 +3073,7 @@
 						"name": "LibraryJson",
 						"kind": "type",
 						"doc_comment": "A library's package.json and source metadata with computed properties.",
-						"source_line": 13,
+						"source_line": 15,
 						"type_signature": "LibraryJson",
 						"properties": [
 							{
@@ -3148,7 +3148,7 @@
 						"name": "library_json_parse",
 						"kind": "function",
 						"doc_comment": "Creates a `LibraryJson` with computed properties from package.json and source metadata.",
-						"source_line": 37,
+						"source_line": 39,
 						"type_signature": "(package_json: { [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; motto?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson",
 						"return_type": "LibraryJson",
 						"parameters": [
@@ -3166,7 +3166,7 @@
 						"name": "library_repo_name_parse",
 						"kind": "function",
 						"doc_comment": "Extracts repo name from a package name, e.g. `@fuzdev/fuz_ui` → `fuz`.",
-						"source_line": 100,
+						"source_line": 102,
 						"type_signature": "(name: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -3180,7 +3180,7 @@
 						"name": "library_org_url_parse",
 						"kind": "function",
 						"doc_comment": "Extracts GitHub org URL from a library, e.g. `https://github.com/ryanatkn`.",
-						"source_line": 114,
+						"source_line": 116,
 						"type_signature": "(library: LibraryJson): string | null",
 						"return_type": "string | null",
 						"parameters": [
@@ -4864,49 +4864,49 @@
 						"name": "DeclarationKind",
 						"kind": "type",
 						"doc_comment": "The kind of exported declaration.",
-						"source_line": 16,
+						"source_line": 18,
 						"type_signature": "ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>"
 					},
 					{
 						"name": "GenericParamInfo",
 						"kind": "type",
 						"doc_comment": "Generic type parameter information.",
-						"source_line": 31,
+						"source_line": 33,
 						"type_signature": "ZodObject<{ name: ZodString; constraint: ZodOptional<ZodString>; default_type: ZodOptional<ZodString>; }, $loose>"
 					},
 					{
 						"name": "ParameterInfo",
 						"kind": "type",
 						"doc_comment": "Parameter information for functions and methods.\n\nKept distinct from ComponentPropInfo despite structural similarity.\nFunction parameters form a tuple with positional semantics:\ncalling order matters (`fn(a, b)` vs `fn(b, a)`),\nmay include rest parameters and destructuring patterns.",
-						"source_line": 49,
+						"source_line": 51,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; default_value: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "ComponentPropInfo",
 						"kind": "type",
 						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from ParameterInfo despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
-						"source_line": 66,
+						"source_line": 68,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; default_value: ZodOptional<...>; bindable: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "DeclarationJson",
 						"kind": "type",
 						"doc_comment": "Metadata for an exported declaration (function, type, class, component, etc.).\n\nExtracted from TypeScript source and JSDoc/TSDoc comments at build time.",
-						"source_line": 81,
+						"source_line": 83,
 						"type_signature": "ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "ModuleJson",
 						"kind": "type",
 						"doc_comment": "A source file in `src/lib/` with its exported declarations.",
-						"source_line": 145,
+						"source_line": 147,
 						"type_signature": "ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loo..."
 					},
 					{
 						"name": "SourceJson",
 						"kind": "type",
 						"doc_comment": "Metadata for a library's `src/lib/` exports.",
-						"source_line": 161,
+						"source_line": 168,
 						"type_signature": "ZodObject<{ name: ZodString; version: ZodString; modules: ZodOptional<ZodArray<ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; ... 6 more ...; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loose>>>; module_comment: ..."
 					},
 					{
@@ -4916,7 +4916,7 @@
 						"examples": [
 							"declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})\n// => 'Map<K, V>'"
 						],
-						"source_line": 173,
+						"source_line": 180,
 						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }): string",
 						"return_type": "string",
 						"parameters": [
@@ -4933,7 +4933,7 @@
 						"examples": [
 							"declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')\n// => \"import type {Foo} from '@pkg/lib/foo.js';\""
 						],
-						"source_line": 189,
+						"source_line": 196,
 						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }, module_path: string, library_name: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -4961,7 +4961,7 @@
 						"name": "stats_mean",
 						"kind": "function",
 						"doc_comment": "Calculate the mean (average) of an array of numbers.",
-						"source_line": 20,
+						"source_line": 22,
 						"type_signature": "(values: number[]): number",
 						"return_type": "number",
 						"parameters": [
@@ -4975,7 +4975,7 @@
 						"name": "stats_median",
 						"kind": "function",
 						"doc_comment": "Calculate the median of an array of numbers.",
-						"source_line": 28,
+						"source_line": 30,
 						"type_signature": "(values: number[]): number",
 						"return_type": "number",
 						"parameters": [
@@ -4989,7 +4989,7 @@
 						"name": "stats_std_dev",
 						"kind": "function",
 						"doc_comment": "Calculate the standard deviation of an array of numbers.\nUses population standard deviation (divides by n, not n-1).\nFor benchmarks with many samples, this is typically appropriate.",
-						"source_line": 40,
+						"source_line": 42,
 						"type_signature": "(values: number[], mean?: number | undefined): number",
 						"return_type": "number",
 						"parameters": [
@@ -5008,7 +5008,7 @@
 						"name": "stats_variance",
 						"kind": "function",
 						"doc_comment": "Calculate the variance of an array of numbers.",
-						"source_line": 50,
+						"source_line": 52,
 						"type_signature": "(values: number[], mean?: number | undefined): number",
 						"return_type": "number",
 						"parameters": [
@@ -5027,7 +5027,7 @@
 						"name": "stats_percentile",
 						"kind": "function",
 						"doc_comment": "Calculate a percentile of an array of numbers using linear interpolation.\nUses the \"R-7\" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.",
-						"source_line": 63,
+						"source_line": 65,
 						"type_signature": "(values: number[], p: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5047,7 +5047,7 @@
 						"name": "stats_cv",
 						"kind": "function",
 						"doc_comment": "Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.",
-						"source_line": 89,
+						"source_line": 91,
 						"type_signature": "(mean: number, std_dev: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5065,7 +5065,7 @@
 						"name": "stats_min_max",
 						"kind": "function",
 						"doc_comment": "Calculate min and max values.",
-						"source_line": 97,
+						"source_line": 99,
 						"type_signature": "(values: number[]): { min: number; max: number; }",
 						"return_type": "{ min: number; max: number; }",
 						"parameters": [
@@ -5079,7 +5079,7 @@
 						"name": "StatsOutlierResult",
 						"kind": "type",
 						"doc_comment": "Result from outlier detection.",
-						"source_line": 112,
+						"source_line": 114,
 						"type_signature": "StatsOutlierResult",
 						"properties": [
 							{
@@ -5100,7 +5100,7 @@
 						"name": "StatsOutliersIqrOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for IQR outlier detection.",
-						"source_line": 122,
+						"source_line": 124,
 						"type_signature": "StatsOutliersIqrOptions",
 						"properties": [
 							{
@@ -5121,7 +5121,7 @@
 						"name": "stats_outliers_iqr",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - multiplier*IQR, Q3 + multiplier*IQR] are considered outliers.",
-						"source_line": 133,
+						"source_line": 135,
 						"type_signature": "(values: number[], options?: StatsOutliersIqrOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -5140,7 +5140,7 @@
 						"name": "StatsOutliersMadOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for MAD outlier detection.",
-						"source_line": 173,
+						"source_line": 175,
 						"type_signature": "StatsOutliersMadOptions",
 						"properties": [
 							{
@@ -5197,7 +5197,7 @@
 						"name": "stats_outliers_mad",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > threshold are considered outliers.",
-						"source_line": 198,
+						"source_line": 200,
 						"type_signature": "(values: number[], options?: StatsOutliersMadOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -5216,7 +5216,7 @@
 						"name": "STATS_CONFIDENCE_Z_SCORES",
 						"kind": "variable",
 						"doc_comment": "Common z-scores for confidence intervals.",
-						"source_line": 275,
+						"source_line": 277,
 						"type_signature": "Record<number, number>"
 					},
 					{
@@ -5226,7 +5226,7 @@
 						"examples": [
 							"```ts\nstats_confidence_level_to_z_score(0.95); // 1.96\nstats_confidence_level_to_z_score(0.99); // 2.576\n```"
 						],
-						"source_line": 293,
+						"source_line": 295,
 						"type_signature": "(level: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5240,7 +5240,7 @@
 						"name": "StatsConfidenceIntervalOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for confidence interval calculation.",
-						"source_line": 321,
+						"source_line": 323,
 						"type_signature": "StatsConfidenceIntervalOptions",
 						"properties": [
 							{
@@ -5261,7 +5261,7 @@
 						"name": "stats_confidence_interval",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval for the mean.",
-						"source_line": 334,
+						"source_line": 336,
 						"type_signature": "(values: number[], options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
 						"return_description": "[lower_bound, upper_bound]",
@@ -5283,7 +5283,7 @@
 						"name": "stats_confidence_interval_from_summary",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval from summary statistics (mean, std_dev, sample_size).\nUseful when raw data is not available.",
-						"source_line": 355,
+						"source_line": 357,
 						"type_signature": "(mean: number, std_dev: number, sample_size: number, options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
 						"return_description": "[lower_bound, upper_bound]",
@@ -5315,7 +5315,7 @@
 						"name": "StatsWelchTTestResult",
 						"kind": "type",
 						"doc_comment": "Result from Welch's t-test calculation.",
-						"source_line": 383,
+						"source_line": 385,
 						"type_signature": "StatsWelchTTestResult",
 						"properties": [
 							{
@@ -5336,7 +5336,7 @@
 						"name": "stats_welch_t_test",
 						"kind": "function",
 						"doc_comment": "Calculate Welch's t-test statistic and degrees of freedom.\nWelch's t-test is more robust than Student's t-test when variances are unequal.",
-						"source_line": 401,
+						"source_line": 403,
 						"type_signature": "(mean1: number, std1: number, n1: number, mean2: number, std2: number, n2: number): StatsWelchTTestResult",
 						"return_type": "StatsWelchTTestResult",
 						"parameters": [
@@ -5376,7 +5376,7 @@
 						"name": "stats_normal_cdf",
 						"kind": "function",
 						"doc_comment": "Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).",
-						"source_line": 428,
+						"source_line": 430,
 						"type_signature": "(x: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5390,7 +5390,7 @@
 						"name": "stats_ln_gamma",
 						"kind": "function",
 						"doc_comment": "Log gamma function approximation (Lanczos approximation).",
-						"source_line": 439,
+						"source_line": 441,
 						"type_signature": "(z: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5404,7 +5404,7 @@
 						"name": "stats_incomplete_beta",
 						"kind": "function",
 						"doc_comment": "Approximate regularized incomplete beta function for p-value calculation.\nUses continued fraction expansion for reasonable accuracy.",
-						"source_line": 464,
+						"source_line": 466,
 						"type_signature": "(x: number, a: number, b: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5426,7 +5426,7 @@
 						"name": "stats_t_distribution_p_value",
 						"kind": "function",
 						"doc_comment": "Approximate two-tailed p-value from t-distribution.\nFor large df (>100), uses normal approximation.\nFor smaller df, uses incomplete beta function.",
-						"source_line": 521,
+						"source_line": 523,
 						"type_signature": "(t: number, df: number): number",
 						"return_type": "number",
 						"return_description": "Two-tailed p-value",
@@ -5756,7 +5756,7 @@
 						"name": "Timer",
 						"kind": "type",
 						"doc_comment": "Timer interface for measuring elapsed time.\nReturns time in nanoseconds for maximum precision.",
-						"source_line": 10,
+						"source_line": 12,
 						"type_signature": "Timer",
 						"properties": [
 							{
@@ -5771,47 +5771,47 @@
 						"name": "timer_node",
 						"kind": "variable",
 						"doc_comment": "Node.js high-resolution timer using process.hrtime.bigint().\nProvides true nanosecond precision.",
-						"source_line": 19,
+						"source_line": 21,
 						"type_signature": "Timer"
 					},
 					{
 						"name": "timer_browser",
 						"kind": "variable",
 						"doc_comment": "Browser high-resolution timer using performance.now().\nConverts milliseconds to nanoseconds for consistent API.\n\n**Precision varies by browser due to Spectre/Meltdown mitigations:**\n- Chrome: ~100μs (coarsened)\n- Firefox: ~1ms (rounded)\n- Safari: ~100μs\n- Node.js: ~1μs\n\nFor nanosecond-precision benchmarks, use Node.js with `timer_node`.",
-						"source_line": 38,
+						"source_line": 40,
 						"type_signature": "Timer"
 					},
 					{
 						"name": "timer_default",
 						"kind": "variable",
 						"doc_comment": "Auto-detected timer based on environment.\nUses process.hrtime in Node.js, performance.now() in browsers.\nThe timer function is detected once and cached for performance.",
-						"source_line": 82,
+						"source_line": 84,
 						"type_signature": "Timer"
 					},
 					{
 						"name": "TIME_NS_PER_US",
 						"kind": "variable",
 						"doc_comment": "Time units and conversions.",
-						"source_line": 89,
+						"source_line": 91,
 						"type_signature": "1000"
 					},
 					{
 						"name": "TIME_NS_PER_MS",
 						"kind": "variable",
-						"source_line": 90,
+						"source_line": 92,
 						"type_signature": "1000000"
 					},
 					{
 						"name": "TIME_NS_PER_SEC",
 						"kind": "variable",
-						"source_line": 91,
+						"source_line": 93,
 						"type_signature": "1000000000"
 					},
 					{
 						"name": "time_ns_to_us",
 						"kind": "function",
 						"doc_comment": "Convert nanoseconds to microseconds.",
-						"source_line": 96,
+						"source_line": 98,
 						"type_signature": "(ns: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5825,7 +5825,7 @@
 						"name": "time_ns_to_ms",
 						"kind": "function",
 						"doc_comment": "Convert nanoseconds to milliseconds.",
-						"source_line": 101,
+						"source_line": 103,
 						"type_signature": "(ns: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5839,7 +5839,7 @@
 						"name": "time_ns_to_sec",
 						"kind": "function",
 						"doc_comment": "Convert nanoseconds to seconds.",
-						"source_line": 106,
+						"source_line": 108,
 						"type_signature": "(ns: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5853,21 +5853,21 @@
 						"name": "TimeUnit",
 						"kind": "type",
 						"doc_comment": "Time unit for formatting.",
-						"source_line": 111,
+						"source_line": 113,
 						"type_signature": "TimeUnit"
 					},
 					{
 						"name": "TIME_UNIT_DISPLAY",
 						"kind": "variable",
 						"doc_comment": "Display labels for time units (uses proper Unicode μ for microseconds).",
-						"source_line": 116,
+						"source_line": 118,
 						"type_signature": "Record<TimeUnit, string>"
 					},
 					{
 						"name": "time_unit_detect_best",
 						"kind": "function",
 						"doc_comment": "Detect the best time unit for a set of nanosecond values.\nChooses the unit where most values fall in the range 1-9999.",
-						"source_line": 124,
+						"source_line": 126,
 						"type_signature": "(values_ns: number[]): TimeUnit",
 						"return_type": "TimeUnit",
 						"return_description": "Best unit to use for all values",
@@ -5883,7 +5883,7 @@
 						"name": "time_format",
 						"kind": "function",
 						"doc_comment": "Format time with a specific unit.",
-						"source_line": 154,
+						"source_line": 156,
 						"type_signature": "(ns: number, unit: TimeUnit, decimals?: number): string",
 						"return_type": "string",
 						"return_description": "Formatted string like \"3.87μs\"",
@@ -5913,7 +5913,7 @@
 						"examples": [
 							"```ts\ntime_format_adaptive(1500) // \"1.50μs\"\ntime_format_adaptive(3870) // \"3.87μs\"\ntime_format_adaptive(1500000) // \"1.50ms\"\ntime_format_adaptive(1500000000) // \"1.50s\"\n```"
 						],
-						"source_line": 183,
+						"source_line": 185,
 						"type_signature": "(ns: number, decimals?: number): string",
 						"return_type": "string",
 						"return_description": "Formatted string like \"3.87μs\" or \"1.23ms\"",
@@ -5935,7 +5935,7 @@
 						"name": "TimeResult",
 						"kind": "type",
 						"doc_comment": "Result from timing a function execution.\nAll times in nanoseconds for maximum precision.",
-						"source_line": 202,
+						"source_line": 204,
 						"type_signature": "TimeResult",
 						"properties": [
 							{
@@ -5977,7 +5977,7 @@
 						"examples": [
 							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
 						],
-						"source_line": 230,
+						"source_line": 232,
 						"type_signature": "<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>",
 						"return_type": "Promise<{ result: T; timing: TimeResult; }>",
 						"return_description": "Object containing the function result and timing information",
@@ -6002,7 +6002,7 @@
 						"examples": [
 							"```ts\nconst {result, timing} = time_sync(() => {\n  return expensive_computation();\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
 						],
-						"source_line": 265,
+						"source_line": 267,
 						"type_signature": "<T>(fn: () => T, timer?: Timer): { result: T; timing: TimeResult; }",
 						"return_type": "{ result: T; timing: TimeResult; }",
 						"return_description": "Object containing the function result and timing information",
@@ -6027,7 +6027,7 @@
 						"examples": [
 							"```ts\nconst timings_ns = await time_measure(async () => {\n  await process_data();\n}, 100);\n\nimport {BenchmarkStats} from './benchmark_stats.js';\nconst stats = new BenchmarkStats(timings_ns);\nconsole.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);\n```"
 						],
-						"source_line": 304,
+						"source_line": 306,
 						"type_signature": "(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>",
 						"return_type": "Promise<number[]>",
 						"return_description": "Array of elapsed times in nanoseconds",
@@ -6328,7 +6328,7 @@
 						"kind": "type",
 						"doc_comment": "The `Flavored` and `Branded` type helpers add varying degrees of nominal typing to other types.\nThis is especially useful with primitives like strings and numbers.",
 						"see_also": [
-							"https://spin.atomicobject.com/typescript-flexible-nominal-typing/ * `Flavored` is a looser form of `Branded` that trades explicitness and a little safety in some cases for ergonomics. With `Flavored` you don't need to cast unflavored types: * ```ts type Email = Flavored<string, 'Email'>; const email1: Email = 'foo'; // ok type Address = Flavored<string, 'Address'>; const email2: Email = 'foo' as Address; // error! ``` * `Branded` requires casting: * ```ts type PhoneNumber = Branded<string, 'PhoneNumber'>; const phone1: PhoneNumber = 'foo'; // error! const phone2: PhoneNumber = 'foo' as PhoneNumber; // ok ``` * See also Zod's `.brand` schema helper: *",
+							"https://spin.atomicobject.com/typescript-flexible-nominal-typing/ * `Flavored` is a looser form of `Branded` that trades explicitness and a little safety in some cases for ergonomics. With `Flavored` you don't need to cast unflavored types: * ```ts type Email = Flavored<string, 'Email'>; const email1: Email = 'foo'; // ok type Address = Flavored<string, 'Address'>; const email2: Email = 'foo' as Address; // error! ``` * `Branded` requires casting: * ```ts type PhoneNumber = Branded<string, 'PhoneNumber'>; const phone1: PhoneNumber = 'foo'; // error! const phone2: PhoneNumber = 'foo' as PhoneNumber; // ok ``` * See also Zod's `.brand` schema helper:",
 							"https://github.com/colinhacks/zod#brand"
 						],
 						"source_line": 90,

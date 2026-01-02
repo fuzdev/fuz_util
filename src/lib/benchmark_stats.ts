@@ -2,6 +2,8 @@
  * Benchmark-specific statistical analysis.
  * Uses the general stats utilities from stats.ts for timing/performance analysis.
  * All timing values are in nanoseconds.
+ *
+ * @module
  */
 
 import {TIME_NS_PER_SEC, time_format_adaptive} from './time.js';
