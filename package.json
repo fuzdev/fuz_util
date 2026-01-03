@@ -44,6 +44,7 @@
     "web"
   ],
   "peerDependencies": {
+    "@fuzdev/svelte-docinfo": "file:../svelte-docinfo",
     "@types/node": "^24",
     "esm-env": "^1.2.2",
     "zod": "^4.0.14"
