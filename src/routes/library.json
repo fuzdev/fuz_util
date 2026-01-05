@@ -69,7 +69,8 @@
 			"@changesets/changelog-git": "^0.2.1",
 			"@fuzdev/fuz_code": "^0.38.0",
 			"@fuzdev/fuz_css": "^0.43.0",
-			"@fuzdev/fuz_ui": "^0.177.0",
+			"@fuzdev/fuz_ui": "file:../fuz_ui",
+			"@fuzdev/svelte-docinfo": "file:../svelte-docinfo",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@ryanatkn/gro": "^0.184.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -124,6 +125,7 @@
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
 		"version": "0.45.1",
+		"repository": "git+https://github.com/fuzdev/fuz_util.git",
 		"modules": [
 			{
 				"path": "array.ts",
@@ -152,6 +154,9 @@
 						"name": "remove_unordered",
 						"kind": "function",
 						"doc_comment": "Removes an element from `array` at `index` in an unordered manner.",
+						"mutates": {
+							"array": "swaps element at index with last element, then removes last element"
+						},
 						"source_line": 14,
 						"type_signature": "(array: any[], index: number): void",
 						"return_type": "void",
@@ -519,12 +524,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Benchmark results to save"
+								"description": "Benchmark results to save"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "- Save options",
+								"description": "Save options",
 								"default_value": "{}"
 							}
 						]
@@ -544,7 +549,7 @@
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "- Load options",
+								"description": "Load options",
 								"default_value": "{}"
 							}
 						]
@@ -564,12 +569,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Current benchmark results"
+								"description": "Current benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineCompareOptions",
-								"description": "- Comparison options including regression threshold and staleness warning",
+								"description": "Comparison options including regression threshold and staleness warning",
 								"default_value": "{}"
 							}
 						]
@@ -586,7 +591,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "- Comparison result from benchmark_baseline_compare"
+								"description": "Comparison result from benchmark_baseline_compare"
 							}
 						]
 					},
@@ -602,12 +607,12 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "- Comparison result from benchmark_baseline_compare"
+								"description": "Comparison result from benchmark_baseline_compare"
 							},
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "- Formatting options",
+								"description": "Formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -634,13 +639,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -659,13 +664,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -684,12 +689,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "- Array of group definitions"
+								"description": "Array of group definitions"
 							}
 						]
 					},
@@ -728,13 +733,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
 								"optional": true,
-								"description": "- Formatting options"
+								"description": "Formatting options"
 							}
 						]
 					},
@@ -753,12 +758,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "- Array of group definitions"
+								"description": "Array of group definitions"
 							}
 						]
 					},
@@ -1046,18 +1051,18 @@
 							{
 								"name": "a",
 								"type": "BenchmarkStatsComparable",
-								"description": "- First benchmark stats (or any object with required properties)"
+								"description": "First benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "b",
 								"type": "BenchmarkStatsComparable",
-								"description": "- Second benchmark stats (or any object with required properties)"
+								"description": "Second benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
 								"optional": true,
-								"description": "- Comparison options"
+								"description": "Comparison options"
 							}
 						]
 					}
@@ -1284,18 +1289,18 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "- Function to warmup (sync or async)"
+								"description": "Function to warmup (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "- Number of warmup iterations"
+								"description": "Number of warmup iterations"
 							},
 							{
 								"name": "async_hint",
 								"type": "boolean | undefined",
 								"optional": true,
-								"description": "- If provided, use this instead of detecting"
+								"description": "If provided, use this instead of detecting"
 							}
 						]
 					},
@@ -1328,12 +1333,12 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Task name or full task object"
+										"description": "Task name or full task object"
 									},
 									{
 										"name": "fn",
 										"type": "() => unknown",
-										"description": "- Function to benchmark (if name is string). Return values are ignored."
+										"description": "Function to benchmark (if name is string). Return values are ignored."
 									}
 								]
 							},
@@ -1380,7 +1385,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to remove"
+										"description": "Name of the task to remove"
 									}
 								],
 								"throws": [
@@ -1401,7 +1406,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to skip"
+										"description": "Name of the task to skip"
 									}
 								],
 								"throws": [
@@ -1422,7 +1427,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to run exclusively"
+										"description": "Name of the task to run exclusively"
 									}
 								],
 								"throws": [
@@ -1453,7 +1458,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options"
+										"description": "Formatting options"
 									}
 								]
 							},
@@ -1469,7 +1474,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options (groups for organized output with optional baselines)"
+										"description": "Formatting options (groups for organized output with optional baselines)"
 									}
 								]
 							},
@@ -1485,7 +1490,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatJsonOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options (pretty, include_timings)"
+										"description": "Formatting options (pretty, include_timings)"
 									}
 								]
 							},
@@ -1939,6 +1944,9 @@
 						"name": "swallow",
 						"kind": "function",
 						"doc_comment": "Stops an event from bubbling and doing default behavior.",
+						"mutates": {
+							"event": "calls preventDefault(), stopPropagation(), or stopImmediatePropagation()"
+						},
 						"source_line": 69,
 						"type_signature": "<T extends Pick<Event, \"preventDefault\" | \"stopPropagation\" | \"stopImmediatePropagation\">>(event: T, immediate?: boolean, preventDefault?: boolean): T",
 						"return_type": "T",
@@ -1965,6 +1973,9 @@
 						"name": "handle_target_value",
 						"kind": "function",
 						"doc_comment": "Handles the value of an event's target and invokes a callback.\nDefaults to swallowing the event to prevent default actions and propagation.",
+						"mutates": {
+							"event": "calls `swallow()` which mutates the event if `swallow_event` is true"
+						},
 						"source_line": 91,
 						"type_signature": "(cb: (value: any, event: any) => void, swallow_event?: boolean): (e: any) => void",
 						"return_type": "(e: any) => void",
@@ -2523,7 +2534,7 @@
 							{
 								"name": "stdout",
 								"type": "string | null",
-								"description": "- The raw output from `git status --porcelain -z`"
+								"description": "The raw output from `git status --porcelain -z`"
 							}
 						]
 					},
@@ -2996,16 +3007,14 @@
 						"kind": "type",
 						"source_line": 5,
 						"type_signature": "JsonObject",
-						"extends": ["Record<string, Json>"],
-						"properties": []
+						"extends": ["Record<string, Json>"]
 					},
 					{
 						"name": "JsonArray",
 						"kind": "type",
 						"source_line": 7,
 						"type_signature": "JsonArray",
-						"extends": ["Array<Json>"],
-						"properties": []
+						"extends": ["Array<Json>"]
 					},
 					{
 						"name": "JsonType",
@@ -3815,12 +3824,12 @@
 							{
 								"name": "obj",
 								"type": "any",
-								"description": "- any object with enumerable properties"
+								"description": "any object with enumerable properties"
 							},
 							{
 								"name": "cb",
 								"type": "(key: string, value: any, obj: any) => void",
-								"description": "- receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
+								"description": "receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
 							}
 						]
 					},
@@ -4014,6 +4023,9 @@
 						"name": "slugify",
 						"kind": "function",
 						"doc_comment": "Converts a string into a URL-compatible slug.",
+						"mutates": {
+							"special_char_mappers": "calls `get_special_char_mappers()` which lazily initializes the module-level array if `map_special_characters` is true"
+						},
 						"source_line": 103,
 						"type_signature": "(str: string, map_special_characters?: boolean): string",
 						"return_type": "string",
@@ -4063,6 +4075,9 @@
 						"name": "configure_print_colors",
 						"kind": "function",
 						"doc_comment": "Configures the module-level styling function for colored output.",
+						"mutates": {
+							"st": "assigns the module-level `st` variable"
+						},
 						"source_line": 12,
 						"type_signature": "(s: ((format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string) | null | undefined): (format: ForegroundColors | ... 2 more ... | (ForegroundColors | ... 1 more ... | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
 						"return_type": "(format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
@@ -4358,6 +4373,9 @@
 						"name": "spawn_process",
 						"kind": "function",
 						"doc_comment": "Wraps the normal Node `childProcess.spawn` with graceful child shutdown behavior.\nAlso returns a convenient `closed` promise.\nIf you only need `closed`, prefer the shorthand function `spawn`.",
+						"mutates": {
+							"global_spawn": "calls `register_global_spawn()` which adds to the module-level Set"
+						},
 						"source_line": 70,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
@@ -4402,6 +4420,9 @@
 						"name": "register_global_spawn",
 						"kind": "function",
 						"doc_comment": "Returns a function that unregisters the `child`.",
+						"mutates": {
+							"global_spawn": "adds child to the module-level Set, and the returned function removes it"
+						},
 						"source_line": 101,
 						"type_signature": "(child: ChildProcess): () => void",
 						"return_type": "() => void",
@@ -4432,6 +4453,9 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all globally registered child processes.",
+						"mutates": {
+							"global_spawn": "indirectly removes processes through `despawn()` calls"
+						},
 						"source_line": 132,
 						"type_signature": "(): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
@@ -4449,13 +4473,13 @@
 								"name": "to_error_label",
 								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
 								"optional": true,
-								"description": "- Customize the error label or return `null` for the default `origin`."
+								"description": "Customize the error label or return `null` for the default `origin`."
 							},
 							{
 								"name": "map_error_text",
 								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
 								"optional": true,
-								"description": "- Customize the error text. Return `''` to silence, or `null` for the default `print_error(err)`."
+								"description": "Customize the error text. Return `''` to silence, or `null` for the default `print_error(err)`."
 							},
 							{
 								"name": "handle_error",
@@ -4685,6 +4709,9 @@
 						"name": "shuffle",
 						"kind": "function",
 						"doc_comment": "Mutates `array` with random ordering.",
+						"mutates": {
+							"array": "randomly reorders elements in place using Fisher-Yates shuffle"
+						},
 						"source_line": 34,
 						"type_signature": "<T extends Array<any>>(array: T, random?: ((min: number, max: number, random?: () => number) => number) | undefined): T",
 						"return_type": "T",
@@ -4723,6 +4750,9 @@
 						"name": "reset_regexp",
 						"kind": "function",
 						"doc_comment": "Reset a RegExp's lastIndex to 0 for global and sticky patterns.\nEnsures consistent behavior by clearing state that affects subsequent matches.",
+						"mutates": {
+							"regexp": "sets lastIndex to 0 if regexp is global or sticky"
+						},
 						"source_line": 12,
 						"type_signature": "<T extends RegExp>(regexp: T): T",
 						"return_type": "T",
@@ -5034,12 +5064,12 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "- Array of numbers"
+								"description": "Array of numbers"
 							},
 							{
 								"name": "p",
 								"type": "number",
-								"description": "- Percentile (0-1, e.g., 0.95 for 95th percentile)"
+								"description": "Percentile (0-1, e.g., 0.95 for 95th percentile)"
 							}
 						]
 					},
@@ -5269,13 +5299,13 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "- Array of numbers"
+								"description": "Array of numbers"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "- Configuration options"
+								"description": "Configuration options"
 							}
 						]
 					},
@@ -5291,23 +5321,23 @@
 							{
 								"name": "mean",
 								"type": "number",
-								"description": "- Mean of the data"
+								"description": "Mean of the data"
 							},
 							{
 								"name": "std_dev",
 								"type": "number",
-								"description": "- Standard deviation of the data"
+								"description": "Standard deviation of the data"
 							},
 							{
 								"name": "sample_size",
 								"type": "number",
-								"description": "- Number of samples"
+								"description": "Number of samples"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "- Configuration options"
+								"description": "Configuration options"
 							}
 						]
 					},
@@ -5343,32 +5373,32 @@
 							{
 								"name": "mean1",
 								"type": "number",
-								"description": "- Mean of first sample"
+								"description": "Mean of first sample"
 							},
 							{
 								"name": "std1",
 								"type": "number",
-								"description": "- Standard deviation of first sample"
+								"description": "Standard deviation of first sample"
 							},
 							{
 								"name": "n1",
 								"type": "number",
-								"description": "- Size of first sample"
+								"description": "Size of first sample"
 							},
 							{
 								"name": "mean2",
 								"type": "number",
-								"description": "- Mean of second sample"
+								"description": "Mean of second sample"
 							},
 							{
 								"name": "std2",
 								"type": "number",
-								"description": "- Standard deviation of second sample"
+								"description": "Standard deviation of second sample"
 							},
 							{
 								"name": "n2",
 								"type": "number",
-								"description": "- Size of second sample"
+								"description": "Size of second sample"
 							}
 						]
 					},
@@ -5434,12 +5464,12 @@
 							{
 								"name": "t",
 								"type": "number",
-								"description": "- Absolute value of t-statistic"
+								"description": "Absolute value of t-statistic"
 							},
 							{
 								"name": "df",
 								"type": "number",
-								"description": "- Degrees of freedom"
+								"description": "Degrees of freedom"
 							}
 						]
 					}
@@ -5875,7 +5905,7 @@
 							{
 								"name": "values_ns",
 								"type": "number[]",
-								"description": "- Array of times in nanoseconds"
+								"description": "Array of times in nanoseconds"
 							}
 						]
 					},
@@ -5891,17 +5921,17 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "- Time in nanoseconds"
+								"description": "Time in nanoseconds"
 							},
 							{
 								"name": "unit",
 								"type": "TimeUnit",
-								"description": "- Unit to use ('ns', 'us', 'ms', 's')"
+								"description": "Unit to use ('ns', 'us', 'ms', 's')"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "- Number of decimal places (default: 2)",
+								"description": "Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -5921,12 +5951,12 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "- Time in nanoseconds"
+								"description": "Time in nanoseconds"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "- Number of decimal places (default: 2)",
+								"description": "Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -5985,12 +6015,12 @@
 							{
 								"name": "fn",
 								"type": "() => Promise<T>",
-								"description": "- Async function to time"
+								"description": "Async function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6010,12 +6040,12 @@
 							{
 								"name": "fn",
 								"type": "() => T",
-								"description": "- Sync function to time"
+								"description": "Sync function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6035,17 +6065,17 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "- Function to measure (sync or async)"
+								"description": "Function to measure (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "- Number of times to execute"
+								"description": "Number of times to execute"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6351,8 +6381,7 @@
 							{
 								"name": "T"
 							}
-						],
-						"properties": []
+						]
 					},
 					{
 						"name": "Branded",
@@ -6377,8 +6406,7 @@
 							{
 								"name": "T"
 							}
-						],
-						"properties": []
+						]
 					}
 				]
 			},
