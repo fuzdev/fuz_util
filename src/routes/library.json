@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.45.1",
+		"version": "0.45.2",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -124,8 +124,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.45.1",
-		"repository": "git+https://github.com/fuzdev/fuz_util.git",
+		"version": "0.45.2",
 		"modules": [
 			{
 				"path": "array.ts",
@@ -5720,6 +5719,27 @@
 								"name": "align",
 								"type": "\"left\" | \"right\"",
 								"default_value": "'left'"
+							}
+						]
+					},
+					{
+						"name": "levenshtein_distance",
+						"kind": "function",
+						"doc_comment": "Calculates the Levenshtein distance between two strings.\nUseful for typo detection and fuzzy matching.",
+						"source_line": 175,
+						"type_signature": "(a: string, b: string): number",
+						"return_type": "number",
+						"return_description": "The edit distance between the strings",
+						"parameters": [
+							{
+								"name": "a",
+								"type": "string",
+								"description": "- First string"
+							},
+							{
+								"name": "b",
+								"type": "string",
+								"description": "- Second string"
 							}
 						]
 					}

@@ -163,3 +163,48 @@ export const pad_width = (
 		return ' '.repeat(padding) + str;
 	}
 };
+
+/**
+ * Calculates the Levenshtein distance between two strings.
+ * Useful for typo detection and fuzzy matching.
+ *
+ * @param a - First string
+ * @param b - Second string
+ * @returns The edit distance between the strings
+ */
+export const levenshtein_distance = (a: string, b: string): number => {
+	if (a.length === 0) return b.length;
+	if (b.length === 0) return a.length;
+	if (a === b) return 0;
+
+	// Use shorter string for rows to minimize space
+	const a_shorter = a.length <= b.length;
+	const short = a_shorter ? a : b;
+	const long = a_shorter ? b : a;
+	const short_len = short.length;
+	const long_len = long.length;
+
+	// Only need two rows: previous and current
+	let prev = new Uint16Array(short_len + 1);
+	let curr = new Uint16Array(short_len + 1);
+
+	// Initialize first row
+	for (let j = 0; j <= short_len; j++) {
+		prev[j] = j;
+	}
+
+	for (let i = 1; i <= long_len; i++) {
+		curr[0] = i;
+		const long_char = long.charCodeAt(i - 1);
+		for (let j = 1; j <= short_len; j++) {
+			if (long_char === short.charCodeAt(j - 1)) {
+				curr[j] = prev[j - 1]!;
+			} else {
+				curr[j] = 1 + Math.min(prev[j - 1]!, prev[j]!, curr[j - 1]!);
+			}
+		}
+		[prev, curr] = [curr, prev];
+	}
+
+	return prev[short_len]!;
+};
