@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.45.2
+
+### Patch Changes
+
+- add `levenshtein_distance` ([258c441](https://github.com/fuzdev/fuz_util/commit/258c441))
+
 ## 0.45.1
 
 ### Patch Changes
