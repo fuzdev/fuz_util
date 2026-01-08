@@ -5692,6 +5692,27 @@
 								"default_value": "'left'"
 							}
 						]
+					},
+					{
+						"name": "levenshtein_distance",
+						"kind": "function",
+						"doc_comment": "Calculates the Levenshtein distance between two strings.\nUseful for typo detection and fuzzy matching.",
+						"source_line": 175,
+						"type_signature": "(a: string, b: string): number",
+						"return_type": "number",
+						"return_description": "The edit distance between the strings",
+						"parameters": [
+							{
+								"name": "a",
+								"type": "string",
+								"description": "- First string"
+							},
+							{
+								"name": "b",
+								"type": "string",
+								"description": "- Second string"
+							}
+						]
 					}
 				],
 				"dependencies": ["iterator.ts"],

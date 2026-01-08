@@ -14,6 +14,7 @@ import {
 	strip_ansi,
 	string_display_width,
 	pad_width,
+	levenshtein_distance,
 } from '$lib/string.ts';
 
 describe('truncate', () => {
@@ -419,5 +420,43 @@ describe('pad_width', () => {
 	test('handles mixed content', () => {
 		// 'a🐆' = 1 + 2 = 3 columns, pad to 5 needs 2 more
 		assert.strictEqual(pad_width('a🐆', 5), 'a🐆  ');
+	});
+});
+
+describe('levenshtein_distance', () => {
+	test('identical strings', () => {
+		assert.strictEqual(levenshtein_distance('hello', 'hello'), 0);
+		assert.strictEqual(levenshtein_distance('', ''), 0);
+	});
+
+	test('empty strings', () => {
+		assert.strictEqual(levenshtein_distance('', 'hello'), 5);
+		assert.strictEqual(levenshtein_distance('hello', ''), 5);
+	});
+
+	test('single character difference', () => {
+		assert.strictEqual(levenshtein_distance('cat', 'bat'), 1); // substitution
+		assert.strictEqual(levenshtein_distance('cat', 'cats'), 1); // insertion
+		assert.strictEqual(levenshtein_distance('cats', 'cat'), 1); // deletion
+	});
+
+	test('multiple edits', () => {
+		assert.strictEqual(levenshtein_distance('kitten', 'sitting'), 3);
+		assert.strictEqual(levenshtein_distance('saturday', 'sunday'), 3);
+	});
+
+	test('completely different strings', () => {
+		assert.strictEqual(levenshtein_distance('abc', 'xyz'), 3);
+	});
+
+	test('typo detection cases', () => {
+		assert.strictEqual(levenshtein_distance('display', 'dispaly'), 2); // transposition
+		assert.strictEqual(levenshtein_distance('opacity', 'opacty'), 1); // missing i
+		assert.strictEqual(levenshtein_distance('hover', 'hvoer'), 2); // typo
+	});
+
+	test('case sensitive', () => {
+		assert.strictEqual(levenshtein_distance('Hello', 'hello'), 1);
+		assert.strictEqual(levenshtein_distance('ABC', 'abc'), 3);
 	});
 });
