@@ -227,6 +227,20 @@ describe('each_concurrent', () => {
 
 		expect(processed).toEqual([1, 2]);
 	});
+
+	test('handles synchronous throw in async function', async () => {
+		await expect(
+			each_concurrent(
+				[1, 2, 3],
+				async (x) => {
+					if (x === 2) {
+						throw new Error('sync throw');
+					}
+				},
+				3,
+			),
+		).rejects.toThrow('sync throw');
+	});
 });
 
 describe('map_concurrent', () => {
