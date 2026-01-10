@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.45.3
+
+### Patch Changes
+
+- add `each_concurrent` ([#64](https://github.com/fuzdev/fuz_util/pull/64))
+
 ## 0.45.2
 
 ### Patch Changes
