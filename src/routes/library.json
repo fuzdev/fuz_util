@@ -260,13 +260,41 @@
 						"parameters": []
 					},
 					{
+						"name": "each_concurrent",
+						"kind": "function",
+						"doc_comment": "Runs an async function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
+						"examples": [
+							"```ts\nawait each_concurrent(\n  file_paths,\n  async (path) => { await unlink(path); },\n  5, // max 5 concurrent deletions\n);\n```"
+						],
+						"source_line": 54,
+						"type_signature": "<T>(items: T[], fn: (item: T, index: number) => Promise<void>, concurrency: number): Promise<void>",
+						"return_type": "Promise<void>",
+						"parameters": [
+							{
+								"name": "items",
+								"type": "T[]",
+								"description": "array of items to process"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => Promise<void>",
+								"description": "async function to apply to each item"
+							},
+							{
+								"name": "concurrency",
+								"type": "number",
+								"description": "maximum number of concurrent operations"
+							}
+						]
+					},
+					{
 						"name": "map_concurrent",
 						"kind": "function",
 						"doc_comment": "Maps over items with controlled concurrency, preserving input order.",
 						"examples": [
 							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  async (path) => readFile(path, 'utf8'),\n  5, // max 5 concurrent reads\n);\n```"
 						],
-						"source_line": 54,
+						"source_line": 125,
 						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<R[]>",
 						"return_type": "Promise<R[]>",
 						"return_description": "promise resolving to array of results in same order as input",
@@ -295,7 +323,7 @@
 						"examples": [
 							"```ts\nconst results = await map_concurrent_settled(urls, fetch, 5);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
 						],
-						"source_line": 133,
+						"source_line": 202,
 						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<PromiseSettledResult<R>[]>",
 						"return_type": "Promise<PromiseSettledResult<R>[]>",
 						"return_description": "promise resolving to array of `PromiseSettledResult` objects in input order",

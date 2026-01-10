@@ -35,6 +35,77 @@ export const create_deferred = <T>(): Deferred<T> => {
 };
 
 /**
+ * Runs an async function on each item with controlled concurrency.
+ * Like `map_concurrent` but doesn't collect results (more efficient for side effects).
+ *
+ * @param items array of items to process
+ * @param fn async function to apply to each item
+ * @param concurrency maximum number of concurrent operations
+ *
+ * @example
+ * ```ts
+ * await each_concurrent(
+ *   file_paths,
+ *   async (path) => { await unlink(path); },
+ *   5, // max 5 concurrent deletions
+ * );
+ * ```
+ */
+export const each_concurrent = async <T>(
+	items: Array<T>,
+	fn: (item: T, index: number) => Promise<void>,
+	concurrency: number,
+): Promise<void> => {
+	if (concurrency < 1) {
+		throw new Error('concurrency must be at least 1');
+	}
+
+	let next_index = 0;
+	let active_count = 0;
+	let rejected = false;
+
+	return new Promise((resolve, reject) => {
+		const run_next = (): void => {
+			// Stop spawning if we've rejected
+			if (rejected) return;
+
+			// Check if we're done
+			if (next_index >= items.length && active_count === 0) {
+				resolve();
+				return;
+			}
+
+			// Spawn workers up to concurrency limit
+			while (active_count < concurrency && next_index < items.length) {
+				const index = next_index++;
+				const item = items[index]!;
+				active_count++;
+
+				fn(item, index)
+					.then(() => {
+						if (rejected) return;
+						active_count--;
+						run_next();
+					})
+					.catch((error) => {
+						if (rejected) return;
+						rejected = true;
+						reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+					});
+			}
+		};
+
+		// Handle empty array
+		if (items.length === 0) {
+			resolve();
+			return;
+		}
+
+		run_next();
+	});
+};
+
+/**
  * Maps over items with controlled concurrency, preserving input order.
  *
  * @param items array of items to process
@@ -64,7 +135,6 @@ export const map_concurrent = async <T, R>(
 	let next_index = 0;
 	let active_count = 0;
 	let rejected = false;
-	let reject_error: unknown;
 
 	return new Promise((resolve, reject) => {
 		const run_next = (): void => {
@@ -93,8 +163,7 @@ export const map_concurrent = async <T, R>(
 					.catch((error) => {
 						if (rejected) return;
 						rejected = true;
-						reject_error = error;
-						reject(reject_error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+						reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
 					});
 			}
 		};
