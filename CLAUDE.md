@@ -6,6 +6,16 @@ fuz_util (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
 `@ryanatkn` ecosystem. It has no UI framework dependencies (no Svelte) and
 focuses on pure TypeScript helpers.
 
+## Gro commands
+
+```bash
+gro check     # typecheck, test, lint, format check (run before committing)
+gro typecheck # typecheck only (faster iteration)
+gro test      # run tests with vitest
+gro gen       # regenerate .gen files
+gro build     # build the package for production
+```
+
 ## Scope
 
 fuz_util is a **foundational utility library**:
