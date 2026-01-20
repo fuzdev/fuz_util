@@ -8,7 +8,7 @@
 	const library = library_context.get();
 </script>
 
-<main class="width_upto_md">
+<main class="width_atmost_md">
 	<section>
 		<header class="box">
 			<h1 class="mt_xl5">{library.repo_name}</h1>
@@ -16,7 +16,7 @@
 		<Breadcrumb>{library.package_json.glyph}</Breadcrumb>
 	</section>
 	<section class="box width:100% mb_lg">
-		<div class="panel p_md width_upto_md">
+		<div class="panel p_md width_atmost_md">
 			<LibraryDetail {library} />
 		</div>
 	</section>
