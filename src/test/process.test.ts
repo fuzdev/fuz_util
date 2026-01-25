@@ -73,6 +73,18 @@ describe('spawn', () => {
 		assert.ok(!result.ok);
 		assert.ok(spawn_result_is_signaled(result));
 	});
+
+	test('supports both signal and timeout_ms together', async () => {
+		const controller = new AbortController();
+		// timeout_ms is shorter, should win
+		const result = await spawn('sleep', ['10'], {
+			signal: controller.signal,
+			timeout_ms: 50,
+		});
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+		assert.strictEqual(result.signal, 'SIGTERM');
+	});
 });
 
 describe('spawn_out', () => {
@@ -122,6 +134,45 @@ describe('spawn_out', () => {
 		assert.strictEqual(stdout, null);
 		assert.strictEqual(stderr, null);
 	});
+
+	test('supports timeout_ms option', async () => {
+		const {result} = await spawn_out('sleep', ['10'], {timeout_ms: 50});
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+		assert.strictEqual(result.signal, 'SIGTERM');
+	});
+
+	test('supports AbortSignal option', async () => {
+		const controller = new AbortController();
+		const promise = spawn_out('sleep', ['10'], {signal: controller.signal});
+		await new Promise((r) => setTimeout(r, 20));
+		controller.abort();
+		const {result} = await promise;
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+	});
+
+	test('returns null for empty output (no data events)', async () => {
+		const {result, stdout} = await spawn_out('node', ['-e', 'process.stdout.write("")']);
+		assert.ok(result.ok);
+		// Empty write produces no data events, so stdout is null
+		assert.strictEqual(stdout, null);
+	});
+
+	test('captures multi-chunk output correctly', async () => {
+		// Generate output that will likely come in multiple chunks
+		const {result, stdout} = await spawn_out('node', [
+			'-e',
+			'for(let i=0;i<100;i++) console.log("line "+i);',
+		]);
+		assert.ok(result.ok);
+		assert.ok(stdout !== null);
+		assert.ok(stdout.includes('line 0'));
+		assert.ok(stdout.includes('line 99'));
+		// Verify all 100 lines are present
+		const lines = stdout.trim().split('\n');
+		assert.strictEqual(lines.length, 100);
+	});
 });
 
 describe('spawn_process', () => {
@@ -164,6 +215,16 @@ describe('despawn', () => {
 		assert.strictEqual(result.code, 0);
 	});
 
+	test('returns signalCode for already-signaled process', async () => {
+		const {child, closed} = spawn_process('sleep', ['10']);
+		child.kill('SIGKILL');
+		await closed;
+		const result = await despawn(child);
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+		assert.strictEqual(result.signal, 'SIGKILL');
+	});
+
 	test('supports custom signal', async () => {
 		const {child} = spawn_process('sleep', ['10']);
 		const result = await despawn(child, {signal: 'SIGKILL'});
@@ -181,6 +242,19 @@ describe('despawn', () => {
 		// Wait for process to start and set up handler
 		await new Promise((r) => setTimeout(r, 50));
 		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 100});
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+		assert.strictEqual(result.signal, 'SIGKILL');
+	});
+
+	test('timeout_ms of 0 escalates to SIGKILL immediately', async () => {
+		// Process that ignores SIGTERM
+		const {child} = spawn_process('node', [
+			'-e',
+			'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);',
+		]);
+		await new Promise((r) => setTimeout(r, 50));
+		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 0});
 		assert.ok(!result.ok);
 		assert.ok(spawn_result_is_signaled(result));
 		assert.strictEqual(result.signal, 'SIGKILL');
@@ -211,6 +285,12 @@ describe('ProcessRegistry', () => {
 		assert.strictEqual(results.length, 2);
 		assert.ok(results.every((r) => !r.ok));
 		assert.strictEqual(registry.processes.size, 0);
+	});
+
+	test('despawn_all returns empty array when no processes', async () => {
+		const registry = new ProcessRegistry();
+		const results = await registry.despawn_all();
+		assert.strictEqual(results.length, 0);
 	});
 
 	test('isolated from default_registry', async () => {
@@ -307,6 +387,60 @@ describe('spawn_restartable_process', () => {
 
 		await rp.kill();
 	});
+
+	test('restart after natural exit works', async () => {
+		const rp = spawn_restartable_process('node', ['-e', 'process.exit(0)']);
+		await rp.spawned;
+		const firstPid = rp.child?.pid;
+		// Wait for natural exit
+		const result = await rp.closed;
+		assert.ok(result.ok);
+		// Note: running stays true until kill() or restart() - it reflects handle state, not process state
+
+		// Restart should work and give us a new process
+		await rp.restart();
+		assert.ok(rp.running);
+		assert.ok(rp.child !== null);
+		assert.notStrictEqual(rp.child.pid, firstPid);
+
+		await rp.kill();
+	});
+
+	test('kill when process already exited', async () => {
+		const rp = spawn_restartable_process('node', ['-e', 'process.exit(0)']);
+		await rp.spawned;
+		await rp.closed;
+		// Note: running is still true here until kill() is called
+
+		// Kill should work without throwing, and set running to false
+		await rp.kill();
+		assert.ok(!rp.running);
+	});
+
+	test('restart after kill allows new process', async () => {
+		const rp = spawn_restartable_process('sleep', ['10']);
+		await rp.spawned;
+		await rp.kill();
+		assert.ok(!rp.running);
+
+		// Restart after kill should work
+		await rp.restart();
+		assert.ok(rp.running);
+		assert.ok(rp.child !== null);
+
+		await rp.kill();
+	});
+
+	test('pre-aborted signal kills process immediately', async () => {
+		const controller = new AbortController();
+		controller.abort();
+		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
+		await rp.spawned;
+		// Process should be killed immediately due to pre-aborted signal
+		const result = await rp.closed;
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+	});
 });
 
 describe('type guards', () => {
@@ -359,24 +493,11 @@ describe('process_is_pid_running', () => {
 		assert.ok(!process_is_pid_running(-1));
 		assert.ok(!process_is_pid_running(-999));
 	});
-});
 
-describe('spawn_out options', () => {
-	test('supports timeout_ms option', async () => {
-		const {result} = await spawn_out('sleep', ['10'], {timeout_ms: 50});
-		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
-		assert.strictEqual(result.signal, 'SIGTERM');
-	});
-
-	test('supports AbortSignal option', async () => {
-		const controller = new AbortController();
-		const promise = spawn_out('sleep', ['10'], {signal: controller.signal});
-		await new Promise((r) => setTimeout(r, 20));
-		controller.abort();
-		const {result} = await promise;
-		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+	test('returns false for NaN and Infinity', () => {
+		assert.ok(!process_is_pid_running(NaN));
+		assert.ok(!process_is_pid_running(Infinity));
+		assert.ok(!process_is_pid_running(-Infinity));
 	});
 });
 
@@ -454,14 +575,6 @@ describe('timeout_ms validation', () => {
 		const result = await spawn('sleep', ['10'], {timeout_ms: 0});
 		assert.ok(!result.ok);
 		assert.ok(spawn_result_is_signaled(result));
-	});
-});
-
-describe('despawn_all', () => {
-	test('returns empty array when no processes', async () => {
-		const registry = new ProcessRegistry();
-		const results = await registry.despawn_all();
-		assert.strictEqual(results.length, 0);
 	});
 });
 

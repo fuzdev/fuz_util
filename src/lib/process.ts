@@ -568,9 +568,14 @@ export interface RestartableProcess {
 	 * will share the same restart operation.
 	 */
 	restart: () => Promise<void>;
-	/** Kill the process and prevent further restarts */
+	/** Kill the process and set `running` to false */
 	kill: () => Promise<void>;
-	/** Whether a process is currently running */
+	/**
+	 * Whether a process handle is active.
+	 * Note: This reflects handle state, not whether the underlying OS process is executing.
+	 * Remains `true` after a process exits naturally until `kill()` or `restart()` is called.
+	 * To check if the process actually exited, await `closed`.
+	 */
 	readonly running: boolean;
 	/** The current child process, or null if not running */
 	readonly child: ChildProcess | null;
@@ -707,12 +712,13 @@ export const spawn_restartable_process = (
  * Checks if a process with the given PID is running.
  * Uses signal 0 which checks existence without sending a signal.
  *
- * @param pid - The process ID to check (must be positive)
+ * @param pid - The process ID to check (must be a positive integer)
  * @returns `true` if the process exists (even without permission to signal it),
- *   `false` if the process doesn't exist or if pid is invalid (non-positive)
+ *   `false` if the process doesn't exist or if pid is invalid (non-positive, NaN, Infinity)
  */
 export const process_is_pid_running = (pid: number): boolean => {
-	if (pid <= 0) return false;
+	// Handle NaN, Infinity, negative, zero, and non-integers
+	if (!(pid > 0) || !Number.isFinite(pid)) return false;
 	try {
 		process.kill(pid, 0);
 		return true;
