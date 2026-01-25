@@ -4298,6 +4298,16 @@
 								"name": "error",
 								"kind": "variable",
 								"type_signature": "Error"
+							},
+							{
+								"name": "code",
+								"kind": "variable",
+								"type_signature": "null"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "null"
 							}
 						]
 					},
@@ -4305,7 +4315,7 @@
 						"name": "SpawnResultExited",
 						"kind": "type",
 						"doc_comment": "Process ran and exited with a code.\n`ok` is true when `code` is 0.",
-						"source_line": 33,
+						"source_line": 35,
 						"type_signature": "SpawnResultExited",
 						"properties": [
 							{
@@ -4317,6 +4327,11 @@
 								"name": "child",
 								"kind": "variable",
 								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "null"
 							},
 							{
 								"name": "code",
@@ -4334,7 +4349,7 @@
 						"name": "SpawnResultSignaled",
 						"kind": "type",
 						"doc_comment": "Process was terminated by a signal (e.g., SIGTERM, SIGKILL).",
-						"source_line": 43,
+						"source_line": 46,
 						"type_signature": "SpawnResultSignaled",
 						"properties": [
 							{
@@ -4346,6 +4361,11 @@
 								"name": "child",
 								"kind": "variable",
 								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "null"
 							},
 							{
 								"name": "code",
@@ -4363,14 +4383,14 @@
 						"name": "SpawnResult",
 						"kind": "type",
 						"doc_comment": "Discriminated union representing all possible spawn outcomes.\nUse type guards `spawn_result_is_error`, `spawn_result_is_signaled`,\nand `spawn_result_is_exited` to narrow the type.",
-						"source_line": 55,
+						"source_line": 59,
 						"type_signature": "SpawnResult"
 					},
 					{
 						"name": "spawn_result_is_error",
 						"kind": "function",
 						"doc_comment": "Type guard for spawn errors (process failed to start).",
-						"source_line": 64,
+						"source_line": 68,
 						"type_signature": "(result: SpawnResult): result is SpawnResultError",
 						"return_type": "boolean",
 						"parameters": [
@@ -4384,7 +4404,7 @@
 						"name": "spawn_result_is_signaled",
 						"kind": "function",
 						"doc_comment": "Type guard for signal termination.",
-						"source_line": 70,
+						"source_line": 74,
 						"type_signature": "(result: SpawnResult): result is SpawnResultSignaled",
 						"return_type": "boolean",
 						"parameters": [
@@ -4398,7 +4418,7 @@
 						"name": "spawn_result_is_exited",
 						"kind": "function",
 						"doc_comment": "Type guard for normal exit with code.",
-						"source_line": 76,
+						"source_line": 80,
 						"type_signature": "(result: SpawnResult): result is SpawnResultExited",
 						"return_type": "boolean",
 						"parameters": [
@@ -4412,7 +4432,7 @@
 						"name": "SpawnProcessOptions",
 						"kind": "type",
 						"doc_comment": "Options for spawning processes, extending Node's `SpawnOptions`.",
-						"source_line": 86,
+						"source_line": 90,
 						"type_signature": "SpawnProcessOptions",
 						"extends": ["SpawnOptions"],
 						"properties": [
@@ -4434,7 +4454,7 @@
 						"name": "DespawnOptions",
 						"kind": "type",
 						"doc_comment": "Options for killing processes.",
-						"source_line": 102,
+						"source_line": 106,
 						"type_signature": "DespawnOptions",
 						"properties": [
 							{
@@ -4455,7 +4475,7 @@
 						"name": "SpawnedProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a spawned process with access to the child and completion promise.",
-						"source_line": 122,
+						"source_line": 126,
 						"type_signature": "SpawnedProcess",
 						"properties": [
 							{
@@ -4476,7 +4496,7 @@
 						"name": "SpawnedOut",
 						"kind": "type",
 						"doc_comment": "Result of `spawn_out` with captured output streams.",
-						"source_line": 132,
+						"source_line": 136,
 						"type_signature": "SpawnedOut",
 						"properties": [
 							{
@@ -4505,7 +4525,7 @@
 						"examples": [
 							"```ts\n// Use default registry via module functions\nconst result = await spawn('echo', ['hello']);\n\n// Or create isolated registry for testing\nconst registry = new ProcessRegistry();\nconst {child, closed} = registry.spawn('node', ['server.js']);\nawait registry.despawn_all();\n```"
 						],
-						"source_line": 230,
+						"source_line": 234,
 						"members": [
 							{
 								"name": "processes",
@@ -4627,7 +4647,7 @@
 						"name": "process_registry_default",
 						"kind": "variable",
 						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
-						"source_line": 459,
+						"source_line": 465,
 						"type_signature": "ProcessRegistry"
 					},
 					{
@@ -4637,7 +4657,7 @@
 						"examples": [
 							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
 						],
-						"source_line": 477,
+						"source_line": 483,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -4664,7 +4684,7 @@
 						"examples": [
 							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
 						],
-						"source_line": 493,
+						"source_line": 499,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4691,7 +4711,7 @@
 						"examples": [
 							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
 						],
-						"source_line": 508,
+						"source_line": 514,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -4718,7 +4738,7 @@
 						"examples": [
 							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
 						],
-						"source_line": 523,
+						"source_line": 529,
 						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4737,7 +4757,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all processes in the default registry.",
-						"source_line": 529,
+						"source_line": 535,
 						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": [
@@ -4753,7 +4773,7 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": ["ProcessRegistry.attach_error_handler"],
-						"source_line": 537,
+						"source_line": 543,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
 						"parameters": [
@@ -4769,7 +4789,7 @@
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
 						"examples": ["`pid(1234) <- node server.js`"],
-						"source_line": 550,
+						"source_line": 556,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -4783,7 +4803,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 557,
+						"source_line": 563,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4797,7 +4817,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 567,
+						"source_line": 573,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4811,7 +4831,7 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 581,
+						"source_line": 587,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -4864,7 +4884,7 @@
 							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
 							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 650,
+						"source_line": 656,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -4888,7 +4908,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 753,
+						"source_line": 759,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",

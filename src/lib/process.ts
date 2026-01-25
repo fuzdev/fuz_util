@@ -24,6 +24,8 @@ export interface SpawnResultError {
 	ok: false;
 	child: ChildProcess;
 	error: Error;
+	code: null;
+	signal: null;
 }
 
 /**
@@ -33,6 +35,7 @@ export interface SpawnResultError {
 export interface SpawnResultExited {
 	ok: boolean;
 	child: ChildProcess;
+	error: null;
 	code: number;
 	signal: null;
 }
@@ -43,6 +46,7 @@ export interface SpawnResultExited {
 export interface SpawnResultSignaled {
 	ok: false;
 	child: ChildProcess;
+	error: null;
 	code: null;
 	signal: NodeJS.Signals;
 }
@@ -62,19 +66,19 @@ export type SpawnResult = SpawnResultError | SpawnResultExited | SpawnResultSign
  * Type guard for spawn errors (process failed to start).
  */
 export const spawn_result_is_error = (result: SpawnResult): result is SpawnResultError =>
-	'error' in result;
+	result.error !== null;
 
 /**
  * Type guard for signal termination.
  */
 export const spawn_result_is_signaled = (result: SpawnResult): result is SpawnResultSignaled =>
-	'signal' in result && result.signal !== null;
+	result.signal !== null;
 
 /**
  * Type guard for normal exit with code.
  */
 export const spawn_result_is_exited = (result: SpawnResult): result is SpawnResultExited =>
-	'code' in result && result.code !== null;
+	result.code !== null;
 
 //
 // Spawn Options
@@ -156,16 +160,16 @@ const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 	child.once('error', (err) => {
 		if (resolved) return;
 		resolved = true;
-		resolve({ok: false, child, error: err});
+		resolve({ok: false, child, error: err, code: null, signal: null});
 	});
 
 	child.once('close', (code, signal) => {
 		if (resolved) return;
 		resolved = true;
 		if (signal !== null) {
-			resolve({ok: false, child, code: null, signal});
+			resolve({ok: false, child, error: null, code: null, signal});
 		} else {
-			resolve({ok: code === 0, child, code: code ?? 0, signal: null});
+			resolve({ok: code === 0, child, error: null, code: code ?? 0, signal: null});
 		}
 	});
 
@@ -332,6 +336,7 @@ export class ProcessRegistry {
 			return {
 				ok: child.exitCode === 0,
 				child,
+				error: null,
 				code: child.exitCode,
 				signal: null,
 			};
@@ -341,6 +346,7 @@ export class ProcessRegistry {
 			return {
 				ok: false,
 				child,
+				error: null,
 				code: null,
 				signal: child.signalCode,
 			};

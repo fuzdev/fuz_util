@@ -491,9 +491,21 @@ describe('spawn_restartable_process', () => {
 
 describe('type guards', () => {
 	test('spawn_result_is_error identifies error results', () => {
-		const error: SpawnResult = {ok: false, child: null!, error: new Error('test')};
-		const exited: SpawnResult = {ok: true, child: null!, code: 0, signal: null};
-		const signaled: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGTERM'};
+		const error: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: new Error('test'),
+			code: null,
+			signal: null,
+		};
+		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
+		const signaled: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: null,
+			code: null,
+			signal: 'SIGTERM',
+		};
 
 		assert.ok(spawn_result_is_error(error));
 		assert.ok(!spawn_result_is_error(exited));
@@ -501,9 +513,21 @@ describe('type guards', () => {
 	});
 
 	test('spawn_result_is_exited identifies exited results', () => {
-		const error: SpawnResult = {ok: false, child: null!, error: new Error('test')};
-		const exited: SpawnResult = {ok: true, child: null!, code: 0, signal: null};
-		const signaled: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGTERM'};
+		const error: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: new Error('test'),
+			code: null,
+			signal: null,
+		};
+		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
+		const signaled: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: null,
+			code: null,
+			signal: 'SIGTERM',
+		};
 
 		assert.ok(!spawn_result_is_exited(error));
 		assert.ok(spawn_result_is_exited(exited));
@@ -511,9 +535,21 @@ describe('type guards', () => {
 	});
 
 	test('spawn_result_is_signaled identifies signaled results', () => {
-		const error: SpawnResult = {ok: false, child: null!, error: new Error('test')};
-		const exited: SpawnResult = {ok: true, child: null!, code: 0, signal: null};
-		const signaled: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGTERM'};
+		const error: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: new Error('test'),
+			code: null,
+			signal: null,
+		};
+		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
+		const signaled: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: null,
+			code: null,
+			signal: 'SIGTERM',
+		};
 
 		assert.ok(!spawn_result_is_signaled(error));
 		assert.ok(!spawn_result_is_signaled(exited));
@@ -563,41 +599,65 @@ describe('print utilities', () => {
 	});
 
 	test('print_spawn_result returns ok for success', () => {
-		const result: SpawnResult = {ok: true, child: null!, code: 0, signal: null};
+		const result: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
 		assert.strictEqual(print_spawn_result(result), 'ok');
 	});
 
 	test('print_spawn_result returns error message for error', () => {
-		const result: SpawnResult = {ok: false, child: null!, error: new Error('test error')};
+		const result: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: new Error('test error'),
+			code: null,
+			signal: null,
+		};
 		assert.strictEqual(print_spawn_result(result), 'test error');
 	});
 
 	test('print_spawn_result returns signal for signaled', () => {
-		const result: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGTERM'};
+		const result: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: null,
+			code: null,
+			signal: 'SIGTERM',
+		};
 		const output = print_spawn_result(result);
 		assert.ok(output.includes('signal'));
 		assert.ok(output.includes('SIGTERM'));
 	});
 
 	test('print_spawn_result returns code for exited', () => {
-		const result: SpawnResult = {ok: false, child: null!, code: 42, signal: null};
+		const result: SpawnResult = {ok: false, child: null!, error: null, code: 42, signal: null};
 		const output = print_spawn_result(result);
 		assert.ok(output.includes('code'));
 		assert.ok(output.includes('42'));
 	});
 
 	test('spawn_result_to_message formats error', () => {
-		const result: SpawnResult = {ok: false, child: null!, error: new Error('test error')};
+		const result: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: new Error('test error'),
+			code: null,
+			signal: null,
+		};
 		assert.strictEqual(spawn_result_to_message(result), 'error: test error');
 	});
 
 	test('spawn_result_to_message formats signal', () => {
-		const result: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGKILL'};
+		const result: SpawnResult = {
+			ok: false,
+			child: null!,
+			error: null,
+			code: null,
+			signal: 'SIGKILL',
+		};
 		assert.strictEqual(spawn_result_to_message(result), 'signal SIGKILL');
 	});
 
 	test('spawn_result_to_message formats code', () => {
-		const result: SpawnResult = {ok: false, child: null!, code: 1, signal: null};
+		const result: SpawnResult = {ok: false, child: null!, error: null, code: 1, signal: null};
 		assert.strictEqual(spawn_result_to_message(result), 'code 1');
 	});
 });
