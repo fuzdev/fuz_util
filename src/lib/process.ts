@@ -285,15 +285,17 @@ export class ProcessRegistry {
 		options?: SpawnProcessOptions,
 	): Promise<SpawnedOut> {
 		const {child, closed} = this.spawn(command, args, {...options, stdio: 'pipe'});
-		let stdout: string | null = null;
-		let stderr: string | null = null;
+		const stdout_chunks: Array<string> = [];
+		const stderr_chunks: Array<string> = [];
 		child.stdout?.on('data', (data: Buffer) => {
-			stdout = (stdout ?? '') + data.toString();
+			stdout_chunks.push(data.toString());
 		});
 		child.stderr?.on('data', (data: Buffer) => {
-			stderr = (stderr ?? '') + data.toString();
+			stderr_chunks.push(data.toString());
 		});
 		const result = await closed;
+		const stdout = stdout_chunks.length > 0 ? stdout_chunks.join('') : null;
+		const stderr = stderr_chunks.length > 0 ? stderr_chunks.join('') : null;
 		return {result, stdout, stderr};
 	}
 
@@ -402,7 +404,8 @@ export class ProcessRegistry {
 				for (const child of this.processes) {
 					child.kill('SIGTERM');
 				}
-				// Busy-wait (blocking) - only option in sync handler
+				// Busy-wait (blocking) - only option in sync handler.
+				// Warning: This will peg the CPU during the wait period.
 				const deadline = Date.now() + graceful_timeout_ms;
 				while (Date.now() < deadline) {
 					// spin
@@ -593,6 +596,10 @@ export interface RestartableProcess {
  * Spawns a process that can be restarted.
  * Handles concurrent restart calls gracefully.
  *
+ * Note: The `signal` and `timeout_ms` options are reapplied on each restart.
+ * If the AbortSignal is already aborted when `restart()` is called, the new
+ * process will be killed immediately.
+ *
  * @example Simple restart on crash
  * ```ts
  * const rp = spawn_restartable_process('node', ['server.js']);
@@ -663,6 +670,8 @@ export const spawn_restartable_process = (
 		return pending_restart;
 	};
 
+	// Wait for any pending restart to complete first, ensuring we kill
+	// the newly spawned process rather than racing with it
 	const kill = async (): Promise<void> => {
 		if (pending_restart) await pending_restart;
 		if (pending_close) await pending_close;
@@ -698,15 +707,19 @@ export const spawn_restartable_process = (
  * Checks if a process with the given PID is running.
  * Uses signal 0 which checks existence without sending a signal.
  *
- * @param pid - The process ID to check
- * @returns `true` if the process exists (even without permission to signal it)
+ * @param pid - The process ID to check (must be positive)
+ * @returns `true` if the process exists (even without permission to signal it),
+ *   `false` if the process doesn't exist or if pid is invalid (non-positive)
  */
 export const process_is_pid_running = (pid: number): boolean => {
+	if (pid <= 0) return false;
 	try {
 		process.kill(pid, 0);
 		return true;
 	} catch (err: unknown) {
-		// ESRCH = no such process, EPERM = exists but no permission
-		return (err as NodeJS.ErrnoException).code === 'EPERM';
+		// ESRCH = no such process
+		// EPERM = process exists but we lack permission to signal it
+		const code = (err as NodeJS.ErrnoException).code;
+		return code === 'EPERM';
 	}
 };

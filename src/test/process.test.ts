@@ -287,6 +287,26 @@ describe('spawn_restartable_process', () => {
 		assert.ok(!result.ok);
 		assert.ok(spawn_result_is_signaled(result));
 	});
+
+	test('concurrent restart calls are coalesced', async () => {
+		const rp = spawn_restartable_process('sleep', ['10']);
+		await rp.spawned;
+		const pid1 = rp.child?.pid;
+
+		// Fire multiple restarts concurrently
+		const restart1 = rp.restart();
+		const restart2 = rp.restart();
+		const restart3 = rp.restart();
+
+		await Promise.all([restart1, restart2, restart3]);
+
+		// Only one new process should exist
+		assert.ok(rp.running);
+		const pid2 = rp.child?.pid;
+		assert.notStrictEqual(pid1, pid2);
+
+		await rp.kill();
+	});
 });
 
 describe('type guards', () => {
@@ -332,6 +352,12 @@ describe('process_is_pid_running', () => {
 	test('returns false for non-existent pid', () => {
 		// Use a very high PID that's unlikely to exist
 		assert.ok(!process_is_pid_running(999999999));
+	});
+
+	test('returns false for non-positive pid', () => {
+		assert.ok(!process_is_pid_running(0));
+		assert.ok(!process_is_pid_running(-1));
+		assert.ok(!process_is_pid_running(-999));
 	});
 });
 
