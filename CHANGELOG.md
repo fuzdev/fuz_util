@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.48.0
+
+### Minor Changes
+
+- add `args.ts` ([#66](https://github.com/fuzdev/fuz_util/pull/66))
+
 ## 0.47.0
 
 ### Minor Changes
