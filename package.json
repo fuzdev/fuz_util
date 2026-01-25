@@ -65,7 +65,7 @@
     "@fuzdev/fuz_css": "^0.44.1",
     "@fuzdev/fuz_ui": "^0.179.0",
     "@ryanatkn/eslint-config": "^0.9.0",
-    "@ryanatkn/gro": "^0.188.0",
+    "@ryanatkn/gro": "^0.189.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.1",
     "@sveltejs/package": "^2.5.7",
