@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.48.1
+
+### Patch Changes
+
+- parameterize `spawn_child_process` to `ProcessRegistry#spawn` ([efa8eb0](https://github.com/fuzdev/fuz_util/commit/efa8eb0))
+
 ## 0.48.0
 
 ### Minor Changes
