@@ -7,6 +7,7 @@ import {styleText as st} from 'node:util';
 
 import {Logger} from './log.js';
 import {print_error, print_key_value} from './print.js';
+import {noop} from './function.js';
 
 const log = new Logger('process');
 
@@ -89,8 +90,8 @@ export interface SpawnProcessOptions extends SpawnOptions {
 	 */
 	signal?: AbortSignal;
 	/**
-	 * Timeout in milliseconds.
-	 * Sends SIGTERM when exceeded.
+	 * Timeout in milliseconds. Must be non-negative.
+	 * Sends SIGTERM when exceeded. A value of 0 triggers immediate SIGTERM.
 	 */
 	timeout_ms?: number;
 }
@@ -105,8 +106,8 @@ export interface DespawnOptions {
 	 */
 	signal?: NodeJS.Signals;
 	/**
-	 * Timeout in ms before escalating to SIGKILL.
-	 * Useful for processes that may ignore SIGTERM.
+	 * Timeout in ms before escalating to SIGKILL. Must be non-negative.
+	 * Useful for processes that may ignore SIGTERM. A value of 0 triggers immediate SIGKILL escalation.
 	 */
 	timeout_ms?: number;
 }
@@ -175,7 +176,7 @@ const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 const setup_abort_signal = (child: ChildProcess, signal: AbortSignal): (() => void) => {
 	if (signal.aborted) {
 		child.kill();
-		return () => {};
+		return noop;
 	}
 	const on_abort = () => child.kill();
 	signal.addEventListener('abort', on_abort, {once: true});
@@ -183,7 +184,18 @@ const setup_abort_signal = (child: ChildProcess, signal: AbortSignal): (() => vo
 };
 
 /**
+ * Validates timeout_ms option.
+ * @throws if timeout_ms is negative
+ */
+const validate_timeout_ms = (timeout_ms: number | undefined): void => {
+	if (timeout_ms !== undefined && timeout_ms < 0) {
+		throw new Error(`timeout_ms must be non-negative, got ${timeout_ms}`);
+	}
+};
+
+/**
  * Sets up timeout handling for a child process.
+ * Note: timeout_ms of 0 triggers immediate SIGTERM (use with caution).
  * @returns cleanup function to clear the timeout
  */
 const setup_timeout = (child: ChildProcess, timeout_ms: number): (() => void) => {
@@ -216,8 +228,7 @@ export class ProcessRegistry {
 	/** All currently tracked child processes */
 	readonly processes: Set<ChildProcess> = new Set();
 
-	#error_handler: ((err: Error, origin: NodeJS.UncaughtExceptionOrigin) => Promise<void>) | null =
-		null;
+	#error_handler: ((err: Error, origin: NodeJS.UncaughtExceptionOrigin) => void) | null = null;
 
 	/**
 	 * Spawns a process and tracks it in this registry.
@@ -234,6 +245,7 @@ export class ProcessRegistry {
 		options?: SpawnProcessOptions,
 	): SpawnedProcess {
 		const {signal, timeout_ms, ...spawn_options} = options ?? {};
+		validate_timeout_ms(timeout_ms);
 		const child = spawn_child_process(command, args, {stdio: 'inherit', ...spawn_options});
 
 		this.processes.add(child);
@@ -294,6 +306,7 @@ export class ProcessRegistry {
 	 */
 	async despawn(child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> {
 		const {signal = 'SIGTERM', timeout_ms} = options ?? {};
+		validate_timeout_ms(timeout_ms);
 
 		// Already exited with code
 		if (child.exitCode !== null) {
@@ -333,13 +346,16 @@ export class ProcessRegistry {
 	 * @param options - Kill options applied to all processes
 	 * @returns Array of spawn results
 	 */
-	async despawn_all(options?: DespawnOptions): Promise<SpawnResult[]> {
+	async despawn_all(options?: DespawnOptions): Promise<Array<SpawnResult>> {
 		return Promise.all([...this.processes].map((child) => this.despawn(child, options)));
 	}
 
 	/**
-	 * Attaches an `uncaughtException` handler that despawns all processes before exiting.
+	 * Attaches an `uncaughtException` handler that kills all processes before exiting.
 	 * Prevents zombie processes when the parent crashes.
+	 *
+	 * Note: Uses synchronous SIGKILL to guarantee cleanup completes before exit,
+	 * since Node's uncaughtException handler doesn't await async operations.
 	 *
 	 * @param to_error_label - Customize error label, return `null` for default
 	 * @param map_error_text - Customize error text, return `''` to silence
@@ -353,10 +369,11 @@ export class ProcessRegistry {
 			process.exit(1),
 	): () => void {
 		if (this.#error_handler) {
-			log.error(st('red', 'error handler already attached to this registry'));
+			log.warn('error handler already attached to this registry');
+			return noop;
 		}
 
-		this.#error_handler = async (err, origin): Promise<void> => {
+		this.#error_handler = (err, origin): void => {
 			const label = to_error_label?.(err, origin) ?? origin;
 			if (label) {
 				const error_text = map_error_text?.(err, origin) ?? print_error(err);
@@ -364,7 +381,11 @@ export class ProcessRegistry {
 					new Logger(label).error(error_text);
 				}
 			}
-			await this.despawn_all();
+			// Use synchronous SIGKILL - guaranteed termination, no waiting
+			for (const child of this.processes) {
+				child.kill('SIGKILL');
+			}
+			this.processes.clear();
 			handle_error(err, origin);
 		};
 
@@ -457,7 +478,7 @@ export const despawn = (child: ChildProcess, options?: DespawnOptions): Promise<
 /**
  * Kills all processes in the default registry.
  */
-export const despawn_all = (options?: DespawnOptions): Promise<SpawnResult[]> =>
+export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult>> =>
 	default_registry.despawn_all(options);
 
 /**
@@ -465,7 +486,7 @@ export const despawn_all = (options?: DespawnOptions): Promise<SpawnResult[]> =>
  *
  * @see ProcessRegistry.attach_error_handler
  */
-export const attach_process_error_handlers = (
+export const attach_process_error_handler = (
 	to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
 	map_error_text?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
 	handle_error: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => void = () =>
@@ -483,7 +504,7 @@ export const attach_process_error_handlers = (
  * @example `pid(1234) <- node server.js`
  */
 export const print_child_process = (child: ChildProcess): string =>
-	`${st('gray', 'pid(')}${child.pid}${st('gray', ')')} ← ${st('green', child.spawnargs.join(' '))}`;
+	`${st('gray', 'pid(')}${child.pid ?? 'none'}${st('gray', ')')} ← ${st('green', child.spawnargs.join(' '))}`;
 
 /**
  * Formats a spawn result for display.
@@ -524,6 +545,8 @@ export interface RestartableProcess {
 	readonly child: ChildProcess | null;
 	/** Promise that resolves when the current process exits */
 	readonly closed: Promise<SpawnResult>;
+	/** Promise that resolves when the initial spawn completes (use to avoid race conditions) */
+	readonly started: Promise<void>;
 }
 
 /**
@@ -557,7 +580,7 @@ export interface RestartableProcess {
 export const spawn_restartable_process = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnOptions,
+	options?: SpawnProcessOptions,
 ): RestartableProcess => {
 	let spawned: SpawnedProcess | null = null;
 	let pending_close: Promise<SpawnResult> | null = null;
@@ -568,6 +591,10 @@ export const spawn_restartable_process = (
 		code: null,
 		signal: 'SIGTERM' as NodeJS.Signals,
 	});
+
+	// Resolve when first spawn completes to avoid race conditions
+	let resolve_started: () => void;
+	const started: Promise<void> = new Promise((r) => (resolve_started = r));
 
 	const do_close = async (): Promise<void> => {
 		if (!spawned) return;
@@ -590,8 +617,8 @@ export const spawn_restartable_process = (
 		await do_close();
 	};
 
-	// Start immediately
-	void restart();
+	// Start immediately and resolve started promise when done
+	void restart().then(() => resolve_started());
 
 	return {
 		restart,
@@ -604,6 +631,9 @@ export const spawn_restartable_process = (
 		},
 		get closed() {
 			return closed_promise;
+		},
+		get started() {
+			return started;
 		},
 	};
 };

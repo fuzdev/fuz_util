@@ -12,6 +12,10 @@ import {
 	spawn_result_is_signaled,
 	spawn_result_is_exited,
 	process_is_pid_running,
+	print_child_process,
+	print_spawn_result,
+	spawn_result_to_message,
+	attach_process_error_handler,
 	type SpawnResult,
 } from '$lib/process.js';
 
@@ -38,7 +42,8 @@ describe('spawn', () => {
 		assert.ok(spawn_result_is_error(result));
 		assert.ok(result.error instanceof Error);
 		assert.ok(
-			result.error.message.includes('ENOENT') || (result.error as NodeJS.ErrnoException).code === 'ENOENT',
+			result.error.message.includes('ENOENT') ||
+				(result.error as NodeJS.ErrnoException).code === 'ENOENT',
 		);
 	});
 
@@ -198,8 +203,8 @@ describe('ProcessRegistry', () => {
 
 	test('despawn_all kills all processes', async () => {
 		const registry = new ProcessRegistry();
-		const p1 = registry.spawn('sleep', ['10']);
-		const p2 = registry.spawn('sleep', ['10']);
+		registry.spawn('sleep', ['10']);
+		registry.spawn('sleep', ['10']);
 		assert.strictEqual(registry.processes.size, 2);
 
 		const results = await registry.despawn_all();
@@ -222,13 +227,12 @@ describe('ProcessRegistry', () => {
 });
 
 describe('spawn_restartable_process', () => {
-	test('starts immediately and exposes running state', async () => {
+	test('started promise resolves when first spawn completes', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
-		// Give it time to start
-		await new Promise((r) => setTimeout(r, 20));
+		await rp.started;
 		assert.ok(rp.running);
 		assert.ok(rp.child !== null);
-		assert.ok(typeof rp.child!.pid === 'number');
+		assert.ok(typeof rp.child.pid === 'number');
 		await rp.kill();
 		assert.ok(!rp.running);
 		assert.strictEqual(rp.child, null);
@@ -236,6 +240,7 @@ describe('spawn_restartable_process', () => {
 
 	test('closed promise resolves when process exits', async () => {
 		const rp = spawn_restartable_process('node', ['-e', 'setTimeout(() => {}, 50)']);
+		await rp.started;
 		const result = await rp.closed;
 		assert.ok(result.ok);
 		assert.ok(spawn_result_is_exited(result));
@@ -243,13 +248,12 @@ describe('spawn_restartable_process', () => {
 
 	test('restart kills current and starts new process', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
-		await new Promise((r) => setTimeout(r, 20));
+		await rp.started;
 		const firstPid = rp.child?.pid;
 		assert.ok(firstPid);
 
 		await rp.restart();
-		await new Promise((r) => setTimeout(r, 20));
-		const secondPid = rp.child?.pid;
+		const secondPid = rp.child.pid;
 		assert.ok(secondPid);
 		assert.notStrictEqual(firstPid, secondPid);
 
@@ -258,6 +262,7 @@ describe('spawn_restartable_process', () => {
 
 	test('closed updates after restart', async () => {
 		const rp = spawn_restartable_process('node', ['-e', 'setTimeout(() => process.exit(1), 30)']);
+		await rp.started;
 		const firstClosed = rp.closed;
 		const firstResult = await firstClosed;
 		assert.ok(!firstResult.ok);
@@ -270,6 +275,17 @@ describe('spawn_restartable_process', () => {
 		assert.notStrictEqual(firstClosed, secondClosed);
 
 		await rp.kill();
+	});
+
+	test('supports SpawnProcessOptions', async () => {
+		const controller = new AbortController();
+		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
+		await rp.started;
+		assert.ok(rp.running);
+		controller.abort();
+		const result = await rp.closed;
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
 	});
 });
 
@@ -316,5 +332,143 @@ describe('process_is_pid_running', () => {
 	test('returns false for non-existent pid', () => {
 		// Use a very high PID that's unlikely to exist
 		assert.ok(!process_is_pid_running(999999999));
+	});
+});
+
+describe('spawn_out options', () => {
+	test('supports timeout_ms option', async () => {
+		const {result} = await spawn_out('sleep', ['10'], {timeout_ms: 50});
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+		assert.strictEqual(result.signal, 'SIGTERM');
+	});
+
+	test('supports AbortSignal option', async () => {
+		const controller = new AbortController();
+		const promise = spawn_out('sleep', ['10'], {signal: controller.signal});
+		await new Promise((r) => setTimeout(r, 20));
+		controller.abort();
+		const {result} = await promise;
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+	});
+});
+
+describe('print utilities', () => {
+	test('print_child_process formats with pid', async () => {
+		const {child, closed} = spawn_process('echo', ['test']);
+		const output = print_child_process(child);
+		assert.ok(output.includes('pid('));
+		assert.ok(output.includes('echo test'));
+		await closed;
+	});
+
+	test('print_spawn_result returns ok for success', () => {
+		const result: SpawnResult = {ok: true, child: null!, code: 0, signal: null};
+		assert.strictEqual(print_spawn_result(result), 'ok');
+	});
+
+	test('print_spawn_result returns error message for error', () => {
+		const result: SpawnResult = {ok: false, child: null!, error: new Error('test error')};
+		assert.strictEqual(print_spawn_result(result), 'test error');
+	});
+
+	test('print_spawn_result returns signal for signaled', () => {
+		const result: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGTERM'};
+		const output = print_spawn_result(result);
+		assert.ok(output.includes('signal'));
+		assert.ok(output.includes('SIGTERM'));
+	});
+
+	test('print_spawn_result returns code for exited', () => {
+		const result: SpawnResult = {ok: false, child: null!, code: 42, signal: null};
+		const output = print_spawn_result(result);
+		assert.ok(output.includes('code'));
+		assert.ok(output.includes('42'));
+	});
+
+	test('spawn_result_to_message formats error', () => {
+		const result: SpawnResult = {ok: false, child: null!, error: new Error('test error')};
+		assert.strictEqual(spawn_result_to_message(result), 'error: test error');
+	});
+
+	test('spawn_result_to_message formats signal', () => {
+		const result: SpawnResult = {ok: false, child: null!, code: null, signal: 'SIGKILL'};
+		assert.strictEqual(spawn_result_to_message(result), 'signal SIGKILL');
+	});
+
+	test('spawn_result_to_message formats code', () => {
+		const result: SpawnResult = {ok: false, child: null!, code: 1, signal: null};
+		assert.strictEqual(spawn_result_to_message(result), 'code 1');
+	});
+});
+
+describe('timeout_ms validation', () => {
+	test('spawn throws for negative timeout_ms', () => {
+		assert.throws(() => spawn_process('echo', ['test'], {timeout_ms: -1}), /non-negative/);
+	});
+
+	test('despawn throws for negative timeout_ms', async () => {
+		const {child, closed} = spawn_process('sleep', ['10']);
+		let threw = false;
+		try {
+			await despawn(child, {timeout_ms: -1});
+		} catch (err) {
+			threw = true;
+			assert.ok((err as Error).message.includes('non-negative'));
+		} finally {
+			child.kill();
+			await closed;
+		}
+		assert.ok(threw, 'Expected despawn to throw');
+	});
+
+	test('spawn allows timeout_ms of 0', async () => {
+		// 0 is valid but immediately sends SIGTERM
+		const result = await spawn('sleep', ['10'], {timeout_ms: 0});
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_signaled(result));
+	});
+});
+
+describe('despawn_all', () => {
+	test('returns empty array when no processes', async () => {
+		const registry = new ProcessRegistry();
+		const results = await registry.despawn_all();
+		assert.strictEqual(results.length, 0);
+	});
+});
+
+describe('attach_process_error_handler', () => {
+	test('returns cleanup function', () => {
+		const registry = new ProcessRegistry();
+		const cleanup = registry.attach_error_handler();
+		assert.ok(typeof cleanup === 'function');
+		cleanup();
+	});
+
+	test('cleanup removes handler', () => {
+		const registry = new ProcessRegistry();
+		const cleanup = registry.attach_error_handler();
+		cleanup();
+		// Attaching again should succeed without warning (handler was removed)
+		const cleanup2 = registry.attach_error_handler();
+		cleanup2();
+	});
+
+	test('double attach returns no-op cleanup', () => {
+		const registry = new ProcessRegistry();
+		const cleanup1 = registry.attach_error_handler();
+		const cleanup2 = registry.attach_error_handler();
+		// Second cleanup should be a no-op (returns early)
+		cleanup2();
+		// First cleanup should still work
+		cleanup1();
+	});
+
+	test('module-level function works', () => {
+		const cleanup = attach_process_error_handler();
+		assert.ok(typeof cleanup === 'function');
+		cleanup();
 	});
 });
