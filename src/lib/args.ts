@@ -3,11 +3,19 @@ import {z} from 'zod';
 /**
  * CLI arguments container.
  * Positional arguments stored in `_`, named flags/options as string keys.
- * Used after initial CLI parsing (mri, minimist, etc.) for schema validation.
+ * Produced by `argv_parse` or external parsers (mri, minimist, etc.).
  */
 export interface Args {
 	_?: Array<string>;
 	[key: string]: ArgValue;
+}
+
+/**
+ * Parsed CLI arguments with guaranteed positionals array.
+ * Returned by `argv_parse` which always initializes `_`.
+ */
+export interface ParsedArgs extends Args {
+	_: Array<string>;
 }
 
 /**
@@ -350,4 +358,189 @@ export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
 		aliases: new Map(cache.aliases),
 		canonical_keys: new Set(cache.canonical_keys),
 	};
+};
+
+// Internal: Try to coerce a string value to number if it looks numeric
+const coerce_value = (value: string): string | number => {
+	// Handle empty string
+	if (value === '') return value;
+	// Try to parse as number
+	const num = Number(value);
+	// Return number if valid and finite, otherwise keep as string
+	// This matches mri behavior: "123" -> 123, "12.5" -> 12.5, "1e5" -> 100000
+	// But "123abc" -> "123abc", "NaN" -> "NaN", "Infinity" -> "Infinity"
+	if (!Number.isNaN(num) && Number.isFinite(num) && value.trim() !== '') {
+		return num;
+	}
+	return value;
+};
+
+// Internal: Set a value on args, handling arrays for repeated flags
+const set_arg = (args: Args, key: string, value: string | number | boolean): void => {
+	if (key in args) {
+		// Convert to array or push to existing array
+		const existing = args[key];
+		if (Array.isArray(existing)) {
+			existing.push(value);
+		} else {
+			args[key] = [existing!, value];
+		}
+	} else {
+		args[key] = value;
+	}
+};
+
+/**
+ * Parses raw CLI argv array into an Args object.
+ *
+ * A lightweight, dependency-free alternative to mri/minimist with compatible behavior.
+ *
+ * Features:
+ * - `--flag` → `{flag: true}`
+ * - `--flag value` → `{flag: 'value'}` or `{flag: 123}` (numeric coercion)
+ * - `--flag=value` → equals syntax
+ * - `--flag=` → `{flag: ''}` (empty string, differs from mri which returns true)
+ * - `-f` → `{f: true}` (short flag)
+ * - `-f value` → `{f: 'value'}`
+ * - `-abc` → `{a: true, b: true, c: true}` (combined short flags)
+ * - `-abc value` → `{a: true, b: true, c: 'value'}` (last flag gets value)
+ * - `--no-flag` → `{flag: false}` (negation prefix)
+ * - `--` → stops flag parsing, rest become positionals
+ * - Positionals collected in `_` array
+ * - Repeated flags become arrays
+ *
+ * Intentional differences from mri:
+ * - `--flag=` returns `''` (mri returns `true`)
+ * - `--flag= next` returns `{flag: '', _: ['next']}` (mri takes `next` as the value)
+ * - `---flag` returns `{'-flag': true}` (mri strips all dashes)
+ * - `['--flag', '']` preserves `''` (mri coerces to `0`)
+ * - `--__proto__` works as a normal key (mri silently fails)
+ *
+ * The returned object uses `Object.create(null)` to prevent prototype pollution
+ * and allow any key name including `__proto__` and `constructor`.
+ *
+ * @param argv Raw argument array (typically process.argv.slice(2))
+ * @returns Parsed Args object with guaranteed `_` array (null prototype)
+ */
+export const argv_parse = (argv: Array<string>): ParsedArgs => {
+	// Use Object.create(null) to allow __proto__ as a normal key
+	// This prevents prototype pollution and makes all key names work
+	const args = Object.create(null) as ParsedArgs;
+	args._ = [];
+	const positionals = args._;
+
+	let i = 0;
+	let flags_done = false; // Set to true after seeing --
+
+	while (i < argv.length) {
+		const arg = argv[i]!;
+
+		// After --, everything is a positional
+		if (flags_done) {
+			positionals.push(arg);
+			i++;
+			continue;
+		}
+
+		// -- stops flag parsing
+		if (arg === '--') {
+			flags_done = true;
+			i++;
+			continue;
+		}
+
+		// Long flag: --flag or --flag=value or --no-flag
+		if (arg.startsWith('--')) {
+			const rest = arg.slice(2);
+
+			// Handle --flag=value
+			const equals_index = rest.indexOf('=');
+			if (equals_index !== -1) {
+				const key = rest.slice(0, equals_index);
+				const value = rest.slice(equals_index + 1);
+				// Empty value after = becomes empty string (explicit value assignment)
+				// This differs from mri which treats it as boolean true
+				set_arg(args, key, coerce_value(value));
+				i++;
+				continue;
+			}
+
+			// Handle --no-flag (negation) - includes --no- which sets '' to false
+			if (rest.startsWith('no-')) {
+				const key = rest.slice(3); // May be empty string for --no-
+				args[key] = false;
+				i++;
+				continue;
+			}
+
+			// Handle --flag or --flag value
+			const key = rest;
+			const next = argv[i + 1];
+
+			// If next arg exists and doesn't look like a flag, it's the value
+			if (next !== undefined && !next.startsWith('-')) {
+				set_arg(args, key, coerce_value(next));
+				i += 2;
+			} else {
+				// Boolean flag
+				args[key] = true;
+				i++;
+			}
+			continue;
+		}
+
+		// Single dash is ignored (matches mri)
+		if (arg === '-') {
+			i++;
+			continue;
+		}
+
+		// Short flag(s): -f or -abc or -f value
+		if (arg.startsWith('-') && arg.length > 1) {
+			const chars = arg.slice(1);
+
+			// Handle -f=value (short flag with equals)
+			const equals_index = chars.indexOf('=');
+			if (equals_index !== -1) {
+				const key = chars.slice(0, equals_index);
+				const value = chars.slice(equals_index + 1);
+				// For -abc=value, set a and b to true, c gets value
+				for (let j = 0; j < key.length - 1; j++) {
+					args[key[j]!] = true;
+				}
+				if (key.length > 0) {
+					set_arg(args, key[key.length - 1]!, coerce_value(value));
+				}
+				i++;
+				continue;
+			}
+
+			// Handle combined flags: -abc means -a -b -c
+			// Last flag can take a value if next arg isn't a flag
+			const next = argv[i + 1];
+			const has_value = next !== undefined && !next.startsWith('-');
+
+			for (let j = 0; j < chars.length; j++) {
+				const char = chars[j]!;
+				const is_last = j === chars.length - 1;
+
+				if (is_last && has_value) {
+					// Last char gets the value
+					set_arg(args, char, coerce_value(next));
+					i += 2;
+				} else {
+					// Boolean flag
+					args[char] = true;
+					if (is_last) i++;
+				}
+			}
+			continue;
+		}
+
+		// Positional argument
+		positionals.push(arg);
+		i++;
+	}
+
+	return args;
 };
