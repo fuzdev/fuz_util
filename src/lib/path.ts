@@ -98,7 +98,7 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
  * Converts a string into a URL-compatible slug.
  * @param str the string to convert
  * @param map_special_characters if `true`, characters like `ñ` are converted to their ASCII equivalents, runs around 5x faster when disabled
- * @mutates special_char_mappers calls `get_special_char_mappers()` which lazily initializes the module-level array if `map_special_characters` is true
+ * @mutates special_char_mappers - calls `get_special_char_mappers()` which lazily initializes the module-level array if `map_special_characters` is true
  */
 export const slugify = (str: string, map_special_characters = true): string => {
 	let s = str.toLowerCase();
@@ -123,7 +123,7 @@ let special_char_mappers: Array<(s: string) => string> | undefined;
 /**
  * Lazily constructs `special_char_mappers` which
  * converts special characters to their ASCII equivalents.
- * @mutates special_char_mappers pushes mapper functions into module-level array on first call
+ * @mutates special_char_mappers - pushes mapper functions into module-level array on first call
  */
 const get_special_char_mappers = (): Array<(s: string) => string> => {
 	if (special_char_mappers) return special_char_mappers;
