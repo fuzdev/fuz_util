@@ -4622,6 +4622,12 @@
 								"kind": "variable",
 								"type_signature": "number",
 								"doc_comment": "Timeout in milliseconds. Must be non-negative.\nSends SIGTERM when exceeded. A value of 0 triggers immediate SIGTERM."
+							},
+							{
+								"name": "spawn_child_process",
+								"kind": "variable",
+								"type_signature": "typeof node_spawn_child_process",
+								"doc_comment": "Custom spawn function for testing. Defaults to `node:child_process` spawn."
 							}
 						]
 					},
@@ -4629,7 +4635,7 @@
 						"name": "DespawnOptions",
 						"kind": "type",
 						"doc_comment": "Options for killing processes.",
-						"source_line": 106,
+						"source_line": 110,
 						"type_signature": "DespawnOptions",
 						"properties": [
 							{
@@ -4650,7 +4656,7 @@
 						"name": "SpawnedProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a spawned process with access to the child and completion promise.",
-						"source_line": 126,
+						"source_line": 130,
 						"type_signature": "SpawnedProcess",
 						"properties": [
 							{
@@ -4671,7 +4677,7 @@
 						"name": "SpawnedOut",
 						"kind": "type",
 						"doc_comment": "Result of `spawn_out` with captured output streams.",
-						"source_line": 136,
+						"source_line": 140,
 						"type_signature": "SpawnedOut",
 						"properties": [
 							{
@@ -4700,7 +4706,7 @@
 						"examples": [
 							"```ts\n// Use default registry via module functions\nconst result = await spawn('echo', ['hello']);\n\n// Or create isolated registry for testing\nconst registry = new ProcessRegistry();\nconst {child, closed} = registry.spawn('node', ['server.js']);\nawait registry.despawn_all();\n```"
 						],
-						"source_line": 234,
+						"source_line": 238,
 						"members": [
 							{
 								"name": "processes",
@@ -4822,7 +4828,7 @@
 						"name": "process_registry_default",
 						"kind": "variable",
 						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
-						"source_line": 465,
+						"source_line": 474,
 						"type_signature": "ProcessRegistry"
 					},
 					{
@@ -4832,7 +4838,7 @@
 						"examples": [
 							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
 						],
-						"source_line": 483,
+						"source_line": 492,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -4859,7 +4865,7 @@
 						"examples": [
 							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
 						],
-						"source_line": 499,
+						"source_line": 508,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4886,7 +4892,7 @@
 						"examples": [
 							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
 						],
-						"source_line": 514,
+						"source_line": 523,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -4913,7 +4919,7 @@
 						"examples": [
 							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
 						],
-						"source_line": 529,
+						"source_line": 538,
 						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4932,7 +4938,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all processes in the default registry.",
-						"source_line": 535,
+						"source_line": 544,
 						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": [
@@ -4948,7 +4954,7 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": ["ProcessRegistry.attach_error_handler"],
-						"source_line": 543,
+						"source_line": 552,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
 						"parameters": [
@@ -4964,7 +4970,7 @@
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
 						"examples": ["`pid(1234) <- node server.js`"],
-						"source_line": 556,
+						"source_line": 565,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -4978,7 +4984,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 563,
+						"source_line": 572,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4992,7 +4998,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 573,
+						"source_line": 582,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5006,7 +5012,7 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 587,
+						"source_line": 596,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -5059,7 +5065,7 @@
 							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
 							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 656,
+						"source_line": 665,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -5083,7 +5089,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 759,
+						"source_line": 768,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",

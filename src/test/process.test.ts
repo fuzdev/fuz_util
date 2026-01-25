@@ -1,4 +1,6 @@
-import {test, describe, assert} from 'vitest';
+import {test, describe, assert, vi} from 'vitest';
+import {EventEmitter} from 'node:events';
+import type {ChildProcess} from 'node:child_process';
 
 import {
 	spawn,
@@ -321,6 +323,88 @@ describe('ProcessRegistry', () => {
 		assert.ok(spawn_result_is_error(result));
 		// After error, process should be removed from registry
 		assert.strictEqual(registry.processes.size, 0);
+	});
+
+	test('uses injected spawn_child_process function', async () => {
+		const registry = new ProcessRegistry();
+
+		// Create a mock child process using EventEmitter
+		const emitter = new EventEmitter();
+		const mock_child = Object.assign(emitter, {
+			pid: 12345,
+			exitCode: null as number | null,
+			signalCode: null as NodeJS.Signals | null,
+			spawnargs: ['test', 'arg'],
+			kill: vi.fn(() => true),
+		}) as unknown as ChildProcess;
+
+		let captured_command: string | undefined;
+		let captured_args: ReadonlyArray<string> | undefined;
+		let captured_options: Record<string, unknown> | undefined;
+		const mock_spawn = vi.fn(
+			(cmd: string, args: ReadonlyArray<string>, opts: Record<string, unknown>) => {
+				captured_command = cmd;
+				captured_args = args;
+				captured_options = opts;
+				return mock_child;
+			},
+		);
+
+		const {child, closed} = registry.spawn('test', ['arg'], {
+			spawn_child_process: mock_spawn as unknown as typeof import('node:child_process').spawn,
+		});
+
+		// Verify the mock was called with correct arguments
+		assert.ok(mock_spawn.mock.calls.length === 1);
+		assert.strictEqual(captured_command, 'test');
+		assert.deepStrictEqual(captured_args, ['arg']);
+		assert.strictEqual(captured_options?.stdio, 'inherit');
+
+		// Verify the child is the mock
+		assert.strictEqual(child, mock_child);
+		assert.strictEqual(child.pid, 12345);
+
+		// Simulate the process exiting with code 0
+		emitter.emit('close', 0, null);
+
+		const result = await closed;
+		assert.ok(result.ok);
+		assert.ok(spawn_result_is_exited(result));
+		assert.strictEqual(result.code, 0);
+	});
+
+	test('injected spawn receives custom options', async () => {
+		const registry = new ProcessRegistry();
+
+		const emitter = new EventEmitter();
+		const mock_child = Object.assign(emitter, {
+			pid: 12345,
+			exitCode: null as number | null,
+			signalCode: null as NodeJS.Signals | null,
+			spawnargs: ['test'],
+			kill: vi.fn(() => true),
+		}) as unknown as ChildProcess;
+
+		let captured_options: Record<string, unknown> | undefined;
+		const mock_spawn = vi.fn(
+			(_cmd: string, _args: ReadonlyArray<string>, opts: Record<string, unknown>) => {
+				captured_options = opts;
+				return mock_child;
+			},
+		);
+
+		const {closed} = registry.spawn('test', [], {
+			spawn_child_process: mock_spawn as unknown as typeof import('node:child_process').spawn,
+			cwd: '/custom/path',
+			env: {FOO: 'bar'},
+		});
+
+		// Verify custom options are passed through
+		assert.strictEqual(captured_options?.cwd, '/custom/path');
+		assert.deepStrictEqual(captured_options?.env, {FOO: 'bar'});
+
+		emitter.emit('close', 0, null);
+		await closed;
 	});
 });
 

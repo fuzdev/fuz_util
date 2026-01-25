@@ -1,5 +1,5 @@
 import {
-	spawn as spawn_child_process,
+	spawn as node_spawn_child_process,
 	type SpawnOptions,
 	type ChildProcess,
 } from 'node:child_process';
@@ -98,6 +98,10 @@ export interface SpawnProcessOptions extends SpawnOptions {
 	 * Sends SIGTERM when exceeded. A value of 0 triggers immediate SIGTERM.
 	 */
 	timeout_ms?: number;
+	/**
+	 * Custom spawn function for testing. Defaults to `node:child_process` spawn.
+	 */
+	spawn_child_process?: typeof node_spawn_child_process;
 }
 
 /**
@@ -251,7 +255,12 @@ export class ProcessRegistry {
 		args: ReadonlyArray<string> = [],
 		options?: SpawnProcessOptions,
 	): SpawnedProcess {
-		const {signal, timeout_ms, ...spawn_options} = options ?? {};
+		const {
+			signal,
+			timeout_ms,
+			spawn_child_process = node_spawn_child_process,
+			...spawn_options
+		} = options ?? {};
 		validate_timeout_ms(timeout_ms);
 		const child = spawn_child_process(command, args, {stdio: 'inherit', ...spawn_options});
 
