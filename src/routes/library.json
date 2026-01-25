@@ -127,6 +127,181 @@
 		"version": "0.47.0",
 		"modules": [
 			{
+				"path": "args.ts",
+				"declarations": [
+					{
+						"name": "Args",
+						"kind": "type",
+						"doc_comment": "CLI arguments container.\nPositional arguments stored in `_`, named flags/options as string keys.\nProduced by `argv_parse` or external parsers (mri, minimist, etc.).",
+						"source_line": 8,
+						"type_signature": "Args",
+						"properties": [
+							{
+								"name": "_",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "ParsedArgs",
+						"kind": "type",
+						"doc_comment": "Parsed CLI arguments with guaranteed positionals array.\nReturned by `argv_parse` which always initializes `_`.",
+						"source_line": 17,
+						"type_signature": "ParsedArgs",
+						"extends": ["Args"],
+						"properties": [
+							{
+								"name": "_",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "ArgValue",
+						"kind": "type",
+						"doc_comment": "Value types supported in CLI arguments.",
+						"source_line": 24,
+						"type_signature": "ArgValue"
+					},
+					{
+						"name": "ArgSchema",
+						"kind": "type",
+						"doc_comment": "Schema description for help text generation.\nNot used by args_parse/args_serialize directly - provided for consumers\nbuilding CLI help output.",
+						"source_line": 31,
+						"type_signature": "ArgSchema",
+						"properties": [
+							{
+								"name": "type",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "default",
+								"kind": "variable",
+								"type_signature": "ArgValue"
+							},
+							{
+								"name": "description",
+								"kind": "variable",
+								"type_signature": "string"
+							}
+						]
+					},
+					{
+						"name": "ArgsAliasesResult",
+						"kind": "type",
+						"doc_comment": "Result of alias extraction from a schema.\nIncludes canonical keys for downstream conflict detection.",
+						"source_line": 41,
+						"type_signature": "ArgsAliasesResult",
+						"properties": [
+							{
+								"name": "aliases",
+								"kind": "variable",
+								"type_signature": "Map<string, string>"
+							},
+							{
+								"name": "canonical_keys",
+								"kind": "variable",
+								"type_signature": "Set<string>"
+							}
+						]
+					},
+					{
+						"name": "args_validate_schema",
+						"kind": "function",
+						"doc_comment": "Validates a zod schema for CLI arg usage.\n\nChecks for:\n- Alias conflicts with canonical keys\n- Duplicate aliases across different keys\n\nResults are cached per schema (WeakMap). Safe to call multiple times.",
+						"source_line": 190,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): { success: true; } | { success: false; error: ZodError<unknown>; }",
+						"return_type": "{ success: true; } | { success: false; error: ZodError<unknown>; }",
+						"return_description": "Validation result with success flag and optional error",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema with optional alias metadata"
+							}
+						]
+					},
+					{
+						"name": "args_parse",
+						"kind": "function",
+						"doc_comment": "Validates parsed CLI args against a zod schema.\n\nHandles CLI-specific concerns before validation:\n1. Validates schema (cached) - returns error if alias conflicts exist\n2. Expands aliases defined in schema `.meta({aliases: ['v']})`\n3. Strips alias keys (required for strictObject schemas)\n4. Validates with zod\n5. After validation, syncs `no-` prefixed boolean flags with their base keys\n\nSchema analysis is cached per schema (WeakMap) for performance.",
+						"source_line": 216,
+						"type_signature": "<TOutput extends Record<string, ArgValue> = Args>(unparsed_args: Args, schema: ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>): ZodSafeParseResult<...>",
+						"return_type": "ZodSafeParseResult<TOutput>",
+						"return_description": "Zod SafeParseResult with expanded/synced data on success",
+						"parameters": [
+							{
+								"name": "unparsed_args",
+								"type": "Args",
+								"description": "Args object from CLI parser (mri, minimist, etc.)"
+							},
+							{
+								"name": "schema",
+								"type": "ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>",
+								"description": "Zod object schema with optional alias metadata"
+							}
+						]
+					},
+					{
+						"name": "args_serialize",
+						"kind": "function",
+						"doc_comment": "Serializes Args to CLI string array for subprocess forwarding.\n\nHandles CLI conventions:\n- Positionals first, then flags\n- Single-char keys get single dash, multi-char get double dash\n- Boolean `true` becomes bare flag, `false` is skipped\n- `undefined` values are skipped\n- `no-` prefixed keys skipped when base key is truthy (avoid contradiction)\n- When schema provided, extracts aliases and prefers shortest form\n\nSchema analysis is cached per schema (WeakMap) for performance.",
+						"source_line": 283,
+						"type_signature": "(args: Args, schema?: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined): string[]",
+						"return_type": "string[]",
+						"return_description": "Array of CLI argument strings",
+						"parameters": [
+							{
+								"name": "args",
+								"type": "Args",
+								"description": "Args object to serialize"
+							},
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+								"optional": true,
+								"description": "Optional zod schema to extract aliases for short form preference"
+							}
+						]
+					},
+					{
+						"name": "args_extract_aliases",
+						"kind": "function",
+						"doc_comment": "Extracts alias mappings and canonical keys from a zod schema's metadata.\n\nUseful for consumers building custom tooling (help generators, conflict detection, etc.).\nResults are cached per schema (WeakMap).\n\nNote: Returns copies of the cached data to prevent mutation of internal cache.",
+						"source_line": 355,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ArgsAliasesResult",
+						"return_type": "ArgsAliasesResult",
+						"return_description": "Object with aliases map and canonical_keys set",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema with optional `.meta({aliases})` on fields"
+							}
+						]
+					},
+					{
+						"name": "argv_parse",
+						"kind": "function",
+						"doc_comment": "Parses raw CLI argv array into an Args object.\n\nA lightweight, dependency-free alternative to mri/minimist with compatible behavior.\n\nFeatures:\n- `--flag` → `{flag: true}`\n- `--flag value` → `{flag: 'value'}` or `{flag: 123}` (numeric coercion)\n- `--flag=value` → equals syntax\n- `--flag=` → `{flag: ''}` (empty string, differs from mri which returns true)\n- `-f` → `{f: true}` (short flag)\n- `-f value` → `{f: 'value'}`\n- `-abc` → `{a: true, b: true, c: true}` (combined short flags)\n- `-abc value` → `{a: true, b: true, c: 'value'}` (last flag gets value)\n- `--no-flag` → `{flag: false}` (negation prefix)\n- `--` → stops flag parsing, rest become positionals\n- Positionals collected in `_` array\n- Repeated flags become arrays\n\nIntentional differences from mri:\n- `--flag=` returns `''` (mri returns `true`)\n- `--flag= next` returns `{flag: '', _: ['next']}` (mri takes `next` as the value)\n- `---flag` returns `{'-flag': true}` (mri strips all dashes)\n- `['--flag', '']` preserves `''` (mri coerces to `0`)\n- `--__proto__` works as a normal key (mri silently fails)\n\nThe returned object uses `Object.create(null)` to prevent prototype pollution\nand allow any key name including `__proto__` and `constructor`.",
+						"source_line": 425,
+						"type_signature": "(argv: string[]): ParsedArgs",
+						"return_type": "ParsedArgs",
+						"return_description": "Parsed Args object with guaranteed `_` array (null prototype)",
+						"parameters": [
+							{
+								"name": "argv",
+								"type": "string[]",
+								"description": "Raw argument array (typically process.argv.slice(2))"
+							}
+						]
+					}
+				]
+			},
+			{
 				"path": "array.ts",
 				"declarations": [
 					{
