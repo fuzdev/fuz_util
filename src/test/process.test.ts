@@ -7,7 +7,7 @@ import {
 	despawn,
 	spawn_restartable_process,
 	ProcessRegistry,
-	default_registry,
+	process_registry_default,
 	spawn_result_is_error,
 	spawn_result_is_signaled,
 	spawn_result_is_exited,
@@ -296,12 +296,12 @@ describe('ProcessRegistry', () => {
 		assert.strictEqual(results.length, 0);
 	});
 
-	test('isolated from default_registry', async () => {
+	test('isolated from process_registry_default', async () => {
 		const registry = new ProcessRegistry();
-		const defaultSizeBefore = default_registry.processes.size;
+		const defaultSizeBefore = process_registry_default.processes.size;
 
 		const {child, closed} = registry.spawn('sleep', ['10']);
-		assert.strictEqual(default_registry.processes.size, defaultSizeBefore);
+		assert.strictEqual(process_registry_default.processes.size, defaultSizeBefore);
 		assert.strictEqual(registry.processes.size, 1);
 
 		child.kill();

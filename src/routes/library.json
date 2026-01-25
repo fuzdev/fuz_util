@@ -4501,11 +4501,11 @@
 					{
 						"name": "ProcessRegistry",
 						"kind": "class",
-						"doc_comment": "Manages a collection of spawned processes for lifecycle tracking and cleanup.\n\nThe default instance `default_registry` is used by module-level functions.\nCreate separate instances for isolated process groups or testing.",
+						"doc_comment": "Manages a collection of spawned processes for lifecycle tracking and cleanup.\n\nThe default instance `process_registry_default` is used by module-level functions.\nCreate separate instances for isolated process groups or testing.",
 						"examples": [
 							"```ts\n// Use default registry via module functions\nconst result = await spawn('echo', ['hello']);\n\n// Or create isolated registry for testing\nconst registry = new ProcessRegistry();\nconst {child, closed} = registry.spawn('node', ['server.js']);\nawait registry.despawn_all();\n```"
 						],
-						"source_line": 227,
+						"source_line": 230,
 						"members": [
 							{
 								"name": "processes",
@@ -4547,7 +4547,7 @@
 								"doc_comment": "Spawns a process and captures stdout/stderr as strings.\nSets `stdio: 'pipe'` automatically.",
 								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 								"return_type": "Promise<SpawnedOut>",
-								"return_description": "Result with captured `stdout` and `stderr`",
+								"return_description": "Result with captured `stdout` and `stderr`.\n- `null` means spawn failed (ENOENT, etc.) or stream was unavailable\n- `''` (empty string) means process ran but produced no output\n- non-empty string contains the captured output",
 								"parameters": [
 									{
 										"name": "command",
@@ -4608,38 +4608,26 @@
 							{
 								"name": "attach_error_handler",
 								"kind": "function",
-								"doc_comment": "Attaches an `uncaughtException` handler that kills all processes before exiting.\nPrevents zombie processes when the parent crashes.\n\nNote: Uses synchronous SIGKILL to guarantee cleanup completes before exit,\nsince Node's uncaughtException handler doesn't await async operations.",
-								"type_signature": "(to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, handle_error?: (err: Error, origin: UncaughtExceptionOrigin) => void): () => void",
+								"doc_comment": "Attaches an `uncaughtException` handler that kills all processes before exiting.\nPrevents zombie processes when the parent crashes.\n\nBy default uses SIGKILL for immediate termination. Set `graceful_timeout_ms`\nto attempt SIGTERM first (allowing processes to clean up) before escalating\nto SIGKILL after the timeout.\n\nNote: Node's uncaughtException handler cannot await async operations, so\ngraceful shutdown uses a blocking busy-wait. This may not be sufficient\nfor processes that need significant cleanup time.",
+								"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 								"return_type": "() => void",
 								"return_description": "Cleanup function to remove the handler",
 								"parameters": [
 									{
-										"name": "to_error_label",
-										"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
+										"name": "options",
+										"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 										"optional": true,
-										"description": "- Customize error label, return `null` for default"
-									},
-									{
-										"name": "map_error_text",
-										"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
-										"optional": true,
-										"description": "- Customize error text, return `''` to silence"
-									},
-									{
-										"name": "handle_error",
-										"type": "(err: Error, origin: UncaughtExceptionOrigin) => void",
-										"description": "- Called after cleanup, defaults to `process.exit(1)`",
-										"default_value": "() =>\n\t\t\tprocess.exit(1)"
+										"description": "- Configuration options"
 									}
 								]
 							}
 						]
 					},
 					{
-						"name": "default_registry",
+						"name": "process_registry_default",
 						"kind": "variable",
 						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
-						"source_line": 411,
+						"source_line": 459,
 						"type_signature": "ProcessRegistry"
 					},
 					{
@@ -4649,7 +4637,7 @@
 						"examples": [
 							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
 						],
-						"source_line": 429,
+						"source_line": 477,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -4676,7 +4664,7 @@
 						"examples": [
 							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
 						],
-						"source_line": 445,
+						"source_line": 493,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4703,7 +4691,7 @@
 						"examples": [
 							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
 						],
-						"source_line": 460,
+						"source_line": 508,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -4730,7 +4718,7 @@
 						"examples": [
 							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
 						],
-						"source_line": 475,
+						"source_line": 523,
 						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4749,7 +4737,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all processes in the default registry.",
-						"source_line": 481,
+						"source_line": 529,
 						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": [
@@ -4765,41 +4753,23 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": ["ProcessRegistry.attach_error_handler"],
-						"source_line": 489,
-						"type_signature": "(to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, handle_error?: (err: Error, origin: UncaughtExceptionOrigin) => void): () => void",
+						"source_line": 537,
+						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
 						"parameters": [
 							{
-								"name": "to_error_label",
-								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
+								"name": "options",
+								"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 								"optional": true
-							},
-							{
-								"name": "map_error_text",
-								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
-								"optional": true
-							},
-							{
-								"name": "handle_error",
-								"type": "(err: Error, origin: UncaughtExceptionOrigin) => void",
-								"default_value": "() =>\n\t\tprocess.exit(1)"
 							}
 						]
-					},
-					{
-						"name": "attach_process_error_handlers",
-						"kind": "variable",
-						"doc_comment": "",
-						"deprecated_message": "Use `attach_process_error_handler` (singular) instead.",
-						"source_line": 500,
-						"type_signature": "(to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, handle_error?: (err: Error, origin: UncaughtExceptionOrigin) => void) => () => void"
 					},
 					{
 						"name": "print_child_process",
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
 						"examples": ["`pid(1234) <- node server.js`"],
-						"source_line": 511,
+						"source_line": 550,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -4813,7 +4783,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 518,
+						"source_line": 557,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4827,7 +4797,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 528,
+						"source_line": 567,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4841,34 +4811,34 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 542,
+						"source_line": 581,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
 								"name": "restart",
 								"kind": "variable",
 								"type_signature": "() => Promise<void>",
-								"doc_comment": "Restart the process, killing the current one if running"
+								"doc_comment": "Restart the process, killing the current one if active.\nConcurrent calls are coalesced - multiple calls before the first completes\nwill share the same restart operation."
 							},
 							{
 								"name": "kill",
 								"kind": "variable",
 								"type_signature": "() => Promise<void>",
-								"doc_comment": "Kill the process and prevent further restarts"
+								"doc_comment": "Kill the process and set `active` to false"
 							},
 							{
-								"name": "running",
+								"name": "active",
 								"kind": "variable",
 								"modifiers": ["readonly"],
 								"type_signature": "boolean",
-								"doc_comment": "Whether a process is currently running"
+								"doc_comment": "Whether this handle is managing a process.\n\nNote: This reflects handle state, not whether the underlying OS process is executing.\nRemains `true` after a process exits naturally until `kill()` or `restart()` is called.\nTo check if the process actually exited, await `closed`."
 							},
 							{
 								"name": "child",
 								"kind": "variable",
 								"modifiers": ["readonly"],
 								"type_signature": "ChildProcess | null",
-								"doc_comment": "The current child process, or null if not running"
+								"doc_comment": "The current child process, or null if not active"
 							},
 							{
 								"name": "closed",
@@ -4878,23 +4848,23 @@
 								"doc_comment": "Promise that resolves when the current process exits"
 							},
 							{
-								"name": "started",
+								"name": "spawned",
 								"kind": "variable",
 								"modifiers": ["readonly"],
 								"type_signature": "Promise<void>",
-								"doc_comment": "Promise that resolves when the initial spawn completes (use to avoid race conditions)"
+								"doc_comment": "Promise that resolves when the initial `spawn_process()` call completes.\n\nNote: This resolves when the spawn syscall returns, NOT when the process\nis \"ready\" or has produced output. For commands that fail immediately\n(e.g., ENOENT), `spawned` still resolves - check `closed` for errors."
 							}
 						]
 					},
 					{
 						"name": "spawn_restartable_process",
 						"kind": "function",
-						"doc_comment": "Spawns a process that can be restarted.\nHandles concurrent restart calls gracefully.",
+						"doc_comment": "Spawns a process that can be restarted.\nHandles concurrent restart calls gracefully.\n\nNote: The `signal` and `timeout_ms` options are reapplied on each restart.\nIf the AbortSignal is already aborted when `restart()` is called, the new\nprocess will be killed immediately.",
 						"examples": [
-							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.running) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
-							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.running) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
+							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
+							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 585,
+						"source_line": 650,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -4918,15 +4888,15 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 657,
+						"source_line": 753,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
-						"return_description": "`true` if the process exists (even without permission to signal it)",
+						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",
 						"parameters": [
 							{
 								"name": "pid",
 								"type": "number",
-								"description": "- The process ID to check"
+								"description": "- The process ID to check (must be a positive integer)"
 							}
 						]
 					}

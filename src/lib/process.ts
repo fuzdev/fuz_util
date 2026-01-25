@@ -213,7 +213,7 @@ const setup_timeout = (child: ChildProcess, timeout_ms: number): (() => void) =>
 /**
  * Manages a collection of spawned processes for lifecycle tracking and cleanup.
  *
- * The default instance `default_registry` is used by module-level functions.
+ * The default instance `process_registry_default` is used by module-level functions.
  * Create separate instances for isolated process groups or testing.
  *
  * @example
@@ -456,7 +456,7 @@ export class ProcessRegistry {
  * Default process registry used by module-level spawn functions.
  * For testing or isolated process groups, create a new `ProcessRegistry` instance.
  */
-export const default_registry = new ProcessRegistry();
+export const process_registry_default = new ProcessRegistry();
 
 //
 // Module-Level Spawn Functions
@@ -478,7 +478,7 @@ export const spawn_process = (
 	command: string,
 	args: ReadonlyArray<string> = [],
 	options?: SpawnProcessOptions,
-): SpawnedProcess => default_registry.spawn(command, args, options);
+): SpawnedProcess => process_registry_default.spawn(command, args, options);
 
 /**
  * Spawns a process and returns a promise that resolves when it exits.
@@ -509,7 +509,7 @@ export const spawn_out = (
 	command: string,
 	args: ReadonlyArray<string> = [],
 	options?: SpawnProcessOptions,
-): Promise<SpawnedOut> => default_registry.spawn_out(command, args, options);
+): Promise<SpawnedOut> => process_registry_default.spawn_out(command, args, options);
 
 /**
  * Kills a child process and returns the result.
@@ -521,13 +521,13 @@ export const spawn_out = (
  * ```
  */
 export const despawn = (child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> =>
-	default_registry.despawn(child, options);
+	process_registry_default.despawn(child, options);
 
 /**
  * Kills all processes in the default registry.
  */
 export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult>> =>
-	default_registry.despawn_all(options);
+	process_registry_default.despawn_all(options);
 
 /**
  * Attaches an `uncaughtException` handler to the default registry.
@@ -536,7 +536,7 @@ export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult
  */
 export const attach_process_error_handler = (
 	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
-): (() => void) => default_registry.attach_error_handler(options);
+): (() => void) => process_registry_default.attach_error_handler(options);
 
 //
 // Formatting Utilities
