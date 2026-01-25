@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.47.0
+
+### Minor Changes
+
+- improve `process.ts` interfaces ([de7a07e](https://github.com/fuzdev/fuz_util/commit/de7a07e))
+
 ## 0.46.0
 
 ### Minor Changes
