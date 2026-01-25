@@ -16,10 +16,12 @@ new features:
 - add `SpawnProcessOptions` with `signal` (AbortSignal) and `timeout_ms`
 - add `DespawnOptions` with `signal` and `timeout_ms` (SIGKILL escalation)
 - add type guards: `spawn_result_is_error`, `spawn_result_is_signaled`, `spawn_result_is_exited`
-- add `running`, `child`, `closed`, and `started` getters to `RestartableProcess`
-  - `started` promise resolves when initial spawn completes (avoids race conditions)
+- add `running`, `child`, `closed`, and `spawned` getters to `RestartableProcess`
+  - `spawned` promise resolves when initial spawn completes (avoids race conditions)
+  - concurrent `restart()` calls are coalesced (share one restart operation)
 - `spawn_restartable_process` now accepts `SpawnProcessOptions` instead of `SpawnOptions`
 - `attach_process_error_handler` returns cleanup function
+- `attach_error_handler` throws if called twice on same registry (was silent no-op)
 
 improvements:
 

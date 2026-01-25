@@ -369,8 +369,7 @@ export class ProcessRegistry {
 			process.exit(1),
 	): () => void {
 		if (this.#error_handler) {
-			log.warn('error handler already attached to this registry');
-			return noop;
+			throw new Error('Error handler already attached to this registry');
 		}
 
 		this.#error_handler = (err, origin): void => {
@@ -535,7 +534,11 @@ export const spawn_result_to_message = (result: SpawnResult): string => {
  * Exposes `closed` promise for observing exits and implementing restart policies.
  */
 export interface RestartableProcess {
-	/** Restart the process, killing the current one if running */
+	/**
+	 * Restart the process, killing the current one if running.
+	 * Concurrent calls are coalesced - multiple calls before the first completes
+	 * will share the same restart operation.
+	 */
 	restart: () => Promise<void>;
 	/** Kill the process and prevent further restarts */
 	kill: () => Promise<void>;
@@ -545,8 +548,20 @@ export interface RestartableProcess {
 	readonly child: ChildProcess | null;
 	/** Promise that resolves when the current process exits */
 	readonly closed: Promise<SpawnResult>;
-	/** Promise that resolves when the initial spawn completes (use to avoid race conditions) */
-	readonly started: Promise<void>;
+	/**
+	 * Promise that resolves when the initial `spawn_process()` call completes.
+	 *
+	 * Note: This resolves when the spawn syscall returns, NOT when the process
+	 * is "ready" or has produced output. For commands that fail immediately
+	 * (e.g., ENOENT), `spawned` still resolves - check `closed` for errors.
+	 *
+	 * @example
+	 * ```ts
+	 * const rp = spawn_restartable_process('node', ['server.js']);
+	 * await rp.spawned;  // Safe to access rp.child now
+	 * ```
+	 */
+	readonly spawned: Promise<void>;
 }
 
 /**
@@ -582,8 +597,9 @@ export const spawn_restartable_process = (
 	args: ReadonlyArray<string> = [],
 	options?: SpawnProcessOptions,
 ): RestartableProcess => {
-	let spawned: SpawnedProcess | null = null;
+	let spawned_process: SpawnedProcess | null = null;
 	let pending_close: Promise<SpawnResult> | null = null;
+	let pending_restart: Promise<void> | null = null;
 	// Placeholder promise for when no process has started yet
 	let closed_promise: Promise<SpawnResult> = Promise.resolve({
 		ok: false,
@@ -593,47 +609,58 @@ export const spawn_restartable_process = (
 	});
 
 	// Resolve when first spawn completes to avoid race conditions
-	let resolve_started: () => void;
-	const started: Promise<void> = new Promise((r) => (resolve_started = r));
+	let resolve_spawned: () => void;
+	const spawned: Promise<void> = new Promise((r) => (resolve_spawned = r));
 
 	const do_close = async (): Promise<void> => {
-		if (!spawned) return;
-		pending_close = spawned.closed;
-		spawned.child.kill();
-		spawned = null;
+		if (!spawned_process) return;
+		pending_close = spawned_process.closed;
+		spawned_process.child.kill();
+		spawned_process = null;
 		await pending_close;
 		pending_close = null;
 	};
 
-	const restart = async (): Promise<void> => {
+	const do_restart = async (): Promise<void> => {
 		if (pending_close) await pending_close;
-		if (spawned) await do_close();
-		spawned = spawn_process(command, args, {stdio: 'inherit', ...options});
-		closed_promise = spawned.closed;
+		if (spawned_process) await do_close();
+		spawned_process = spawn_process(command, args, {stdio: 'inherit', ...options});
+		closed_promise = spawned_process.closed;
+	};
+
+	// Coalesce concurrent restart calls - multiple calls share one restart
+	const restart = (): Promise<void> => {
+		if (!pending_restart) {
+			pending_restart = do_restart().finally(() => {
+				pending_restart = null;
+			});
+		}
+		return pending_restart;
 	};
 
 	const kill = async (): Promise<void> => {
+		if (pending_restart) await pending_restart;
 		if (pending_close) await pending_close;
 		await do_close();
 	};
 
-	// Start immediately and resolve started promise when done
-	void restart().then(() => resolve_started());
+	// Start immediately and resolve spawned promise when done
+	void restart().then(() => resolve_spawned());
 
 	return {
 		restart,
 		kill,
 		get running() {
-			return spawned !== null;
+			return spawned_process !== null;
 		},
 		get child() {
-			return spawned?.child ?? null;
+			return spawned_process?.child ?? null;
 		},
 		get closed() {
 			return closed_promise;
 		},
-		get started() {
-			return started;
+		get spawned() {
+			return spawned;
 		},
 	};
 };

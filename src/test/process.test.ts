@@ -227,9 +227,9 @@ describe('ProcessRegistry', () => {
 });
 
 describe('spawn_restartable_process', () => {
-	test('started promise resolves when first spawn completes', async () => {
+	test('spawned promise resolves when first spawn completes', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
-		await rp.started;
+		await rp.spawned;
 		assert.ok(rp.running);
 		assert.ok(rp.child !== null);
 		assert.ok(typeof rp.child.pid === 'number');
@@ -240,7 +240,7 @@ describe('spawn_restartable_process', () => {
 
 	test('closed promise resolves when process exits', async () => {
 		const rp = spawn_restartable_process('node', ['-e', 'setTimeout(() => {}, 50)']);
-		await rp.started;
+		await rp.spawned;
 		const result = await rp.closed;
 		assert.ok(result.ok);
 		assert.ok(spawn_result_is_exited(result));
@@ -248,7 +248,7 @@ describe('spawn_restartable_process', () => {
 
 	test('restart kills current and starts new process', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
-		await rp.started;
+		await rp.spawned;
 		const firstPid = rp.child?.pid;
 		assert.ok(firstPid);
 
@@ -262,7 +262,7 @@ describe('spawn_restartable_process', () => {
 
 	test('closed updates after restart', async () => {
 		const rp = spawn_restartable_process('node', ['-e', 'setTimeout(() => process.exit(1), 30)']);
-		await rp.started;
+		await rp.spawned;
 		const firstClosed = rp.closed;
 		const firstResult = await firstClosed;
 		assert.ok(!firstResult.ok);
@@ -280,7 +280,7 @@ describe('spawn_restartable_process', () => {
 	test('supports SpawnProcessOptions', async () => {
 		const controller = new AbortController();
 		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
-		await rp.started;
+		await rp.spawned;
 		assert.ok(rp.running);
 		controller.abort();
 		const result = await rp.closed;
@@ -456,14 +456,11 @@ describe('attach_process_error_handler', () => {
 		cleanup2();
 	});
 
-	test('double attach returns no-op cleanup', () => {
+	test('double attach throws', () => {
 		const registry = new ProcessRegistry();
-		const cleanup1 = registry.attach_error_handler();
-		const cleanup2 = registry.attach_error_handler();
-		// Second cleanup should be a no-op (returns early)
-		cleanup2();
-		// First cleanup should still work
-		cleanup1();
+		const cleanup = registry.attach_error_handler();
+		assert.throws(() => registry.attach_error_handler(), /already attached/);
+		cleanup();
 	});
 
 	test('module-level function works', () => {
