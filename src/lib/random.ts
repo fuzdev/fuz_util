@@ -29,7 +29,7 @@ export const random_item = <T extends ReadonlyArray<any>>(
 
 /**
  * Mutates `array` with random ordering.
- * @mutates array randomly reorders elements in place using Fisher-Yates shuffle
+ * @mutates array - randomly reorders elements in place using Fisher-Yates shuffle
  */
 export const shuffle: <T extends Array<any>>(array: T, random?: typeof random_int) => T = (
 	array,

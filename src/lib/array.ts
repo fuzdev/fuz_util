@@ -9,7 +9,7 @@ export const to_array = <T>(value: T): T extends ReadonlyArray<any> ? T : Array<
 
 /**
  * Removes an element from `array` at `index` in an unordered manner.
- * @mutates array swaps element at index with last element, then removes last element
+ * @mutates array - swaps element at index with last element, then removes last element
  */
 export const remove_unordered = (array: Array<any>, index: number): void => {
 	array[index] = array[array.length - 1];

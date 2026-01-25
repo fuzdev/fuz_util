@@ -48,7 +48,7 @@ export interface FetchValueOptions<TValue, TParams = undefined> {
  * If the `value` is cached, only the cached safe subset of the `headers` are returned.
  * (currently just `etag` and `last-modified`)
  * Otherwise the full `res.headers` are included.
- * @mutates options.cache calls `cache.set()` to store fetched results if cache is provided
+ * @mutates options.cache - calls `cache.set()` to store fetched results if cache is provided
  */
 export const fetch_value = async <TValue = any, TParams = undefined>(
 	url: string | URL,

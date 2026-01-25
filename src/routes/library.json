@@ -2697,7 +2697,7 @@
 						"name": "git_pull",
 						"kind": "function",
 						"doc_comment": "Calls `git pull` and throws if anything goes wrong.",
-						"source_line": 265,
+						"source_line": 267,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2722,7 +2722,7 @@
 						"name": "git_push",
 						"kind": "function",
 						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 281,
+						"source_line": 283,
 						"type_signature": "(origin: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined, set_upstream?: boolean): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2751,7 +2751,7 @@
 						"name": "git_push_to_create",
 						"kind": "function",
 						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 299,
+						"source_line": 303,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2776,7 +2776,7 @@
 						"name": "git_delete_local_branch",
 						"kind": "function",
 						"doc_comment": "Deletes a branch locally and throws if anything goes wrong.",
-						"source_line": 321,
+						"source_line": 327,
 						"type_signature": "(branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2795,7 +2795,7 @@
 						"name": "git_delete_remote_branch",
 						"kind": "function",
 						"doc_comment": "Deletes a branch remotely and throws if anything goes wrong.",
-						"source_line": 334,
+						"source_line": 342,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2818,7 +2818,7 @@
 						"name": "git_reset_branch_to_first_commit",
 						"kind": "function",
 						"doc_comment": "Resets the `target` branch back to its first commit both locally and remotely.",
-						"source_line": 348,
+						"source_line": 358,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2841,7 +2841,7 @@
 						"name": "git_current_commit_hash",
 						"kind": "function",
 						"doc_comment": "Returns the branch's latest commit hash or throws if something goes wrong.",
-						"source_line": 365,
+						"source_line": 375,
 						"type_signature": "(branch?: string | undefined, options?: SpawnOptions | undefined): Promise<string | null>",
 						"return_type": "Promise<string | null>",
 						"parameters": [
@@ -2861,7 +2861,7 @@
 						"name": "git_current_branch_first_commit_hash",
 						"kind": "function",
 						"doc_comment": "Returns the hash of the current branch's first commit or throws if something goes wrong.",
-						"source_line": 378,
+						"source_line": 388,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<string>",
 						"return_type": "Promise<string>",
 						"parameters": [
@@ -2876,7 +2876,7 @@
 						"name": "git_check_setting_pull_rebase",
 						"kind": "function",
 						"doc_comment": "Returns the global git config setting for `pull.rebase`.",
-						"source_line": 393,
+						"source_line": 403,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -2891,7 +2891,7 @@
 						"name": "git_clone_locally",
 						"kind": "function",
 						"doc_comment": "Clones a branch locally to another directory and updates the origin to match the source.",
-						"source_line": 401,
+						"source_line": 411,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, source_dir: string, target_dir: string, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -4276,9 +4276,98 @@
 				"path": "process.ts",
 				"declarations": [
 					{
+						"name": "SpawnResultError",
+						"kind": "type",
+						"doc_comment": "Spawn failed before the process could run (e.g., ENOENT)",
+						"source_line": 18,
+						"type_signature": "SpawnResultError",
+						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "false"
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "Error"
+							}
+						]
+					},
+					{
+						"name": "SpawnResultExited",
+						"kind": "type",
+						"doc_comment": "Process ran and exited with a code",
+						"source_line": 25,
+						"type_signature": "SpawnResultExited",
+						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "boolean"
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "code",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "null"
+							}
+						]
+					},
+					{
+						"name": "SpawnResultSignaled",
+						"kind": "type",
+						"doc_comment": "Process was terminated by a signal",
+						"source_line": 33,
+						"type_signature": "SpawnResultSignaled",
+						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "false"
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "code",
+								"kind": "variable",
+								"type_signature": "null"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "NodeJS.Signals"
+							}
+						]
+					},
+					{
+						"name": "SpawnResult",
+						"kind": "type",
+						"doc_comment": "Result of a spawn operation",
+						"source_line": 41,
+						"type_signature": "SpawnResult"
+					},
+					{
 						"name": "SpawnedProcess",
 						"kind": "type",
-						"source_line": 14,
+						"source_line": 47,
 						"type_signature": "SpawnedProcess",
 						"properties": [
 							{
@@ -4294,39 +4383,10 @@
 						]
 					},
 					{
-						"name": "Spawned",
-						"kind": "type",
-						"source_line": 19,
-						"type_signature": "Spawned",
-						"properties": [
-							{
-								"name": "child",
-								"kind": "variable",
-								"type_signature": "ChildProcess"
-							},
-							{
-								"name": "signal",
-								"kind": "variable",
-								"type_signature": "NodeJS.Signals | null"
-							},
-							{
-								"name": "code",
-								"kind": "variable",
-								"type_signature": "number | null"
-							}
-						]
-					},
-					{
-						"name": "SpawnResult",
-						"kind": "type",
-						"source_line": 27,
-						"type_signature": "SpawnResult"
-					},
-					{
 						"name": "spawn",
 						"kind": "function",
 						"doc_comment": "A convenient promise wrapper around `spawn_process`\nintended for commands that have an end, not long running-processes like watchers.\nAny more advanced usage should use `spawn_process` directly for access to the `child` process.",
-						"source_line": 34,
+						"source_line": 57,
 						"type_signature": "(command: string, args?: readonly string[] | undefined, options?: SpawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4339,7 +4399,7 @@
 					{
 						"name": "SpawnedOut",
 						"kind": "type",
-						"source_line": 37,
+						"source_line": 60,
 						"type_signature": "SpawnedOut",
 						"properties": [
 							{
@@ -4363,7 +4423,7 @@
 						"name": "spawn_out",
 						"kind": "function",
 						"doc_comment": "Similar to `spawn` but buffers and returns `stdout` and `stderr` as strings.",
-						"source_line": 46,
+						"source_line": 69,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -4387,7 +4447,7 @@
 						"name": "spawn_process",
 						"kind": "function",
 						"doc_comment": "Wraps the normal Node `childProcess.spawn` with graceful child shutdown behavior.\nAlso returns a convenient `closed` promise.\nIf you only need `closed`, prefer the shorthand function `spawn`.",
-						"source_line": 70,
+						"source_line": 94,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -4410,7 +4470,7 @@
 					{
 						"name": "print_child_process",
 						"kind": "function",
-						"source_line": 86,
+						"source_line": 124,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -4423,15 +4483,15 @@
 					{
 						"name": "global_spawn",
 						"kind": "variable",
-						"doc_comment": "We register spawned processes gloabally so we can gracefully exit child processes.\nOtherwise, errors can cause zombie processes, sometimes blocking ports even!",
-						"source_line": 93,
+						"doc_comment": "We register spawned processes globally so we can gracefully exit child processes.\nOtherwise, errors can cause zombie processes, sometimes blocking ports even!",
+						"source_line": 131,
 						"type_signature": "Set<ChildProcess>"
 					},
 					{
 						"name": "register_global_spawn",
 						"kind": "function",
 						"doc_comment": "Returns a function that unregisters the `child`.",
-						"source_line": 101,
+						"source_line": 139,
 						"type_signature": "(child: ChildProcess): () => void",
 						"return_type": "() => void",
 						"return_description": "cleanup function that removes the child from `global_spawn`",
@@ -4447,7 +4507,7 @@
 						"name": "despawn",
 						"kind": "function",
 						"doc_comment": "Kills a child process and returns a `SpawnResult`.",
-						"source_line": 117,
+						"source_line": 155,
 						"type_signature": "(child: ChildProcess): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -4461,7 +4521,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all globally registered child processes.",
-						"source_line": 132,
+						"source_line": 200,
 						"type_signature": "(): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": []
@@ -4469,8 +4529,8 @@
 					{
 						"name": "attach_process_error_handlers",
 						"kind": "function",
-						"doc_comment": "Attaches the `'uncoughtException'` event to despawn all processes,\nand enables custom error logging with `to_error_label`.",
-						"source_line": 141,
+						"doc_comment": "Attaches the `'uncaughtException'` event to despawn all processes,\nand enables custom error logging with `to_error_label`.",
+						"source_line": 209,
 						"type_signature": "(to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, handle_error?: (err: Error, origin: UncaughtExceptionOrigin) => void): void",
 						"return_type": "void",
 						"parameters": [
@@ -4497,7 +4557,21 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a `SpawnResult` for printing.",
-						"source_line": 163,
+						"source_line": 231,
+						"type_signature": "(result: SpawnResult): string",
+						"return_type": "string",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "SpawnResult"
+							}
+						]
+					},
+					{
+						"name": "spawn_result_to_message",
+						"kind": "function",
+						"doc_comment": "Formats a failed `SpawnResult` for use in error messages.",
+						"source_line": 242,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4510,7 +4584,7 @@
 					{
 						"name": "RestartableProcess",
 						"kind": "type",
-						"source_line": 171,
+						"source_line": 250,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -4529,7 +4603,7 @@
 						"name": "spawn_restartable_process",
 						"kind": "function",
 						"doc_comment": "Like `spawn_process` but with `restart` and `kill`,\nhandling many concurrent `restart` calls gracefully.",
-						"source_line": 180,
+						"source_line": 259,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -4553,7 +4627,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Check if a PID is still running.",
-						"source_line": 212,
+						"source_line": 291,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"parameters": [
