@@ -372,6 +372,79 @@ describe('args_parse', () => {
 			expect(result.data).toEqual({});
 		}
 	});
+
+	test('returns zod validation error for invalid values', () => {
+		const schema = z.strictObject({
+			count: z.number().min(0),
+		});
+		const result = args_parse({count: -5}, schema);
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			// This is a zod validation error, not a schema conflict
+			expect(result.error.issues[0]?.message).not.toContain('conflicts');
+			expect(result.error.issues[0]?.message).not.toContain('is used by both');
+		}
+	});
+
+	test('first alias in input wins when multiple aliases provided', () => {
+		const schema = z.strictObject({
+			output: z
+				.string()
+				.default('')
+				.meta({aliases: ['o', 'out']}),
+		});
+		// When both aliases are in input, first one processed wins
+		// (object iteration order is insertion order in modern JS)
+		const result = args_parse({o: 'first', out: 'second'}, schema);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			// 'o' is processed first, so 'first' is used
+			expect(result.data.output).toBe('first');
+		}
+	});
+
+	test('handles wrapped object schema', () => {
+		const schema = z
+			.strictObject({
+				verbose: z
+					.boolean()
+					.default(false)
+					.meta({aliases: ['v']}),
+			})
+			.default({verbose: false});
+		const result = args_parse({v: true}, schema);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.verbose).toBe(true);
+		}
+	});
+
+	test('no- sync works with alias expansion', () => {
+		const schema = z.strictObject({
+			watch: z
+				.boolean()
+				.default(true)
+				.meta({aliases: ['w']}),
+			'no-watch': z.boolean().default(false),
+		});
+		// Use alias 'w' to set watch=true, no-watch should sync
+		const result = args_parse({w: true}, schema);
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data).toEqual({watch: true, 'no-watch': false});
+		}
+	});
+
+	test('rejects unknown keys with strictObject', () => {
+		const schema = z.strictObject({
+			watch: z.boolean().default(false),
+		});
+		const result = args_parse({watch: true, unknown: 'key'}, schema);
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues[0]?.message).toContain('Unrecognized key');
+		}
+	});
 });
 
 describe('args_extract_aliases', () => {
@@ -469,5 +542,25 @@ describe('args_extract_aliases', () => {
 		expect(canonical_keys.has('verbose')).toBe(true);
 		expect(canonical_keys.has('watch')).toBe(true);
 		expect(canonical_keys.has('output')).toBe(true);
+	});
+
+	test('returns copies that are safe to mutate', () => {
+		const schema = z.strictObject({
+			verbose: z
+				.boolean()
+				.default(false)
+				.meta({aliases: ['v']}),
+		});
+		const result1 = args_extract_aliases(schema);
+		// Mutate the returned collections
+		result1.aliases.set('x', 'verbose');
+		result1.canonical_keys.add('mutated');
+
+		// Get fresh extraction - should not be affected
+		const result2 = args_extract_aliases(schema);
+		expect(result2.aliases.has('x')).toBe(false);
+		expect(result2.canonical_keys.has('mutated')).toBe(false);
+		expect(result2.aliases.size).toBe(1);
+		expect(result2.canonical_keys.size).toBe(1);
 	});
 });

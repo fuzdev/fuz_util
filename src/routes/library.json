@@ -255,8 +255,8 @@
 					{
 						"name": "args_extract_aliases",
 						"kind": "function",
-						"doc_comment": "Extracts alias mappings and canonical keys from a zod schema's metadata.\n\nUseful for consumers building custom tooling (help generators, conflict detection, etc.).\nResults are cached per schema (WeakMap).",
-						"source_line": 345,
+						"doc_comment": "Extracts alias mappings and canonical keys from a zod schema's metadata.\n\nUseful for consumers building custom tooling (help generators, conflict detection, etc.).\nResults are cached per schema (WeakMap).\n\nNote: Returns copies of the cached data to prevent mutation of internal cache.",
+						"source_line": 347,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ArgsAliasesResult",
 						"return_type": "ArgsAliasesResult",
 						"return_description": "Object with aliases map and canonical_keys set",

@@ -339,13 +339,15 @@ export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> =>
  * Useful for consumers building custom tooling (help generators, conflict detection, etc.).
  * Results are cached per schema (WeakMap).
  *
+ * Note: Returns copies of the cached data to prevent mutation of internal cache.
+ *
  * @param schema Zod object schema with optional `.meta({aliases})` on fields
  * @returns Object with aliases map and canonical_keys set
  */
 export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
 	const cache = get_schema_cache(schema);
 	return {
-		aliases: cache.aliases,
-		canonical_keys: cache.canonical_keys,
+		aliases: new Map(cache.aliases),
+		canonical_keys: new Set(cache.canonical_keys),
 	};
 };
