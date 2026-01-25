@@ -44,7 +44,7 @@ interface SchemaCacheEntry {
 }
 
 // WeakMap cache for schema analysis - avoids redundant reflection
-const schema_cache = new WeakMap<z.ZodType, SchemaCacheEntry>();
+const schema_cache: WeakMap<z.ZodType, SchemaCacheEntry> = new WeakMap();
 
 // Internal: Unwrap nested schema types (Optional, Default, Transform, Pipe)
 const unwrap_schema = (def: z.core.$ZodTypeDef): z.ZodType | undefined => {
@@ -78,9 +78,9 @@ interface SchemaAnalysisResult {
 
 // Internal: Analyze schema for aliases, canonical keys, boolean keys, and conflicts
 const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
-	const aliases = new Map<string, string>();
-	const canonical_keys = new Set<string>();
-	const boolean_keys = new Set<string>();
+	const aliases: Map<string, string> = new Map();
+	const canonical_keys: Set<string> = new Set();
+	const boolean_keys: Set<string> = new Set();
 	const errors: SchemaAnalysisResult['errors'] = [];
 	const def = schema._zod.def;
 
@@ -108,9 +108,9 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 			boolean_keys.add(key);
 		}
 
-		const meta = field_schema.meta?.();
+		const meta = field_schema.meta();
 		if (meta?.aliases) {
-			for (const alias of meta.aliases as string[]) {
+			for (const alias of meta.aliases as Array<string>) {
 				// Check for alias-canonical conflict
 				if (canonical_keys.has(alias)) {
 					errors.push({
@@ -279,9 +279,9 @@ export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> =>
 	let shortest_names: Map<string, string> | undefined;
 	if (schema) {
 		const cache = get_schema_cache(schema);
-		shortest_names = new Map<string, string>();
+		shortest_names = new Map();
 		// Group aliases by canonical key
-		const aliases_by_canonical = new Map<string, string[]>();
+		const aliases_by_canonical: Map<string, Array<string>> = new Map();
 		for (const [alias, canonical] of cache.aliases) {
 			if (!aliases_by_canonical.has(canonical)) {
 				aliases_by_canonical.set(canonical, []);
