@@ -143,7 +143,10 @@ export interface SpawnedOut {
 
 /**
  * Creates a promise that resolves when the child process closes.
- * Handles both 'error' and 'close' events with deduplication.
+ *
+ * Handles both 'error' and 'close' events with deduplication because Node.js
+ * can emit both for certain failures (e.g., spawn ENOENT emits 'error' then 'close').
+ * The `resolved` flag ensures we only resolve once with the first event's data.
  */
 const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 	let resolve: (v: SpawnResult) => void;
@@ -277,7 +280,10 @@ export class ProcessRegistry {
 	 * @param command - The command to run
 	 * @param args - Arguments to pass to the command
 	 * @param options - Spawn options
-	 * @returns Result with captured `stdout` and `stderr`
+	 * @returns Result with captured `stdout` and `stderr`.
+	 *   - `null` means spawn failed (ENOENT, etc.) or stream was unavailable
+	 *   - `''` (empty string) means process ran but produced no output
+	 *   - non-empty string contains the captured output
 	 */
 	async spawn_out(
 		command: string,
@@ -287,15 +293,26 @@ export class ProcessRegistry {
 		const {child, closed} = this.spawn(command, args, {...options, stdio: 'pipe'});
 		const stdout_chunks: Array<string> = [];
 		const stderr_chunks: Array<string> = [];
-		child.stdout?.on('data', (data: Buffer) => {
+		// Track whether streams were available (not null)
+		const stdout_available = child.stdout !== null;
+		const stderr_available = child.stderr !== null;
+		const on_stdout = (data: Buffer): void => {
 			stdout_chunks.push(data.toString());
-		});
-		child.stderr?.on('data', (data: Buffer) => {
+		};
+		const on_stderr = (data: Buffer): void => {
 			stderr_chunks.push(data.toString());
-		});
+		};
+		child.stdout?.on('data', on_stdout);
+		child.stderr?.on('data', on_stderr);
 		const result = await closed;
-		const stdout = stdout_chunks.length > 0 ? stdout_chunks.join('') : null;
-		const stderr = stderr_chunks.length > 0 ? stderr_chunks.join('') : null;
+		// Clean up listeners explicitly
+		child.stdout?.off('data', on_stdout);
+		child.stderr?.off('data', on_stderr);
+		// If spawn failed (error result), streams are meaningless - return null
+		// Otherwise: '' = available but empty, string = has content
+		const spawn_failed = spawn_result_is_error(result);
+		const stdout = spawn_failed || !stdout_available ? null : stdout_chunks.join('');
+		const stderr = spawn_failed || !stderr_available ? null : stderr_chunks.join('');
 		return {result, stdout, stderr};
 	}
 
@@ -563,21 +580,22 @@ export const spawn_result_to_message = (result: SpawnResult): string => {
  */
 export interface RestartableProcess {
 	/**
-	 * Restart the process, killing the current one if running.
+	 * Restart the process, killing the current one if active.
 	 * Concurrent calls are coalesced - multiple calls before the first completes
 	 * will share the same restart operation.
 	 */
 	restart: () => Promise<void>;
-	/** Kill the process and set `running` to false */
+	/** Kill the process and set `active` to false */
 	kill: () => Promise<void>;
 	/**
-	 * Whether a process handle is active.
+	 * Whether this handle is managing a process.
+	 *
 	 * Note: This reflects handle state, not whether the underlying OS process is executing.
 	 * Remains `true` after a process exits naturally until `kill()` or `restart()` is called.
 	 * To check if the process actually exited, await `closed`.
 	 */
-	readonly running: boolean;
-	/** The current child process, or null if not running */
+	readonly active: boolean;
+	/** The current child process, or null if not active */
 	readonly child: ChildProcess | null;
 	/** Promise that resolves when the current process exits */
 	readonly closed: Promise<SpawnResult>;
@@ -609,7 +627,7 @@ export interface RestartableProcess {
  * ```ts
  * const rp = spawn_restartable_process('node', ['server.js']);
  *
- * while (rp.running) {
+ * while (rp.active) {
  *   const result = await rp.closed;
  *   if (result.ok) break; // Clean exit
  *   await rp.restart();
@@ -621,7 +639,7 @@ export interface RestartableProcess {
  * const rp = spawn_restartable_process('node', ['server.js']);
  * let failures = 0;
  *
- * while (rp.running) {
+ * while (rp.active) {
  *   const result = await rp.closed;
  *   if (result.ok || ++failures > 5) break;
  *   await new Promise((r) => setTimeout(r, 1000 * failures));
@@ -637,13 +655,14 @@ export const spawn_restartable_process = (
 	let spawned_process: SpawnedProcess | null = null;
 	let pending_close: Promise<SpawnResult> | null = null;
 	let pending_restart: Promise<void> | null = null;
-	// Placeholder promise for when no process has started yet
-	let closed_promise: Promise<SpawnResult> = Promise.resolve({
-		ok: false,
-		child: null!,
-		code: null,
-		signal: 'SIGTERM' as NodeJS.Signals,
-	});
+	let pending_kill: Promise<void> | null = null;
+	// Deferred promise - resolves when first process spawns
+	let closed_promise: Promise<SpawnResult>;
+	let resolve_closed: (result: SpawnResult) => void;
+	const reset_closed_promise = (): void => {
+		closed_promise = new Promise((r) => (resolve_closed = r));
+	};
+	reset_closed_promise();
 
 	// Resolve when first spawn completes to avoid race conditions
 	let resolve_spawned: () => void;
@@ -659,15 +678,22 @@ export const spawn_restartable_process = (
 	};
 
 	const do_restart = async (): Promise<void> => {
+		// Wait for any in-progress kill or close before restarting
+		if (pending_kill) await pending_kill;
 		if (pending_close) await pending_close;
 		if (spawned_process) await do_close();
 		spawned_process = spawn_process(command, args, {stdio: 'inherit', ...options});
-		closed_promise = spawned_process.closed;
+		// Forward the spawned process's closed promise to our exposed one
+		void spawned_process.closed.then((result) => {
+			resolve_closed(result);
+		});
 	};
 
 	// Coalesce concurrent restart calls - multiple calls share one restart
 	const restart = (): Promise<void> => {
 		if (!pending_restart) {
+			// Reset the closed promise for the new process
+			reset_closed_promise();
 			pending_restart = do_restart().finally(() => {
 				pending_restart = null;
 			});
@@ -678,9 +704,17 @@ export const spawn_restartable_process = (
 	// Wait for any pending restart to complete first, ensuring we kill
 	// the newly spawned process rather than racing with it
 	const kill = async (): Promise<void> => {
-		if (pending_restart) await pending_restart;
-		if (pending_close) await pending_close;
-		await do_close();
+		if (pending_kill) return pending_kill;
+		pending_kill = (async () => {
+			if (pending_restart) await pending_restart;
+			if (pending_close) await pending_close;
+			await do_close();
+		})();
+		try {
+			await pending_kill;
+		} finally {
+			pending_kill = null;
+		}
 	};
 
 	// Start immediately and resolve spawned promise when done
@@ -689,7 +723,7 @@ export const spawn_restartable_process = (
 	return {
 		restart,
 		kill,
-		get running() {
+		get active() {
 			return spawned_process !== null;
 		},
 		get child() {
@@ -714,18 +748,20 @@ export const spawn_restartable_process = (
  *
  * @param pid - The process ID to check (must be a positive integer)
  * @returns `true` if the process exists (even without permission to signal it),
- *   `false` if the process doesn't exist or if pid is invalid (non-positive, NaN, Infinity)
+ *   `false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)
  */
 export const process_is_pid_running = (pid: number): boolean => {
-	// Handle NaN, Infinity, negative, zero, and non-integers
-	if (!(pid > 0) || !Number.isFinite(pid)) return false;
+	// Handle NaN, Infinity, negative, zero, non-integers, and fractional values
+	if (!Number.isInteger(pid) || pid <= 0) return false;
 	try {
 		process.kill(pid, 0);
 		return true;
 	} catch (err: unknown) {
 		// ESRCH = no such process
 		// EPERM = process exists but we lack permission to signal it
-		const code = (err as NodeJS.ErrnoException).code;
+		// Safely access .code in case of unexpected error types
+		const code =
+			err && typeof err === 'object' && 'code' in err ? (err as {code: string}).code : undefined;
 		return code === 'EPERM';
 	}
 };

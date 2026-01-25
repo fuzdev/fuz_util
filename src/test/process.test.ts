@@ -92,7 +92,8 @@ describe('spawn_out', () => {
 		const {result, stdout, stderr} = await spawn_out('echo', ['hello']);
 		assert.ok(result.ok);
 		assert.strictEqual(stdout, 'hello\n');
-		assert.strictEqual(stderr, null);
+		// stderr stream available but empty
+		assert.strictEqual(stderr, '');
 	});
 
 	test('captures stderr', async () => {
@@ -101,7 +102,8 @@ describe('spawn_out', () => {
 			'console.error("error output")',
 		]);
 		assert.ok(result.ok);
-		assert.strictEqual(stdout, null);
+		// stdout stream available but empty
+		assert.strictEqual(stdout, '');
 		assert.strictEqual(stderr, 'error output\n');
 	});
 
@@ -152,11 +154,12 @@ describe('spawn_out', () => {
 		assert.ok(spawn_result_is_signaled(result));
 	});
 
-	test('returns null for empty output (no data events)', async () => {
-		const {result, stdout} = await spawn_out('node', ['-e', 'process.stdout.write("")']);
+	test('returns empty string for empty output', async () => {
+		const {result, stdout, stderr} = await spawn_out('node', ['-e', 'process.stdout.write("")']);
 		assert.ok(result.ok);
-		// Empty write produces no data events, so stdout is null
-		assert.strictEqual(stdout, null);
+		// Empty write - stream available but no content
+		assert.strictEqual(stdout, '');
+		assert.strictEqual(stderr, '');
 	});
 
 	test('captures multi-chunk output correctly', async () => {
@@ -304,17 +307,32 @@ describe('ProcessRegistry', () => {
 		child.kill();
 		await closed;
 	});
+
+	test('removes process from registry on spawn error', async () => {
+		const registry = new ProcessRegistry();
+		assert.strictEqual(registry.processes.size, 0);
+
+		const {closed} = registry.spawn('nonexistent_command_xyz_12345');
+		// Process is added to registry immediately
+		assert.strictEqual(registry.processes.size, 1);
+
+		const result = await closed;
+		assert.ok(!result.ok);
+		assert.ok(spawn_result_is_error(result));
+		// After error, process should be removed from registry
+		assert.strictEqual(registry.processes.size, 0);
+	});
 });
 
 describe('spawn_restartable_process', () => {
 	test('spawned promise resolves when first spawn completes', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
 		await rp.spawned;
-		assert.ok(rp.running);
+		assert.ok(rp.active);
 		assert.ok(rp.child !== null);
 		assert.ok(typeof rp.child.pid === 'number');
 		await rp.kill();
-		assert.ok(!rp.running);
+		assert.ok(!rp.active);
 		assert.strictEqual(rp.child, null);
 	});
 
@@ -361,7 +379,7 @@ describe('spawn_restartable_process', () => {
 		const controller = new AbortController();
 		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
 		await rp.spawned;
-		assert.ok(rp.running);
+		assert.ok(rp.active);
 		controller.abort();
 		const result = await rp.closed;
 		assert.ok(!result.ok);
@@ -381,7 +399,7 @@ describe('spawn_restartable_process', () => {
 		await Promise.all([restart1, restart2, restart3]);
 
 		// Only one new process should exist
-		assert.ok(rp.running);
+		assert.ok(rp.active);
 		const pid2 = rp.child?.pid;
 		assert.notStrictEqual(pid1, pid2);
 
@@ -395,11 +413,11 @@ describe('spawn_restartable_process', () => {
 		// Wait for natural exit
 		const result = await rp.closed;
 		assert.ok(result.ok);
-		// Note: running stays true until kill() or restart() - it reflects handle state, not process state
+		// Note: active stays true until kill() or restart() - it reflects handle state, not process state
 
 		// Restart should work and give us a new process
 		await rp.restart();
-		assert.ok(rp.running);
+		assert.ok(rp.active);
 		assert.ok(rp.child !== null);
 		assert.notStrictEqual(rp.child.pid, firstPid);
 
@@ -410,22 +428,22 @@ describe('spawn_restartable_process', () => {
 		const rp = spawn_restartable_process('node', ['-e', 'process.exit(0)']);
 		await rp.spawned;
 		await rp.closed;
-		// Note: running is still true here until kill() is called
+		// Note: active is still true here until kill() is called
 
-		// Kill should work without throwing, and set running to false
+		// Kill should work without throwing, and set active to false
 		await rp.kill();
-		assert.ok(!rp.running);
+		assert.ok(!rp.active);
 	});
 
 	test('restart after kill allows new process', async () => {
 		const rp = spawn_restartable_process('sleep', ['10']);
 		await rp.spawned;
 		await rp.kill();
-		assert.ok(!rp.running);
+		assert.ok(!rp.active);
 
 		// Restart after kill should work
 		await rp.restart();
-		assert.ok(rp.running);
+		assert.ok(rp.active);
 		assert.ok(rp.child !== null);
 
 		await rp.kill();
@@ -440,6 +458,34 @@ describe('spawn_restartable_process', () => {
 		const result = await rp.closed;
 		assert.ok(!result.ok);
 		assert.ok(spawn_result_is_signaled(result));
+	});
+
+	test('concurrent kill and restart resolves without error', async () => {
+		const rp = spawn_restartable_process('sleep', ['10']);
+		await rp.spawned;
+
+		// Fire kill and restart concurrently - should not throw or deadlock
+		const kill_promise = rp.kill();
+		const restart_promise = rp.restart();
+
+		await Promise.all([kill_promise, restart_promise]);
+
+		// Should end in a stable state (either active with new process, or inactive)
+		// The exact outcome depends on timing, but no crash/deadlock should occur
+		if (rp.active) {
+			await rp.kill();
+		}
+	});
+
+	test('multiple concurrent kills are coalesced', async () => {
+		const rp = spawn_restartable_process('sleep', ['10']);
+		await rp.spawned;
+
+		// Multiple concurrent kill calls should all resolve
+		const kills = [rp.kill(), rp.kill(), rp.kill()];
+		await Promise.all(kills);
+
+		assert.ok(!rp.active);
 	});
 });
 
@@ -498,6 +544,12 @@ describe('process_is_pid_running', () => {
 		assert.ok(!process_is_pid_running(NaN));
 		assert.ok(!process_is_pid_running(Infinity));
 		assert.ok(!process_is_pid_running(-Infinity));
+	});
+
+	test('returns false for fractional pid', () => {
+		assert.ok(!process_is_pid_running(1234.5));
+		assert.ok(!process_is_pid_running(1.1));
+		assert.ok(!process_is_pid_running(0.5));
 	});
 });
 
