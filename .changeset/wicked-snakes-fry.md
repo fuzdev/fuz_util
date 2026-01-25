@@ -1,5 +1,5 @@
 ---
-'@fuzdev/fuz_util': major
+'@fuzdev/fuz_util': minor
 ---
 
 refactor process spawning with `ProcessRegistry` class and improved APIs
@@ -20,8 +20,9 @@ new features:
   - `spawned` promise resolves when initial spawn completes (avoids race conditions)
   - concurrent `restart()` calls are coalesced (share one restart operation)
 - `spawn_restartable_process` now accepts `SpawnProcessOptions` instead of `SpawnOptions`
-- `attach_process_error_handler` returns cleanup function
+- `attach_process_error_handler` now takes options object instead of positional args
 - `attach_error_handler` throws if called twice on same registry (was silent no-op)
+- `attach_error_handler` accepts `graceful_timeout_ms` option for SIGTERM before SIGKILL
 
 improvements:
 

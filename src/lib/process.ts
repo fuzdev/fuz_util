@@ -354,23 +354,39 @@ export class ProcessRegistry {
 	 * Attaches an `uncaughtException` handler that kills all processes before exiting.
 	 * Prevents zombie processes when the parent crashes.
 	 *
-	 * Note: Uses synchronous SIGKILL to guarantee cleanup completes before exit,
-	 * since Node's uncaughtException handler doesn't await async operations.
+	 * By default uses SIGKILL for immediate termination. Set `graceful_timeout_ms`
+	 * to attempt SIGTERM first (allowing processes to clean up) before escalating
+	 * to SIGKILL after the timeout.
 	 *
-	 * @param to_error_label - Customize error label, return `null` for default
-	 * @param map_error_text - Customize error text, return `''` to silence
-	 * @param handle_error - Called after cleanup, defaults to `process.exit(1)`
+	 * Note: Node's uncaughtException handler cannot await async operations, so
+	 * graceful shutdown uses a blocking busy-wait. This may not be sufficient
+	 * for processes that need significant cleanup time.
+	 *
+	 * @param options - Configuration options
+	 * @param options.to_error_label - Customize error label, return `null` for default
+	 * @param options.map_error_text - Customize error text, return `''` to silence
+	 * @param options.handle_error - Called after cleanup, defaults to `process.exit(1)`
+	 * @param options.graceful_timeout_ms - If set, sends SIGTERM first and waits this
+	 *   many ms before SIGKILL. Recommended: 100-500ms. If null/undefined, uses
+	 *   immediate SIGKILL (default).
 	 * @returns Cleanup function to remove the handler
 	 */
-	attach_error_handler(
-		to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
-		map_error_text?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
-		handle_error: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => void = () =>
-			process.exit(1),
-	): () => void {
+	attach_error_handler(options?: {
+		to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null;
+		map_error_text?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null;
+		handle_error?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => void;
+		graceful_timeout_ms?: number | null;
+	}): () => void {
 		if (this.#error_handler) {
 			throw new Error('Error handler already attached to this registry');
 		}
+
+		const {
+			to_error_label,
+			map_error_text,
+			handle_error = () => process.exit(1),
+			graceful_timeout_ms,
+		} = options ?? {};
 
 		this.#error_handler = (err, origin): void => {
 			const label = to_error_label?.(err, origin) ?? origin;
@@ -380,7 +396,20 @@ export class ProcessRegistry {
 					new Logger(label).error(error_text);
 				}
 			}
-			// Use synchronous SIGKILL - guaranteed termination, no waiting
+
+			if (graceful_timeout_ms != null && graceful_timeout_ms > 0) {
+				// Attempt graceful shutdown with SIGTERM first
+				for (const child of this.processes) {
+					child.kill('SIGTERM');
+				}
+				// Busy-wait (blocking) - only option in sync handler
+				const deadline = Date.now() + graceful_timeout_ms;
+				while (Date.now() < deadline) {
+					// spin
+				}
+			}
+
+			// Force kill all (including any that survived SIGTERM)
 			for (const child of this.processes) {
 				child.kill('SIGKILL');
 			}
@@ -486,12 +515,8 @@ export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult
  * @see ProcessRegistry.attach_error_handler
  */
 export const attach_process_error_handler = (
-	to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
-	map_error_text?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null,
-	handle_error: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => void = () =>
-		process.exit(1),
-): (() => void) =>
-	default_registry.attach_error_handler(to_error_label, map_error_text, handle_error);
+	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
+): (() => void) => default_registry.attach_error_handler(options);
 
 //
 // Formatting Utilities

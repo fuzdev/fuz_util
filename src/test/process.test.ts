@@ -468,4 +468,11 @@ describe('attach_process_error_handler', () => {
 		assert.ok(typeof cleanup === 'function');
 		cleanup();
 	});
+
+	test('accepts graceful_timeout_ms option', () => {
+		const registry = new ProcessRegistry();
+		const cleanup = registry.attach_error_handler({graceful_timeout_ms: 100});
+		assert.ok(typeof cleanup === 'function');
+		cleanup();
+	});
 });
