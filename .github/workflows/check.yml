@@ -24,5 +24,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - run: npx @ryanatkn/gro check --workspace
-      - run: npx @ryanatkn/gro build
+      - run: npx @ryanatkn/gro check --workspace --build
