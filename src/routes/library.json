@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.45.2",
+		"version": "0.48.1",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -72,20 +72,21 @@
 			"@fuzdev/fuz_ui": "file:../fuz_ui",
 			"@fuzdev/svelte-docinfo": "file:../svelte-docinfo",
 			"@ryanatkn/eslint-config": "^0.9.0",
-			"@ryanatkn/gro": "^0.184.0",
+			"@ryanatkn/gro": "^0.189.0",
 			"@sveltejs/adapter-static": "^3.0.10",
-			"@sveltejs/kit": "^2.49.1",
+			"@sveltejs/kit": "^2.50.1",
 			"@sveltejs/package": "^2.5.7",
-			"@sveltejs/vite-plugin-svelte": "^6.2.1",
+			"@sveltejs/vite-plugin-svelte": "^6.2.4",
 			"@types/node": "^24.10.1",
+			"@webref/css": "^8.2.0",
 			"dequal": "^2.0.3",
 			"eslint": "^9.39.1",
-			"eslint-plugin-svelte": "^3.13.1",
+			"eslint-plugin-svelte": "^3.14.0",
 			"esm-env": "^1.2.2",
 			"fast-deep-equal": "^3.1.3",
 			"prettier": "^3.7.4",
 			"prettier-plugin-svelte": "^3.4.1",
-			"svelte": "^5.45.6",
+			"svelte": "^5.48.2",
 			"svelte-check": "^4.3.4",
 			"tslib": "^2.8.1",
 			"typescript": "^5.9.3",
@@ -124,8 +125,183 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.45.2",
+		"version": "0.48.1",
 		"modules": [
+			{
+				"path": "args.ts",
+				"declarations": [
+					{
+						"name": "Args",
+						"kind": "type",
+						"doc_comment": "CLI arguments container.\nPositional arguments stored in `_`, named flags/options as string keys.\nProduced by `argv_parse` or external parsers (mri, minimist, etc.).",
+						"source_line": 8,
+						"type_signature": "Args",
+						"properties": [
+							{
+								"name": "_",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "ParsedArgs",
+						"kind": "type",
+						"doc_comment": "Parsed CLI arguments with guaranteed positionals array.\nReturned by `argv_parse` which always initializes `_`.",
+						"source_line": 17,
+						"type_signature": "ParsedArgs",
+						"extends": ["Args"],
+						"properties": [
+							{
+								"name": "_",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "ArgValue",
+						"kind": "type",
+						"doc_comment": "Value types supported in CLI arguments.",
+						"source_line": 24,
+						"type_signature": "ArgValue"
+					},
+					{
+						"name": "ArgSchema",
+						"kind": "type",
+						"doc_comment": "Schema description for help text generation.\nNot used by args_parse/args_serialize directly - provided for consumers\nbuilding CLI help output.",
+						"source_line": 31,
+						"type_signature": "ArgSchema",
+						"properties": [
+							{
+								"name": "type",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "default",
+								"kind": "variable",
+								"type_signature": "ArgValue"
+							},
+							{
+								"name": "description",
+								"kind": "variable",
+								"type_signature": "string"
+							}
+						]
+					},
+					{
+						"name": "ArgsAliasesResult",
+						"kind": "type",
+						"doc_comment": "Result of alias extraction from a schema.\nIncludes canonical keys for downstream conflict detection.",
+						"source_line": 41,
+						"type_signature": "ArgsAliasesResult",
+						"properties": [
+							{
+								"name": "aliases",
+								"kind": "variable",
+								"type_signature": "Map<string, string>"
+							},
+							{
+								"name": "canonical_keys",
+								"kind": "variable",
+								"type_signature": "Set<string>"
+							}
+						]
+					},
+					{
+						"name": "args_validate_schema",
+						"kind": "function",
+						"doc_comment": "Validates a zod schema for CLI arg usage.\n\nChecks for:\n- Alias conflicts with canonical keys\n- Duplicate aliases across different keys\n\nResults are cached per schema (WeakMap). Safe to call multiple times.",
+						"source_line": 190,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): { success: true; } | { success: false; error: ZodError<unknown>; }",
+						"return_type": "{ success: true; } | { success: false; error: ZodError<unknown>; }",
+						"return_description": "Validation result with success flag and optional error",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema with optional alias metadata"
+							}
+						]
+					},
+					{
+						"name": "args_parse",
+						"kind": "function",
+						"doc_comment": "Validates parsed CLI args against a zod schema.\n\nHandles CLI-specific concerns before validation:\n1. Validates schema (cached) - returns error if alias conflicts exist\n2. Expands aliases defined in schema `.meta({aliases: ['v']})`\n3. Strips alias keys (required for strictObject schemas)\n4. Validates with zod\n5. After validation, syncs `no-` prefixed boolean flags with their base keys\n\nSchema analysis is cached per schema (WeakMap) for performance.",
+						"source_line": 216,
+						"type_signature": "<TOutput extends Record<string, ArgValue> = Args>(unparsed_args: Args, schema: ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>): ZodSafeParseResult<...>",
+						"return_type": "ZodSafeParseResult<TOutput>",
+						"return_description": "Zod SafeParseResult with expanded/synced data on success",
+						"parameters": [
+							{
+								"name": "unparsed_args",
+								"type": "Args",
+								"description": "Args object from CLI parser (mri, minimist, etc.)"
+							},
+							{
+								"name": "schema",
+								"type": "ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>",
+								"description": "Zod object schema with optional alias metadata"
+							}
+						]
+					},
+					{
+						"name": "args_serialize",
+						"kind": "function",
+						"doc_comment": "Serializes Args to CLI string array for subprocess forwarding.\n\nHandles CLI conventions:\n- Positionals first, then flags\n- Single-char keys get single dash, multi-char get double dash\n- Boolean `true` becomes bare flag, `false` is skipped\n- `undefined` values are skipped\n- `no-` prefixed keys skipped when base key is truthy (avoid contradiction)\n- When schema provided, extracts aliases and prefers shortest form\n\nSchema analysis is cached per schema (WeakMap) for performance.",
+						"source_line": 283,
+						"type_signature": "(args: Args, schema?: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined): string[]",
+						"return_type": "string[]",
+						"return_description": "Array of CLI argument strings",
+						"parameters": [
+							{
+								"name": "args",
+								"type": "Args",
+								"description": "Args object to serialize"
+							},
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+								"optional": true,
+								"description": "Optional zod schema to extract aliases for short form preference"
+							}
+						]
+					},
+					{
+						"name": "args_extract_aliases",
+						"kind": "function",
+						"doc_comment": "Extracts alias mappings and canonical keys from a zod schema's metadata.\n\nUseful for consumers building custom tooling (help generators, conflict detection, etc.).\nResults are cached per schema (WeakMap).\n\nNote: Returns copies of the cached data to prevent mutation of internal cache.",
+						"source_line": 355,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ArgsAliasesResult",
+						"return_type": "ArgsAliasesResult",
+						"return_description": "Object with aliases map and canonical_keys set",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema with optional `.meta({aliases})` on fields"
+							}
+						]
+					},
+					{
+						"name": "argv_parse",
+						"kind": "function",
+						"doc_comment": "Parses raw CLI argv array into an Args object.\n\nA lightweight, dependency-free alternative to mri/minimist with compatible behavior.\n\nFeatures:\n- `--flag` → `{flag: true}`\n- `--flag value` → `{flag: 'value'}` or `{flag: 123}` (numeric coercion)\n- `--flag=value` → equals syntax\n- `--flag=` → `{flag: ''}` (empty string, differs from mri which returns true)\n- `-f` → `{f: true}` (short flag)\n- `-f value` → `{f: 'value'}`\n- `-abc` → `{a: true, b: true, c: true}` (combined short flags)\n- `-abc value` → `{a: true, b: true, c: 'value'}` (last flag gets value)\n- `--no-flag` → `{flag: false}` (negation prefix)\n- `--` → stops flag parsing, rest become positionals\n- Positionals collected in `_` array\n- Repeated flags become arrays\n\nIntentional differences from mri:\n- `--flag=` returns `''` (mri returns `true`)\n- `--flag= next` returns `{flag: '', _: ['next']}` (mri takes `next` as the value)\n- `---flag` returns `{'-flag': true}` (mri strips all dashes)\n- `['--flag', '']` preserves `''` (mri coerces to `0`)\n- `--__proto__` works as a normal key (mri silently fails)\n\nThe returned object uses `Object.create(null)` to prevent prototype pollution\nand allow any key name including `__proto__` and `constructor`.",
+						"source_line": 425,
+						"type_signature": "(argv: string[]): ParsedArgs",
+						"return_type": "ParsedArgs",
+						"return_description": "Parsed Args object with guaranteed `_` array (null prototype)",
+						"parameters": [
+							{
+								"name": "argv",
+								"type": "string[]",
+								"description": "Raw argument array (typically process.argv.slice(2))"
+							}
+						]
+					}
+				]
+			},
 			{
 				"path": "array.ts",
 				"declarations": [
@@ -153,9 +329,6 @@
 						"name": "remove_unordered",
 						"kind": "function",
 						"doc_comment": "Removes an element from `array` at `index` in an unordered manner.",
-						"mutates": {
-							"array": "swaps element at index with last element, then removes last element"
-						},
 						"source_line": 14,
 						"type_signature": "(array: any[], index: number): void",
 						"return_type": "void",
@@ -264,13 +437,41 @@
 						"parameters": []
 					},
 					{
+						"name": "each_concurrent",
+						"kind": "function",
+						"doc_comment": "Runs an async function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
+						"examples": [
+							"```ts\nawait each_concurrent(\n  file_paths,\n  async (path) => { await unlink(path); },\n  5, // max 5 concurrent deletions\n);\n```"
+						],
+						"source_line": 54,
+						"type_signature": "<T>(items: T[], fn: (item: T, index: number) => Promise<void>, concurrency: number): Promise<void>",
+						"return_type": "Promise<void>",
+						"parameters": [
+							{
+								"name": "items",
+								"type": "T[]",
+								"description": "array of items to process"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => Promise<void>",
+								"description": "async function to apply to each item"
+							},
+							{
+								"name": "concurrency",
+								"type": "number",
+								"description": "maximum number of concurrent operations"
+							}
+						]
+					},
+					{
 						"name": "map_concurrent",
 						"kind": "function",
 						"doc_comment": "Maps over items with controlled concurrency, preserving input order.",
 						"examples": [
 							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  async (path) => readFile(path, 'utf8'),\n  5, // max 5 concurrent reads\n);\n```"
 						],
-						"source_line": 54,
+						"source_line": 125,
 						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<R[]>",
 						"return_type": "Promise<R[]>",
 						"return_description": "promise resolving to array of results in same order as input",
@@ -299,7 +500,7 @@
 						"examples": [
 							"```ts\nconst results = await map_concurrent_settled(urls, fetch, 5);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
 						],
-						"source_line": 133,
+						"source_line": 202,
 						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<PromiseSettledResult<R>[]>",
 						"return_type": "Promise<PromiseSettledResult<R>[]>",
 						"return_description": "promise resolving to array of `PromiseSettledResult` objects in input order",
@@ -523,12 +724,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Benchmark results to save"
+								"description": "- Benchmark results to save"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "Save options",
+								"description": "- Save options",
 								"default_value": "{}"
 							}
 						]
@@ -548,7 +749,7 @@
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "Load options",
+								"description": "- Load options",
 								"default_value": "{}"
 							}
 						]
@@ -568,12 +769,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Current benchmark results"
+								"description": "- Current benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineCompareOptions",
-								"description": "Comparison options including regression threshold and staleness warning",
+								"description": "- Comparison options including regression threshold and staleness warning",
 								"default_value": "{}"
 							}
 						]
@@ -590,7 +791,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "- Comparison result from benchmark_baseline_compare"
 							}
 						]
 					},
@@ -606,12 +807,12 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "- Comparison result from benchmark_baseline_compare"
 							},
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "Formatting options",
+								"description": "- Formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -638,13 +839,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "- Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -663,13 +864,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "- Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -688,12 +889,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "- Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "- Array of group definitions"
 							}
 						]
 					},
@@ -732,13 +933,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "- Array of benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
 								"optional": true,
-								"description": "Formatting options"
+								"description": "- Formatting options"
 							}
 						]
 					},
@@ -757,12 +958,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "- Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "- Array of group definitions"
 							}
 						]
 					},
@@ -1050,18 +1251,18 @@
 							{
 								"name": "a",
 								"type": "BenchmarkStatsComparable",
-								"description": "First benchmark stats (or any object with required properties)"
+								"description": "- First benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "b",
 								"type": "BenchmarkStatsComparable",
-								"description": "Second benchmark stats (or any object with required properties)"
+								"description": "- Second benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
 								"optional": true,
-								"description": "Comparison options"
+								"description": "- Comparison options"
 							}
 						]
 					}
@@ -1288,18 +1489,18 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to warmup (sync or async)"
+								"description": "- Function to warmup (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of warmup iterations"
+								"description": "- Number of warmup iterations"
 							},
 							{
 								"name": "async_hint",
 								"type": "boolean | undefined",
 								"optional": true,
-								"description": "If provided, use this instead of detecting"
+								"description": "- If provided, use this instead of detecting"
 							}
 						]
 					},
@@ -1332,12 +1533,12 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Task name or full task object"
+										"description": "- Task name or full task object"
 									},
 									{
 										"name": "fn",
 										"type": "() => unknown",
-										"description": "Function to benchmark (if name is string). Return values are ignored."
+										"description": "- Function to benchmark (if name is string). Return values are ignored."
 									}
 								]
 							},
@@ -1384,7 +1585,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to remove"
+										"description": "- Name of the task to remove"
 									}
 								],
 								"throws": [
@@ -1405,7 +1606,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to skip"
+										"description": "- Name of the task to skip"
 									}
 								],
 								"throws": [
@@ -1426,7 +1627,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to run exclusively"
+										"description": "- Name of the task to run exclusively"
 									}
 								],
 								"throws": [
@@ -1457,7 +1658,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options"
+										"description": "- Formatting options"
 									}
 								]
 							},
@@ -1473,7 +1674,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (groups for organized output with optional baselines)"
+										"description": "- Formatting options (groups for organized output with optional baselines)"
 									}
 								]
 							},
@@ -1489,7 +1690,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatJsonOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (pretty, include_timings)"
+										"description": "- Formatting options (pretty, include_timings)"
 									}
 								]
 							},
@@ -1943,9 +2144,6 @@
 						"name": "swallow",
 						"kind": "function",
 						"doc_comment": "Stops an event from bubbling and doing default behavior.",
-						"mutates": {
-							"event": "calls preventDefault(), stopPropagation(), or stopImmediatePropagation()"
-						},
 						"source_line": 69,
 						"type_signature": "<T extends Pick<Event, \"preventDefault\" | \"stopPropagation\" | \"stopImmediatePropagation\">>(event: T, immediate?: boolean, preventDefault?: boolean): T",
 						"return_type": "T",
@@ -1972,9 +2170,6 @@
 						"name": "handle_target_value",
 						"kind": "function",
 						"doc_comment": "Handles the value of an event's target and invokes a callback.\nDefaults to swallowing the event to prevent default actions and propagation.",
-						"mutates": {
-							"event": "calls `swallow()` which mutates the event if `swallow_event` is true"
-						},
 						"source_line": 91,
 						"type_signature": "(cb: (value: any, event: any) => void, swallow_event?: boolean): (e: any) => void",
 						"return_type": "(e: any) => void",
@@ -2385,7 +2580,8 @@
 							}
 						]
 					}
-				]
+				],
+				"dependents": ["process.ts"]
 			},
 			{
 				"path": "git.ts",
@@ -2533,7 +2729,7 @@
 							{
 								"name": "stdout",
 								"type": "string | null",
-								"description": "The raw output from `git status --porcelain -z`"
+								"description": "- The raw output from `git status --porcelain -z`"
 							}
 						]
 					},
@@ -2678,7 +2874,7 @@
 						"name": "git_pull",
 						"kind": "function",
 						"doc_comment": "Calls `git pull` and throws if anything goes wrong.",
-						"source_line": 265,
+						"source_line": 267,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2703,7 +2899,7 @@
 						"name": "git_push",
 						"kind": "function",
 						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 281,
+						"source_line": 283,
 						"type_signature": "(origin: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined, set_upstream?: boolean): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2732,7 +2928,7 @@
 						"name": "git_push_to_create",
 						"kind": "function",
 						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 299,
+						"source_line": 303,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2757,7 +2953,7 @@
 						"name": "git_delete_local_branch",
 						"kind": "function",
 						"doc_comment": "Deletes a branch locally and throws if anything goes wrong.",
-						"source_line": 321,
+						"source_line": 327,
 						"type_signature": "(branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2776,7 +2972,7 @@
 						"name": "git_delete_remote_branch",
 						"kind": "function",
 						"doc_comment": "Deletes a branch remotely and throws if anything goes wrong.",
-						"source_line": 334,
+						"source_line": 342,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2799,7 +2995,7 @@
 						"name": "git_reset_branch_to_first_commit",
 						"kind": "function",
 						"doc_comment": "Resets the `target` branch back to its first commit both locally and remotely.",
-						"source_line": 348,
+						"source_line": 358,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2822,7 +3018,7 @@
 						"name": "git_current_commit_hash",
 						"kind": "function",
 						"doc_comment": "Returns the branch's latest commit hash or throws if something goes wrong.",
-						"source_line": 365,
+						"source_line": 375,
 						"type_signature": "(branch?: string | undefined, options?: SpawnOptions | undefined): Promise<string | null>",
 						"return_type": "Promise<string | null>",
 						"parameters": [
@@ -2842,7 +3038,7 @@
 						"name": "git_current_branch_first_commit_hash",
 						"kind": "function",
 						"doc_comment": "Returns the hash of the current branch's first commit or throws if something goes wrong.",
-						"source_line": 378,
+						"source_line": 388,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<string>",
 						"return_type": "Promise<string>",
 						"parameters": [
@@ -2857,7 +3053,7 @@
 						"name": "git_check_setting_pull_rebase",
 						"kind": "function",
 						"doc_comment": "Returns the global git config setting for `pull.rebase`.",
-						"source_line": 393,
+						"source_line": 403,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -2872,7 +3068,7 @@
 						"name": "git_clone_locally",
 						"kind": "function",
 						"doc_comment": "Clones a branch locally to another directory and updates the origin to match the source.",
-						"source_line": 401,
+						"source_line": 411,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, source_dir: string, target_dir: string, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3006,14 +3202,16 @@
 						"kind": "type",
 						"source_line": 5,
 						"type_signature": "JsonObject",
-						"extends": ["Record<string, Json>"]
+						"extends": ["Record<string, Json>"],
+						"properties": []
 					},
 					{
 						"name": "JsonArray",
 						"kind": "type",
 						"source_line": 7,
 						"type_signature": "JsonArray",
-						"extends": ["Array<Json>"]
+						"extends": ["Array<Json>"],
+						"properties": []
 					},
 					{
 						"name": "JsonType",
@@ -3823,12 +4021,12 @@
 							{
 								"name": "obj",
 								"type": "any",
-								"description": "any object with enumerable properties"
+								"description": "- any object with enumerable properties"
 							},
 							{
 								"name": "cb",
 								"type": "(key: string, value: any, obj: any) => void",
-								"description": "receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
+								"description": "- receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
 							}
 						]
 					},
@@ -4022,9 +4220,6 @@
 						"name": "slugify",
 						"kind": "function",
 						"doc_comment": "Converts a string into a URL-compatible slug.",
-						"mutates": {
-							"special_char_mappers": "calls `get_special_char_mappers()` which lazily initializes the module-level array if `map_special_characters` is true"
-						},
 						"source_line": 103,
 						"type_signature": "(str: string, map_special_characters?: boolean): string",
 						"return_type": "string",
@@ -4074,9 +4269,6 @@
 						"name": "configure_print_colors",
 						"kind": "function",
 						"doc_comment": "Configures the module-level styling function for colored output.",
-						"mutates": {
-							"st": "assigns the module-level `st` variable"
-						},
 						"source_line": 12,
 						"type_signature": "(s: ((format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string) | null | undefined): (format: ForegroundColors | ... 2 more ... | (ForegroundColors | ... 1 more ... | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
 						"return_type": "(format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
@@ -4261,70 +4453,232 @@
 				"path": "process.ts",
 				"declarations": [
 					{
-						"name": "SpawnedProcess",
+						"name": "SpawnResultError",
 						"kind": "type",
-						"source_line": 14,
-						"type_signature": "SpawnedProcess",
+						"doc_comment": "Spawn failed before the process could run.",
+						"examples": ["ENOENT when command not found"],
+						"source_line": 23,
+						"type_signature": "SpawnResultError",
 						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "false"
+							},
 							{
 								"name": "child",
 								"kind": "variable",
 								"type_signature": "ChildProcess"
 							},
 							{
-								"name": "closed",
+								"name": "error",
 								"kind": "variable",
-								"type_signature": "Promise<SpawnResult>"
-							}
-						]
-					},
-					{
-						"name": "Spawned",
-						"kind": "type",
-						"source_line": 19,
-						"type_signature": "Spawned",
-						"properties": [
-							{
-								"name": "child",
-								"kind": "variable",
-								"type_signature": "ChildProcess"
-							},
-							{
-								"name": "signal",
-								"kind": "variable",
-								"type_signature": "NodeJS.Signals | null"
+								"type_signature": "Error"
 							},
 							{
 								"name": "code",
 								"kind": "variable",
-								"type_signature": "number | null"
+								"type_signature": "null"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "null"
+							}
+						]
+					},
+					{
+						"name": "SpawnResultExited",
+						"kind": "type",
+						"doc_comment": "Process ran and exited with a code.\n`ok` is true when `code` is 0.",
+						"source_line": 35,
+						"type_signature": "SpawnResultExited",
+						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "boolean"
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "null"
+							},
+							{
+								"name": "code",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "null"
+							}
+						]
+					},
+					{
+						"name": "SpawnResultSignaled",
+						"kind": "type",
+						"doc_comment": "Process was terminated by a signal (e.g., SIGTERM, SIGKILL).",
+						"source_line": 46,
+						"type_signature": "SpawnResultSignaled",
+						"properties": [
+							{
+								"name": "ok",
+								"kind": "variable",
+								"type_signature": "false"
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "null"
+							},
+							{
+								"name": "code",
+								"kind": "variable",
+								"type_signature": "null"
+							},
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "NodeJS.Signals"
 							}
 						]
 					},
 					{
 						"name": "SpawnResult",
 						"kind": "type",
-						"source_line": 27,
+						"doc_comment": "Discriminated union representing all possible spawn outcomes.\nUse type guards `spawn_result_is_error`, `spawn_result_is_signaled`,\nand `spawn_result_is_exited` to narrow the type.",
+						"source_line": 59,
 						"type_signature": "SpawnResult"
 					},
 					{
-						"name": "spawn",
+						"name": "spawn_result_is_error",
 						"kind": "function",
-						"doc_comment": "A convenient promise wrapper around `spawn_process`\nintended for commands that have an end, not long running-processes like watchers.\nAny more advanced usage should use `spawn_process` directly for access to the `child` process.",
-						"source_line": 34,
-						"type_signature": "(command: string, args?: readonly string[] | undefined, options?: SpawnOptions | undefined): Promise<SpawnResult>",
-						"return_type": "Promise<SpawnResult>",
+						"doc_comment": "Type guard for spawn errors (process failed to start).",
+						"source_line": 68,
+						"type_signature": "(result: SpawnResult): result is SpawnResultError",
+						"return_type": "boolean",
 						"parameters": [
 							{
-								"name": "args",
-								"type": "[command: string, args?: readonly string[] | undefined, options?: SpawnOptions | undefined]"
+								"name": "result",
+								"type": "SpawnResult"
+							}
+						]
+					},
+					{
+						"name": "spawn_result_is_signaled",
+						"kind": "function",
+						"doc_comment": "Type guard for signal termination.",
+						"source_line": 74,
+						"type_signature": "(result: SpawnResult): result is SpawnResultSignaled",
+						"return_type": "boolean",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "SpawnResult"
+							}
+						]
+					},
+					{
+						"name": "spawn_result_is_exited",
+						"kind": "function",
+						"doc_comment": "Type guard for normal exit with code.",
+						"source_line": 80,
+						"type_signature": "(result: SpawnResult): result is SpawnResultExited",
+						"return_type": "boolean",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "SpawnResult"
+							}
+						]
+					},
+					{
+						"name": "SpawnProcessOptions",
+						"kind": "type",
+						"doc_comment": "Options for spawning processes, extending Node's `SpawnOptions`.",
+						"source_line": 90,
+						"type_signature": "SpawnProcessOptions",
+						"extends": ["SpawnOptions"],
+						"properties": [
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "AbortSignal",
+								"doc_comment": "AbortSignal to cancel the process.\nWhen aborted, sends SIGTERM to the child."
+							},
+							{
+								"name": "timeout_ms",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Timeout in milliseconds. Must be non-negative.\nSends SIGTERM when exceeded. A value of 0 triggers immediate SIGTERM."
+							},
+							{
+								"name": "spawn_child_process",
+								"kind": "variable",
+								"type_signature": "typeof node_spawn_child_process",
+								"doc_comment": "Custom spawn function for testing. Defaults to `node:child_process` spawn."
+							}
+						]
+					},
+					{
+						"name": "DespawnOptions",
+						"kind": "type",
+						"doc_comment": "Options for killing processes.",
+						"source_line": 110,
+						"type_signature": "DespawnOptions",
+						"properties": [
+							{
+								"name": "signal",
+								"kind": "variable",
+								"type_signature": "NodeJS.Signals",
+								"doc_comment": "Signal to send."
+							},
+							{
+								"name": "timeout_ms",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Timeout in ms before escalating to SIGKILL. Must be non-negative.\nUseful for processes that may ignore SIGTERM. A value of 0 triggers immediate SIGKILL escalation."
+							}
+						]
+					},
+					{
+						"name": "SpawnedProcess",
+						"kind": "type",
+						"doc_comment": "Handle for a spawned process with access to the child and completion promise.",
+						"source_line": 130,
+						"type_signature": "SpawnedProcess",
+						"properties": [
+							{
+								"name": "child",
+								"kind": "variable",
+								"type_signature": "ChildProcess",
+								"doc_comment": "The underlying Node.js ChildProcess"
+							},
+							{
+								"name": "closed",
+								"kind": "variable",
+								"type_signature": "Promise<SpawnResult>",
+								"doc_comment": "Resolves when the process exits"
 							}
 						]
 					},
 					{
 						"name": "SpawnedOut",
 						"kind": "type",
-						"source_line": 37,
+						"doc_comment": "Result of `spawn_out` with captured output streams.",
+						"source_line": 140,
 						"type_signature": "SpawnedOut",
 						"properties": [
 							{
@@ -4335,48 +4689,158 @@
 							{
 								"name": "stdout",
 								"kind": "variable",
-								"type_signature": "string | null"
+								"type_signature": "string | null",
+								"doc_comment": "Captured stdout, or null if stream unavailable"
 							},
 							{
 								"name": "stderr",
 								"kind": "variable",
-								"type_signature": "string | null"
+								"type_signature": "string | null",
+								"doc_comment": "Captured stderr, or null if stream unavailable"
 							}
 						]
 					},
 					{
-						"name": "spawn_out",
-						"kind": "function",
-						"doc_comment": "Similar to `spawn` but buffers and returns `stdout` and `stderr` as strings.",
-						"source_line": 46,
-						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): Promise<SpawnedOut>",
-						"return_type": "Promise<SpawnedOut>",
-						"parameters": [
+						"name": "ProcessRegistry",
+						"kind": "class",
+						"doc_comment": "Manages a collection of spawned processes for lifecycle tracking and cleanup.\n\nThe default instance `process_registry_default` is used by module-level functions.\nCreate separate instances for isolated process groups or testing.",
+						"examples": [
+							"```ts\n// Use default registry via module functions\nconst result = await spawn('echo', ['hello']);\n\n// Or create isolated registry for testing\nconst registry = new ProcessRegistry();\nconst {child, closed} = registry.spawn('node', ['server.js']);\nawait registry.despawn_all();\n```"
+						],
+						"source_line": 238,
+						"members": [
 							{
-								"name": "command",
-								"type": "string"
+								"name": "processes",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"doc_comment": "All currently tracked child processes",
+								"type_signature": "Set<ChildProcess>"
 							},
 							{
-								"name": "args",
-								"type": "readonly string[]",
-								"default_value": "[]"
+								"name": "spawn",
+								"kind": "function",
+								"doc_comment": "Spawns a process and tracks it in this registry.\nThe process is automatically unregistered when it exits.",
+								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
+								"return_type": "SpawnedProcess",
+								"return_description": "Handle with `child` process and `closed` promise",
+								"parameters": [
+									{
+										"name": "command",
+										"type": "string",
+										"description": "- The command to run"
+									},
+									{
+										"name": "args",
+										"type": "readonly string[]",
+										"description": "- Arguments to pass to the command",
+										"default_value": "[]"
+									},
+									{
+										"name": "options",
+										"type": "SpawnProcessOptions | undefined",
+										"optional": true,
+										"description": "- Spawn options including `signal` and `timeout_ms`"
+									}
+								]
 							},
 							{
-								"name": "options",
-								"type": "SpawnOptions | undefined",
-								"optional": true
+								"name": "spawn_out",
+								"kind": "function",
+								"doc_comment": "Spawns a process and captures stdout/stderr as strings.\nSets `stdio: 'pipe'` automatically.",
+								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
+								"return_type": "Promise<SpawnedOut>",
+								"return_description": "Result with captured `stdout` and `stderr`.\n- `null` means spawn failed (ENOENT, etc.) or stream was unavailable\n- `''` (empty string) means process ran but produced no output\n- non-empty string contains the captured output",
+								"parameters": [
+									{
+										"name": "command",
+										"type": "string",
+										"description": "- The command to run"
+									},
+									{
+										"name": "args",
+										"type": "readonly string[]",
+										"description": "- Arguments to pass to the command",
+										"default_value": "[]"
+									},
+									{
+										"name": "options",
+										"type": "SpawnProcessOptions | undefined",
+										"optional": true,
+										"description": "- Spawn options"
+									}
+								]
+							},
+							{
+								"name": "despawn",
+								"kind": "function",
+								"doc_comment": "Kills a child process and waits for it to exit.",
+								"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
+								"return_type": "Promise<SpawnResult>",
+								"return_description": "The spawn result after the process exits",
+								"parameters": [
+									{
+										"name": "child",
+										"type": "ChildProcess",
+										"description": "- The child process to kill"
+									},
+									{
+										"name": "options",
+										"type": "DespawnOptions | undefined",
+										"optional": true,
+										"description": "- Kill options including signal and timeout"
+									}
+								]
+							},
+							{
+								"name": "despawn_all",
+								"kind": "function",
+								"doc_comment": "Kills all processes in this registry.",
+								"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
+								"return_type": "Promise<SpawnResult[]>",
+								"return_description": "Array of spawn results",
+								"parameters": [
+									{
+										"name": "options",
+										"type": "DespawnOptions | undefined",
+										"optional": true,
+										"description": "- Kill options applied to all processes"
+									}
+								]
+							},
+							{
+								"name": "attach_error_handler",
+								"kind": "function",
+								"doc_comment": "Attaches an `uncaughtException` handler that kills all processes before exiting.\nPrevents zombie processes when the parent crashes.\n\nBy default uses SIGKILL for immediate termination. Set `graceful_timeout_ms`\nto attempt SIGTERM first (allowing processes to clean up) before escalating\nto SIGKILL after the timeout.\n\nNote: Node's uncaughtException handler cannot await async operations, so\ngraceful shutdown uses a blocking busy-wait. This may not be sufficient\nfor processes that need significant cleanup time.",
+								"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
+								"return_type": "() => void",
+								"return_description": "Cleanup function to remove the handler",
+								"parameters": [
+									{
+										"name": "options",
+										"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
+										"optional": true,
+										"description": "- Configuration options"
+									}
+								]
 							}
 						]
+					},
+					{
+						"name": "process_registry_default",
+						"kind": "variable",
+						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
+						"source_line": 474,
+						"type_signature": "ProcessRegistry"
 					},
 					{
 						"name": "spawn_process",
 						"kind": "function",
-						"doc_comment": "Wraps the normal Node `childProcess.spawn` with graceful child shutdown behavior.\nAlso returns a convenient `closed` promise.\nIf you only need `closed`, prefer the shorthand function `spawn`.",
-						"mutates": {
-							"global_spawn": "calls `register_global_spawn()` which adds to the module-level Set"
-						},
-						"source_line": 70,
-						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnedProcess",
+						"doc_comment": "Spawns a process with graceful shutdown behavior.\nReturns a handle with access to the `child` process and `closed` promise.",
+						"examples": [
+							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
+						],
+						"source_line": 492,
+						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
 							{
@@ -4390,7 +4854,114 @@
 							},
 							{
 								"name": "options",
-								"type": "SpawnOptions | undefined",
+								"type": "SpawnProcessOptions | undefined",
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "spawn",
+						"kind": "function",
+						"doc_comment": "Spawns a process and returns a promise that resolves when it exits.\nUse this for commands that complete (not long-running processes).",
+						"examples": [
+							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
+						],
+						"source_line": 508,
+						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
+						"return_type": "Promise<SpawnResult>",
+						"parameters": [
+							{
+								"name": "command",
+								"type": "string"
+							},
+							{
+								"name": "args",
+								"type": "readonly string[]",
+								"default_value": "[]"
+							},
+							{
+								"name": "options",
+								"type": "SpawnProcessOptions | undefined",
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "spawn_out",
+						"kind": "function",
+						"doc_comment": "Spawns a process and captures stdout/stderr as strings.",
+						"examples": [
+							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
+						],
+						"source_line": 523,
+						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
+						"return_type": "Promise<SpawnedOut>",
+						"parameters": [
+							{
+								"name": "command",
+								"type": "string"
+							},
+							{
+								"name": "args",
+								"type": "readonly string[]",
+								"default_value": "[]"
+							},
+							{
+								"name": "options",
+								"type": "SpawnProcessOptions | undefined",
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "despawn",
+						"kind": "function",
+						"doc_comment": "Kills a child process and returns the result.",
+						"examples": [
+							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
+						],
+						"source_line": 538,
+						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
+						"return_type": "Promise<SpawnResult>",
+						"parameters": [
+							{
+								"name": "child",
+								"type": "ChildProcess"
+							},
+							{
+								"name": "options",
+								"type": "DespawnOptions | undefined",
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "despawn_all",
+						"kind": "function",
+						"doc_comment": "Kills all processes in the default registry.",
+						"source_line": 544,
+						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
+						"return_type": "Promise<SpawnResult[]>",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "DespawnOptions | undefined",
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "attach_process_error_handler",
+						"kind": "function",
+						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
+						"see_also": ["ProcessRegistry.attach_error_handler"],
+						"source_line": 552,
+						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
+						"return_type": "() => void",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 								"optional": true
 							}
 						]
@@ -4398,7 +4969,9 @@
 					{
 						"name": "print_child_process",
 						"kind": "function",
-						"source_line": 86,
+						"doc_comment": "Formats a child process for display.",
+						"examples": ["`pid(1234) <- node server.js`"],
+						"source_line": 565,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -4409,89 +4982,24 @@
 						]
 					},
 					{
-						"name": "global_spawn",
-						"kind": "variable",
-						"doc_comment": "We register spawned processes gloabally so we can gracefully exit child processes.\nOtherwise, errors can cause zombie processes, sometimes blocking ports even!",
-						"source_line": 93,
-						"type_signature": "Set<ChildProcess>"
-					},
-					{
-						"name": "register_global_spawn",
-						"kind": "function",
-						"doc_comment": "Returns a function that unregisters the `child`.",
-						"mutates": {
-							"global_spawn": "adds child to the module-level Set, and the returned function removes it"
-						},
-						"source_line": 101,
-						"type_signature": "(child: ChildProcess): () => void",
-						"return_type": "() => void",
-						"return_description": "cleanup function that removes the child from `global_spawn`",
-						"parameters": [
-							{
-								"name": "child",
-								"type": "ChildProcess",
-								"description": "the child process to register"
-							}
-						]
-					},
-					{
-						"name": "despawn",
-						"kind": "function",
-						"doc_comment": "Kills a child process and returns a `SpawnResult`.",
-						"source_line": 117,
-						"type_signature": "(child: ChildProcess): Promise<SpawnResult>",
-						"return_type": "Promise<SpawnResult>",
-						"parameters": [
-							{
-								"name": "child",
-								"type": "ChildProcess"
-							}
-						]
-					},
-					{
-						"name": "despawn_all",
-						"kind": "function",
-						"doc_comment": "Kills all globally registered child processes.",
-						"mutates": {
-							"global_spawn": "indirectly removes processes through `despawn()` calls"
-						},
-						"source_line": 132,
-						"type_signature": "(): Promise<SpawnResult[]>",
-						"return_type": "Promise<SpawnResult[]>",
-						"parameters": []
-					},
-					{
-						"name": "attach_process_error_handlers",
-						"kind": "function",
-						"doc_comment": "Attaches the `'uncoughtException'` event to despawn all processes,\nand enables custom error logging with `to_error_label`.",
-						"source_line": 141,
-						"type_signature": "(to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined, handle_error?: (err: Error, origin: UncaughtExceptionOrigin) => void): void",
-						"return_type": "void",
-						"parameters": [
-							{
-								"name": "to_error_label",
-								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
-								"optional": true,
-								"description": "Customize the error label or return `null` for the default `origin`."
-							},
-							{
-								"name": "map_error_text",
-								"type": "((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined",
-								"optional": true,
-								"description": "Customize the error text. Return `''` to silence, or `null` for the default `print_error(err)`."
-							},
-							{
-								"name": "handle_error",
-								"type": "(err: Error, origin: UncaughtExceptionOrigin) => void",
-								"default_value": "() =>\n\t\tprocess.exit(1)"
-							}
-						]
-					},
-					{
 						"name": "print_spawn_result",
 						"kind": "function",
-						"doc_comment": "Formats a `SpawnResult` for printing.",
-						"source_line": 163,
+						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
+						"source_line": 572,
+						"type_signature": "(result: SpawnResult): string",
+						"return_type": "string",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "SpawnResult"
+							}
+						]
+					},
+					{
+						"name": "spawn_result_to_message",
+						"kind": "function",
+						"doc_comment": "Formats a spawn result for use in error messages.",
+						"source_line": 582,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -4504,27 +5012,62 @@
 					{
 						"name": "RestartableProcess",
 						"kind": "type",
-						"source_line": 171,
+						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
+						"source_line": 596,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
 								"name": "restart",
 								"kind": "variable",
-								"type_signature": "() => void"
+								"type_signature": "() => Promise<void>",
+								"doc_comment": "Restart the process, killing the current one if active.\nConcurrent calls are coalesced - multiple calls before the first completes\nwill share the same restart operation."
 							},
 							{
 								"name": "kill",
 								"kind": "variable",
-								"type_signature": "() => Promise<void>"
+								"type_signature": "() => Promise<void>",
+								"doc_comment": "Kill the process and set `active` to false"
+							},
+							{
+								"name": "active",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"type_signature": "boolean",
+								"doc_comment": "Whether this handle is managing a process.\n\nNote: This reflects handle state, not whether the underlying OS process is executing.\nRemains `true` after a process exits naturally until `kill()` or `restart()` is called.\nTo check if the process actually exited, await `closed`."
+							},
+							{
+								"name": "child",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"type_signature": "ChildProcess | null",
+								"doc_comment": "The current child process, or null if not active"
+							},
+							{
+								"name": "closed",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"type_signature": "Promise<SpawnResult>",
+								"doc_comment": "Promise that resolves when the current process exits"
+							},
+							{
+								"name": "spawned",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"type_signature": "Promise<void>",
+								"doc_comment": "Promise that resolves when the initial `spawn_process()` call completes.\n\nNote: This resolves when the spawn syscall returns, NOT when the process\nis \"ready\" or has produced output. For commands that fail immediately\n(e.g., ENOENT), `spawned` still resolves - check `closed` for errors."
 							}
 						]
 					},
 					{
 						"name": "spawn_restartable_process",
 						"kind": "function",
-						"doc_comment": "Like `spawn_process` but with `restart` and `kill`,\nhandling many concurrent `restart` calls gracefully.",
-						"source_line": 180,
-						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): RestartableProcess",
+						"doc_comment": "Spawns a process that can be restarted.\nHandles concurrent restart calls gracefully.\n\nNote: The `signal` and `timeout_ms` options are reapplied on each restart.\nIf the AbortSignal is already aborted when `restart()` is called, the new\nprocess will be killed immediately.",
+						"examples": [
+							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
+							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
+						],
+						"source_line": 665,
+						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
 							{
@@ -4538,7 +5081,7 @@
 							},
 							{
 								"name": "options",
-								"type": "SpawnOptions | undefined",
+								"type": "SpawnProcessOptions | undefined",
 								"optional": true
 							}
 						]
@@ -4546,19 +5089,21 @@
 					{
 						"name": "process_is_pid_running",
 						"kind": "function",
-						"doc_comment": "Check if a PID is still running.",
-						"source_line": 212,
+						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
+						"source_line": 768,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
+						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",
 						"parameters": [
 							{
 								"name": "pid",
-								"type": "number"
+								"type": "number",
+								"description": "- The process ID to check (must be a positive integer)"
 							}
 						]
 					}
 				],
-				"dependencies": ["log.ts", "print.ts"],
+				"dependencies": ["function.ts", "log.ts", "print.ts"],
 				"dependents": ["git.ts"]
 			},
 			{
@@ -4708,9 +5253,6 @@
 						"name": "shuffle",
 						"kind": "function",
 						"doc_comment": "Mutates `array` with random ordering.",
-						"mutates": {
-							"array": "randomly reorders elements in place using Fisher-Yates shuffle"
-						},
 						"source_line": 34,
 						"type_signature": "<T extends Array<any>>(array: T, random?: ((min: number, max: number, random?: () => number) => number) | undefined): T",
 						"return_type": "T",
@@ -4749,9 +5291,6 @@
 						"name": "reset_regexp",
 						"kind": "function",
 						"doc_comment": "Reset a RegExp's lastIndex to 0 for global and sticky patterns.\nEnsures consistent behavior by clearing state that affects subsequent matches.",
-						"mutates": {
-							"regexp": "sets lastIndex to 0 if regexp is global or sticky"
-						},
 						"source_line": 12,
 						"type_signature": "<T extends RegExp>(regexp: T): T",
 						"return_type": "T",
@@ -5063,12 +5602,12 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "- Array of numbers"
 							},
 							{
 								"name": "p",
 								"type": "number",
-								"description": "Percentile (0-1, e.g., 0.95 for 95th percentile)"
+								"description": "- Percentile (0-1, e.g., 0.95 for 95th percentile)"
 							}
 						]
 					},
@@ -5298,13 +5837,13 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "- Array of numbers"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "- Configuration options"
 							}
 						]
 					},
@@ -5320,23 +5859,23 @@
 							{
 								"name": "mean",
 								"type": "number",
-								"description": "Mean of the data"
+								"description": "- Mean of the data"
 							},
 							{
 								"name": "std_dev",
 								"type": "number",
-								"description": "Standard deviation of the data"
+								"description": "- Standard deviation of the data"
 							},
 							{
 								"name": "sample_size",
 								"type": "number",
-								"description": "Number of samples"
+								"description": "- Number of samples"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "- Configuration options"
 							}
 						]
 					},
@@ -5372,32 +5911,32 @@
 							{
 								"name": "mean1",
 								"type": "number",
-								"description": "Mean of first sample"
+								"description": "- Mean of first sample"
 							},
 							{
 								"name": "std1",
 								"type": "number",
-								"description": "Standard deviation of first sample"
+								"description": "- Standard deviation of first sample"
 							},
 							{
 								"name": "n1",
 								"type": "number",
-								"description": "Size of first sample"
+								"description": "- Size of first sample"
 							},
 							{
 								"name": "mean2",
 								"type": "number",
-								"description": "Mean of second sample"
+								"description": "- Mean of second sample"
 							},
 							{
 								"name": "std2",
 								"type": "number",
-								"description": "Standard deviation of second sample"
+								"description": "- Standard deviation of second sample"
 							},
 							{
 								"name": "n2",
 								"type": "number",
-								"description": "Size of second sample"
+								"description": "- Size of second sample"
 							}
 						]
 					},
@@ -5463,12 +6002,12 @@
 							{
 								"name": "t",
 								"type": "number",
-								"description": "Absolute value of t-statistic"
+								"description": "- Absolute value of t-statistic"
 							},
 							{
 								"name": "df",
 								"type": "number",
-								"description": "Degrees of freedom"
+								"description": "- Degrees of freedom"
 							}
 						]
 					}
@@ -5925,7 +6464,7 @@
 							{
 								"name": "values_ns",
 								"type": "number[]",
-								"description": "Array of times in nanoseconds"
+								"description": "- Array of times in nanoseconds"
 							}
 						]
 					},
@@ -5941,17 +6480,17 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "- Time in nanoseconds"
 							},
 							{
 								"name": "unit",
 								"type": "TimeUnit",
-								"description": "Unit to use ('ns', 'us', 'ms', 's')"
+								"description": "- Unit to use ('ns', 'us', 'ms', 's')"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "- Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -5971,12 +6510,12 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "- Time in nanoseconds"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "- Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -6035,12 +6574,12 @@
 							{
 								"name": "fn",
 								"type": "() => Promise<T>",
-								"description": "Async function to time"
+								"description": "- Async function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "- Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6060,12 +6599,12 @@
 							{
 								"name": "fn",
 								"type": "() => T",
-								"description": "Sync function to time"
+								"description": "- Sync function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "- Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6085,17 +6624,17 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to measure (sync or async)"
+								"description": "- Function to measure (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of times to execute"
+								"description": "- Number of times to execute"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "- Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -6401,7 +6940,8 @@
 							{
 								"name": "T"
 							}
-						]
+						],
+						"properties": []
 					},
 					{
 						"name": "Branded",
@@ -6426,7 +6966,8 @@
 							{
 								"name": "T"
 							}
-						]
+						],
+						"properties": []
 					}
 				]
 			},

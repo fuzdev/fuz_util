@@ -63,7 +63,7 @@ export const is_interactive = (el: any): boolean => {
  * @param event
  * @param immediate defaults to `true` to use `stopImmediatePropagation` over `stopPropagation`
  * @param preventDefault defaults to `true`
- * @mutates event calls preventDefault(), stopPropagation(), or stopImmediatePropagation()
+ * @mutates event - calls preventDefault(), stopPropagation(), or stopImmediatePropagation()
  * @returns
  */
 export const swallow = <
@@ -86,7 +86,7 @@ export const swallow = <
 /**
  * Handles the value of an event's target and invokes a callback.
  * Defaults to swallowing the event to prevent default actions and propagation.
- * @mutates event calls `swallow()` which mutates the event if `swallow_event` is true
+ * @mutates event - calls `swallow()` which mutates the event if `swallow_event` is true
  */
 export const handle_target_value =
 	(cb: (value: any, event: any) => void, swallow_event = true) =>
