@@ -83,6 +83,17 @@ See `docs/benchmark.md` for full documentation.
   `.well-known/src.json` metadata (shared by gro for generation and fuz for UI)
 - `pkg_json.ts` - `PkgJson` enriched package representation combining
   `PackageJson` and `SrcJson`
+- `source_json.ts` - Library documentation metadata types shared across Fuz projects:
+  - `SourceJson` - package metadata + analyzed modules
+  - `ModuleJson` - source file metadata (declarations, dependencies, comments)
+  - `DeclarationJson` - exported declaration metadata (functions, types, classes, components)
+  - Supporting types: `ParameterInfo`, `ComponentPropInfo`, `GenericParamInfo`
+  - Used by `@fuzdev/svelte-docinfo` (analysis) and `@fuzdev/fuz_ui` (documentation UI)
+- `library_json.ts` - Opinionated library metadata wrapping:
+  - `LibraryJson` - combines `SourceJson` with GitHub/npm metadata
+  - `library_json_parse()` - generates URLs, logo paths, published flags
+  - `library_repo_name_parse()`, `library_org_url_parse()` - helpers
+  - Used by `@fuzdev/fuz_ui` for documentation generation
 - `result.ts` - Result type pattern
 - `error.ts` - error utilities
 
