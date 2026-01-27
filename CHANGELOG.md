@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.48.2
+
+### Patch Changes
+
+- add `spawn_detached` ([129b37e](https://github.com/fuzdev/fuz_util/commit/129b37e))
+
 ## 0.48.1
 
 ### Patch Changes
