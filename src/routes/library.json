@@ -3099,6 +3099,50 @@
 				"dependents": ["benchmark_baseline.ts"]
 			},
 			{
+				"path": "hash.ts",
+				"declarations": [
+					{
+						"name": "hash_secure",
+						"kind": "function",
+						"doc_comment": "Computes a cryptographic hash using Web Crypto API.",
+						"source_line": 30,
+						"type_signature": "(data: string | BufferSource, algorithm?: \"SHA-256\" | \"SHA-384\" | \"SHA-512\"): Promise<string>",
+						"return_type": "Promise<string>",
+						"return_description": "Hexadecimal hash string.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "- String or binary data to hash. Strings are UTF-8 encoded."
+							},
+							{
+								"name": "algorithm",
+								"type": "\"SHA-256\" | \"SHA-384\" | \"SHA-512\"",
+								"description": "- Hash algorithm. Defaults to SHA-256.",
+								"default_value": "'SHA-256'"
+							}
+						]
+					},
+					{
+						"name": "hash_insecure",
+						"kind": "function",
+						"doc_comment": "Computes a fast non-cryptographic hash using DJB2 algorithm.\nUse for content comparison and cache keys, not security.",
+						"source_line": 52,
+						"type_signature": "(data: string | BufferSource): string",
+						"return_type": "string",
+						"return_description": "Hex-encoded 32-bit hash.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "- String or binary data to hash."
+							}
+						]
+					}
+				],
+				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides both secure (cryptographic) and insecure (fast) hash functions."
+			},
+			{
 				"path": "id.ts",
 				"declarations": [
 					{
