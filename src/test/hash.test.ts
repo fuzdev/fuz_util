@@ -189,7 +189,7 @@ describe('hash_insecure', () => {
 
 		test.each(string_cases)('%s produces hex output', (_description, input) => {
 			const result = hash_insecure(input);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 	});
 
@@ -197,13 +197,13 @@ describe('hash_insecure', () => {
 		test('ArrayBuffer', () => {
 			const buffer = new TextEncoder().encode('hello').buffer;
 			const result = hash_insecure(buffer);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('Uint8Array', () => {
 			const array = new Uint8Array([104, 101, 108, 108, 111]); // "hello"
 			const result = hash_insecure(array);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('Uint8Array slice (byteOffset)', () => {
@@ -225,20 +225,20 @@ describe('hash_insecure', () => {
 			const buffer = new TextEncoder().encode('test').buffer;
 			const view = new DataView(buffer);
 			const result = hash_insecure(view);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('Int8Array', () => {
 			const array = new Int8Array([1, 2, 3, 4, 5]);
 			const result = hash_insecure(array);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('Uint16Array', () => {
 			// Multi-byte typed arrays hash the underlying bytes
 			const array = new Uint16Array([0x0102, 0x0304]);
 			const result = hash_insecure(array);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 	});
 
@@ -267,13 +267,13 @@ describe('hash_insecure', () => {
 			const stringHash = hash_insecure(str);
 			// String uses charCodeAt (UTF-16), buffer uses UTF-8 bytes
 			// For ASCII they happen to have same values, but processed differently
-			expect(stringHash).toMatch(/^-?[0-9a-f]+$/);
+			expect(stringHash).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('buffer hashes raw bytes', () => {
 			const buffer = new TextEncoder().encode('hello');
 			const bufferHash = hash_insecure(buffer);
-			expect(bufferHash).toMatch(/^-?[0-9a-f]+$/);
+			expect(bufferHash).toMatch(/^[0-9a-f]+$/);
 		});
 	});
 
@@ -281,7 +281,7 @@ describe('hash_insecure', () => {
 		test('very long string', () => {
 			const long = 'a'.repeat(100000);
 			const result = hash_insecure(long);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('null bytes in buffer', () => {
@@ -294,14 +294,14 @@ describe('hash_insecure', () => {
 		test('buffer with mixed null and non-null bytes', () => {
 			const buffer = new Uint8Array([0, 1, 0, 1]);
 			const result = hash_insecure(buffer);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 			expect(result).not.toBe('0');
 		});
 
 		test('high byte values', () => {
 			const buffer = new Uint8Array([255, 255, 255, 255]);
 			const result = hash_insecure(buffer);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('whitespace strings', () => {
@@ -316,7 +316,7 @@ describe('hash_insecure', () => {
 				allBytes[i] = i;
 			}
 			const result = hash_insecure(allBytes);
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 		});
 
 		test('ASCII string equals buffer with same bytes', () => {
@@ -329,7 +329,7 @@ describe('hash_insecure', () => {
 		test('surrogate pairs (astral plane characters)', () => {
 			// 🎉 is U+1F389, encoded as surrogate pair in UTF-16
 			const result = hash_insecure('🎉');
-			expect(result).toMatch(/^-?[0-9a-f]+$/);
+			expect(result).toMatch(/^[0-9a-f]+$/);
 			// String uses UTF-16 (2 code units), buffer uses UTF-8 (4 bytes)
 			const buffer = new TextEncoder().encode('🎉');
 			expect(buffer.length).toBe(4);

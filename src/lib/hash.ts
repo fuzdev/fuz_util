@@ -47,24 +47,24 @@ export const hash_secure = async (
  * Use for content comparison and cache keys, not security.
  *
  * @param data - String or binary data to hash.
- * @returns Hex-encoded 32-bit hash.
+ * @returns Hex-encoded unsigned 32-bit hash.
  */
 export const hash_insecure = (data: BufferSource | string): string => {
 	let hash = 0;
 	if (typeof data === 'string') {
 		for (let i = 0; i < data.length; i++) {
 			hash = (hash << 5) - hash + data.charCodeAt(i);
-			hash |= 0;
 		}
 	} else {
 		const bytes =
-			data instanceof ArrayBuffer
-				? new Uint8Array(data)
-				: new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+			data instanceof Uint8Array
+				? data
+				: data instanceof ArrayBuffer
+					? new Uint8Array(data)
+					: new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
 		for (const byte of bytes) {
 			hash = (hash << 5) - hash + byte;
-			hash |= 0;
 		}
 	}
-	return hash.toString(16);
+	return (hash >>> 0).toString(16);
 };
