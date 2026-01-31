@@ -18,6 +18,9 @@ gro gen       # regenerate .gen files
 gro build     # build the package for production
 ```
 
+IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
+dev server.
+
 ## Scope
 
 fuz_util is a **foundational utility library**:
@@ -126,8 +129,22 @@ See `docs/benchmark.md` for full documentation.
 
 ## What fuz_util does NOT include
 
-- UI components (use fuz)
-- Svelte-specific code (use fuz)
+- UI components (use fuz_ui)
+- Svelte-specific code (use fuz_ui)
 - Build tooling (use gro)
-- UI helper functions for src_json (use fuz's `src_json.ts` for
+- UI helper functions for src_json (use fuz_ui's helpers for
   `identifier_display_name_get`, `identifier_import_generate`)
+
+## Project standards
+
+- TypeScript strict mode
+- Prettier with tabs, 100 char width
+- Node >= 22.15
+- Tests in `src/test/` (not co-located)
+- No Svelte dependency (pure TypeScript)
+
+## Related projects
+
+- [`fuz_css`](../fuz_css/CLAUDE.md) - CSS framework (depends on fuz_util)
+- [`fuz_ui`](../fuz_ui/CLAUDE.md) - UI components (depends on fuz_util)
+- [`gro`](../gro/CLAUDE.md) - build system (depends on fuz_util)
