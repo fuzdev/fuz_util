@@ -56,7 +56,7 @@ export const hash_insecure = (data: BufferSource | string): string => {
 			hash = (hash << 5) - hash + data.charCodeAt(i);
 		}
 	} else {
-		const bytes =
+		const bytes: Uint8Array =
 			data instanceof Uint8Array
 				? data
 				: data instanceof ArrayBuffer
