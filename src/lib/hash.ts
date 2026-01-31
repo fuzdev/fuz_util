@@ -46,8 +46,11 @@ export const hash_secure = async (
  * Computes a fast non-cryptographic hash using DJB2 algorithm.
  * Use for content comparison and cache keys, not security.
  *
+ * Note: Strings use UTF-16 code units, buffers use raw bytes.
+ * For non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.
+ *
  * @param data - String or binary data to hash.
- * @returns Hex-encoded unsigned 32-bit hash.
+ * @returns 8-character hex-encoded unsigned 32-bit hash.
  */
 export const hash_insecure = (data: BufferSource | string): string => {
 	let hash = 5381; // DJB2 initial value, chosen empirically for good distribution
