@@ -3,8 +3,10 @@
 > TypeScript utility library - foundational utilities with no UI dependencies
 
 fuz_util (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
-`@ryanatkn` ecosystem. It has no UI framework dependencies (no Svelte) and
+`@fuzdev` ecosystem. It has no UI framework dependencies (no Svelte) and
 focuses on pure TypeScript helpers.
+
+For coding conventions, see [`fuz-stack`](../fuz-stack/CLAUDE.md).
 
 ## Gro commands
 
