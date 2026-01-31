@@ -3130,7 +3130,7 @@
 						"source_line": 52,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
-						"return_description": "Hex-encoded 32-bit hash.",
+						"return_description": "Hex-encoded unsigned 32-bit hash.",
 						"parameters": [
 							{
 								"name": "data",
