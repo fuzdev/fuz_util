@@ -12,7 +12,7 @@ const encoder = new TextEncoder();
 let byte_to_hex: Array<string> | undefined;
 const get_byte_to_hex = (): Array<string> => {
 	if (byte_to_hex === undefined) {
-		byte_to_hex = new Array(256);
+		byte_to_hex = new Array(256); // 256 possible byte values (0x00-0xff)
 		for (let i = 0; i < 256; i++) {
 			byte_to_hex[i] = i.toString(16).padStart(2, '0');
 		}
@@ -50,7 +50,7 @@ export const hash_secure = async (
  * @returns Hex-encoded unsigned 32-bit hash.
  */
 export const hash_insecure = (data: BufferSource | string): string => {
-	let hash = 0;
+	let hash = 5381; // DJB2 initial value, chosen empirically for good distribution
 	if (typeof data === 'string') {
 		for (let i = 0; i < data.length; i++) {
 			hash = (hash << 5) - hash + data.charCodeAt(i);
@@ -66,5 +66,5 @@ export const hash_insecure = (data: BufferSource | string): string => {
 			hash = (hash << 5) - hash + byte;
 		}
 	}
-	return (hash >>> 0).toString(16);
+	return (hash >>> 0).toString(16).padStart(8, '0');
 };

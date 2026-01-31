@@ -218,7 +218,7 @@ describe('hash_insecure', () => {
 		test('empty ArrayBuffer', () => {
 			const buffer = new ArrayBuffer(0);
 			const result = hash_insecure(buffer);
-			expect(result).toBe('0');
+			expect(result).toBe('00001505'); // 5381 in hex, padded to 8 chars
 		});
 
 		test('DataView', () => {
@@ -285,10 +285,13 @@ describe('hash_insecure', () => {
 		});
 
 		test('null bytes in buffer', () => {
-			// DJB2 of all zeros is 0 (same as empty) - this is expected behavior
+			// With DJB2 initial value 5381, null bytes still produce a distinct hash
 			const buffer = new Uint8Array([0, 0, 0, 0]);
 			const result = hash_insecure(buffer);
-			expect(result).toBe('0');
+			expect(result).toHaveLength(8);
+			expect(result).toMatch(/^[0-9a-f]+$/);
+			// Null bytes now produce different hash than empty buffer
+			expect(result).not.toBe(hash_insecure(new ArrayBuffer(0)));
 		});
 
 		test('buffer with mixed null and non-null bytes', () => {
