@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.48.3
+
+### Patch Changes
+
+- add `hash.ts` ([#68](https://github.com/fuzdev/fuz_util/pull/68))
+
 ## 0.48.2
 
 ### Patch Changes
