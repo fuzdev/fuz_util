@@ -50,73 +50,15 @@ fuz_util is a **foundational utility library**:
 - `throttle.ts` - throttle/debounce with configurable edge behavior
 - `timings.ts` - performance timing
 
-**Concurrent operations:**
-
-```typescript
-import {map_concurrent, each_concurrent} from '@fuzdev/fuz_util/async.js';
-
-// Process with concurrency limit, preserving order
-const results = await map_concurrent(urls, fetch_data, 5);
-
-// Side effects only (no results collected)
-await each_concurrent(items, process_item, 10);
-```
-
-**Deferred pattern:**
-
-```typescript
-import {create_deferred} from '@fuzdev/fuz_util/async.js';
-
-const deferred = create_deferred<string>();
-// Later: deferred.resolve('value') or deferred.reject(error)
-await deferred.promise;
-```
-
-**Throttle with edge options:**
-
-```typescript
-import {throttle} from '@fuzdev/fuz_util/throttle.js';
-
-const throttled = throttle(save, {
-	delay: 1000,
-	when: 'trailing', // 'leading' | 'trailing' | 'both'
-});
-```
+Key exports: `map_concurrent`, `each_concurrent` (concurrency-limited async),
+`create_deferred` (Deferred pattern), `throttle` with `when` option
+('leading' | 'trailing' | 'both').
 
 ### Benchmarking
 
-Benchmarking library with nanosecond precision timing,
-comprehensive statistics (mean, median, percentiles, outlier detection), and
-multiple output formats (ASCII table, Markdown, JSON).
-
-```typescript
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
-
-const bench = new Benchmark({
-	duration_ms: 5000,
-	warmup_iterations: 10,
-	cooldown_ms: 100,
-	min_iterations: 10,
-	max_iterations: 100_000,
-	include_percentiles: [50, 75, 90, 95, 99],
-});
-
-bench.add('test 1', () => fn1()).add('test 2', () => fn2());
-
-await bench.run();
-console.log(bench.table()); // ASCII table with all percentiles
-console.log(bench.markdown()); // Markdown table
-console.log(bench.summary()); // Fastest/slowest comparison
-console.log(bench.json()); // JSON export
-```
-
-**Statistics computed:**
-
-- Mean, median, standard deviation
-- Percentiles (p50, p75, p90, p95, p99)
-- Min/max, outlier detection (MAD)
-- Coefficient of variation, confidence intervals (95%)
-- Ops/sec calculation
+Benchmarking library with nanosecond precision timing, comprehensive statistics
+(mean, median, percentiles, outlier detection, confidence intervals), and
+multiple output formats (`table()`, `markdown()`, `summary()`, `json()`).
 
 **Workflow:**
 
@@ -143,60 +85,11 @@ See `docs/benchmark.md` for full documentation.
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion)
 - `args.ts` - CLI argument parsing with Zod validation
 
-**Flavored and Branded types:**
-
-```typescript
-import type {Flavored, Branded} from '@fuzdev/fuz_util/types.js';
-
-// Loose nominal typing (no cast needed, compatible with base type)
-type UserId = Flavored<number, 'UserId'>;
-const id: UserId = 42; // OK
-
-// Strict nominal typing (requires explicit cast)
-type Token = Branded<string, 'Token'>;
-const token = 'abc' as Token; // Must cast
-```
-
-**Result pattern:**
-
-```typescript
-import type {Result} from '@fuzdev/fuz_util/result.js';
-import {unwrap} from '@fuzdev/fuz_util/result.js';
-
-type FetchResult = Result<{data: string}, {message: string}>;
-
-const result: FetchResult = {ok: true, data: 'hello'};
-if (result.ok) {
-	console.log(result.data);
-}
-
-// Throws ResultError if !ok
-const data = unwrap(result);
-```
-
-**CLI argument parsing:**
-
-```typescript
-import {args_parse} from '@fuzdev/fuz_util/args.js';
-import {z} from 'zod';
-
-const schema = z.object({
-	verbose: z
-		.boolean()
-		.default(false)
-		.meta({aliases: ['v']}),
-	output: z.string(),
-	force: z.boolean().optional(),
-});
-
-const result = args_parse(['--verbose', '--output', 'dist'], schema);
-if (result.success) {
-	console.log(result.data); // {verbose: true, output: 'dist'}
-}
-```
-
-Features: alias expansion, `--no-flag` negation, boolean coercion, prototype
-pollution protection.
+- `types.ts` - `Flavored` (loose nominal typing, no cast needed) and `Branded`
+  (strict, requires cast) for type-safe IDs
+- `result.ts` - `Result<T, E>` discriminated union with `unwrap()` helper
+- `args.ts` - `args_parse()` for CLI arguments with Zod schemas, supports
+  aliases, `--no-flag` negation, boolean coercion
 
 ### System utilities
 
@@ -207,37 +100,10 @@ pollution protection.
 - `git.ts` - git operations
 - `log.ts` - hierarchical logging system
 
-**Spawn with typed results:**
-
-```typescript
-import {spawn} from '@fuzdev/fuz_util/process.js';
-
-const result = await spawn('npm', ['test']);
-
-// Type guards for narrowing
-if (spawn_result_is_error(result)) {
-	// SpawnResultError - process failed to start (ENOENT, etc)
-} else if (spawn_result_is_signaled(result)) {
-	// SpawnResultSignaled - killed by signal (SIGTERM, etc)
-} else {
-	// SpawnResultExited - normal exit, check result.code
-}
-```
-
-**Hierarchical logging:**
-
-```typescript
-import {Logger} from '@fuzdev/fuz_util/log.js';
-
-const log = new Logger('app');
-const db_log = log.child('db'); // Auto-labeled [app:db]
-
-log.set_level('debug'); // Inherited by children
-log.info('Starting...');
-db_log.debug('Query executed');
-```
-
-Auto-detects level from `PUBLIC_LOG_LEVEL` env var.
+- `process.ts` - `spawn()` with typed results (`SpawnResultExited`,
+  `SpawnResultSignaled`, `SpawnResultError`) and type guards
+- `log.ts` - `Logger` class with hierarchical children, auto-detects level from
+  `PUBLIC_LOG_LEVEL` env var
 
 ### Statistics
 
@@ -259,17 +125,7 @@ Auto-detects level from `PUBLIC_LOG_LEVEL` env var.
 - `url.ts` - URL utilities
 - `print.ts` - formatted output with colors
 
-**Thunk pattern:**
-
-```typescript
-import type {Thunk} from '@fuzdev/fuz_util/function.js';
-import {unthunk} from '@fuzdev/fuz_util/function.js';
-
-type LazyValue<T> = T | Thunk<T>;
-
-// Calls if function, otherwise returns value
-const value = unthunk(maybeLazy); // Lazy evaluation
-```
+- `function.ts` - `Thunk<T>` type and `unthunk()` for lazy evaluation
 
 ## Code style
 
