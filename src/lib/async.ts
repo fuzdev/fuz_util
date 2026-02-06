@@ -249,3 +249,36 @@ export const map_concurrent_settled = async <T, R>(
 		run_next();
 	});
 };
+
+/**
+ * Async semaphore for concurrency limiting.
+ *
+ * With `Infinity` permits, `acquire()` always resolves immediately.
+ */
+export class AsyncSemaphore {
+	#permits: number;
+	#waiters: Array<() => void> = [];
+
+	constructor(permits: number) {
+		this.#permits = permits;
+	}
+
+	async acquire(): Promise<void> {
+		if (this.#permits > 0) {
+			this.#permits--;
+			return;
+		}
+		return new Promise<void>((resolve) => {
+			this.#waiters.push(resolve);
+		});
+	}
+
+	release(): void {
+		const next = this.#waiters.shift();
+		if (next) {
+			next();
+		} else {
+			this.#permits++;
+		}
+	}
+}

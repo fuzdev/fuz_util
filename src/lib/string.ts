@@ -208,3 +208,16 @@ export const levenshtein_distance = (a: string, b: string): number => {
 
 	return prev[short_len]!;
 };
+
+/**
+ * Check if content appears to be binary.
+ *
+ * Checks for null bytes in the first 8KB of content.
+ *
+ * @param content - Content to check.
+ * @returns True if content appears to be binary.
+ */
+export const is_binary = (content: string): boolean => {
+	const sample = content.slice(0, 8192);
+	return sample.includes('\0');
+};

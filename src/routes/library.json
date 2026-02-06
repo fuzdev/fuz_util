@@ -520,9 +520,42 @@
 								"description": "maximum number of concurrent operations"
 							}
 						]
+					},
+					{
+						"name": "AsyncSemaphore",
+						"kind": "class",
+						"doc_comment": "Async semaphore for concurrency limiting.\n\nWith `Infinity` permits, `acquire()` always resolves immediately.",
+						"source_line": 258,
+						"members": [
+							{
+								"name": "constructor",
+								"kind": "constructor",
+								"type_signature": "(permits: number): AsyncSemaphore",
+								"parameters": [
+									{
+										"name": "permits",
+										"type": "number"
+									}
+								]
+							},
+							{
+								"name": "acquire",
+								"kind": "function",
+								"type_signature": "(): Promise<void>",
+								"return_type": "Promise<void>",
+								"parameters": []
+							},
+							{
+								"name": "release",
+								"kind": "function",
+								"type_signature": "(): void",
+								"return_type": "void",
+								"parameters": []
+							}
+						]
 					}
 				],
-				"dependents": ["benchmark.ts", "throttle.ts"]
+				"dependents": ["benchmark.ts", "dag.ts", "throttle.ts"]
 			},
 			{
 				"path": "benchmark_baseline.ts",
@@ -2069,6 +2102,192 @@
 				"dependents": ["id.ts"]
 			},
 			{
+				"path": "dag.ts",
+				"declarations": [
+					{
+						"name": "DagNode",
+						"kind": "type",
+						"doc_comment": "Minimum shape for a DAG node.",
+						"source_line": 18,
+						"type_signature": "DagNode",
+						"extends": ["Sortable"],
+						"properties": [
+							{
+								"name": "id",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "depends_on",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "DagOptions",
+						"kind": "type",
+						"doc_comment": "Options for running a DAG.",
+						"source_line": 26,
+						"type_signature": "DagOptions<T>",
+						"generic_params": [
+							{
+								"name": "T",
+								"constraint": "DagNode"
+							}
+						],
+						"properties": [
+							{
+								"name": "nodes",
+								"kind": "variable",
+								"type_signature": "Array<T>",
+								"doc_comment": "Nodes to execute."
+							},
+							{
+								"name": "execute",
+								"kind": "variable",
+								"type_signature": "(node: T) => Promise<void>",
+								"doc_comment": "Execute a node. Throw on failure."
+							},
+							{
+								"name": "on_error",
+								"kind": "variable",
+								"type_signature": "(node: T, error: Error) => Promise<void>",
+								"doc_comment": "Called after a node fails. For observability — the error is already recorded."
+							},
+							{
+								"name": "on_skip",
+								"kind": "variable",
+								"type_signature": "(node: T, reason: string) => Promise<void>",
+								"doc_comment": "Called when a node is skipped (pre-skip or dependency failure)."
+							},
+							{
+								"name": "should_skip",
+								"kind": "variable",
+								"type_signature": "(node: T) => boolean",
+								"doc_comment": "Return true to skip a node without executing. Dependents still proceed."
+							},
+							{
+								"name": "max_concurrency",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Maximum concurrent executions. Default: Infinity."
+							},
+							{
+								"name": "stop_on_failure",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Stop starting new nodes on first failure. Default: true."
+							},
+							{
+								"name": "skip_validation",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Skip internal graph validation (caller already validated)."
+							}
+						]
+					},
+					{
+						"name": "DagNodeResult",
+						"kind": "type",
+						"doc_comment": "Result for a single node.",
+						"source_line": 48,
+						"type_signature": "DagNodeResult",
+						"properties": [
+							{
+								"name": "id",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "status",
+								"kind": "variable",
+								"type_signature": "'completed' | 'failed' | 'skipped'"
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "duration_ms",
+								"kind": "variable",
+								"type_signature": "number"
+							}
+						]
+					},
+					{
+						"name": "DagResult",
+						"kind": "type",
+						"doc_comment": "Result of a DAG execution.",
+						"source_line": 58,
+						"type_signature": "DagResult",
+						"properties": [
+							{
+								"name": "success",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Whether all executed nodes succeeded."
+							},
+							{
+								"name": "results",
+								"kind": "variable",
+								"type_signature": "Map<string, DagNodeResult>",
+								"doc_comment": "Per-node results."
+							},
+							{
+								"name": "completed",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Number of nodes that completed successfully."
+							},
+							{
+								"name": "failed",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Number of nodes that failed."
+							},
+							{
+								"name": "skipped",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Number of nodes that were skipped."
+							},
+							{
+								"name": "duration_ms",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Total execution time in milliseconds."
+							},
+							{
+								"name": "error",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Error message if any nodes failed."
+							}
+						]
+					},
+					{
+						"name": "run_dag",
+						"kind": "function",
+						"doc_comment": "Execute nodes in a dependency graph concurrently.\n\nIndependent nodes (no unmet dependencies) run in parallel up to\n`max_concurrency`. When a node completes, its dependents become\neligible to start. Failure cascading and stop-on-failure are handled\nper the options.",
+						"source_line": 86,
+						"type_signature": "<T extends DagNode>(options: DagOptions<T>): Promise<DagResult>",
+						"return_type": "Promise<DagResult>",
+						"return_description": "Aggregated result with per-node details.",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "DagOptions<T>",
+								"description": "- DAG execution options."
+							}
+						]
+					}
+				],
+				"module_comment": "Generic concurrent DAG executor.\n\nExecutes nodes in a dependency graph with configurable concurrency,\nfailure handling, and skip semantics. Nodes without dependency edges\nrun in parallel (up to max_concurrency). Dependencies are respected\nvia per-node deferreds.",
+				"dependencies": ["async.ts", "sort.ts"]
+			},
+			{
 				"path": "deep_equal.ts",
 				"declarations": [
 					{
@@ -2093,6 +2312,166 @@
 						]
 					}
 				]
+			},
+			{
+				"path": "diff.ts",
+				"declarations": [
+					{
+						"name": "DiffLine",
+						"kind": "type",
+						"doc_comment": "Line diff result",
+						"source_line": 10,
+						"type_signature": "DiffLine",
+						"properties": [
+							{
+								"name": "type",
+								"kind": "variable",
+								"type_signature": "'same' | 'add' | 'remove'"
+							},
+							{
+								"name": "line",
+								"kind": "variable",
+								"type_signature": "string"
+							}
+						]
+					},
+					{
+						"name": "diff_lines",
+						"kind": "function",
+						"doc_comment": "Generate a line-based diff between two strings using LCS algorithm.",
+						"source_line": 22,
+						"type_signature": "(a: string, b: string): DiffLine[]",
+						"return_type": "DiffLine[]",
+						"return_description": "Array of diff lines with type annotations.",
+						"parameters": [
+							{
+								"name": "a",
+								"type": "string",
+								"description": "- The original/current content."
+							},
+							{
+								"name": "b",
+								"type": "string",
+								"description": "- The new/desired content."
+							}
+						]
+					},
+					{
+						"name": "filter_diff_context",
+						"kind": "function",
+						"doc_comment": "Filter diff to only include lines within N lines of context around changes.",
+						"source_line": 101,
+						"type_signature": "(diff: DiffLine[], context_lines?: number): DiffLine[]",
+						"return_type": "DiffLine[]",
+						"return_description": "Filtered diff with ellipsis markers for skipped regions.",
+						"parameters": [
+							{
+								"name": "diff",
+								"type": "DiffLine[]",
+								"description": "- The full diff lines."
+							},
+							{
+								"name": "context_lines",
+								"type": "number",
+								"description": "- Number of context lines to show around changes (default: 3).",
+								"default_value": "3"
+							}
+						]
+					},
+					{
+						"name": "FormatDiffOptions",
+						"kind": "type",
+						"doc_comment": "Format options for diff output.",
+						"source_line": 154,
+						"type_signature": "FormatDiffOptions",
+						"properties": [
+							{
+								"name": "prefix",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Prefix for each line (for indentation in plan output)."
+							},
+							{
+								"name": "use_color",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Whether to use ANSI colors."
+							},
+							{
+								"name": "max_lines",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Maximum number of diff lines to show (0 = unlimited)."
+							}
+						]
+					},
+					{
+						"name": "format_diff",
+						"kind": "function",
+						"doc_comment": "Format a diff for display.",
+						"source_line": 172,
+						"type_signature": "(diff: DiffLine[], current_path: string, desired_path: string, options?: FormatDiffOptions): string",
+						"return_type": "string",
+						"return_description": "Formatted diff string.",
+						"parameters": [
+							{
+								"name": "diff",
+								"type": "DiffLine[]",
+								"description": "- The diff lines to format."
+							},
+							{
+								"name": "current_path",
+								"type": "string",
+								"description": "- Path label for \"current\" content."
+							},
+							{
+								"name": "desired_path",
+								"type": "string",
+								"description": "- Path label for \"desired\" content."
+							},
+							{
+								"name": "options",
+								"type": "FormatDiffOptions",
+								"description": "- Formatting options.",
+								"default_value": "{}"
+							}
+						]
+					},
+					{
+						"name": "generate_diff",
+						"kind": "function",
+						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines diff_lines, filter_diff_context, and format_diff for convenience.\nReturns null if content is binary.",
+						"source_line": 220,
+						"type_signature": "(current: string, desired: string, path: string, options?: FormatDiffOptions): string | null",
+						"return_type": "string | null",
+						"return_description": "Formatted diff string, or null if binary.",
+						"parameters": [
+							{
+								"name": "current",
+								"type": "string",
+								"description": "- Current content."
+							},
+							{
+								"name": "desired",
+								"type": "string",
+								"description": "- Desired content."
+							},
+							{
+								"name": "path",
+								"type": "string",
+								"description": "- File path for labels."
+							},
+							{
+								"name": "options",
+								"type": "FormatDiffOptions",
+								"description": "- Formatting options.",
+								"default_value": "{}"
+							}
+						]
+					}
+				],
+				"module_comment": "Line-based diff utilities using LCS (Longest Common Subsequence).",
+				"dependencies": ["string.ts"]
 			},
 			{
 				"path": "dom.ts",
@@ -5507,6 +5886,67 @@
 				]
 			},
 			{
+				"path": "sort.ts",
+				"declarations": [
+					{
+						"name": "Sortable",
+						"kind": "type",
+						"doc_comment": "Minimum shape required for topological sorting.",
+						"source_line": 13,
+						"type_signature": "Sortable",
+						"properties": [
+							{
+								"name": "id",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "depends_on",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "TopologicalSortResult",
+						"kind": "type",
+						"doc_comment": "Result of topological sort.",
+						"source_line": 21,
+						"type_signature": "TopologicalSortResult<T>",
+						"generic_params": [
+							{
+								"name": "T",
+								"constraint": "Sortable"
+							}
+						]
+					},
+					{
+						"name": "topological_sort",
+						"kind": "function",
+						"doc_comment": "Sort items by their dependencies using Kahn's algorithm.\n\nReturns items ordered so that dependencies come before dependents.\nIf a cycle is detected, returns an error with the cycle path.",
+						"source_line": 35,
+						"type_signature": "<T extends Sortable>(items: T[], label?: string): TopologicalSortResult<T>",
+						"return_type": "TopologicalSortResult<T>",
+						"return_description": "Sorted items or error if cycle detected.",
+						"parameters": [
+							{
+								"name": "items",
+								"type": "T[]",
+								"description": "- Array of items to sort."
+							},
+							{
+								"name": "label",
+								"type": "string",
+								"description": "- Label for error messages (e.g. \"resource\", \"step\").",
+								"default_value": "'item'"
+							}
+						]
+					}
+				],
+				"module_comment": "Generic topological sort using Kahn's algorithm.\n\nOrders items so that dependencies come before dependents.\nWorks with any item type that has `id` and optional `depends_on`.",
+				"dependents": ["dag.ts"]
+			},
+			{
 				"path": "source_json.ts",
 				"declarations": [
 					{
@@ -6362,11 +6802,28 @@
 								"description": "- Second string"
 							}
 						]
+					},
+					{
+						"name": "is_binary",
+						"kind": "function",
+						"doc_comment": "Check if content appears to be binary.\n\nChecks for null bytes in the first 8KB of content.",
+						"source_line": 220,
+						"type_signature": "(content: string): boolean",
+						"return_type": "boolean",
+						"return_description": "True if content appears to be binary.",
+						"parameters": [
+							{
+								"name": "content",
+								"type": "string",
+								"description": "- Content to check."
+							}
+						]
 					}
 				],
 				"dependencies": ["iterator.ts"],
 				"dependents": [
 					"benchmark_format.ts",
+					"diff.ts",
 					"fs.ts",
 					"library_json.ts",
 					"package_json.ts",
