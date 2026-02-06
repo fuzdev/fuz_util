@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.48.4
+
+### Patch Changes
+
+- add `dag.ts`, `diff.ts`, and `sort.ts` ([7b3bf38](https://github.com/fuzdev/fuz_util/commit/7b3bf38))
+- add `AsyncSemaphore` to `async.ts` ([7b3bf38](https://github.com/fuzdev/fuz_util/commit/7b3bf38))
+
 ## 0.48.3
 
 ### Patch Changes
