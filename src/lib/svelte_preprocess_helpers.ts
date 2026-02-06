@@ -35,7 +35,7 @@ export interface ResolvedComponentImport {
 /**
  * Checks if a filename matches any exclusion pattern.
  *
- * Returns `false` when `filename` is `undefined` or `exclude` is empty.
+ * Returns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.
  * String patterns use substring matching. RegExp patterns use `.test()`.
  *
  * @param filename The file path to check, or `undefined` for virtual files.
@@ -186,15 +186,19 @@ export const find_import_insert_position = (script: AST.Script): number => {
 };
 
 /**
- * Generates tab-indented import statement lines from an import map.
+ * Generates indented import statement lines from an import map.
  *
  * Default imports produce `import Name from 'path';` lines.
  * Named imports are grouped by path into `import {a, b} from 'path';` lines.
  *
  * @param imports Map of local names to their import info.
+ * @param indent Indentation prefix for each line. @default '\t'
  * @returns A string of newline-separated import statements.
  */
-export const generate_import_lines = (imports: Map<string, PreprocessImportInfo>): string => {
+export const generate_import_lines = (
+	imports: Map<string, PreprocessImportInfo>,
+	indent: string = '\t',
+): string => {
 	const default_imports: Array<[string, string]> = [];
 	const named_by_path: Map<string, Array<string>> = new Map();
 
@@ -213,10 +217,10 @@ export const generate_import_lines = (imports: Map<string, PreprocessImportInfo>
 
 	const lines: Array<string> = [];
 	for (const [name, path] of default_imports) {
-		lines.push(`\timport ${name} from '${path}';`);
+		lines.push(`${indent}import ${name} from '${path}';`);
 	}
 	for (const [path, names] of named_by_path) {
-		lines.push(`\timport {${names.join(', ')}} from '${path}';`);
+		lines.push(`${indent}import {${names.join(', ')}} from '${path}';`);
 	}
 	return lines.join('\n');
 };
@@ -297,13 +301,16 @@ export const escape_svelte_text = (text: string): string => {
  *
  * The sequential `.replace()` calls are safe here because no replacement introduces
  * characters matched by later patterns: backslashes produce `\\` (not matched by
- * subsequent patterns), quotes produce `\'`, and steps 3/4 match actual newline/CR
- * characters (not the two-char strings `\n`/`\r`).
+ * subsequent patterns), quotes produce `\'`, steps 3/4 match actual newline/CR
+ * characters (not the two-char strings `\n`/`\r`), and steps 5/6 match single
+ * Unicode code points that don't appear in any prior replacement output.
  */
 export const escape_js_string = (value: string): string => {
 	return value
 		.replace(/\\/g, '\\\\') // backslashes first
 		.replace(/'/g, "\\'") // single quotes
 		.replace(/\n/g, '\\n') // newlines
-		.replace(/\r/g, '\\r'); // carriage returns
+		.replace(/\r/g, '\\r') // carriage returns
+		.replace(/\u2028/g, '\\u2028') // line separator
+		.replace(/\u2029/g, '\\u2029'); // paragraph separator
 };

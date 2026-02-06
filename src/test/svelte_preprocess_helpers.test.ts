@@ -115,11 +115,31 @@ describe('escape_js_string', () => {
 		// Expected: \\\' (escaped backslash then escaped quote)
 		assert.equal(escape_js_string("\\'"), "\\\\\\'");
 	});
+
+	test('escapes CRLF line endings', () => {
+		assert.equal(escape_js_string('a\r\nb'), 'a\\r\\nb');
+	});
+
+	test('escapes line separator U+2028', () => {
+		assert.equal(escape_js_string('a\u2028b'), 'a\\u2028b');
+	});
+
+	test('escapes paragraph separator U+2029', () => {
+		assert.equal(escape_js_string('a\u2029b'), 'a\\u2029b');
+	});
+
+	test('escapes mixed line terminators', () => {
+		assert.equal(escape_js_string('\n\r\u2028\u2029'), '\\n\\r\\u2028\\u2029');
+	});
 });
 
 describe('should_exclude', () => {
 	test('returns false when filename is undefined', () => {
 		assert.equal(should_exclude(undefined, ['foo']), false);
+	});
+
+	test('returns false when filename is empty string', () => {
+		assert.equal(should_exclude('', ['anything']), false);
 	});
 
 	test('returns false when exclude list is empty', () => {
@@ -364,6 +384,18 @@ describe('extract_static_string', () => {
 			null,
 		);
 	});
+
+	// Svelte parses content="{expr}" (quoted) as an array-wrapped ExpressionTag,
+	// vs content={expr} (unquoted) as a bare ExpressionTag. The array form is
+	// not delegated to evaluate_static_expr — only bare ExpressionTags are.
+	test('returns null for array with single ExpressionTag', () => {
+		assert.equal(
+			extract_static_string([
+				{type: 'ExpressionTag', expression: {type: 'Literal', value: 'hello'}},
+			] as any),
+			null,
+		);
+	});
 });
 
 describe('find_attribute', () => {
@@ -475,6 +507,34 @@ describe('generate_import_lines', () => {
 			"\timport {resolve} from '$app/paths';\n\timport {getContext} from 'svelte';",
 		);
 	});
+
+	test('uses custom indent for default import', () => {
+		const imports: Map<string, PreprocessImportInfo> = new Map([
+			['DocsLink', {path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default'}],
+		]);
+		assert.equal(
+			generate_import_lines(imports, '  '),
+			"  import DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';",
+		);
+	});
+
+	test('uses custom indent for named imports', () => {
+		const imports: Map<string, PreprocessImportInfo> = new Map([
+			['resolve', {path: '$app/paths', kind: 'named'}],
+			['base', {path: '$app/paths', kind: 'named'}],
+		]);
+		assert.equal(
+			generate_import_lines(imports, '    '),
+			"    import {resolve, base} from '$app/paths';",
+		);
+	});
+
+	test('uses empty indent', () => {
+		const imports: Map<string, PreprocessImportInfo> = new Map([
+			['resolve', {path: '$app/paths', kind: 'named'}],
+		]);
+		assert.equal(generate_import_lines(imports, ''), "import {resolve} from '$app/paths';");
+	});
 });
 
 describe('resolve_component_names', () => {
@@ -556,6 +616,49 @@ describe('resolve_component_names', () => {
 		assert.equal(info.import_node.type, 'ImportDeclaration');
 		assert.equal(info.specifier.local.name, 'Mdz');
 	});
+
+	test('resolves named import', () => {
+		const ast = parse(
+			`<script lang="ts">import {Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.ok(names.has('Mdz'));
+		assert.equal(names.size, 1);
+	});
+
+	test('resolves aliased named import', () => {
+		const ast = parse(
+			`<script lang="ts">import {default as Markdown} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.ok(names.has('Markdown'));
+		assert.equal(names.size, 1);
+	});
+
+	test('resolves import from module script', () => {
+		const ast = parse(
+			`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.ok(names.has('Mdz'));
+		assert.equal(names.size, 1);
+	});
+
+	test('resolves multiple specifiers from same import', () => {
+		const ast = parse(
+			`<script lang="ts">import Mdz, {helper} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.ok(names.has('Mdz'));
+		assert.ok(names.has('helper'));
+		assert.equal(names.size, 2);
+		// Both specifiers share the same import_node
+		assert.equal(names.get('Mdz')!.import_node, names.get('helper')!.import_node);
+	});
 });
 
 describe('find_import_insert_position', () => {
@@ -567,10 +670,9 @@ describe('find_import_insert_position', () => {
 </script>`;
 		const ast = parse(source, {modern: true});
 		const pos = find_import_insert_position(ast.instance!);
-		// position should be after the resolve import, before const
-		const before = source.slice(0, pos);
-		assert.ok(before.includes("import {resolve} from '$app/paths';"));
-		assert.ok(!before.includes('const x'));
+		// Position should be immediately after the last import's semicolon
+		const last_import_end = source.indexOf("from '$app/paths';") + "from '$app/paths';".length;
+		assert.equal(pos, last_import_end);
 	});
 
 	test('returns script body start when no imports', () => {
@@ -579,7 +681,6 @@ describe('find_import_insert_position', () => {
 </script>`;
 		const ast = parse(source, {modern: true});
 		const pos = find_import_insert_position(ast.instance!);
-		// should be at the very start of script body content
 		assert.equal(pos, (ast.instance!.content as any).start);
 	});
 
@@ -590,10 +691,8 @@ describe('find_import_insert_position', () => {
 </script>`;
 		const ast = parse(source, {modern: true});
 		const pos = find_import_insert_position(ast.instance!);
-		const before = source.slice(0, pos);
-		const after = source.slice(pos);
-		assert.ok(before.endsWith("';"));
-		assert.ok(after.trimStart().startsWith('const x'));
+		const import_end = source.indexOf("from '@fuzdev/fuz_ui/Mdz.svelte';") + "from '@fuzdev/fuz_ui/Mdz.svelte';".length;
+		assert.equal(pos, import_end);
 	});
 });
 
@@ -604,6 +703,18 @@ describe('has_identifier_in_tree', () => {
 
 	test('returns false for undefined', () => {
 		assert.equal(has_identifier_in_tree(undefined, 'Mdz'), false);
+	});
+
+	test('returns false for number', () => {
+		assert.equal(has_identifier_in_tree(42, 'Mdz'), false);
+	});
+
+	test('returns false for string', () => {
+		assert.equal(has_identifier_in_tree('Mdz', 'Mdz'), false);
+	});
+
+	test('returns false for boolean', () => {
+		assert.equal(has_identifier_in_tree(true, 'Mdz'), false);
 	});
 
 	test('returns false for empty object', () => {
