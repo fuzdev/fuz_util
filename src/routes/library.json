@@ -52,6 +52,7 @@
 		"peerDependencies": {
 			"@types/node": "^24",
 			"esm-env": "^1.2.2",
+			"svelte": "^5",
 			"zod": "^4.0.14"
 		},
 		"peerDependenciesMeta": {
@@ -59,6 +60,9 @@
 				"optional": true
 			},
 			"esm-env": {
+				"optional": true
+			},
+			"svelte": {
 				"optional": true
 			},
 			"zod": {
@@ -6829,6 +6833,236 @@
 					"package_json.ts",
 					"url.ts"
 				]
+			},
+			{
+				"path": "svelte_preprocess_helpers.ts",
+				"declarations": [
+					{
+						"name": "PreprocessImportInfo",
+						"kind": "type",
+						"doc_comment": "Import metadata for a single import specifier.",
+						"source_line": 18,
+						"type_signature": "PreprocessImportInfo",
+						"properties": [
+							{
+								"name": "path",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "The module path to import from."
+							},
+							{
+								"name": "kind",
+								"kind": "variable",
+								"type_signature": "'default' | 'named'",
+								"doc_comment": "Whether this is a default or named import."
+							}
+						]
+					},
+					{
+						"name": "ResolvedComponentImport",
+						"kind": "type",
+						"doc_comment": "Information about a resolved component import.",
+						"source_line": 26,
+						"type_signature": "ResolvedComponentImport",
+						"properties": [
+							{
+								"name": "import_node",
+								"kind": "variable",
+								"type_signature": "any",
+								"doc_comment": "The `ImportDeclaration` AST node that provides this name."
+							},
+							{
+								"name": "specifier",
+								"kind": "variable",
+								"type_signature": "any",
+								"doc_comment": "The specific import specifier for this name."
+							}
+						]
+					},
+					{
+						"name": "should_exclude",
+						"kind": "function",
+						"doc_comment": "Checks if a filename matches any exclusion pattern.\n\nReturns `false` when `filename` is `undefined` or `exclude` is empty.\nString patterns use substring matching. RegExp patterns use `.test()`.",
+						"source_line": 45,
+						"type_signature": "(filename: string | undefined, exclude: (string | RegExp)[]): boolean",
+						"return_type": "boolean",
+						"return_description": "`true` if the file should be excluded from processing.",
+						"parameters": [
+							{
+								"name": "filename",
+								"type": "string | undefined",
+								"description": "The file path to check, or `undefined` for virtual files."
+							},
+							{
+								"name": "exclude",
+								"type": "(string | RegExp)[]",
+								"description": "Array of string or RegExp exclusion patterns."
+							}
+						]
+					},
+					{
+						"name": "find_attribute",
+						"kind": "function",
+						"doc_comment": "Finds an attribute by name on a component AST node.\n\nIterates the node's `attributes` array and returns the first `Attribute`\nnode whose `name` matches. Skips `SpreadAttribute`, directive, and other node types.",
+						"source_line": 65,
+						"type_signature": "(node: Component, name: string): Attribute | undefined",
+						"return_type": "Attribute | undefined",
+						"return_description": "The matching `Attribute` node, or `undefined` if not found.",
+						"parameters": [
+							{
+								"name": "node",
+								"type": "Component",
+								"description": "The component AST node to search."
+							},
+							{
+								"name": "name",
+								"type": "string",
+								"description": "The attribute name to find."
+							}
+						]
+					},
+					{
+						"name": "evaluate_static_expr",
+						"kind": "function",
+						"doc_comment": "Recursively evaluates an expression AST node to a static string value.\n\nHandles string `Literal`, `TemplateLiteral` without interpolation, and\n`BinaryExpression` with the `+` operator (string concatenation).\nReturns `null` for dynamic expressions, non-string literals, or unsupported node types.",
+						"source_line": 85,
+						"type_signature": "(expr: any): string | null",
+						"return_type": "string | null",
+						"return_description": "The resolved static string, or `null` if the expression is dynamic.",
+						"parameters": [
+							{
+								"name": "expr",
+								"type": "any",
+								"description": "An ESTree-compatible expression AST node."
+							}
+						]
+					},
+					{
+						"name": "extract_static_string",
+						"kind": "function",
+						"doc_comment": "Extracts a static string value from a Svelte attribute value AST node.\n\nHandles three forms:\n- Boolean `true` (bare attribute like `inline`) -- returns `null`.\n- Array with a single `Text` node (quoted attribute like `content=\"text\"`) --\n  returns the text data.\n- `ExpressionTag` (expression like `content={'text'}`) -- delegates to `evaluate_static_expr`.\n\nReturns `null` for null literals, mixed arrays, dynamic expressions, and non-string values.",
+						"source_line": 115,
+						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[]): string | null",
+						"return_type": "string | null",
+						"return_description": "The resolved static string, or `null` if the value is dynamic.",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "true | ExpressionTag | (ExpressionTag | Text)[]",
+								"description": "The attribute value from `AST.Attribute['value']`."
+							}
+						]
+					},
+					{
+						"name": "resolve_component_names",
+						"kind": "function",
+						"doc_comment": "Resolves local names that import from specified source paths.\n\nScans `ImportDeclaration` nodes in both the instance and module scripts.\nHandles default, named, and aliased imports. Skips namespace imports.\nReturns import node references alongside names to support import removal.",
+						"source_line": 146,
+						"type_signature": "(ast: Root, component_imports: string[]): Map<string, ResolvedComponentImport>",
+						"return_type": "Map<string, ResolvedComponentImport>",
+						"return_description": "Map of local names to their resolved import info.",
+						"parameters": [
+							{
+								"name": "ast",
+								"type": "Root",
+								"description": "The parsed Svelte AST root node."
+							},
+							{
+								"name": "component_imports",
+								"type": "string[]",
+								"description": "Array of import source paths to match against."
+							}
+						]
+					},
+					{
+						"name": "find_import_insert_position",
+						"kind": "function",
+						"doc_comment": "Finds the position to insert new import statements within a script block.\n\nReturns the end position of the last `ImportDeclaration`, or the start\nof the script body content if no imports exist.",
+						"source_line": 174,
+						"type_signature": "(script: Script): number",
+						"return_type": "number",
+						"return_description": "The character position where new imports should be inserted.",
+						"parameters": [
+							{
+								"name": "script",
+								"type": "Script",
+								"description": "The parsed `AST.Script` node."
+							}
+						]
+					},
+					{
+						"name": "generate_import_lines",
+						"kind": "function",
+						"doc_comment": "Generates tab-indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
+						"source_line": 197,
+						"type_signature": "(imports: Map<string, PreprocessImportInfo>): string",
+						"return_type": "string",
+						"return_description": "A string of newline-separated import statements.",
+						"parameters": [
+							{
+								"name": "imports",
+								"type": "Map<string, PreprocessImportInfo>",
+								"description": "Map of local names to their import info."
+							}
+						]
+					},
+					{
+						"name": "has_identifier_in_tree",
+						"kind": "function",
+						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
+						"source_line": 240,
+						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
+						"return_type": "boolean",
+						"return_description": "`true` if a matching `Identifier` node is found.",
+						"parameters": [
+							{
+								"name": "node",
+								"type": "unknown",
+								"description": "The AST subtree to search."
+							},
+							{
+								"name": "name",
+								"type": "string",
+								"description": "The identifier name to look for."
+							},
+							{
+								"name": "skip",
+								"type": "Set<unknown> | undefined",
+								"optional": true,
+								"description": "Set of AST nodes to skip during traversal."
+							}
+						]
+					},
+					{
+						"name": "escape_svelte_text",
+						"kind": "function",
+						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
+						"source_line": 274,
+						"type_signature": "(text: string): string",
+						"return_type": "string",
+						"parameters": [
+							{
+								"name": "text",
+								"type": "string"
+							}
+						]
+					},
+					{
+						"name": "escape_js_string",
+						"kind": "function",
+						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.\n\nUsed for attribute values like `reference={'escaped_value'}` and\n`content={'escaped_value'}`. Single quotes are used because the emitted\nmarkup may contain double quotes (e.g., in HTML attribute values).\n\nThe sequential `.replace()` calls are safe here because no replacement introduces\ncharacters matched by later patterns: backslashes produce `\\\\` (not matched by\nsubsequent patterns), quotes produce `\\'`, and steps 3/4 match actual newline/CR\ncharacters (not the two-char strings `\\n`/`\\r`).",
+						"source_line": 303,
+						"type_signature": "(value: string): string",
+						"return_type": "string",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "string"
+							}
+						]
+					}
+				],
+				"module_comment": "Shared helper functions for Svelte preprocessors.\n\nProvides AST utilities for detecting static content, resolving imports,\nmanaging import statements, and escaping strings for Svelte templates.\nUsed by `svelte_preprocess_mdz` in fuz_ui, `svelte_preprocess_fuz_code`\nin fuz_code, and potentially other Svelte preprocessors.\n\nUses `import type` from `svelte/compiler` for AST types only — no runtime\nSvelte dependency. Consumers must have `svelte` installed for type resolution."
 			},
 			{
 				"path": "throttle.ts",

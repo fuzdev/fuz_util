@@ -27,7 +27,8 @@ fuz_util is a **foundational utility library**:
 
 - Pure TypeScript utilities (string, array, object, async, etc.)
 - Zod schemas for common data structures (`PackageJson`)
-- No UI components, no Svelte dependency
+- Svelte preprocessor helpers (type-only Svelte dependency, no runtime dep)
+- No UI components
 - Used by gro (build tools) and fuz (UI/stack)
 
 ## Key modules
@@ -110,6 +111,13 @@ See `docs/benchmark.md` for full documentation.
 - `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
   detection)
 
+### Svelte preprocessor utilities
+
+- `svelte_preprocess_helpers.ts` - shared helpers for Svelte preprocessors (AST
+  utilities, import management, string escaping). Uses `import type` from
+  `svelte/compiler` for types only — no runtime Svelte dependency. Used by
+  `svelte_preprocess_mdz` (fuz_ui) and `svelte_preprocess_fuz_code` (fuz_code).
+
 ### Other
 
 - `random.ts`, `random_alea.ts` - random number generation
@@ -159,7 +167,7 @@ Note: Browser timing is coarsened due to Spectre/Meltdown mitigations.
 ## What fuz_util does NOT include
 
 - UI components (use fuz_ui)
-- Svelte-specific code (use fuz_ui)
+- Svelte-specific UI code (use fuz_ui; preprocessor helpers are here)
 - Build tooling (use gro)
 - CSS utilities (use fuz_css)
 - UI helper functions for source_json (use fuz_ui's helpers)
@@ -170,7 +178,7 @@ Note: Browser timing is coarsened due to Spectre/Meltdown mitigations.
 - Prettier with tabs, 100 char width
 - Node >= 22.15
 - Tests in `src/test/` (not co-located)
-- No Svelte dependency (pure TypeScript)
+- No runtime Svelte dependency (`svelte_preprocess_helpers.ts` uses type-only imports)
 
 ## Related projects
 
