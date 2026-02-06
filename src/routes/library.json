@@ -7056,8 +7056,8 @@
 					{
 						"name": "escape_js_string",
 						"kind": "function",
-						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.\n\nUsed for attribute values like `reference={'escaped_value'}` and\n`content={'escaped_value'}`. Single quotes are used because the emitted\nmarkup may contain double quotes (e.g., in HTML attribute values).\n\nThe sequential `.replace()` calls are safe here because no replacement introduces\ncharacters matched by later patterns: backslashes produce `\\\\` (not matched by\nsubsequent patterns), quotes produce `\\'`, steps 3/4 match actual newline/CR\ncharacters (not the two-char strings `\\n`/`\\r`), and steps 5/6 match single\nUnicode code points that don't appear in any prior replacement output.",
-						"source_line": 308,
+						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.\n\nUsed for attribute values like `reference={'escaped_value'}` and\n`content={'escaped_value'}`. Single quotes are used because the emitted\nmarkup may contain double quotes (e.g., in HTML attribute values).\n\nUses a single-pass regex replacement, consistent with `escape_svelte_text`.",
+						"source_line": 303,
 						"type_signature": "(value: string): string",
 						"return_type": "string",
 						"parameters": [
