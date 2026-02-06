@@ -275,8 +275,8 @@ export const has_identifier_in_tree = (
  * The preprocessor emits raw template text where `&` is NOT auto-escaped, so
  * manual escaping is required to match the runtime behavior.
  */
-export const escape_svelte_text = (text: string): string => {
-	return text.replace(/[{}<&]/g, (ch) => {
+export const escape_svelte_text = (text: string): string =>
+	text.replace(/[{}<&]/g, (ch) => {
 		switch (ch) {
 			case '{':
 				return "{'{'}";
@@ -290,7 +290,6 @@ export const escape_svelte_text = (text: string): string => {
 				return ch;
 		}
 	});
-};
 
 /**
  * Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.
@@ -299,18 +298,24 @@ export const escape_svelte_text = (text: string): string => {
  * `content={'escaped_value'}`. Single quotes are used because the emitted
  * markup may contain double quotes (e.g., in HTML attribute values).
  *
- * The sequential `.replace()` calls are safe here because no replacement introduces
- * characters matched by later patterns: backslashes produce `\\` (not matched by
- * subsequent patterns), quotes produce `\'`, steps 3/4 match actual newline/CR
- * characters (not the two-char strings `\n`/`\r`), and steps 5/6 match single
- * Unicode code points that don't appear in any prior replacement output.
+ * Uses a single-pass regex replacement, consistent with `escape_svelte_text`.
  */
-export const escape_js_string = (value: string): string => {
-	return value
-		.replace(/\\/g, '\\\\') // backslashes first
-		.replace(/'/g, "\\'") // single quotes
-		.replace(/\n/g, '\\n') // newlines
-		.replace(/\r/g, '\\r') // carriage returns
-		.replace(/\u2028/g, '\\u2028') // line separator
-		.replace(/\u2029/g, '\\u2029'); // paragraph separator
-};
+export const escape_js_string = (value: string): string =>
+	value.replace(/[\\'\n\r\u2028\u2029]/g, (ch) => {
+		switch (ch) {
+			case '\\':
+				return '\\\\';
+			case "'":
+				return "\\'";
+			case '\n':
+				return '\\n';
+			case '\r':
+				return '\\r';
+			case '\u2028':
+				return '\\u2028';
+			case '\u2029':
+				return '\\u2029';
+			default:
+				return ch;
+		}
+	});
