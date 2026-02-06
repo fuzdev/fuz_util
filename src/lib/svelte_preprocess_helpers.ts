@@ -12,6 +12,7 @@
  * @module
  */
 
+import type {Expression, ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier} from 'estree';
 import type {AST} from 'svelte/compiler';
 
 /** Import metadata for a single import specifier. */
@@ -24,12 +25,10 @@ export interface PreprocessImportInfo {
 
 /** Information about a resolved component import. */
 export interface ResolvedComponentImport {
-	// TODO: use proper ESTree types (e.g. import('estree').ImportDeclaration)
 	/** The `ImportDeclaration` AST node that provides this name. */
-	import_node: any;
-	// TODO: use proper ESTree types (e.g. import('estree').ImportSpecifier | ImportDefaultSpecifier)
+	import_node: ImportDeclaration;
 	/** The specific import specifier for this name. */
-	specifier: any;
+	specifier: ImportSpecifier | ImportDefaultSpecifier;
 }
 
 /**
@@ -78,17 +77,16 @@ export const find_attribute = (node: AST.Component, name: string): AST.Attribute
  * `BinaryExpression` with the `+` operator (string concatenation).
  * Returns `null` for dynamic expressions, non-string literals, or unsupported node types.
  *
- * @param expr An ESTree-compatible expression AST node.
+ * @param expr An ESTree expression AST node.
  * @returns The resolved static string, or `null` if the expression is dynamic.
  */
-// TODO: use proper ESTree expression type instead of `any`
-export const evaluate_static_expr = (expr: any): string | null => {
+export const evaluate_static_expr = (expr: Expression): string | null => {
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
 	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
-		// TODO: use proper ESTree TemplateElement type instead of `any`
-		return expr.quasis.map((q: any) => q.value.cooked ?? q.value.raw).join('');
+		return expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
 	}
 	if (expr.type === 'BinaryExpression' && expr.operator === '+') {
+		if (expr.left.type === 'PrivateIdentifier') return null;
 		const left = evaluate_static_expr(expr.left);
 		if (left === null) return null;
 		const right = evaluate_static_expr(expr.right);

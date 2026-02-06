@@ -1,5 +1,6 @@
 import {test, assert, describe} from 'vitest';
 import {parse} from 'svelte/compiler';
+import type {Expression} from 'estree';
 
 import {
 	should_exclude,
@@ -173,19 +174,19 @@ describe('should_exclude', () => {
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 'hello'}), 'hello');
+		assert.equal(evaluate_static_expr({type: 'Literal', value: 'hello'} as Expression), 'hello');
 	});
 
 	test('returns null for number literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 42}), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: 42} as Expression), null);
 	});
 
 	test('returns null for boolean literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: true}), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: true} as Expression), null);
 	});
 
 	test('returns null for null literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: null}), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: null} as Expression), null);
 	});
 
 	test('returns cooked value for template literal without interpolation', () => {
@@ -193,8 +194,8 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
 				expressions: [],
-				quasis: [{value: {cooked: 'hello', raw: 'hello'}}],
-			}),
+				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'hello', raw: 'hello'}}],
+			} as Expression),
 			'hello',
 		);
 	});
@@ -204,8 +205,11 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
 				expressions: [{type: 'Identifier', name: 'x'}],
-				quasis: [{value: {cooked: 'a', raw: 'a'}}, {value: {cooked: 'b', raw: 'b'}}],
-			}),
+				quasis: [
+					{type: 'TemplateElement', tail: false, value: {cooked: 'a', raw: 'a'}},
+					{type: 'TemplateElement', tail: true, value: {cooked: 'b', raw: 'b'}},
+				],
+			} as Expression),
 			null,
 		);
 	});
@@ -217,7 +221,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Literal', value: 'hello '},
 				right: {type: 'Literal', value: 'world'},
-			}),
+			} as Expression),
 			'hello world',
 		);
 	});
@@ -234,7 +238,7 @@ describe('evaluate_static_expr', () => {
 					right: {type: 'Literal', value: 'b'},
 				},
 				right: {type: 'Literal', value: 'c'},
-			}),
+			} as Expression),
 			'abc',
 		);
 	});
@@ -246,7 +250,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Identifier', name: 'x'},
 				right: {type: 'Literal', value: 'b'},
-			}),
+			} as Expression),
 			null,
 		);
 	});
@@ -258,7 +262,7 @@ describe('evaluate_static_expr', () => {
 				operator: '-',
 				left: {type: 'Literal', value: 'a'},
 				right: {type: 'Literal', value: 'b'},
-			}),
+			} as Expression),
 			null,
 		);
 	});
@@ -270,7 +274,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Literal', value: 'a'},
 				right: {type: 'Identifier', name: 'x'},
-			}),
+			} as Expression),
 			null,
 		);
 	});
@@ -284,26 +288,29 @@ describe('evaluate_static_expr', () => {
 				right: {
 					type: 'TemplateLiteral',
 					expressions: [],
-					quasis: [{value: {cooked: 'world', raw: 'world'}}],
+					quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'world', raw: 'world'}}],
 				},
-			}),
+			} as Expression),
 			'hello world',
 		);
 	});
 
 	test('returns value for empty string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: ''}), '');
+		assert.equal(evaluate_static_expr({type: 'Literal', value: ''} as Expression), '');
 	});
 
 	test('returns null for call expression', () => {
 		assert.equal(
-			evaluate_static_expr({type: 'CallExpression', callee: {type: 'Identifier', name: 'fn'}}),
+			evaluate_static_expr({
+				type: 'CallExpression',
+				callee: {type: 'Identifier', name: 'fn'},
+			} as Expression),
 			null,
 		);
 	});
 
 	test('returns null for identifier', () => {
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}), null);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression), null);
 	});
 
 	test('falls back to raw when cooked is null', () => {
@@ -311,8 +318,8 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
 				expressions: [],
-				quasis: [{value: {cooked: null, raw: '\\x41'}}],
-			}),
+				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: null, raw: '\\x41'}}],
+			} as Expression),
 			'\\x41',
 		);
 	});
