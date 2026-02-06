@@ -6882,7 +6882,7 @@
 					{
 						"name": "should_exclude",
 						"kind": "function",
-						"doc_comment": "Checks if a filename matches any exclusion pattern.\n\nReturns `false` when `filename` is `undefined` or `exclude` is empty.\nString patterns use substring matching. RegExp patterns use `.test()`.",
+						"doc_comment": "Checks if a filename matches any exclusion pattern.\n\nReturns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.\nString patterns use substring matching. RegExp patterns use `.test()`.",
 						"source_line": 45,
 						"type_signature": "(filename: string | undefined, exclude: (string | RegExp)[]): boolean",
 						"return_type": "boolean",
@@ -6993,9 +6993,9 @@
 					{
 						"name": "generate_import_lines",
 						"kind": "function",
-						"doc_comment": "Generates tab-indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
-						"source_line": 197,
-						"type_signature": "(imports: Map<string, PreprocessImportInfo>): string",
+						"doc_comment": "Generates indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
+						"source_line": 198,
+						"type_signature": "(imports: Map<string, PreprocessImportInfo>, indent?: string): string",
 						"return_type": "string",
 						"return_description": "A string of newline-separated import statements.",
 						"parameters": [
@@ -7003,6 +7003,12 @@
 								"name": "imports",
 								"type": "Map<string, PreprocessImportInfo>",
 								"description": "Map of local names to their import info."
+							},
+							{
+								"name": "indent",
+								"type": "string",
+								"description": "Indentation prefix for each line.",
+								"default_value": "'\\t'"
 							}
 						]
 					},
@@ -7010,7 +7016,7 @@
 						"name": "has_identifier_in_tree",
 						"kind": "function",
 						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
-						"source_line": 240,
+						"source_line": 244,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if a matching `Identifier` node is found.",
@@ -7037,7 +7043,7 @@
 						"name": "escape_svelte_text",
 						"kind": "function",
 						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
-						"source_line": 274,
+						"source_line": 278,
 						"type_signature": "(text: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -7050,8 +7056,8 @@
 					{
 						"name": "escape_js_string",
 						"kind": "function",
-						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.\n\nUsed for attribute values like `reference={'escaped_value'}` and\n`content={'escaped_value'}`. Single quotes are used because the emitted\nmarkup may contain double quotes (e.g., in HTML attribute values).\n\nThe sequential `.replace()` calls are safe here because no replacement introduces\ncharacters matched by later patterns: backslashes produce `\\\\` (not matched by\nsubsequent patterns), quotes produce `\\'`, and steps 3/4 match actual newline/CR\ncharacters (not the two-char strings `\\n`/`\\r`).",
-						"source_line": 303,
+						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.\n\nUsed for attribute values like `reference={'escaped_value'}` and\n`content={'escaped_value'}`. Single quotes are used because the emitted\nmarkup may contain double quotes (e.g., in HTML attribute values).\n\nThe sequential `.replace()` calls are safe here because no replacement introduces\ncharacters matched by later patterns: backslashes produce `\\\\` (not matched by\nsubsequent patterns), quotes produce `\\'`, steps 3/4 match actual newline/CR\ncharacters (not the two-char strings `\\n`/`\\r`), and steps 5/6 match single\nUnicode code points that don't appear in any prior replacement output.",
+						"source_line": 308,
 						"type_signature": "(value: string): string",
 						"return_type": "string",
 						"parameters": [

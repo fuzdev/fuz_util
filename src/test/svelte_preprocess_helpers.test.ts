@@ -618,10 +618,9 @@ describe('resolve_component_names', () => {
 	});
 
 	test('resolves named import', () => {
-		const ast = parse(
-			`<script lang="ts">import {Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
-		);
+		const ast = parse(`<script lang="ts">import {Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
+			modern: true,
+		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
 		assert.equal(names.size, 1);
@@ -638,10 +637,9 @@ describe('resolve_component_names', () => {
 	});
 
 	test('resolves import from module script', () => {
-		const ast = parse(
-			`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
-		);
+		const ast = parse(`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
+			modern: true,
+		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
 		assert.equal(names.size, 1);
@@ -691,7 +689,9 @@ describe('find_import_insert_position', () => {
 </script>`;
 		const ast = parse(source, {modern: true});
 		const pos = find_import_insert_position(ast.instance!);
-		const import_end = source.indexOf("from '@fuzdev/fuz_ui/Mdz.svelte';") + "from '@fuzdev/fuz_ui/Mdz.svelte';".length;
+		const import_end =
+			source.indexOf("from '@fuzdev/fuz_ui/Mdz.svelte';") +
+			"from '@fuzdev/fuz_ui/Mdz.svelte';".length;
 		assert.equal(pos, import_end);
 	});
 });
