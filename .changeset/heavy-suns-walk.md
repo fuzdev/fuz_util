@@ -2,4 +2,4 @@
 '@fuzdev/fuz_util': patch
 ---
 
-add `svelte_preprocessor_helpers.ts`
+add `svelte_preprocess_helpers.ts`
