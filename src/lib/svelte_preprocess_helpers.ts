@@ -136,6 +136,50 @@ export const extract_static_string = (
 	return evaluate_static_expr(expr, bindings);
 };
 
+/** Result of extracting a conditional expression with static string branches. */
+export interface ConditionalStaticStrings {
+	/** The source text of the test/condition expression. */
+	test_source: string;
+	/** The static string value of the consequent (truthy) branch. */
+	consequent: string;
+	/** The static string value of the alternate (falsy) branch. */
+	alternate: string;
+}
+
+/**
+ * Extracts a conditional expression where both branches are static strings.
+ *
+ * Handles `content={test ? 'a' : 'b'}` where both the consequent and alternate
+ * branches resolve to static strings via `evaluate_static_expr`. The test expression
+ * is preserved as source text (sliced from the original source) since it may be dynamic.
+ *
+ * Returns `null` if the attribute value is not an `ExpressionTag` containing a
+ * `ConditionalExpression`, or if either branch is not statically resolvable.
+ *
+ * @param value The attribute value from `AST.Attribute['value']`.
+ * @param source The full source string (needed to slice the test expression source text).
+ * @param bindings Map of variable names to their resolved static string values.
+ * @returns The condition source and both branch values, or `null` if not extractable.
+ */
+export const try_extract_conditional = (
+	value: AST.Attribute['value'],
+	source: string,
+	bindings: ReadonlyMap<string, string>,
+): ConditionalStaticStrings | null => {
+	if (value === true || Array.isArray(value)) return null;
+	const expr = value.expression;
+	if (expr.type !== 'ConditionalExpression') return null;
+
+	const consequent = evaluate_static_expr(expr.consequent, bindings);
+	if (consequent === null) return null;
+	const alternate = evaluate_static_expr(expr.alternate, bindings);
+	if (alternate === null) return null;
+
+	const test = expr.test as any;
+	const test_source = source.slice(test.start, test.end);
+	return {test_source, consequent, alternate};
+};
+
 // TODO cross-import tracing: resolve `import {x} from './constants.js'` by reading
 // and parsing the imported module, extracting `export const` values. Would need path
 // resolution ($lib, tsconfig paths), a Program-node variant of this function, and

@@ -6,6 +6,7 @@ import {
 	find_attribute,
 	evaluate_static_expr,
 	extract_static_string,
+	try_extract_conditional,
 	build_static_bindings,
 	resolve_component_names,
 	generate_import_lines,
@@ -1374,5 +1375,206 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
 			true,
 		);
+	});
+});
+
+describe('try_extract_conditional', () => {
+	test('returns null for boolean true value', () => {
+		assert.equal(try_extract_conditional(true, '', new Map()), null);
+	});
+
+	test('returns null for array value', () => {
+		assert.equal(
+			try_extract_conditional([{type: 'Text', data: 'hello'}] as any, '', new Map()),
+			null,
+		);
+	});
+
+	test('returns null for non-conditional expression', () => {
+		assert.equal(
+			try_extract_conditional(
+				{type: 'ExpressionTag', expression: {type: 'Literal', value: 'hello'}} as any,
+				'hello',
+				new Map(),
+			),
+			null,
+		);
+	});
+
+	test('extracts conditional with static string literal branches', () => {
+		const source = "show ? 'yes' : 'no'";
+		const result = try_extract_conditional(
+			{
+				type: 'ExpressionTag',
+				expression: {
+					type: 'ConditionalExpression',
+					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+					consequent: {type: 'Literal', value: 'yes'},
+					alternate: {type: 'Literal', value: 'no'},
+				},
+			} as any,
+			source,
+			new Map(),
+		);
+		assert.ok(result !== null);
+		assert.equal(result.test_source, 'show');
+		assert.equal(result.consequent, 'yes');
+		assert.equal(result.alternate, 'no');
+	});
+
+	test('returns null when consequent is dynamic', () => {
+		const source = 'show ? x : "no"';
+		assert.equal(
+			try_extract_conditional(
+				{
+					type: 'ExpressionTag',
+					expression: {
+						type: 'ConditionalExpression',
+						test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+						consequent: {type: 'Identifier', name: 'x'},
+						alternate: {type: 'Literal', value: 'no'},
+					},
+				} as any,
+				source,
+				new Map(),
+			),
+			null,
+		);
+	});
+
+	test('returns null when alternate is dynamic', () => {
+		const source = 'show ? "yes" : x';
+		assert.equal(
+			try_extract_conditional(
+				{
+					type: 'ExpressionTag',
+					expression: {
+						type: 'ConditionalExpression',
+						test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+						consequent: {type: 'Literal', value: 'yes'},
+						alternate: {type: 'Identifier', name: 'x'},
+					},
+				} as any,
+				source,
+				new Map(),
+			),
+			null,
+		);
+	});
+
+	test('resolves branches through bindings', () => {
+		const source = 'show ? A : B';
+		const bindings = new Map([
+			['A', 'yes'],
+			['B', 'no'],
+		]);
+		const result = try_extract_conditional(
+			{
+				type: 'ExpressionTag',
+				expression: {
+					type: 'ConditionalExpression',
+					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+					consequent: {type: 'Identifier', name: 'A'},
+					alternate: {type: 'Identifier', name: 'B'},
+				},
+			} as any,
+			source,
+			bindings,
+		);
+		assert.ok(result !== null);
+		assert.equal(result.consequent, 'yes');
+		assert.equal(result.alternate, 'no');
+	});
+
+	test('preserves complex condition source text', () => {
+		const source = 'items.length > 0 ? "yes" : "no"';
+		const result = try_extract_conditional(
+			{
+				type: 'ExpressionTag',
+				expression: {
+					type: 'ConditionalExpression',
+					test: {type: 'BinaryExpression', start: 0, end: 16},
+					consequent: {type: 'Literal', value: 'yes'},
+					alternate: {type: 'Literal', value: 'no'},
+				},
+			} as any,
+			source,
+			new Map(),
+		);
+		assert.ok(result !== null);
+		assert.equal(result.test_source, 'items.length > 0');
+	});
+
+	test('handles empty string branch', () => {
+		const source = "show ? 'content' : ''";
+		const result = try_extract_conditional(
+			{
+				type: 'ExpressionTag',
+				expression: {
+					type: 'ConditionalExpression',
+					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+					consequent: {type: 'Literal', value: 'content'},
+					alternate: {type: 'Literal', value: ''},
+				},
+			} as any,
+			source,
+			new Map(),
+		);
+		assert.ok(result !== null);
+		assert.equal(result.consequent, 'content');
+		assert.equal(result.alternate, '');
+	});
+
+	test('returns null for nested ternary in alternate', () => {
+		const source = "a ? 'x' : b ? 'y' : 'z'";
+		assert.equal(
+			try_extract_conditional(
+				{
+					type: 'ExpressionTag',
+					expression: {
+						type: 'ConditionalExpression',
+						test: {type: 'Identifier', name: 'a', start: 0, end: 1},
+						consequent: {type: 'Literal', value: 'x'},
+						alternate: {
+							type: 'ConditionalExpression',
+							test: {type: 'Identifier', name: 'b'},
+							consequent: {type: 'Literal', value: 'y'},
+							alternate: {type: 'Literal', value: 'z'},
+						},
+					},
+				} as any,
+				source,
+				new Map(),
+			),
+			null,
+		);
+	});
+
+	test('handles template literal branches', () => {
+		const source = 'show ? `yes` : `no`';
+		const result = try_extract_conditional(
+			{
+				type: 'ExpressionTag',
+				expression: {
+					type: 'ConditionalExpression',
+					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
+					consequent: {
+						type: 'TemplateLiteral',
+						expressions: [],
+						quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'yes', raw: 'yes'}}],
+					},
+					alternate: {
+						type: 'TemplateLiteral',
+						expressions: [],
+						quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'no', raw: 'no'}}],
+					},
+				},
+			} as any,
+			source,
+			new Map(),
+		);
+		assert.ok(result !== null);
+		assert.equal(result.consequent, 'yes');
+		assert.equal(result.alternate, 'no');
 	});
 });

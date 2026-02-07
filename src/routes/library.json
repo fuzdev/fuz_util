@@ -6985,10 +6985,63 @@
 						]
 					},
 					{
+						"name": "ConditionalStaticStrings",
+						"kind": "type",
+						"doc_comment": "Result of extracting a conditional expression with static string branches.",
+						"source_line": 140,
+						"type_signature": "ConditionalStaticStrings",
+						"properties": [
+							{
+								"name": "test_source",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "The source text of the test/condition expression."
+							},
+							{
+								"name": "consequent",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "The static string value of the consequent (truthy) branch."
+							},
+							{
+								"name": "alternate",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "The static string value of the alternate (falsy) branch."
+							}
+						]
+					},
+					{
+						"name": "try_extract_conditional",
+						"kind": "function",
+						"doc_comment": "Extracts a conditional expression where both branches are static strings.\n\nHandles `content={test ? 'a' : 'b'}` where both the consequent and alternate\nbranches resolve to static strings via `evaluate_static_expr`. The test expression\nis preserved as source text (sliced from the original source) since it may be dynamic.\n\nReturns `null` if the attribute value is not an `ExpressionTag` containing a\n`ConditionalExpression`, or if either branch is not statically resolvable.",
+						"source_line": 164,
+						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], source: string, bindings: ReadonlyMap<string, string>): ConditionalStaticStrings | null",
+						"return_type": "ConditionalStaticStrings | null",
+						"return_description": "The condition source and both branch values, or `null` if not extractable.",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "true | ExpressionTag | (ExpressionTag | Text)[]",
+								"description": "The attribute value from `AST.Attribute['value']`."
+							},
+							{
+								"name": "source",
+								"type": "string",
+								"description": "The full source string (needed to slice the test expression source text)."
+							},
+							{
+								"name": "bindings",
+								"type": "ReadonlyMap<string, string>",
+								"description": "Map of variable names to their resolved static string values."
+							}
+						]
+					},
+					{
 						"name": "build_static_bindings",
 						"kind": "function",
 						"doc_comment": "Builds a map of statically resolvable `const` bindings from a Svelte AST.\n\nScans top-level `const` variable declarations in both instance and module scripts.\nFor each declarator with a plain `Identifier` pattern and a statically evaluable\ninitializer, adds the binding to the map. Processes declarations in source order\nso that chained references resolve: `const a = 'x'; const b = a;` maps `b` to `'x'`.\n\nSkips destructuring patterns, `let`/`var` declarations, and declarations\nwhose initializers reference dynamic values.",
-						"source_line": 158,
+						"source_line": 202,
 						"type_signature": "(ast: Root): Map<string, string>",
 						"return_type": "Map<string, string>",
 						"return_description": "Map of variable names to their resolved static string values.",
@@ -7004,7 +7057,7 @@
 						"name": "resolve_component_names",
 						"kind": "function",
 						"doc_comment": "Resolves local names that import from specified source paths.\n\nScans `ImportDeclaration` nodes in both the instance and module scripts.\nHandles default, named, and aliased imports. Skips namespace imports.\nReturns import node references alongside names to support import removal.",
-						"source_line": 188,
+						"source_line": 232,
 						"type_signature": "(ast: Root, component_imports: string[]): Map<string, ResolvedComponentImport>",
 						"return_type": "Map<string, ResolvedComponentImport>",
 						"return_description": "Map of local names to their resolved import info.",
@@ -7025,7 +7078,7 @@
 						"name": "find_import_insert_position",
 						"kind": "function",
 						"doc_comment": "Finds the position to insert new import statements within a script block.\n\nReturns the end position of the last `ImportDeclaration`, or the start\nof the script body content if no imports exist.",
-						"source_line": 216,
+						"source_line": 260,
 						"type_signature": "(script: Script): number",
 						"return_type": "number",
 						"return_description": "The character position where new imports should be inserted.",
@@ -7041,7 +7094,7 @@
 						"name": "generate_import_lines",
 						"kind": "function",
 						"doc_comment": "Generates indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
-						"source_line": 240,
+						"source_line": 284,
 						"type_signature": "(imports: Map<string, PreprocessImportInfo>, indent?: string): string",
 						"return_type": "string",
 						"return_description": "A string of newline-separated import statements.",
@@ -7063,7 +7116,7 @@
 						"name": "has_identifier_in_tree",
 						"kind": "function",
 						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSkips `Identifier` nodes in non-reference positions defined by\n`NON_REFERENCE_FIELDS` — for example, `obj.Mdz` (non-computed member property),\n`{ Mdz: value }` (non-computed object key), and statement labels.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
-						"source_line": 314,
+						"source_line": 358,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if a matching `Identifier` node is found.",
@@ -7090,7 +7143,7 @@
 						"name": "escape_svelte_text",
 						"kind": "function",
 						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
-						"source_line": 352,
+						"source_line": 396,
 						"type_signature": "(text: string): string",
 						"return_type": "string",
 						"parameters": [
