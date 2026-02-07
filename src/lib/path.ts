@@ -95,6 +95,26 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
 };
 
 /**
+ * Checks if a filename matches any exclusion pattern.
+ *
+ * Returns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.
+ * String patterns use substring matching. RegExp patterns use `.test()`.
+ *
+ * @param filename The file path to check, or `undefined` for virtual files.
+ * @param exclude Array of string or RegExp exclusion patterns.
+ * @returns `true` if the file should be excluded from processing.
+ */
+export const should_exclude_path = (
+	filename: string | undefined,
+	exclude: Array<string | RegExp>,
+): boolean => {
+	if (!filename || exclude.length === 0) return false;
+	return exclude.some((pattern) =>
+		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename),
+	);
+};
+
+/**
  * Converts a string into a URL-compatible slug.
  * @param str the string to convert
  * @param map_special_characters if `true`, characters like `ñ` are converted to their ASCII equivalents, runs around 5x faster when disabled

@@ -44,8 +44,10 @@
     "web"
   ],
   "peerDependencies": {
+    "@types/estree": "^1",
     "@types/node": "^24",
     "esm-env": "^1.2.2",
+    "svelte": "^5",
     "zod": "^4.0.14"
   },
   "peerDependenciesMeta": {
@@ -53,6 +55,12 @@
       "optional": true
     },
     "esm-env": {
+      "optional": true
+    },
+    "@types/estree": {
+      "optional": true
+    },
+    "svelte": {
       "optional": true
     },
     "zod": {
@@ -70,6 +78,7 @@
     "@sveltejs/kit": "^2.50.1",
     "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@types/estree": "^1.0.8",
     "@types/node": "^24.10.1",
     "@webref/css": "^8.2.0",
     "dequal": "^2.0.3",

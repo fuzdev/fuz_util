@@ -1,7 +1,8 @@
 import {describe, test, assert} from 'vitest';
 
 import {
-	is_binary,
+	string_is_binary,
+	escape_js_string,
 	plural,
 	truncate,
 	strip_start,
@@ -550,34 +551,86 @@ describe('stringify', () => {
 	});
 });
 
-describe('is_binary', () => {
+describe('escape_js_string', () => {
+	test('escapes single quotes', () => {
+		assert.equal(escape_js_string("it's"), "it\\'s");
+	});
+
+	test('escapes backslashes', () => {
+		assert.equal(escape_js_string('a\\b'), 'a\\\\b');
+	});
+
+	test('escapes newlines', () => {
+		assert.equal(escape_js_string('line 1\nline 2'), 'line 1\\nline 2');
+	});
+
+	test('escapes carriage returns', () => {
+		assert.equal(escape_js_string('line 1\rline 2'), 'line 1\\rline 2');
+	});
+
+	test('escapes mixed special characters', () => {
+		assert.equal(escape_js_string("it's a\nnew\\day"), "it\\'s a\\nnew\\\\day");
+	});
+
+	test('returns empty string unchanged', () => {
+		assert.equal(escape_js_string(''), '');
+	});
+
+	test('returns string without special chars unchanged', () => {
+		assert.equal(escape_js_string('hello world'), 'hello world');
+	});
+
+	test('backslashes are escaped before quotes', () => {
+		// Input: \'  (backslash then quote)
+		// Expected: \\\' (escaped backslash then escaped quote)
+		assert.equal(escape_js_string("\\'"), "\\\\\\'");
+	});
+
+	test('escapes CRLF line endings', () => {
+		assert.equal(escape_js_string('a\r\nb'), 'a\\r\\nb');
+	});
+
+	test('escapes line separator U+2028', () => {
+		assert.equal(escape_js_string('a\u2028b'), 'a\\u2028b');
+	});
+
+	test('escapes paragraph separator U+2029', () => {
+		assert.equal(escape_js_string('a\u2029b'), 'a\\u2029b');
+	});
+
+	test('escapes mixed line terminators', () => {
+		assert.equal(escape_js_string('\n\r\u2028\u2029'), '\\n\\r\\u2028\\u2029');
+	});
+});
+
+describe('string_is_binary', () => {
 	test('empty string is not binary', () => {
-		assert.isFalse(is_binary(''));
+		assert.isFalse(string_is_binary(''));
 	});
 
 	test('plain text is not binary', () => {
-		assert.isFalse(is_binary('hello world\nline two\n'));
+		assert.isFalse(string_is_binary('hello world\nline two\n'));
 	});
 
 	test('string with null byte is binary', () => {
-		assert.isTrue(is_binary('hello\0world'));
+		assert.isTrue(string_is_binary('hello\0world'));
 	});
 
 	test('null byte at start is binary', () => {
-		assert.isTrue(is_binary('\0rest of content'));
+		assert.isTrue(string_is_binary('\0rest of content'));
 	});
 
 	test('null byte at end is binary', () => {
-		assert.isTrue(is_binary('content\0'));
+		assert.isTrue(string_is_binary('content\0'));
 	});
 
 	test('checks only first 8KB', () => {
 		const content = 'a'.repeat(8192) + '\0';
-		assert.isFalse(is_binary(content));
+		assert.isFalse(string_is_binary(content));
 	});
 
 	test('null byte within first 8KB is detected', () => {
 		const content = 'a'.repeat(8191) + '\0';
-		assert.isTrue(is_binary(content));
+		assert.isTrue(string_is_binary(content));
 	});
 });
