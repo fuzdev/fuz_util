@@ -136,6 +136,11 @@ export const extract_static_string = (
 	return evaluate_static_expr(expr, bindings);
 };
 
+// TODO cross-import tracing: resolve `import {x} from './constants.js'` by reading
+// and parsing the imported module, extracting `export const` values. Would need path
+// resolution ($lib, tsconfig paths), a Program-node variant of this function, and
+// cache invalidation when the imported file changes. Start with relative .ts/.js only.
+
 /**
  * Builds a map of statically resolvable `const` bindings from a Svelte AST.
  *
