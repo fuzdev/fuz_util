@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.49.3
+
+### Patch Changes
+
+- add `try_extract_conditional` to `svelte_preprocess_helpers.ts` ([0a966ec](https://github.com/fuzdev/fuz_util/commit/0a966ec))
+
 ## 0.49.2
 
 ### Patch Changes
