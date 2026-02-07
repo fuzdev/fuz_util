@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.49.0
+
+### Minor Changes
+
+- rename `string_is_binary` from `is_binary` ([#69](https://github.com/fuzdev/fuz_util/pull/69))
+
+### Patch Changes
+
+- add `svelte_preprocess_helpers.ts` ([#69](https://github.com/fuzdev/fuz_util/pull/69))
+
 ## 0.48.4
 
 ### Patch Changes
