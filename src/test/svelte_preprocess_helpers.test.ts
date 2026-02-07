@@ -165,6 +165,18 @@ describe('evaluate_static_expr', () => {
 			'\\x41',
 		);
 	});
+
+	test('returns null for PrivateIdentifier on left side of binary +', () => {
+		assert.equal(
+			evaluate_static_expr({
+				type: 'BinaryExpression',
+				operator: '+',
+				left: {type: 'PrivateIdentifier', name: 'x'},
+				right: {type: 'Literal', value: 'b'},
+			} as unknown as Expression),
+			null,
+		);
+	});
 });
 
 describe('extract_static_string', () => {
@@ -243,6 +255,21 @@ describe('extract_static_string', () => {
 				{type: 'ExpressionTag', expression: {type: 'Literal', value: 'hello'}},
 			] as any),
 			null,
+		);
+	});
+
+	test('evaluates ExpressionTag with binary concat expression', () => {
+		assert.equal(
+			extract_static_string({
+				type: 'ExpressionTag',
+				expression: {
+					type: 'BinaryExpression',
+					operator: '+',
+					left: {type: 'Literal', value: 'hello '},
+					right: {type: 'Literal', value: 'world'},
+				},
+			} as any),
+			'hello world',
 		);
 	});
 });
@@ -506,6 +533,29 @@ describe('resolve_component_names', () => {
 		// Both specifiers share the same import_node
 		assert.equal(names.get('Mdz')!.import_node, names.get('helper')!.import_node);
 	});
+
+	test('returns empty map for side-effect-only import with no specifiers', () => {
+		const ast = parse(`<script lang="ts">import '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
+			modern: true,
+		});
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.equal(names.size, 0);
+	});
+
+	test('resolves imports from both instance and module scripts', () => {
+		const ast = parse(
+			`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>
+<script lang="ts">import Code from '@fuzdev/fuz_code/Code.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, [
+			'@fuzdev/fuz_ui/Mdz.svelte',
+			'@fuzdev/fuz_code/Code.svelte',
+		]);
+		assert.ok(names.has('Mdz'));
+		assert.ok(names.has('Code'));
+		assert.equal(names.size, 2);
+	});
 });
 
 describe('find_import_insert_position', () => {
@@ -542,6 +592,19 @@ describe('find_import_insert_position', () => {
 			source.indexOf("from '@fuzdev/fuz_ui/Mdz.svelte';") +
 			"from '@fuzdev/fuz_ui/Mdz.svelte';".length;
 		assert.equal(pos, import_end);
+	});
+
+	test('returns end of last import when imports are non-contiguous', () => {
+		const source = `<script lang="ts">
+	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
+	const x = 1;
+	import {resolve} from '$app/paths';
+</script>`;
+		const ast = parse(source, {modern: true});
+		const pos = find_import_insert_position(ast.instance!);
+		// Should return end of the last import, even though there's a statement in between
+		const last_import_end = source.indexOf("from '$app/paths';") + "from '$app/paths';".length;
+		assert.equal(pos, last_import_end);
 	});
 });
 
@@ -697,7 +760,7 @@ describe('escape_svelte_text', () => {
 	});
 
 	test('escapes multiple braces', () => {
-		assert.equal(escape_svelte_text('{{}}'), "{'{'}{'{'}{'}'}{'}'}" );
+		assert.equal(escape_svelte_text('{{}}'), "{'{'}{'{'}{'}'}{'}'}");
 	});
 
 	test('escapes ampersand in HTML entities', () => {
@@ -710,6 +773,14 @@ describe('escape_svelte_text', () => {
 
 	test('preserves whitespace and newlines', () => {
 		assert.equal(escape_svelte_text('line 1\nline 2\ttab'), 'line 1\nline 2\ttab');
+	});
+
+	test('escapes Svelte block syntax in text', () => {
+		assert.equal(escape_svelte_text('{#if condition}'), "{'{'}#if condition{'}'}");
+	});
+
+	test('escapes Svelte expression tag syntax in text', () => {
+		assert.equal(escape_svelte_text('{@html content}'), "{'{'}@html content{'}'}");
 	});
 });
 
