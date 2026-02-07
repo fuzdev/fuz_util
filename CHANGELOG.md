@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.49.2
+
+### Patch Changes
+
+- improve `has_identifier_in_tree` skip behavior ([74f5025](https://github.com/fuzdev/fuz_util/commit/74f5025))
+
 ## 0.49.1
 
 ### Patch Changes
