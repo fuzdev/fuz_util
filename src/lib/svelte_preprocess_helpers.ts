@@ -53,25 +53,47 @@ export const find_attribute = (node: AST.Component, name: string): AST.Attribute
 /**
  * Recursively evaluates an expression AST node to a static string value.
  *
- * Handles string `Literal`, `TemplateLiteral` without interpolation, and
- * `BinaryExpression` with the `+` operator (string concatenation).
+ * Handles string `Literal`, `TemplateLiteral` (including interpolations when all
+ * expressions resolve), `BinaryExpression` with `+`, and `Identifier` lookup
+ * via an optional bindings map built by `build_static_bindings`.
  * Returns `null` for dynamic expressions, non-string literals, or unsupported node types.
  *
  * @param expr An ESTree expression AST node.
+ * @param bindings Optional map of variable names to their resolved static string values.
  * @returns The resolved static string, or `null` if the expression is dynamic.
  */
-export const evaluate_static_expr = (expr: Expression): string | null => {
+export const evaluate_static_expr = (
+	expr: Expression,
+	bindings?: ReadonlyMap<string, string>,
+): string | null => {
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
-	if (expr.type === 'TemplateLiteral' && expr.expressions.length === 0) {
-		return expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
+	if (expr.type === 'TemplateLiteral') {
+		if (expr.expressions.length === 0) {
+			return expr.quasis.map((q) => q.value.cooked ?? q.value.raw).join('');
+		}
+		// Try resolving interpolations through bindings
+		const parts: Array<string> = [];
+		for (let i = 0; i < expr.quasis.length; i++) {
+			const quasi = expr.quasis[i]!;
+			parts.push(quasi.value.cooked ?? quasi.value.raw);
+			if (i < expr.expressions.length) {
+				const val = evaluate_static_expr(expr.expressions[i]!, bindings);
+				if (val === null) return null;
+				parts.push(val);
+			}
+		}
+		return parts.join('');
 	}
 	if (expr.type === 'BinaryExpression' && expr.operator === '+') {
 		if (expr.left.type === 'PrivateIdentifier') return null;
-		const left = evaluate_static_expr(expr.left);
+		const left = evaluate_static_expr(expr.left, bindings);
 		if (left === null) return null;
-		const right = evaluate_static_expr(expr.right);
+		const right = evaluate_static_expr(expr.right, bindings);
 		if (right === null) return null;
 		return left + right;
+	}
+	if (expr.type === 'Identifier' && bindings?.has(expr.name)) {
+		return bindings.get(expr.name)!;
 	}
 	return null;
 };
@@ -88,9 +110,13 @@ export const evaluate_static_expr = (expr: Expression): string | null => {
  * Returns `null` for null literals, mixed arrays, dynamic expressions, and non-string values.
  *
  * @param value The attribute value from `AST.Attribute['value']`.
+ * @param bindings Optional map of variable names to their resolved static string values.
  * @returns The resolved static string, or `null` if the value is dynamic.
  */
-export const extract_static_string = (value: AST.Attribute['value']): string | null => {
+export const extract_static_string = (
+	value: AST.Attribute['value'],
+	bindings?: ReadonlyMap<string, string>,
+): string | null => {
 	// Boolean attribute (e.g., <Mdz inline />)
 	if (value === true) return null;
 
@@ -107,7 +133,40 @@ export const extract_static_string = (value: AST.Attribute['value']): string | n
 	const expr = value.expression;
 	// Null literal
 	if (expr.type === 'Literal' && expr.value === null) return null;
-	return evaluate_static_expr(expr);
+	return evaluate_static_expr(expr, bindings);
+};
+
+/**
+ * Builds a map of statically resolvable `const` bindings from a Svelte AST.
+ *
+ * Scans top-level `const` variable declarations in both instance and module scripts.
+ * For each declarator with a plain `Identifier` pattern and a statically evaluable
+ * initializer, adds the binding to the map. Processes declarations in source order
+ * so that chained references resolve: `const a = 'x'; const b = a;` maps `b` to `'x'`.
+ *
+ * Skips destructuring patterns, `let`/`var` declarations, and declarations
+ * whose initializers reference dynamic values.
+ *
+ * @param ast The parsed Svelte AST root node.
+ * @returns Map of variable names to their resolved static string values.
+ */
+export const build_static_bindings = (ast: AST.Root): Map<string, string> => {
+	const bindings: Map<string, string> = new Map();
+	for (const script of [ast.instance, ast.module]) {
+		if (!script) continue;
+		for (const node of script.content.body) {
+			if (node.type !== 'VariableDeclaration' || node.kind !== 'const') continue;
+			for (const declarator of node.declarations) {
+				if (declarator.id.type !== 'Identifier') continue;
+				if (!declarator.init) continue;
+				const value = evaluate_static_expr(declarator.init, bindings);
+				if (value !== null) {
+					bindings.set(declarator.id.name, value);
+				}
+			}
+		}
+	}
+	return bindings;
 };
 
 /**

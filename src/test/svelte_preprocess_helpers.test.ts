@@ -6,6 +6,7 @@ import {
 	find_attribute,
 	evaluate_static_expr,
 	extract_static_string,
+	build_static_bindings,
 	resolve_component_names,
 	generate_import_lines,
 	find_import_insert_position,
@@ -177,6 +178,117 @@ describe('evaluate_static_expr', () => {
 			null,
 		);
 	});
+
+	test('resolves identifier from bindings', () => {
+		const bindings = new Map([['x', 'hello']]);
+		assert.equal(
+			evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression, bindings),
+			'hello',
+		);
+	});
+
+	test('returns null for identifier not in bindings', () => {
+		const bindings = new Map([['y', 'hello']]);
+		assert.equal(
+			evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression, bindings),
+			null,
+		);
+	});
+
+	test('returns null for identifier without bindings', () => {
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression), null);
+	});
+
+	test('resolves identifier in binary concat', () => {
+		const bindings = new Map([['x', 'hello']]);
+		assert.equal(
+			evaluate_static_expr(
+				{
+					type: 'BinaryExpression',
+					operator: '+',
+					left: {type: 'Identifier', name: 'x'},
+					right: {type: 'Literal', value: ' world'},
+				} as Expression,
+				bindings,
+			),
+			'hello world',
+		);
+	});
+
+	test('resolves template literal with identifier interpolation', () => {
+		const bindings = new Map([['name', 'world']]);
+		assert.equal(
+			evaluate_static_expr(
+				{
+					type: 'TemplateLiteral',
+					expressions: [{type: 'Identifier', name: 'name'}],
+					quasis: [
+						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
+						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
+					],
+				} as Expression,
+				bindings,
+			),
+			'hello world!',
+		);
+	});
+
+	test('returns null for template literal with unresolvable interpolation', () => {
+		const bindings = new Map([['other', 'value']]);
+		assert.equal(
+			evaluate_static_expr(
+				{
+					type: 'TemplateLiteral',
+					expressions: [{type: 'Identifier', name: 'name'}],
+					quasis: [
+						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
+						{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
+					],
+				} as Expression,
+				bindings,
+			),
+			null,
+		);
+	});
+
+	test('resolves template literal with multiple interpolations', () => {
+		const bindings = new Map([
+			['greeting', 'hello'],
+			['name', 'world'],
+		]);
+		assert.equal(
+			evaluate_static_expr(
+				{
+					type: 'TemplateLiteral',
+					expressions: [
+						{type: 'Identifier', name: 'greeting'},
+						{type: 'Identifier', name: 'name'},
+					],
+					quasis: [
+						{type: 'TemplateElement', tail: false, value: {cooked: '', raw: ''}},
+						{type: 'TemplateElement', tail: false, value: {cooked: ' ', raw: ' '}},
+						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
+					],
+				} as Expression,
+				bindings,
+			),
+			'hello world!',
+		);
+	});
+
+	test('resolves template literal with literal expression', () => {
+		assert.equal(
+			evaluate_static_expr({
+				type: 'TemplateLiteral',
+				expressions: [{type: 'Literal', value: 'world'}],
+				quasis: [
+					{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
+					{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
+				],
+			} as Expression),
+			'hello world',
+		);
+	});
 });
 
 describe('extract_static_string', () => {
@@ -271,6 +383,244 @@ describe('extract_static_string', () => {
 			} as any),
 			'hello world',
 		);
+	});
+
+	test('resolves identifier via bindings', () => {
+		const bindings = new Map([['msg', 'hello']]);
+		assert.equal(
+			extract_static_string(
+				{
+					type: 'ExpressionTag',
+					expression: {type: 'Identifier', name: 'msg'},
+				} as any,
+				bindings,
+			),
+			'hello',
+		);
+	});
+
+	test('returns null for identifier without bindings', () => {
+		assert.equal(
+			extract_static_string({
+				type: 'ExpressionTag',
+				expression: {type: 'Identifier', name: 'msg'},
+			} as any),
+			null,
+		);
+	});
+});
+
+describe('build_static_bindings', () => {
+	test('resolves const string literal', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const msg = 'hello';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('msg'), 'hello');
+	});
+
+	test('resolves const template literal', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const msg = \`hello world\`;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('msg'), 'hello world');
+	});
+
+	test('resolves chained const references', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const a = 'hello';
+	const b = a;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('a'), 'hello');
+		assert.equal(bindings.get('b'), 'hello');
+	});
+
+	test('resolves const concatenation with identifier', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const prefix = 'hello';
+	const msg = prefix + ' world';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('msg'), 'hello world');
+	});
+
+	test('resolves template literal with interpolated const', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const name = 'world';
+	const msg = \`hello \${name}\`;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('msg'), 'hello world');
+	});
+
+	test('skips let declarations', () => {
+		const ast = parse(
+			`<script lang="ts">
+	let msg = 'hello';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('msg'), false);
+	});
+
+	test('skips dynamic initializers', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const el = document.getElementById('x');
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('el'), false);
+	});
+
+	test('skips destructuring patterns', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const {a} = {a: 'hello'};
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('a'), false);
+	});
+
+	test('skips const without initializer', () => {
+		// TypeScript `declare const` has no init
+		const ast = parse(
+			`<script lang="ts">
+	declare const x: string;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('x'), false);
+	});
+
+	test('resolves number const to nothing (not a string)', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const x = 42;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('x'), false);
+	});
+
+	test('resolves from both instance and module scripts', () => {
+		const ast = parse(
+			`<script module>
+	const a = 'from module';
+</script>
+<script lang="ts">
+	const b = 'from instance';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('a'), 'from module');
+		assert.equal(bindings.get('b'), 'from instance');
+	});
+
+	test('returns empty map when no scripts', () => {
+		const ast = parse(`<p>No script</p>`, {modern: true});
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.size, 0);
+	});
+
+	test('skips imports and non-const statements', () => {
+		const ast = parse(
+			`<script lang="ts">
+	import Foo from './Foo.svelte';
+	const msg = 'hello';
+	function fn() { return 'world'; }
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.size, 1);
+		assert.equal(bindings.get('msg'), 'hello');
+	});
+
+	test('does not resolve forward references', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const a = b;
+	const b = 'hello';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('a'), false);
+		assert.equal(bindings.get('b'), 'hello');
+	});
+
+	test('resolves multiple const in same declaration', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const a = 'hello', b = 'world';
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('a'), 'hello');
+		assert.equal(bindings.get('b'), 'world');
+	});
+
+	test('resolves template with multiple interpolations', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const first = 'hello';
+	const last = 'world';
+	const msg = \`\${first} \${last}!\`;
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('msg'), 'hello world!');
+	});
+
+	test('skips rune declarations like $state', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const msg = $state('hello');
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.has('msg'), false);
+	});
+
+	test('skips $derived declarations', () => {
+		const ast = parse(
+			`<script lang="ts">
+	const base = 'hello';
+	const msg = $derived(base + ' world');
+</script>`,
+			{modern: true},
+		);
+		const bindings = build_static_bindings(ast);
+		assert.equal(bindings.get('base'), 'hello');
+		assert.equal(bindings.has('msg'), false);
 	});
 });
 
