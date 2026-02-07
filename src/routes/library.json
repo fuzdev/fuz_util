@@ -7062,8 +7062,8 @@
 					{
 						"name": "has_identifier_in_tree",
 						"kind": "function",
-						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
-						"source_line": 286,
+						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSkips `Identifier` nodes in non-reference positions defined by\n`NON_REFERENCE_FIELDS` — for example, `obj.Mdz` (non-computed member property),\n`{ Mdz: value }` (non-computed object key), and statement labels.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
+						"source_line": 314,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if a matching `Identifier` node is found.",
@@ -7090,7 +7090,7 @@
 						"name": "escape_svelte_text",
 						"kind": "function",
 						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
-						"source_line": 320,
+						"source_line": 352,
 						"type_signature": "(text: string): string",
 						"return_type": "string",
 						"parameters": [

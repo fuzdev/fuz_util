@@ -268,12 +268,40 @@ export const generate_import_lines = (
 };
 
 /**
+ * ESTree node fields that contain `Identifier` nodes which are NOT binding references.
+ *
+ * Keyed by node type. Each entry lists fields to skip during identifier search,
+ * optionally conditioned on the node's `computed` property being falsy.
+ *
+ * Examples of non-reference positions:
+ * - `obj.Mdz` — `MemberExpression.property` when `computed: false`
+ * - `{ Mdz: value }` — `Property.key` when `computed: false`
+ * - `label: for(...)` — `LabeledStatement.label`
+ */
+const NON_REFERENCE_FIELDS: Map<
+	string,
+	Array<{field: string; when_not_computed?: boolean}>
+> = new Map([
+	['MemberExpression', [{field: 'property', when_not_computed: true}]],
+	['Property', [{field: 'key', when_not_computed: true}]],
+	['PropertyDefinition', [{field: 'key', when_not_computed: true}]],
+	['MethodDefinition', [{field: 'key', when_not_computed: true}]],
+	['LabeledStatement', [{field: 'label'}]],
+	['BreakStatement', [{field: 'label'}]],
+	['ContinueStatement', [{field: 'label'}]],
+]);
+
+/**
  * Checks if an identifier with the given name appears anywhere in an AST subtree.
  *
  * Recursively walks all object and array properties of the tree, matching
  * ESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the
  * `skip` set are excluded from traversal — used to skip `ImportDeclaration`
  * nodes so the import's own specifier identifier doesn't false-positive.
+ *
+ * Skips `Identifier` nodes in non-reference positions defined by
+ * `NON_REFERENCE_FIELDS` — for example, `obj.Mdz` (non-computed member property),
+ * `{ Mdz: value }` (non-computed object key), and statement labels.
  *
  * Safe for Svelte template ASTs: `Component.name` is a plain string property
  * (not an `Identifier` node), so `<Mdz>` tags do not produce false matches.
@@ -295,7 +323,11 @@ export const has_identifier_in_tree = (
 	}
 	const record = node as Record<string, unknown>;
 	if (record.type === 'Identifier' && record.name === name) return true;
+	const rules = NON_REFERENCE_FIELDS.get(record.type as string);
 	for (const key of Object.keys(record)) {
+		if (rules?.some((r) => r.field === key && (!r.when_not_computed || !record.computed))) {
+			continue;
+		}
 		if (has_identifier_in_tree(record[key], name, skip)) return true;
 	}
 	return false;

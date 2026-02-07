@@ -1074,6 +1074,139 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for empty array', () => {
 		assert.equal(has_identifier_in_tree([], 'Mdz'), false);
 	});
+
+	// Non-reference positions (should return false)
+
+	test('returns false for non-computed member property (obj.Mdz)', () => {
+		const node = {
+			type: 'MemberExpression',
+			object: {type: 'Identifier', name: 'obj'},
+			property: {type: 'Identifier', name: 'Mdz'},
+			computed: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for non-computed object key ({ Mdz: 123 })', () => {
+		const node = {
+			type: 'Property',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Literal', value: 123},
+			computed: false,
+			shorthand: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for non-computed destructuring key ({ Mdz: x } = obj)', () => {
+		const node = {
+			type: 'Property',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Identifier', name: 'x'},
+			computed: false,
+			shorthand: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for non-computed method name (class { Mdz() {} })', () => {
+		const node = {
+			type: 'MethodDefinition',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'FunctionExpression', body: {type: 'BlockStatement', body: []}},
+			computed: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for labeled statement (Mdz: for(;;){})', () => {
+		const node = {
+			type: 'LabeledStatement',
+			label: {type: 'Identifier', name: 'Mdz'},
+			body: {type: 'ForStatement', body: {type: 'BlockStatement', body: []}},
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for break statement label (break Mdz)', () => {
+		const node = {
+			type: 'BreakStatement',
+			label: {type: 'Identifier', name: 'Mdz'},
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for continue statement label (continue Mdz)', () => {
+		const node = {
+			type: 'ContinueStatement',
+			label: {type: 'Identifier', name: 'Mdz'},
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns false for non-computed class field (class { Mdz = 1 })', () => {
+		const node = {
+			type: 'PropertyDefinition',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Literal', value: 1},
+			computed: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
+	});
+
+	test('returns true for computed class field (class { [Mdz] = 1 })', () => {
+		const node = {
+			type: 'PropertyDefinition',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Literal', value: 1},
+			computed: true,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
+	});
+
+	// Reference positions (should return true)
+
+	test('returns true for computed member property (obj[Mdz])', () => {
+		const node = {
+			type: 'MemberExpression',
+			object: {type: 'Identifier', name: 'obj'},
+			property: {type: 'Identifier', name: 'Mdz'},
+			computed: true,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
+	});
+
+	test('returns true for computed object key ({ [Mdz]: 123 })', () => {
+		const node = {
+			type: 'Property',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Literal', value: 123},
+			computed: true,
+			shorthand: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
+	});
+
+	test('returns true for shorthand property ({ Mdz })', () => {
+		const node = {
+			type: 'Property',
+			key: {type: 'Identifier', name: 'Mdz'},
+			value: {type: 'Identifier', name: 'Mdz'},
+			computed: false,
+			shorthand: true,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
+	});
+
+	test('returns true for member expression object (Mdz.foo)', () => {
+		const node = {
+			type: 'MemberExpression',
+			object: {type: 'Identifier', name: 'Mdz'},
+			property: {type: 'Identifier', name: 'foo'},
+			computed: false,
+		};
+		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
+	});
 });
 
 describe('escape_svelte_text', () => {
@@ -1210,6 +1343,36 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 		assert.equal(
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
 			false,
+		);
+	});
+
+	test('returns false for obj.Mdz in script (non-reference member property)', () => {
+		const ast = parse(
+			`<script lang="ts">
+	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
+	const x = obj.Mdz;
+</script>`,
+			{modern: true},
+		);
+		const import_node = ast.instance!.content.body[0];
+		assert.equal(
+			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
+			false,
+		);
+	});
+
+	test('returns true for obj[Mdz] in script (computed member property)', () => {
+		const ast = parse(
+			`<script lang="ts">
+	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
+	const x = obj[Mdz];
+</script>`,
+			{modern: true},
+		);
+		const import_node = ast.instance!.content.body[0];
+		assert.equal(
+			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
+			true,
 		);
 	});
 });
