@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.49.1
+
+### Patch Changes
+
+- add `build_static_bindings` and support it from `evaluate_static_expr` ([3aeb47c](https://github.com/fuzdev/fuz_util/commit/3aeb47c))
+
 ## 0.49.0
 
 ### Minor Changes
