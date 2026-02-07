@@ -32,26 +32,6 @@ export interface ResolvedComponentImport {
 }
 
 /**
- * Checks if a filename matches any exclusion pattern.
- *
- * Returns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.
- * String patterns use substring matching. RegExp patterns use `.test()`.
- *
- * @param filename The file path to check, or `undefined` for virtual files.
- * @param exclude Array of string or RegExp exclusion patterns.
- * @returns `true` if the file should be excluded from processing.
- */
-export const should_exclude = (
-	filename: string | undefined,
-	exclude: Array<string | RegExp>,
-): boolean => {
-	if (!filename || exclude.length === 0) return false;
-	return exclude.some((pattern) =>
-		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename),
-	);
-};
-
-/**
  * Finds an attribute by name on a component AST node.
  *
  * Iterates the node's `attributes` array and returns the first `Attribute`
@@ -284,35 +264,6 @@ export const escape_svelte_text = (text: string): string =>
 				return '&lt;';
 			case '&':
 				return '&amp;';
-			default:
-				return ch;
-		}
-	});
-
-/**
- * Escapes a string for use inside a single-quoted JS string literal in Svelte expressions.
- *
- * Used for attribute values like `reference={'escaped_value'}` and
- * `content={'escaped_value'}`. Single quotes are used because the emitted
- * markup may contain double quotes (e.g., in HTML attribute values).
- *
- * Uses a single-pass regex replacement, consistent with `escape_svelte_text`.
- */
-export const escape_js_string = (value: string): string =>
-	value.replace(/[\\'\n\r\u2028\u2029]/g, (ch) => {
-		switch (ch) {
-			case '\\':
-				return '\\\\';
-			case "'":
-				return "\\'";
-			case '\n':
-				return '\\n';
-			case '\r':
-				return '\\r';
-			case '\u2028':
-				return '\\u2028';
-			case '\u2029':
-				return '\\u2029';
 			default:
 				return ch;
 		}

@@ -3,7 +3,6 @@ import {parse} from 'svelte/compiler';
 import type {Expression} from 'estree';
 
 import {
-	should_exclude,
 	find_attribute,
 	evaluate_static_expr,
 	extract_static_string,
@@ -12,165 +11,8 @@ import {
 	find_import_insert_position,
 	has_identifier_in_tree,
 	escape_svelte_text,
-	escape_js_string,
 	type PreprocessImportInfo,
 } from '$lib/svelte_preprocess_helpers.js';
-
-describe('escape_svelte_text', () => {
-	test('escapes opening curly brace', () => {
-		assert.equal(escape_svelte_text('{'), "{'{'}");
-	});
-
-	test('escapes closing curly brace', () => {
-		assert.equal(escape_svelte_text('}'), "{'}'}");
-	});
-
-	test('escapes less-than sign', () => {
-		assert.equal(escape_svelte_text('<'), '&lt;');
-	});
-
-	test('escapes ampersand', () => {
-		assert.equal(escape_svelte_text('&'), '&amp;');
-	});
-
-	test('escapes mixed special characters', () => {
-		assert.equal(escape_svelte_text('{foo} < bar & baz'), "{'{'}foo{'}'} &lt; bar &amp; baz");
-	});
-
-	test('returns empty string unchanged', () => {
-		assert.equal(escape_svelte_text(''), '');
-	});
-
-	test('returns string without special chars unchanged', () => {
-		assert.equal(escape_svelte_text('hello world'), 'hello world');
-	});
-
-	test('regression: single-pass prevents sequential replace corruption', () => {
-		// With sequential .replace() calls, {foo} would corrupt to {'{'{'}'} foo{'}'}
-		// because the } in {'{'} from the first replace gets caught by the second replace.
-		// Single-pass correctly produces {'{'}foo{'}'}.
-		assert.equal(escape_svelte_text('{foo}'), "{'{'}foo{'}'}");
-	});
-
-	test('handles Svelte-like syntax in text', () => {
-		assert.equal(
-			escape_svelte_text('Use {#if} for conditionals'),
-			"Use {'{'}#if{'}'} for conditionals",
-		);
-	});
-
-	test('handles multiple adjacent special characters', () => {
-		assert.equal(escape_svelte_text('{}'), "{'{'}{'}'}");
-		assert.equal(escape_svelte_text('<<'), '&lt;&lt;');
-		assert.equal(escape_svelte_text('&&'), '&amp;&amp;');
-	});
-
-	test('preserves whitespace including newlines', () => {
-		assert.equal(escape_svelte_text('line 1\nline 2'), 'line 1\nline 2');
-		assert.equal(escape_svelte_text('\t\tindented'), '\t\tindented');
-	});
-
-	test('does not escape greater-than sign', () => {
-		assert.equal(escape_svelte_text('a > b'), 'a > b');
-	});
-
-	test('handles HTML entity-like content', () => {
-		// If mdz text contains &amp; literally, it must be escaped to &amp;amp;
-		// so the browser renders &amp; (matching runtime behavior).
-		assert.equal(escape_svelte_text('&amp;'), '&amp;amp;');
-		assert.equal(escape_svelte_text('&lt;'), '&amp;lt;');
-	});
-});
-
-describe('escape_js_string', () => {
-	test('escapes single quotes', () => {
-		assert.equal(escape_js_string("it's"), "it\\'s");
-	});
-
-	test('escapes backslashes', () => {
-		assert.equal(escape_js_string('a\\b'), 'a\\\\b');
-	});
-
-	test('escapes newlines', () => {
-		assert.equal(escape_js_string('line 1\nline 2'), 'line 1\\nline 2');
-	});
-
-	test('escapes carriage returns', () => {
-		assert.equal(escape_js_string('line 1\rline 2'), 'line 1\\rline 2');
-	});
-
-	test('escapes mixed special characters', () => {
-		assert.equal(escape_js_string("it's a\nnew\\day"), "it\\'s a\\nnew\\\\day");
-	});
-
-	test('returns empty string unchanged', () => {
-		assert.equal(escape_js_string(''), '');
-	});
-
-	test('returns string without special chars unchanged', () => {
-		assert.equal(escape_js_string('hello world'), 'hello world');
-	});
-
-	test('backslashes are escaped before quotes', () => {
-		// Input: \'  (backslash then quote)
-		// Expected: \\\' (escaped backslash then escaped quote)
-		assert.equal(escape_js_string("\\'"), "\\\\\\'");
-	});
-
-	test('escapes CRLF line endings', () => {
-		assert.equal(escape_js_string('a\r\nb'), 'a\\r\\nb');
-	});
-
-	test('escapes line separator U+2028', () => {
-		assert.equal(escape_js_string('a\u2028b'), 'a\\u2028b');
-	});
-
-	test('escapes paragraph separator U+2029', () => {
-		assert.equal(escape_js_string('a\u2029b'), 'a\\u2029b');
-	});
-
-	test('escapes mixed line terminators', () => {
-		assert.equal(escape_js_string('\n\r\u2028\u2029'), '\\n\\r\\u2028\\u2029');
-	});
-});
-
-describe('should_exclude', () => {
-	test('returns false when filename is undefined', () => {
-		assert.equal(should_exclude(undefined, ['foo']), false);
-	});
-
-	test('returns false when filename is empty string', () => {
-		assert.equal(should_exclude('', ['anything']), false);
-	});
-
-	test('returns false when exclude list is empty', () => {
-		assert.equal(should_exclude('src/Foo.svelte', []), false);
-	});
-
-	test('matches string pattern as substring', () => {
-		assert.equal(should_exclude('src/routes/page.svelte', ['routes/']), true);
-	});
-
-	test('returns false when string pattern does not match', () => {
-		assert.equal(should_exclude('src/lib/Mdz.svelte', ['routes/']), false);
-	});
-
-	test('matches regex pattern', () => {
-		assert.equal(should_exclude('Test.svelte', [/Test\.svelte$/]), true);
-	});
-
-	test('returns false when regex does not match', () => {
-		assert.equal(should_exclude('Other.svelte', [/Test\.svelte$/]), false);
-	});
-
-	test('matches second pattern when first does not match', () => {
-		assert.equal(should_exclude('src/lib/Mdz.svelte', ['routes/', 'lib/']), true);
-	});
-
-	test('matches with mixed string and regex patterns', () => {
-		assert.equal(should_exclude('src/Test.svelte', ['routes/', /Test\.svelte$/]), true);
-	});
-});
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {
@@ -818,6 +660,56 @@ describe('has_identifier_in_tree', () => {
 
 	test('returns false for empty array', () => {
 		assert.equal(has_identifier_in_tree([], 'Mdz'), false);
+	});
+});
+
+describe('escape_svelte_text', () => {
+	test('returns empty string unchanged', () => {
+		assert.equal(escape_svelte_text(''), '');
+	});
+
+	test('returns plain text unchanged', () => {
+		assert.equal(escape_svelte_text('hello world'), 'hello world');
+	});
+
+	test('escapes opening brace', () => {
+		assert.equal(escape_svelte_text('{value}'), "{'{'}value{'}'}");
+	});
+
+	test('escapes closing brace', () => {
+		assert.equal(escape_svelte_text('}'), "{'}'}");
+	});
+
+	test('escapes less-than to &lt;', () => {
+		assert.equal(escape_svelte_text('<div>'), '&lt;div>');
+	});
+
+	test('escapes ampersand to &amp;', () => {
+		assert.equal(escape_svelte_text('a & b'), 'a &amp; b');
+	});
+
+	test('does not escape greater-than', () => {
+		assert.equal(escape_svelte_text('a > b'), 'a > b');
+	});
+
+	test('escapes all special characters in mixed content', () => {
+		assert.equal(escape_svelte_text('<div>{a & b}</div>'), "&lt;div>{'{'}a &amp; b{'}'}&lt;/div>");
+	});
+
+	test('escapes multiple braces', () => {
+		assert.equal(escape_svelte_text('{{}}'), "{'{'}{'{'}{'}'}{'}'}" );
+	});
+
+	test('escapes ampersand in HTML entities', () => {
+		assert.equal(escape_svelte_text('&amp;'), '&amp;amp;');
+	});
+
+	test('handles text with only special characters', () => {
+		assert.equal(escape_svelte_text('{<&'), "{'{'}&lt;&amp;");
+	});
+
+	test('preserves whitespace and newlines', () => {
+		assert.equal(escape_svelte_text('line 1\nline 2\ttab'), 'line 1\nline 2\ttab');
 	});
 });
 

@@ -210,6 +210,32 @@ export const levenshtein_distance = (a: string, b: string): number => {
 };
 
 /**
+ * Escapes a string for use inside a single-quoted JS string literal.
+ *
+ * Uses a single-pass regex replacement to escape backslashes, single quotes,
+ * newlines, carriage returns, and Unicode line/paragraph separators.
+ */
+export const escape_js_string = (value: string): string =>
+	value.replace(/[\\'\n\r\u2028\u2029]/g, (ch) => {
+		switch (ch) {
+			case '\\':
+				return '\\\\';
+			case "'":
+				return "\\'";
+			case '\n':
+				return '\\n';
+			case '\r':
+				return '\\r';
+			case '\u2028':
+				return '\\u2028';
+			case '\u2029':
+				return '\\u2029';
+			default:
+				return ch;
+		}
+	});
+
+/**
  * Check if content appears to be binary.
  *
  * Checks for null bytes in the first 8KB of content.

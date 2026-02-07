@@ -1,9 +1,10 @@
-import {test, assert} from 'vitest';
+import {test, assert, describe} from 'vitest';
 
 import {
 	parse_path_parts,
 	parse_path_pieces,
 	parse_path_segments,
+	should_exclude_path,
 	slugify,
 	to_file_path,
 } from '$lib/path.ts';
@@ -57,6 +58,44 @@ test('parse_path_pieces', () => {
 	]);
 	assert.deepEqual(parse_path_pieces('/'), []);
 	assert.deepEqual(parse_path_pieces(''), []);
+});
+
+describe('should_exclude_path', () => {
+	test('returns false when filename is undefined', () => {
+		assert.equal(should_exclude_path(undefined, ['foo']), false);
+	});
+
+	test('returns false when filename is empty string', () => {
+		assert.equal(should_exclude_path('', ['anything']), false);
+	});
+
+	test('returns false when exclude list is empty', () => {
+		assert.equal(should_exclude_path('src/Foo.svelte', []), false);
+	});
+
+	test('matches string pattern as substring', () => {
+		assert.equal(should_exclude_path('src/routes/page.svelte', ['routes/']), true);
+	});
+
+	test('returns false when string pattern does not match', () => {
+		assert.equal(should_exclude_path('src/lib/Mdz.svelte', ['routes/']), false);
+	});
+
+	test('matches regex pattern', () => {
+		assert.equal(should_exclude_path('Test.svelte', [/Test\.svelte$/]), true);
+	});
+
+	test('returns false when regex does not match', () => {
+		assert.equal(should_exclude_path('Other.svelte', [/Test\.svelte$/]), false);
+	});
+
+	test('matches second pattern when first does not match', () => {
+		assert.equal(should_exclude_path('src/lib/Mdz.svelte', ['routes/', 'lib/']), true);
+	});
+
+	test('matches with mixed string and regex patterns', () => {
+		assert.equal(should_exclude_path('src/Test.svelte', ['routes/', /Test\.svelte$/]), true);
+	});
 });
 
 test('slugify', () => {
