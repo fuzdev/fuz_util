@@ -243,7 +243,4 @@ export const escape_js_string = (value: string): string =>
  * @param content - Content to check.
  * @returns True if content appears to be binary.
  */
-export const is_binary = (content: string): boolean => {
-	const sample = content.slice(0, 8192);
-	return sample.includes('\0');
-};
+export const string_is_binary = (content: string): boolean => content.slice(0, 8192).includes('\0');

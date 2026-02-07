@@ -4648,7 +4648,7 @@
 						]
 					},
 					{
-						"name": "should_exclude",
+						"name": "should_exclude_path",
 						"kind": "function",
 						"doc_comment": "Checks if a filename matches any exclusion pattern.\n\nReturns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.\nString patterns use substring matching. RegExp patterns use `.test()`.",
 						"source_line": 107,
@@ -6848,7 +6848,7 @@
 						]
 					},
 					{
-						"name": "is_binary",
+						"name": "string_is_binary",
 						"kind": "function",
 						"doc_comment": "Check if content appears to be binary.\n\nChecks for null bytes in the first 8KB of content.",
 						"source_line": 246,

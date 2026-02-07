@@ -1,7 +1,7 @@
 import {describe, test, assert} from 'vitest';
 
 import {
-	is_binary,
+	string_is_binary,
 	escape_js_string,
 	plural,
 	truncate,
@@ -603,34 +603,34 @@ describe('escape_js_string', () => {
 	});
 });
 
-describe('is_binary', () => {
+describe('string_is_binary', () => {
 	test('empty string is not binary', () => {
-		assert.isFalse(is_binary(''));
+		assert.isFalse(string_is_binary(''));
 	});
 
 	test('plain text is not binary', () => {
-		assert.isFalse(is_binary('hello world\nline two\n'));
+		assert.isFalse(string_is_binary('hello world\nline two\n'));
 	});
 
 	test('string with null byte is binary', () => {
-		assert.isTrue(is_binary('hello\0world'));
+		assert.isTrue(string_is_binary('hello\0world'));
 	});
 
 	test('null byte at start is binary', () => {
-		assert.isTrue(is_binary('\0rest of content'));
+		assert.isTrue(string_is_binary('\0rest of content'));
 	});
 
 	test('null byte at end is binary', () => {
-		assert.isTrue(is_binary('content\0'));
+		assert.isTrue(string_is_binary('content\0'));
 	});
 
 	test('checks only first 8KB', () => {
 		const content = 'a'.repeat(8192) + '\0';
-		assert.isFalse(is_binary(content));
+		assert.isFalse(string_is_binary(content));
 	});
 
 	test('null byte within first 8KB is detected', () => {
 		const content = 'a'.repeat(8191) + '\0';
-		assert.isTrue(is_binary(content));
+		assert.isTrue(string_is_binary(content));
 	});
 });

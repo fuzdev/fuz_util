@@ -4,7 +4,7 @@
  * @module
  */
 
-import {is_binary} from './string.js';
+import {string_is_binary} from './string.js';
 
 /** Line diff result */
 export interface DiffLine {
@@ -224,7 +224,7 @@ export const generate_diff = (
 	options: FormatDiffOptions = {},
 ): string | null => {
 	// Skip binary files
-	if (is_binary(current) || is_binary(desired)) {
+	if (string_is_binary(current) || string_is_binary(desired)) {
 		return null;
 	}
 
