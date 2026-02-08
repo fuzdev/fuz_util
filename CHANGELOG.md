@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.50.0
+
+### Minor Changes
+
+- `handle_preprocess_error`: preserve error cause chain, simplify `format_named_specifiers` type ([e6c5b82](https://github.com/fuzdev/fuz_util/commit/e6c5b82))
+
 ## 0.49.3
 
 ### Patch Changes
