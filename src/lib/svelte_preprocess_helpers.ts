@@ -562,9 +562,7 @@ export const remove_import_specifier = (
 };
 
 /** Formats named/namespace specifiers as comma-separated string. */
-const format_named_specifiers = (
-	specs: Array<ImportDeclaration['specifiers'][number]>,
-): string =>
+const format_named_specifiers = (specs: Array<ImportDeclaration['specifiers'][number]>): string =>
 	specs
 		.map((spec) => {
 			if (spec.type === 'ImportNamespaceSpecifier') return `* as ${spec.local.name}`;

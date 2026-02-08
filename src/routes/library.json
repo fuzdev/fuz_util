@@ -7237,7 +7237,7 @@
 						"name": "handle_preprocess_error",
 						"kind": "function",
 						"doc_comment": "Handles errors during Svelte preprocessing with configurable behavior.",
-						"source_line": 589,
+						"source_line": 587,
 						"type_signature": "(error: unknown, prefix: string, filename: string | undefined, on_error: \"log\" | \"throw\"): void",
 						"return_type": "void",
 						"parameters": [
