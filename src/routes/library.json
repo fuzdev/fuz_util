@@ -6881,7 +6881,7 @@
 						"name": "PreprocessImportInfo",
 						"kind": "type",
 						"doc_comment": "Import metadata for a single import specifier.",
-						"source_line": 19,
+						"source_line": 26,
 						"type_signature": "PreprocessImportInfo",
 						"properties": [
 							{
@@ -6902,7 +6902,7 @@
 						"name": "ResolvedComponentImport",
 						"kind": "type",
 						"doc_comment": "Information about a resolved component import.",
-						"source_line": 27,
+						"source_line": 34,
 						"type_signature": "ResolvedComponentImport",
 						"properties": [
 							{
@@ -6923,7 +6923,7 @@
 						"name": "find_attribute",
 						"kind": "function",
 						"doc_comment": "Finds an attribute by name on a component AST node.\n\nIterates the node's `attributes` array and returns the first `Attribute`\nnode whose `name` matches. Skips `SpreadAttribute`, directive, and other node types.",
-						"source_line": 44,
+						"source_line": 51,
 						"type_signature": "(node: Component, name: string): Attribute | undefined",
 						"return_type": "Attribute | undefined",
 						"return_description": "The matching `Attribute` node, or `undefined` if not found.",
@@ -6944,7 +6944,7 @@
 						"name": "evaluate_static_expr",
 						"kind": "function",
 						"doc_comment": "Recursively evaluates an expression AST node to a static string value.\n\nHandles string `Literal`, `TemplateLiteral` (including interpolations when all\nexpressions resolve), `BinaryExpression` with `+`, and `Identifier` lookup\nvia an optional bindings map built by `build_static_bindings`.\nReturns `null` for dynamic expressions, non-string literals, or unsupported node types.",
-						"source_line": 65,
+						"source_line": 72,
 						"type_signature": "(expr: Expression, bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
 						"return_description": "The resolved static string, or `null` if the expression is dynamic.",
@@ -6966,7 +6966,7 @@
 						"name": "extract_static_string",
 						"kind": "function",
 						"doc_comment": "Extracts a static string value from a Svelte attribute value AST node.\n\nHandles three forms:\n- Boolean `true` (bare attribute like `inline`) -- returns `null`.\n- Array with a single `Text` node (quoted attribute like `content=\"text\"`) --\n  returns the text data.\n- `ExpressionTag` (expression like `content={'text'}`) -- delegates to `evaluate_static_expr`.\n\nReturns `null` for null literals, mixed arrays, dynamic expressions, and non-string values.",
-						"source_line": 116,
+						"source_line": 123,
 						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
 						"return_description": "The resolved static string, or `null` if the value is dynamic.",
@@ -6985,40 +6985,34 @@
 						]
 					},
 					{
-						"name": "ConditionalStaticStrings",
+						"name": "ConditionalChainBranch",
 						"kind": "type",
-						"doc_comment": "Result of extracting a conditional expression with static string branches.",
-						"source_line": 140,
-						"type_signature": "ConditionalStaticStrings",
+						"doc_comment": "A single branch in a conditional chain extracted from nested ternary expressions.",
+						"source_line": 147,
+						"type_signature": "ConditionalChainBranch",
 						"properties": [
 							{
 								"name": "test_source",
 								"kind": "variable",
-								"type_signature": "string",
-								"doc_comment": "The source text of the test/condition expression."
+								"type_signature": "string | null",
+								"doc_comment": "The source text of the test expression, or `null` for the final else branch."
 							},
 							{
-								"name": "consequent",
+								"name": "value",
 								"kind": "variable",
 								"type_signature": "string",
-								"doc_comment": "The static string value of the consequent (truthy) branch."
-							},
-							{
-								"name": "alternate",
-								"kind": "variable",
-								"type_signature": "string",
-								"doc_comment": "The static string value of the alternate (falsy) branch."
+								"doc_comment": "The resolved static string value for this branch."
 							}
 						]
 					},
 					{
-						"name": "try_extract_conditional",
+						"name": "try_extract_conditional_chain",
 						"kind": "function",
-						"doc_comment": "Extracts a conditional expression where both branches are static strings.\n\nHandles `content={test ? 'a' : 'b'}` where both the consequent and alternate\nbranches resolve to static strings via `evaluate_static_expr`. The test expression\nis preserved as source text (sliced from the original source) since it may be dynamic.\n\nReturns `null` if the attribute value is not an `ExpressionTag` containing a\n`ConditionalExpression`, or if either branch is not statically resolvable.",
-						"source_line": 164,
-						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], source: string, bindings: ReadonlyMap<string, string>): ConditionalStaticStrings | null",
-						"return_type": "ConditionalStaticStrings | null",
-						"return_description": "The condition source and both branch values, or `null` if not extractable.",
+						"doc_comment": "Extracts a chain of conditional expressions where all leaf values are static strings.\n\nHandles nested ternaries like `a ? 'x' : b ? 'y' : 'z'` by iteratively walking\nthe right-recursive `ConditionalExpression` chain. At each level, evaluates the\nconsequent via `evaluate_static_expr` and continues into the alternate if it is\nanother `ConditionalExpression`. The final alternate is the else branch.\n\nReturns `null` if the attribute value is not an `ExpressionTag` containing a\n`ConditionalExpression`, if any leaf fails to resolve to a static string, or\nif the chain exceeds 10 branches (safety limit).\n\nA 2-branch result covers the simple ternary case (`a ? 'x' : 'y'`).",
+						"source_line": 173,
+						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], source: string, bindings: ReadonlyMap<string, string>): ConditionalChainBranch[] | null",
+						"return_type": "ConditionalChainBranch[] | null",
+						"return_description": "Array of conditional chain branches, or `null` if not extractable.",
 						"parameters": [
 							{
 								"name": "value",
@@ -7028,7 +7022,7 @@
 							{
 								"name": "source",
 								"type": "string",
-								"description": "The full source string (needed to slice the test expression source text)."
+								"description": "The full source string (needed to slice test expression source text)."
 							},
 							{
 								"name": "bindings",
@@ -7041,7 +7035,7 @@
 						"name": "build_static_bindings",
 						"kind": "function",
 						"doc_comment": "Builds a map of statically resolvable `const` bindings from a Svelte AST.\n\nScans top-level `const` variable declarations in both instance and module scripts.\nFor each declarator with a plain `Identifier` pattern and a statically evaluable\ninitializer, adds the binding to the map. Processes declarations in source order\nso that chained references resolve: `const a = 'x'; const b = a;` maps `b` to `'x'`.\n\nSkips destructuring patterns, `let`/`var` declarations, and declarations\nwhose initializers reference dynamic values.",
-						"source_line": 202,
+						"source_line": 229,
 						"type_signature": "(ast: Root): Map<string, string>",
 						"return_type": "Map<string, string>",
 						"return_description": "Map of variable names to their resolved static string values.",
@@ -7057,7 +7051,7 @@
 						"name": "resolve_component_names",
 						"kind": "function",
 						"doc_comment": "Resolves local names that import from specified source paths.\n\nScans `ImportDeclaration` nodes in both the instance and module scripts.\nHandles default, named, and aliased imports. Skips namespace imports.\nReturns import node references alongside names to support import removal.",
-						"source_line": 232,
+						"source_line": 259,
 						"type_signature": "(ast: Root, component_imports: string[]): Map<string, ResolvedComponentImport>",
 						"return_type": "Map<string, ResolvedComponentImport>",
 						"return_description": "Map of local names to their resolved import info.",
@@ -7078,7 +7072,7 @@
 						"name": "find_import_insert_position",
 						"kind": "function",
 						"doc_comment": "Finds the position to insert new import statements within a script block.\n\nReturns the end position of the last `ImportDeclaration`, or the start\nof the script body content if no imports exist.",
-						"source_line": 260,
+						"source_line": 287,
 						"type_signature": "(script: Script): number",
 						"return_type": "number",
 						"return_description": "The character position where new imports should be inserted.",
@@ -7094,7 +7088,7 @@
 						"name": "generate_import_lines",
 						"kind": "function",
 						"doc_comment": "Generates indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
-						"source_line": 284,
+						"source_line": 311,
 						"type_signature": "(imports: Map<string, PreprocessImportInfo>, indent?: string): string",
 						"return_type": "string",
 						"return_description": "A string of newline-separated import statements.",
@@ -7116,7 +7110,7 @@
 						"name": "has_identifier_in_tree",
 						"kind": "function",
 						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSkips `Identifier` nodes in non-reference positions defined by\n`NON_REFERENCE_FIELDS` — for example, `obj.Mdz` (non-computed member property),\n`{ Mdz: value }` (non-computed object key), and statement labels.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
-						"source_line": 358,
+						"source_line": 385,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if a matching `Identifier` node is found.",
@@ -7143,13 +7137,129 @@
 						"name": "escape_svelte_text",
 						"kind": "function",
 						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
-						"source_line": 396,
+						"source_line": 423,
 						"type_signature": "(text: string): string",
 						"return_type": "string",
 						"parameters": [
 							{
 								"name": "text",
 								"type": "string"
+							}
+						]
+					},
+					{
+						"name": "remove_variable_declaration",
+						"kind": "function",
+						"doc_comment": "Removes a single-declarator `VariableDeclaration` from source using MagicString.\n\nConsumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving\nblank lines. Only safe for single-declarator statements (`const x = 'val';`);\ncallers must verify `node.declarations.length === 1` before calling.",
+						"source_line": 450,
+						"type_signature": "(s: { remove: (start: number, end: number) => unknown; }, declaration_node: VariableDeclaration & { start: number; end: number; }, source: string): void",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "s",
+								"type": "{ remove: (start: number, end: number) => unknown; }",
+								"description": "The MagicString instance to modify."
+							},
+							{
+								"name": "declaration_node",
+								"type": "VariableDeclaration & { start: number; end: number; }",
+								"description": "The `VariableDeclaration` AST node with Svelte position data."
+							},
+							{
+								"name": "source",
+								"type": "string",
+								"description": "The original source string."
+							}
+						]
+					},
+					{
+						"name": "remove_import_declaration",
+						"kind": "function",
+						"doc_comment": "Removes an `ImportDeclaration` from source using MagicString.\n\nConsumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving\nblank lines.",
+						"source_line": 468,
+						"type_signature": "(s: { remove: (start: number, end: number) => unknown; }, import_node: ImportDeclaration & { start: number; end: number; }, source: string): void",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "s",
+								"type": "{ remove: (start: number, end: number) => unknown; }",
+								"description": "The MagicString instance to modify."
+							},
+							{
+								"name": "import_node",
+								"type": "ImportDeclaration & { start: number; end: number; }",
+								"description": "The `ImportDeclaration` AST node with Svelte position data."
+							},
+							{
+								"name": "source",
+								"type": "string",
+								"description": "The original source string."
+							}
+						]
+					},
+					{
+						"name": "remove_import_specifier",
+						"kind": "function",
+						"doc_comment": "Removes a specifier from a multi-specifier import declaration by\nreconstructing the statement without the removed specifier.\n\nOverwrites the entire declaration range to avoid character-level comma surgery.\n\nHandles:\n- `import Mdz, {other} from '...'` → `import {other} from '...'`\n- `import {default as Mdz, other} from '...'` → `import {other} from '...'`\n- `import {Mdz, other} from '...'` → `import {other} from '...'`",
+						"source_line": 524,
+						"type_signature": "(s: { overwrite: (start: number, end: number, content: string) => unknown; }, node: ImportDeclaration & { start: number; end: number; }, specifier_to_remove: ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier, source: string, additional_lines?: string): void",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "s",
+								"type": "{ overwrite: (start: number, end: number, content: string) => unknown; }",
+								"description": "The MagicString instance to modify."
+							},
+							{
+								"name": "node",
+								"type": "ImportDeclaration & { start: number; end: number; }",
+								"description": "The positioned `ImportDeclaration` AST node."
+							},
+							{
+								"name": "specifier_to_remove",
+								"type": "ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier",
+								"description": "The specifier to remove from the import."
+							},
+							{
+								"name": "source",
+								"type": "string",
+								"description": "The original source string."
+							},
+							{
+								"name": "additional_lines",
+								"type": "string",
+								"description": "Extra content appended after the reconstructed import\n(used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).",
+								"default_value": "''"
+							}
+						]
+					},
+					{
+						"name": "handle_preprocess_error",
+						"kind": "function",
+						"doc_comment": "Handles errors during Svelte preprocessing with configurable behavior.",
+						"source_line": 589,
+						"type_signature": "(error: unknown, prefix: string, filename: string | undefined, on_error: \"log\" | \"throw\"): void",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "error",
+								"type": "unknown",
+								"description": "The caught error."
+							},
+							{
+								"name": "prefix",
+								"type": "string",
+								"description": "Log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`)."
+							},
+							{
+								"name": "filename",
+								"type": "string | undefined",
+								"description": "The file being processed."
+							},
+							{
+								"name": "on_error",
+								"type": "\"log\" | \"throw\"",
+								"description": "`'throw'` to re-throw as a new Error, `'log'` to console.error."
 							}
 						]
 					}

@@ -12,7 +12,14 @@
  * @module
  */
 
-import type {Expression, ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier} from 'estree';
+import type {
+	ConditionalExpression,
+	Expression,
+	ImportDeclaration,
+	ImportDefaultSpecifier,
+	ImportSpecifier,
+	VariableDeclaration,
+} from 'estree';
 import type {AST} from 'svelte/compiler';
 
 /** Import metadata for a single import specifier. */
@@ -136,48 +143,68 @@ export const extract_static_string = (
 	return evaluate_static_expr(expr, bindings);
 };
 
-/** Result of extracting a conditional expression with static string branches. */
-export interface ConditionalStaticStrings {
-	/** The source text of the test/condition expression. */
-	test_source: string;
-	/** The static string value of the consequent (truthy) branch. */
-	consequent: string;
-	/** The static string value of the alternate (falsy) branch. */
-	alternate: string;
+/** A single branch in a conditional chain extracted from nested ternary expressions. */
+export interface ConditionalChainBranch {
+	/** The source text of the test expression, or `null` for the final else branch. */
+	test_source: string | null;
+	/** The resolved static string value for this branch. */
+	value: string;
 }
 
 /**
- * Extracts a conditional expression where both branches are static strings.
+ * Extracts a chain of conditional expressions where all leaf values are static strings.
  *
- * Handles `content={test ? 'a' : 'b'}` where both the consequent and alternate
- * branches resolve to static strings via `evaluate_static_expr`. The test expression
- * is preserved as source text (sliced from the original source) since it may be dynamic.
+ * Handles nested ternaries like `a ? 'x' : b ? 'y' : 'z'` by iteratively walking
+ * the right-recursive `ConditionalExpression` chain. At each level, evaluates the
+ * consequent via `evaluate_static_expr` and continues into the alternate if it is
+ * another `ConditionalExpression`. The final alternate is the else branch.
  *
  * Returns `null` if the attribute value is not an `ExpressionTag` containing a
- * `ConditionalExpression`, or if either branch is not statically resolvable.
+ * `ConditionalExpression`, if any leaf fails to resolve to a static string, or
+ * if the chain exceeds 10 branches (safety limit).
+ *
+ * A 2-branch result covers the simple ternary case (`a ? 'x' : 'y'`).
  *
  * @param value The attribute value from `AST.Attribute['value']`.
- * @param source The full source string (needed to slice the test expression source text).
+ * @param source The full source string (needed to slice test expression source text).
  * @param bindings Map of variable names to their resolved static string values.
- * @returns The condition source and both branch values, or `null` if not extractable.
+ * @returns Array of conditional chain branches, or `null` if not extractable.
  */
-export const try_extract_conditional = (
+export const try_extract_conditional_chain = (
 	value: AST.Attribute['value'],
 	source: string,
 	bindings: ReadonlyMap<string, string>,
-): ConditionalStaticStrings | null => {
+): Array<ConditionalChainBranch> | null => {
 	if (value === true || Array.isArray(value)) return null;
 	const expr = value.expression;
 	if (expr.type !== 'ConditionalExpression') return null;
 
-	const consequent = evaluate_static_expr(expr.consequent, bindings);
-	if (consequent === null) return null;
-	const alternate = evaluate_static_expr(expr.alternate, bindings);
-	if (alternate === null) return null;
+	const MAX_BRANCHES = 10;
+	const branches: Array<ConditionalChainBranch> = [];
+	let current: ConditionalExpression = expr;
 
-	const test = expr.test as any;
-	const test_source = source.slice(test.start, test.end);
-	return {test_source, consequent, alternate};
+	for (;;) {
+		const consequent = evaluate_static_expr(current.consequent, bindings);
+		if (consequent === null) return null;
+
+		const test = current.test as any;
+		const test_source = source.slice(test.start, test.end);
+		branches.push({test_source, value: consequent});
+
+		if (branches.length >= MAX_BRANCHES) return null;
+
+		if (current.alternate.type === 'ConditionalExpression') {
+			current = current.alternate;
+		} else {
+			// Final else branch
+			const alternate = evaluate_static_expr(current.alternate, bindings);
+			if (alternate === null) return null;
+			branches.push({test_source: null, value: alternate});
+			break;
+		}
+	}
+
+	return branches;
 };
 
 // TODO cross-import tracing: resolve `import {x} from './constants.js'` by reading
@@ -408,3 +435,167 @@ export const escape_svelte_text = (text: string): string =>
 				return ch;
 		}
 	});
+
+/**
+ * Removes a single-declarator `VariableDeclaration` from source using MagicString.
+ *
+ * Consumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving
+ * blank lines. Only safe for single-declarator statements (`const x = 'val';`);
+ * callers must verify `node.declarations.length === 1` before calling.
+ *
+ * @param s The MagicString instance to modify.
+ * @param declaration_node The `VariableDeclaration` AST node with Svelte position data.
+ * @param source The original source string.
+ */
+export const remove_variable_declaration = (
+	s: {remove: (start: number, end: number) => unknown},
+	declaration_node: VariableDeclaration & {start: number; end: number},
+	source: string,
+): void => {
+	remove_positioned_node(s, declaration_node, source);
+};
+
+/**
+ * Removes an `ImportDeclaration` from source using MagicString.
+ *
+ * Consumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving
+ * blank lines.
+ *
+ * @param s The MagicString instance to modify.
+ * @param import_node The `ImportDeclaration` AST node with Svelte position data.
+ * @param source The original source string.
+ */
+export const remove_import_declaration = (
+	s: {remove: (start: number, end: number) => unknown},
+	import_node: ImportDeclaration & {start: number; end: number},
+	source: string,
+): void => {
+	remove_positioned_node(s, import_node, source);
+};
+
+/**
+ * Removes a positioned AST node from source, consuming surrounding whitespace.
+ *
+ * Consumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving
+ * blank lines. Shared implementation for `remove_variable_declaration` and
+ * `remove_import_declaration`.
+ */
+const remove_positioned_node = (
+	s: {remove: (start: number, end: number) => unknown},
+	node: {start: number; end: number},
+	source: string,
+): void => {
+	let start: number = node.start;
+	let end: number = node.end;
+
+	// Consume trailing newline
+	if (source[end] === '\n') {
+		end++;
+	} else if (source[end] === '\r' && source[end + 1] === '\n') {
+		end += 2;
+	}
+
+	// Consume leading whitespace on the same line
+	while (start > 0 && (source[start - 1] === '\t' || source[start - 1] === ' ')) {
+		start--;
+	}
+
+	s.remove(start, end);
+};
+
+/**
+ * Removes a specifier from a multi-specifier import declaration by
+ * reconstructing the statement without the removed specifier.
+ *
+ * Overwrites the entire declaration range to avoid character-level comma surgery.
+ *
+ * Handles:
+ * - `import Mdz, {other} from '...'` → `import {other} from '...'`
+ * - `import {default as Mdz, other} from '...'` → `import {other} from '...'`
+ * - `import {Mdz, other} from '...'` → `import {other} from '...'`
+ *
+ * @param s The MagicString instance to modify.
+ * @param node The positioned `ImportDeclaration` AST node.
+ * @param specifier_to_remove The specifier to remove from the import.
+ * @param source The original source string.
+ * @param additional_lines Extra content appended after the reconstructed import
+ *   (used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).
+ */
+export const remove_import_specifier = (
+	s: {overwrite: (start: number, end: number, content: string) => unknown},
+	node: ImportDeclaration & {start: number; end: number},
+	specifier_to_remove: ImportDeclaration['specifiers'][number],
+	source: string,
+	additional_lines: string = '',
+): void => {
+	const remaining = node.specifiers.filter((spec) => spec !== specifier_to_remove);
+	if (remaining.length === 0) return;
+
+	const source_path = node.source.value as string;
+
+	// Reconstruct the import statement
+	const default_specs = remaining.filter((sp) => sp.type === 'ImportDefaultSpecifier');
+	const named_specs = remaining.filter(
+		(sp) => sp.type === 'ImportSpecifier' || sp.type === 'ImportNamespaceSpecifier',
+	);
+
+	let import_clause = '';
+	if (default_specs.length > 0) {
+		import_clause = default_specs[0]!.local.name;
+		if (named_specs.length > 0) {
+			import_clause += `, {${format_named_specifiers(named_specs)}}`;
+		}
+	} else if (named_specs.length > 0) {
+		import_clause = `{${format_named_specifiers(named_specs)}}`;
+	}
+
+	const reconstructed = `import ${import_clause} from '${source_path}';`;
+
+	// Find leading whitespace to preserve indentation
+	let line_start = node.start;
+	while (line_start > 0 && (source[line_start - 1] === '\t' || source[line_start - 1] === ' ')) {
+		line_start--;
+	}
+	const indent = source.slice(line_start, node.start);
+
+	s.overwrite(line_start, node.end, `${indent}${reconstructed}${additional_lines}`);
+};
+
+/** Formats named/namespace specifiers as comma-separated string. */
+const format_named_specifiers = (
+	specs: Array<ImportDeclaration['specifiers'][number]>,
+): string =>
+	specs
+		.map((spec) => {
+			if (spec.type === 'ImportNamespaceSpecifier') return `* as ${spec.local.name}`;
+			if (spec.type !== 'ImportSpecifier') return spec.local.name;
+			const imported_name =
+				spec.imported.type === 'Identifier' ? spec.imported.name : spec.imported.value;
+			if (imported_name !== spec.local.name) {
+				return `${imported_name} as ${spec.local.name}`;
+			}
+			return spec.local.name;
+		})
+		.join(', ');
+
+/**
+ * Handles errors during Svelte preprocessing with configurable behavior.
+ *
+ * @param error The caught error.
+ * @param prefix Log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`).
+ * @param filename The file being processed.
+ * @param on_error `'throw'` to re-throw as a new Error, `'log'` to console.error.
+ */
+export const handle_preprocess_error = (
+	error: unknown,
+	prefix: string,
+	filename: string | undefined,
+	on_error: 'throw' | 'log',
+): void => {
+	const message = `${prefix} Preprocessing failed${filename ? ` in ${filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
+	if (on_error === 'throw') {
+		throw new Error(message, {cause: error});
+	}
+	// eslint-disable-next-line no-console
+	console.error(message);
+};
