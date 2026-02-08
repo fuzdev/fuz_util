@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.50.1
+
+### Patch Changes
+
+- fix: skip import type declarations in `resolve_component_names` ([87f4287](https://github.com/fuzdev/fuz_util/commit/87f4287))
+
 ## 0.50.0
 
 ### Minor Changes
