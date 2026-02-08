@@ -910,6 +910,35 @@ describe('resolve_component_names', () => {
 		assert.ok(names.has('Code'));
 		assert.equal(names.size, 2);
 	});
+
+	test('skips import type declaration', () => {
+		const ast = parse(
+			`<script lang="ts">import type Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.equal(names.size, 0);
+	});
+
+	test('skips type specifier in mixed import', () => {
+		const ast = parse(
+			`<script lang="ts">import Mdz, {type MdzNode} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.ok(names.has('Mdz'));
+		assert.ok(!names.has('MdzNode'));
+		assert.equal(names.size, 1);
+	});
+
+	test('skips import type with aliased specifier', () => {
+		const ast = parse(
+			`<script lang="ts">import type {default as Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
+			{modern: true},
+		);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
+		assert.equal(names.size, 0);
+	});
 });
 
 describe('find_import_insert_position', () => {

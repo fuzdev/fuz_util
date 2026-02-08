@@ -249,7 +249,8 @@ export const build_static_bindings = (ast: AST.Root): Map<string, string> => {
  * Resolves local names that import from specified source paths.
  *
  * Scans `ImportDeclaration` nodes in both the instance and module scripts.
- * Handles default, named, and aliased imports. Skips namespace imports.
+ * Handles default, named, and aliased imports. Skips namespace imports
+ * and `import type` declarations (both whole-declaration and per-specifier).
  * Returns import node references alongside names to support import removal.
  *
  * @param ast The parsed Svelte AST root node.
@@ -266,8 +267,13 @@ export const resolve_component_names = (
 		for (const node of script.content.body) {
 			if (node.type !== 'ImportDeclaration') continue;
 			if (!component_imports.includes(node.source.value as string)) continue;
+			// Skip `import type` declarations — estree types don't declare importKind,
+			// but Svelte's parser preserves it from the TypeScript syntax.
+			if ((node as any).importKind === 'type') continue;
 			for (const specifier of node.specifiers) {
 				if (specifier.type === 'ImportNamespaceSpecifier') continue;
+				// Skip `import {type Foo}` specifiers
+				if ((specifier as any).importKind === 'type') continue;
 				names.set(specifier.local.name, {import_node: node, specifier});
 			}
 		}
