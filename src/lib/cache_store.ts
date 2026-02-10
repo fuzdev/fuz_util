@@ -59,6 +59,9 @@ export interface CreateCacheStoreOptions<TData> {
 	/**
 	 * Serializer for the data. Defaults to `JSON.stringify(data, null, '\t')`.
 	 * Override for custom serialization (e.g., Map-based data, Prettier formatting).
+	 *
+	 * Must produce identical output for identical data — dirty tracking
+	 * uses string equality on the serialized result.
 	 */
 	serialize?: (data: TData) => string | Promise<string>;
 	/**

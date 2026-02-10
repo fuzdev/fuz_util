@@ -59,13 +59,18 @@ export interface CollectFileSnapshotOptions {
 	fields: FileSnapshotFields;
 	/** Filesystem operations. Uses `default_fs_operations` if not provided. */
 	fs_ops?: FsOperations;
-	/** Maximum concurrent file operations. Defaults to 20. */
+	/** Maximum concurrent file operations. Defaults to `DEFAULT_SNAPSHOT_CONCURRENCY`. */
 	concurrency?: number;
-	/** Optional filter: return `false` to exclude a file path. */
-	filter?: (path: string) => boolean;
+	/**
+	 * Optional filter. Receives the cache key (dir_prefix joined with relative path),
+	 * not the raw filesystem path. Return `false` to exclude.
+	 */
+	filter?: (cache_key: string) => boolean;
 	/** Optional logger for warnings. */
 	log?: Logger;
 }
+
+const DEFAULT_SNAPSHOT_CONCURRENCY = 20;
 
 interface FileToProcess {
 	full_path: string;
@@ -75,12 +80,21 @@ interface FileToProcess {
 /**
  * Recursively scans directories and collects per-file metadata.
  *
+ * Only regular files are collected — directories and symlinks are excluded.
+ *
  * @returns Array of snapshot entries sorted by path.
  */
 export const collect_file_snapshot = async (
 	options: CollectFileSnapshotOptions,
 ): Promise<Array<FileSnapshotEntry>> => {
-	const {dirs, fields, fs_ops = default_fs_operations, concurrency = 20, filter, log} = options;
+	const {
+		dirs,
+		fields,
+		fs_ops = default_fs_operations,
+		concurrency = DEFAULT_SNAPSHOT_CONCURRENCY,
+		filter,
+		log,
+	} = options;
 
 	const needs_stat = fields.size || fields.mtime || fields.ctime || fields.mode;
 
@@ -114,9 +128,8 @@ export const collect_file_snapshot = async (
 		}
 	};
 
-	// Collect files from all directories sequentially
+	// Collect files from all directories sequentially (readdir handles missing dirs)
 	for (const dir of dirs) {
-		if (!(await fs_ops.exists({path: dir}))) continue; // eslint-disable-line no-await-in-loop
 		await collect_recursive(dir, '', dir); // eslint-disable-line no-await-in-loop
 	}
 
@@ -156,13 +169,13 @@ export const collect_file_snapshot = async (
 export interface ValidateFileSnapshotOptions {
 	/** Snapshot entries to validate. */
 	entries: Array<FileSnapshotEntry>;
-	/** Base directory to prepend to entry paths. Defaults to `''` (paths used as-is). */
-	base_dir?: string;
+	/** Base path to prepend to entry paths. Defaults to `''` (paths used as-is). */
+	base_path?: string;
 	/** Filesystem operations. Uses `default_fs_operations` if not provided. */
 	fs_ops?: FsOperations;
-	/** Maximum concurrent file operations. Defaults to 20. */
+	/** Maximum concurrent file operations. Defaults to `DEFAULT_SNAPSHOT_CONCURRENCY`. */
 	concurrency?: number;
-	/** Optional logger for debug information. */
+	/** Optional logger for warnings during validation. */
 	log?: Logger;
 }
 
@@ -170,27 +183,35 @@ export interface ValidateFileSnapshotOptions {
  * Validates a snapshot against the current filesystem state.
  *
  * Uses a two-pass strategy for efficiency:
- * 1. Fast negative check: verify files exist and sizes match (sequential, early exit)
+ * 1. Fast negative check: stat files to verify existence and sizes (sequential, early exit)
  * 2. Content verification: hash files and compare (concurrent)
  *
  * @returns `true` if all entries match current filesystem state.
  */
+// TODO consider accepting an optional file content provider (like Filer's in-memory cache)
+// so callers can avoid redundant disk reads when content is already cached.
+// Needs API design — don't want to force Filer dependency everywhere.
 export const validate_file_snapshot = async (
 	options: ValidateFileSnapshotOptions,
 ): Promise<boolean> => {
-	const {entries, base_dir = '', fs_ops = default_fs_operations, concurrency = 20} = options;
+	const {
+		entries,
+		base_path = '',
+		fs_ops = default_fs_operations,
+		concurrency = DEFAULT_SNAPSHOT_CONCURRENCY,
+		log,
+	} = options;
 
-	// Pass 1: Fast negative checks (sequential with early exit)
+	// Pass 1: Fast negative checks via stat (sequential with early exit)
+	// Uses stat instead of exists to avoid TOCTOU races and redundant syscalls.
 	for (const entry of entries) {
-		const path = join(base_dir, entry.path);
+		const path = join(base_path, entry.path);
 
-		if (!(await fs_ops.exists({path}))) return false; // eslint-disable-line no-await-in-loop
+		const stat_result = await fs_ops.stat({path}); // eslint-disable-line no-await-in-loop
+		if (!stat_result.ok) return false;
 
 		// Size check (fast negative — avoids expensive hash)
-		if (entry.size !== undefined) {
-			const stat_result = await fs_ops.stat({path}); // eslint-disable-line no-await-in-loop
-			if (!stat_result.ok || stat_result.value.size !== entry.size) return false;
-		}
+		if (entry.size !== undefined && stat_result.value.size !== entry.size) return false;
 	}
 
 	// Pass 2: Content hash verification (concurrent)
@@ -200,13 +221,16 @@ export const validate_file_snapshot = async (
 	const results = await map_concurrent(
 		entries_with_hash,
 		async (entry) => {
-			const path = join(base_dir, entry.path);
+			const path = join(base_path, entry.path);
 			try {
 				const read_result = await fs_ops.read_file_buffer({path});
 				if (!read_result.ok) return false;
 				const actual_hash = await hash_secure(read_result.value as BufferSource);
 				return actual_hash === entry.hash;
-			} catch {
+			} catch (error) {
+				log?.warn(
+					`Failed to validate ${path}: ${error instanceof Error ? error.message : String(error)}`,
+				);
 				return false;
 			}
 		},

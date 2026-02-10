@@ -1865,7 +1865,7 @@
 								"name": "serialize",
 								"kind": "variable",
 								"type_signature": "(data: TData) => string | Promise<string>",
-								"doc_comment": "Serializer for the data. Defaults to `JSON.stringify(data, null, '\\t')`.\nOverride for custom serialization (e.g., Map-based data, Prettier formatting)."
+								"doc_comment": "Serializer for the data. Defaults to `JSON.stringify(data, null, '\\t')`.\nOverride for custom serialization (e.g., Map-based data, Prettier formatting).\n\nMust produce identical output for identical data — dirty tracking\nuses string equality on the serialized result."
 							},
 							{
 								"name": "deserialize",
@@ -1891,7 +1891,7 @@
 						"name": "create_cache_store",
 						"kind": "function",
 						"doc_comment": "Creates a file-backed cache store with automatic schema validation,\nversion checking, corruption recovery, and dirty tracking.",
-						"source_line": 81,
+						"source_line": 84,
 						"type_signature": "<TData>(options: CreateCacheStoreOptions<TData>): Promise<CacheStore<TData>>",
 						"return_type": "Promise<CacheStore<TData>>",
 						"return_description": "A `CacheStore` with the loaded (or fresh) data and a `save()` method.",
@@ -3025,13 +3025,13 @@
 								"name": "concurrency",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Maximum concurrent file operations. Defaults to 20."
+								"doc_comment": "Maximum concurrent file operations. Defaults to `DEFAULT_SNAPSHOT_CONCURRENCY`."
 							},
 							{
 								"name": "filter",
 								"kind": "variable",
-								"type_signature": "(path: string) => boolean",
-								"doc_comment": "Optional filter: return `false` to exclude a file path."
+								"type_signature": "(cache_key: string) => boolean",
+								"doc_comment": "Optional filter. Receives the cache key (dir_prefix joined with relative path),\nnot the raw filesystem path. Return `false` to exclude."
 							},
 							{
 								"name": "log",
@@ -3044,8 +3044,8 @@
 					{
 						"name": "collect_file_snapshot",
 						"kind": "function",
-						"doc_comment": "Recursively scans directories and collects per-file metadata.",
-						"source_line": 80,
+						"doc_comment": "Recursively scans directories and collects per-file metadata.\n\nOnly regular files are collected — directories and symlinks are excluded.",
+						"source_line": 87,
 						"type_signature": "(options: CollectFileSnapshotOptions): Promise<FileSnapshotEntry[]>",
 						"return_type": "Promise<FileSnapshotEntry[]>",
 						"return_description": "Array of snapshot entries sorted by path.",
@@ -3059,7 +3059,7 @@
 					{
 						"name": "ValidateFileSnapshotOptions",
 						"kind": "type",
-						"source_line": 156,
+						"source_line": 169,
 						"type_signature": "ValidateFileSnapshotOptions",
 						"properties": [
 							{
@@ -3069,10 +3069,10 @@
 								"doc_comment": "Snapshot entries to validate."
 							},
 							{
-								"name": "base_dir",
+								"name": "base_path",
 								"kind": "variable",
 								"type_signature": "string",
-								"doc_comment": "Base directory to prepend to entry paths. Defaults to `''` (paths used as-is)."
+								"doc_comment": "Base path to prepend to entry paths. Defaults to `''` (paths used as-is)."
 							},
 							{
 								"name": "fs_ops",
@@ -3084,21 +3084,21 @@
 								"name": "concurrency",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Maximum concurrent file operations. Defaults to 20."
+								"doc_comment": "Maximum concurrent file operations. Defaults to `DEFAULT_SNAPSHOT_CONCURRENCY`."
 							},
 							{
 								"name": "log",
 								"kind": "variable",
 								"type_signature": "Logger",
-								"doc_comment": "Optional logger for debug information."
+								"doc_comment": "Optional logger for warnings during validation."
 							}
 						]
 					},
 					{
 						"name": "validate_file_snapshot",
 						"kind": "function",
-						"doc_comment": "Validates a snapshot against the current filesystem state.\n\nUses a two-pass strategy for efficiency:\n1. Fast negative check: verify files exist and sizes match (sequential, early exit)\n2. Content verification: hash files and compare (concurrent)",
-						"source_line": 178,
+						"doc_comment": "Validates a snapshot against the current filesystem state.\n\nUses a two-pass strategy for efficiency:\n1. Fast negative check: stat files to verify existence and sizes (sequential, early exit)\n2. Content verification: hash files and compare (concurrent)",
+						"source_line": 194,
 						"type_signature": "(options: ValidateFileSnapshotOptions): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "`true` if all entries match current filesystem state.",
@@ -3272,42 +3272,50 @@
 							{
 								"name": "read_file",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t\tencoding?: BufferEncoding;\n\t}) => Promise<Result<{value: string}, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\tencoding?: BufferEncoding;\n\t}) => Promise<Result<{value: string}, {message: string}>>",
+								"doc_comment": "Reads a file as text."
 							},
 							{
 								"name": "read_file_buffer",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Uint8Array}, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Uint8Array}, {message: string}>>",
+								"doc_comment": "Reads a file as a binary buffer."
 							},
 							{
 								"name": "write_file",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t\tcontent: string | Uint8Array;\n\t}) => Promise<Result<object, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\tcontent: string | Uint8Array;\n\t}) => Promise<Result<object, {message: string}>>",
+								"doc_comment": "Writes content to a file."
 							},
 							{
 								"name": "stat",
 								"kind": "variable",
-								"type_signature": "(options: {path: string}) => Promise<Result<{value: FsStatResult}, {message: string}>>"
+								"type_signature": "(options: {path: string}) => Promise<Result<{value: FsStatResult}, {message: string}>>",
+								"doc_comment": "Gets filesystem stats."
 							},
 							{
 								"name": "exists",
 								"kind": "variable",
-								"type_signature": "(options: {path: string}) => Promise<boolean>"
+								"type_signature": "(options: {path: string}) => Promise<boolean>",
+								"doc_comment": "Checks if a path exists. Prefer `stat` or direct operations to avoid TOCTOU races."
 							},
 							{
 								"name": "readdir",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Array<FsDirent>}, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Array<FsDirent>}, {message: string}>>",
+								"doc_comment": "Lists directory entries."
 							},
 							{
 								"name": "mkdir",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t}) => Promise<Result<object, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t}) => Promise<Result<object, {message: string}>>",
+								"doc_comment": "Creates a directory."
 							},
 							{
 								"name": "rm",
 								"kind": "variable",
-								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t\tforce?: boolean;\n\t}) => Promise<Result<object, {message: string}>>"
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t\tforce?: boolean;\n\t}) => Promise<Result<object, {message: string}>>",
+								"doc_comment": "Removes a file or directory."
 							}
 						]
 					}

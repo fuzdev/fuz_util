@@ -44,33 +44,41 @@ export interface FsDirent {
  * Provide a custom implementation for testing or alternative runtimes (e.g., Deno).
  */
 export interface FsOperations {
+	/** Reads a file as text. @returns the file content, or error if read fails. */
 	read_file: (options: {
 		path: string;
 		encoding?: BufferEncoding;
 	}) => Promise<Result<{value: string}, {message: string}>>;
 
+	/** Reads a file as a binary buffer. @returns the file bytes, or error if read fails. */
 	read_file_buffer: (options: {
 		path: string;
 	}) => Promise<Result<{value: Uint8Array}, {message: string}>>;
 
+	/** Writes content to a file. @returns success, or error if write fails. */
 	write_file: (options: {
 		path: string;
 		content: string | Uint8Array;
 	}) => Promise<Result<object, {message: string}>>;
 
+	/** Gets filesystem stats. @returns stat metadata, or error if stat fails. */
 	stat: (options: {path: string}) => Promise<Result<{value: FsStatResult}, {message: string}>>;
 
+	/** Checks if a path exists. Prefer `stat` or direct operations to avoid TOCTOU races. */
 	exists: (options: {path: string}) => Promise<boolean>;
 
+	/** Lists directory entries. @returns array of entries with type info, or error if readdir fails. */
 	readdir: (options: {
 		path: string;
 	}) => Promise<Result<{value: Array<FsDirent>}, {message: string}>>;
 
+	/** Creates a directory. @returns success, or error if mkdir fails. */
 	mkdir: (options: {
 		path: string;
 		recursive?: boolean;
 	}) => Promise<Result<object, {message: string}>>;
 
+	/** Removes a file or directory. @returns success, or error if rm fails. */
 	rm: (options: {
 		path: string;
 		recursive?: boolean;
