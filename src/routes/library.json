@@ -4603,9 +4603,9 @@
 						"kind": "function",
 						"doc_comment": "",
 						"examples": [
-							"parse_path_parts('./foo/bar/baz.ts') => ['foo', 'foo/bar', 'foo/bar/baz.ts']"
+							"```ts\nparse_path_parts('./foo/bar/baz.ts') // => ['foo', 'foo/bar', 'foo/bar/baz.ts']\n```"
 						],
-						"source_line": 42,
+						"source_line": 45,
 						"type_signature": "(path: string): string[]",
 						"return_type": "string[]",
 						"parameters": [
@@ -4619,8 +4619,10 @@
 						"name": "parse_path_segments",
 						"kind": "function",
 						"doc_comment": "Gets the individual parts of a path, ignoring dots and separators.",
-						"examples": ["parse_path_segments('/foo/bar/baz.ts') => ['foo', 'bar', 'baz.ts']"],
-						"source_line": 58,
+						"examples": [
+							"```ts\nparse_path_segments('/foo/bar/baz.ts') // => ['foo', 'bar', 'baz.ts']\n```"
+						],
+						"source_line": 64,
 						"type_signature": "(path: string): string[]",
 						"return_type": "string[]",
 						"parameters": [
@@ -4634,14 +4636,14 @@
 						"name": "PathPiece",
 						"kind": "type",
 						"doc_comment": "A piece of a parsed path, either a path segment or separator.",
-						"source_line": 64,
+						"source_line": 70,
 						"type_signature": "PathPiece"
 					},
 					{
 						"name": "parse_path_pieces",
 						"kind": "function",
 						"doc_comment": "Treats all paths as absolute, so the first piece is always a `'/'` with type `'separator'`.",
-						"source_line": 79,
+						"source_line": 85,
 						"type_signature": "(raw_path: string): PathPiece[]",
 						"return_type": "PathPiece[]",
 						"parameters": [
@@ -4655,7 +4657,7 @@
 						"name": "should_exclude_path",
 						"kind": "function",
 						"doc_comment": "Checks if a filename matches any exclusion pattern.\n\nReturns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.\nString patterns use substring matching. RegExp patterns use `.test()`.",
-						"source_line": 107,
+						"source_line": 113,
 						"type_signature": "(filename: string | undefined, exclude: (string | RegExp)[]): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the file should be excluded from processing.",
@@ -4676,7 +4678,7 @@
 						"name": "slugify",
 						"kind": "function",
 						"doc_comment": "Converts a string into a URL-compatible slug.",
-						"source_line": 123,
+						"source_line": 129,
 						"type_signature": "(str: string, map_special_characters?: boolean): string",
 						"return_type": "string",
 						"parameters": [
@@ -5464,8 +5466,8 @@
 						"name": "print_child_process",
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
-						"examples": ["`pid(1234) <- node server.js`"],
-						"source_line": 621,
+						"examples": ["```ts\n`pid(1234) <- node server.js`\n```"],
+						"source_line": 624,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -5479,7 +5481,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 628,
+						"source_line": 631,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5493,7 +5495,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 638,
+						"source_line": 641,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5507,7 +5509,7 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 652,
+						"source_line": 655,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -5560,7 +5562,7 @@
 							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
 							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 721,
+						"source_line": 724,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -5584,7 +5586,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 824,
+						"source_line": 827,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",
@@ -6037,9 +6039,9 @@
 						"kind": "function",
 						"doc_comment": "Format declaration name with generic parameters for display.",
 						"examples": [
-							"declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})\n// => 'Map<K, V>'"
+							"```ts\ndeclaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})\n// => 'Map<K, V>'\n```"
 						],
-						"source_line": 180,
+						"source_line": 183,
 						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }): string",
 						"return_type": "string",
 						"parameters": [
@@ -6054,9 +6056,9 @@
 						"kind": "function",
 						"doc_comment": "Generate TypeScript import statement for a declaration.",
 						"examples": [
-							"declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')\n// => \"import type {Foo} from '@pkg/lib/foo.js';\""
+							"```ts\ndeclaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')\n// => \"import type {Foo} from '@pkg/lib/foo.js';\"\n```"
 						],
-						"source_line": 196,
+						"source_line": 202,
 						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }, module_path: string, library_name: string): string",
 						"return_type": "string",
 						"parameters": [

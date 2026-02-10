@@ -174,8 +174,11 @@ export type SourceJson = z.infer<typeof SourceJson>;
 
 /**
  * Format declaration name with generic parameters for display.
- * @example declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})
+ * @example
+ * ```ts
+ * declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})
  * // => 'Map<K, V>'
+ * ```
  */
 export const declaration_get_display_name = (declaration: DeclarationJson): string => {
 	if (!declaration.generic_params?.length) return declaration.name;
@@ -190,8 +193,11 @@ export const declaration_get_display_name = (declaration: DeclarationJson): stri
 
 /**
  * Generate TypeScript import statement for a declaration.
- * @example declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')
+ * @example
+ * ```ts
+ * declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')
  * // => "import type {Foo} from '@pkg/lib/foo.js';"
+ * ```
  */
 export const declaration_generate_import = (
 	declaration: DeclarationJson,
