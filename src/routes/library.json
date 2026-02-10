@@ -568,7 +568,7 @@
 						]
 					}
 				],
-				"dependents": ["benchmark.ts", "dag.ts", "throttle.ts"]
+				"dependents": ["benchmark.ts", "dag.ts", "file_snapshot.ts", "throttle.ts"]
 			},
 			{
 				"path": "benchmark_baseline.ts",
@@ -1791,6 +1791,123 @@
 				"dependencies": ["async.ts", "benchmark_format.ts", "benchmark_stats.ts", "time.ts"]
 			},
 			{
+				"path": "cache_store.ts",
+				"declarations": [
+					{
+						"name": "CacheStore",
+						"kind": "type",
+						"doc_comment": "A loaded cache store with data and save capability.",
+						"source_line": 26,
+						"type_signature": "CacheStore<TData>",
+						"generic_params": [
+							{
+								"name": "TData"
+							}
+						],
+						"properties": [
+							{
+								"name": "data",
+								"kind": "variable",
+								"type_signature": "TData",
+								"doc_comment": "The cached data. Mutate directly; dirty tracking happens at save time."
+							},
+							{
+								"name": "save",
+								"kind": "variable",
+								"type_signature": "() => Promise<Result<{value: boolean}, {message: string}>>",
+								"doc_comment": "Persists data to disk if changed since load."
+							},
+							{
+								"name": "path",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "The file path where this cache is stored."
+							}
+						]
+					},
+					{
+						"name": "CreateCacheStoreOptions",
+						"kind": "type",
+						"doc_comment": "Options for creating a cache store.",
+						"source_line": 41,
+						"type_signature": "CreateCacheStoreOptions<TData>",
+						"generic_params": [
+							{
+								"name": "TData"
+							}
+						],
+						"properties": [
+							{
+								"name": "path",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Absolute path to the cache JSON file."
+							},
+							{
+								"name": "validate",
+								"kind": "variable",
+								"type_signature": "(data: unknown) => TData | null",
+								"doc_comment": "Validation function for loaded data.\nCalled with the parsed and deserialized data.\nReturn the validated data, or `null` to indicate validation failure\n(which triggers cache invalidation — file is deleted and `fresh_data()` is used)."
+							},
+							{
+								"name": "fresh_data",
+								"kind": "variable",
+								"type_signature": "() => TData",
+								"doc_comment": "Factory function to create fresh/empty data when cache is missing or invalid."
+							},
+							{
+								"name": "version",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Optional expected version string.\nIf provided, the deserialized data must have a `version` property matching this value.\nMismatched versions are treated as stale cache."
+							},
+							{
+								"name": "serialize",
+								"kind": "variable",
+								"type_signature": "(data: TData) => string | Promise<string>",
+								"doc_comment": "Serializer for the data. Defaults to `JSON.stringify(data, null, '\\t')`.\nOverride for custom serialization (e.g., Map-based data, Prettier formatting)."
+							},
+							{
+								"name": "deserialize",
+								"kind": "variable",
+								"type_signature": "(raw: string) => unknown",
+								"doc_comment": "Deserializer for raw file contents. Defaults to `JSON.parse`.\nOverride for custom deserialization (e.g., reviving Maps from arrays)."
+							},
+							{
+								"name": "fs_ops",
+								"kind": "variable",
+								"type_signature": "FsOperations",
+								"doc_comment": "Filesystem operations. Uses `default_fs_operations` if not provided."
+							},
+							{
+								"name": "log",
+								"kind": "variable",
+								"type_signature": "Logger",
+								"doc_comment": "Optional logger for warnings about corruption recovery."
+							}
+						]
+					},
+					{
+						"name": "create_cache_store",
+						"kind": "function",
+						"doc_comment": "Creates a file-backed cache store with automatic schema validation,\nversion checking, corruption recovery, and dirty tracking.",
+						"source_line": 81,
+						"type_signature": "<TData>(options: CreateCacheStoreOptions<TData>): Promise<CacheStore<TData>>",
+						"return_type": "Promise<CacheStore<TData>>",
+						"return_description": "A `CacheStore` with the loaded (or fresh) data and a `save()` method.",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "CreateCacheStoreOptions<TData>"
+							}
+						]
+					}
+				],
+				"module_comment": "Schema-validated persistent cache with dirty tracking and corruption recovery.\n\nExtracted from shared patterns in gro's build cache and fuz_gitops's fs_fetch_value_cache.\n\nFeatures:\n- Schema validation at load time (any validation function, not coupled to Zod)\n- Optional version checking\n- Corruption recovery (delete invalid file, start fresh)\n- Dirty tracking (only writes if data changed)\n- Pluggable storage via `FsOperations`",
+				"dependencies": ["fs_operations_node.ts"],
+				"dependents": ["fs_fetch_cache.ts"]
+			},
+			{
 				"path": "colors.ts",
 				"declarations": [
 					{
@@ -2790,7 +2907,412 @@
 						]
 					}
 				],
-				"dependencies": ["json.ts", "object.ts"]
+				"dependencies": ["json.ts", "object.ts"],
+				"dependents": ["fs_fetch_cache.ts"]
+			},
+			{
+				"path": "file_snapshot.ts",
+				"declarations": [
+					{
+						"name": "FileSnapshotEntry",
+						"kind": "type",
+						"doc_comment": "Metadata about a single file in a snapshot.\nAll fields except `path` are optional based on the `FileSnapshotFields` configuration.",
+						"source_line": 23,
+						"type_signature": "FileSnapshotEntry",
+						"properties": [
+							{
+								"name": "path",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Relative path from the snapshot root directory."
+							},
+							{
+								"name": "hash",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "SHA-256 hash of file contents. Present if `hash` field is enabled."
+							},
+							{
+								"name": "size",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "File size in bytes. Present if `size` field is enabled."
+							},
+							{
+								"name": "mtime",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Modification time in milliseconds since epoch. Present if `mtime` field is enabled."
+							},
+							{
+								"name": "ctime",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Change time in milliseconds since epoch. Present if `ctime` field is enabled."
+							},
+							{
+								"name": "mode",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Unix file permission mode. Present if `mode` field is enabled."
+							}
+						]
+					},
+					{
+						"name": "FileSnapshotFields",
+						"kind": "type",
+						"doc_comment": "Controls which metadata fields are collected per file.\nAll default to `false`. The `path` field is always included.",
+						"source_line": 42,
+						"type_signature": "FileSnapshotFields",
+						"properties": [
+							{
+								"name": "hash",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Compute SHA-256 content hash. Expensive for large files."
+							},
+							{
+								"name": "size",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Include file size."
+							},
+							{
+								"name": "mtime",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Include modification time."
+							},
+							{
+								"name": "ctime",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Include change time."
+							},
+							{
+								"name": "mode",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "Include file mode/permissions."
+							}
+						]
+					},
+					{
+						"name": "CollectFileSnapshotOptions",
+						"kind": "type",
+						"source_line": 55,
+						"type_signature": "CollectFileSnapshotOptions",
+						"properties": [
+							{
+								"name": "dirs",
+								"kind": "variable",
+								"type_signature": "Array<string>",
+								"doc_comment": "Directories to scan."
+							},
+							{
+								"name": "fields",
+								"kind": "variable",
+								"type_signature": "FileSnapshotFields",
+								"doc_comment": "Which metadata fields to include per file."
+							},
+							{
+								"name": "fs_ops",
+								"kind": "variable",
+								"type_signature": "FsOperations",
+								"doc_comment": "Filesystem operations. Uses `default_fs_operations` if not provided."
+							},
+							{
+								"name": "concurrency",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Maximum concurrent file operations. Defaults to 20."
+							},
+							{
+								"name": "filter",
+								"kind": "variable",
+								"type_signature": "(path: string) => boolean",
+								"doc_comment": "Optional filter: return `false` to exclude a file path."
+							},
+							{
+								"name": "log",
+								"kind": "variable",
+								"type_signature": "Logger",
+								"doc_comment": "Optional logger for warnings."
+							}
+						]
+					},
+					{
+						"name": "collect_file_snapshot",
+						"kind": "function",
+						"doc_comment": "Recursively scans directories and collects per-file metadata.",
+						"source_line": 80,
+						"type_signature": "(options: CollectFileSnapshotOptions): Promise<FileSnapshotEntry[]>",
+						"return_type": "Promise<FileSnapshotEntry[]>",
+						"return_description": "Array of snapshot entries sorted by path.",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "CollectFileSnapshotOptions"
+							}
+						]
+					},
+					{
+						"name": "ValidateFileSnapshotOptions",
+						"kind": "type",
+						"source_line": 156,
+						"type_signature": "ValidateFileSnapshotOptions",
+						"properties": [
+							{
+								"name": "entries",
+								"kind": "variable",
+								"type_signature": "Array<FileSnapshotEntry>",
+								"doc_comment": "Snapshot entries to validate."
+							},
+							{
+								"name": "base_dir",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Base directory to prepend to entry paths. Defaults to `''` (paths used as-is)."
+							},
+							{
+								"name": "fs_ops",
+								"kind": "variable",
+								"type_signature": "FsOperations",
+								"doc_comment": "Filesystem operations. Uses `default_fs_operations` if not provided."
+							},
+							{
+								"name": "concurrency",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Maximum concurrent file operations. Defaults to 20."
+							},
+							{
+								"name": "log",
+								"kind": "variable",
+								"type_signature": "Logger",
+								"doc_comment": "Optional logger for debug information."
+							}
+						]
+					},
+					{
+						"name": "validate_file_snapshot",
+						"kind": "function",
+						"doc_comment": "Validates a snapshot against the current filesystem state.\n\nUses a two-pass strategy for efficiency:\n1. Fast negative check: verify files exist and sizes match (sequential, early exit)\n2. Content verification: hash files and compare (concurrent)",
+						"source_line": 178,
+						"type_signature": "(options: ValidateFileSnapshotOptions): Promise<boolean>",
+						"return_type": "Promise<boolean>",
+						"return_description": "`true` if all entries match current filesystem state.",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "ValidateFileSnapshotOptions"
+							}
+						]
+					}
+				],
+				"module_comment": "Directory fingerprinting and validation utilities.\n\nExtracted from gro's `collect_build_outputs` and `validate_build_cache`.\nScans directory trees, collects per-file metadata with configurable fields,\nand validates snapshots against the current filesystem state.",
+				"dependencies": ["async.ts", "fs_operations_node.ts", "hash.ts"]
+			},
+			{
+				"path": "fs_fetch_cache.ts",
+				"declarations": [
+					{
+						"name": "FsFetchCache",
+						"kind": "type",
+						"doc_comment": "A cache store wrapping `FetchValueCache`.\nThe `data` field is a `Map` that can be passed directly to `fetch_value`'s `cache` option.",
+						"source_line": 20,
+						"type_signature": "FsFetchCache"
+					},
+					{
+						"name": "CreateFsFetchCacheOptions",
+						"kind": "type",
+						"source_line": 22,
+						"type_signature": "CreateFsFetchCacheOptions",
+						"properties": [
+							{
+								"name": "name",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Cache name (used as filename without `.json` extension)."
+							},
+							{
+								"name": "dir",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Directory to store cache file."
+							},
+							{
+								"name": "fs_ops",
+								"kind": "variable",
+								"type_signature": "FsOperations",
+								"doc_comment": "Filesystem operations. Uses `default_fs_operations` if not provided."
+							},
+							{
+								"name": "format",
+								"kind": "variable",
+								"type_signature": "(content: string, filepath: string) => string | Promise<string>",
+								"doc_comment": "Optional formatter for the serialized JSON before writing.\nUseful for Prettier formatting via `format_file`."
+							},
+							{
+								"name": "log",
+								"kind": "variable",
+								"type_signature": "Logger",
+								"doc_comment": "Optional logger."
+							}
+						]
+					},
+					{
+						"name": "create_fs_fetch_cache",
+						"kind": "function",
+						"doc_comment": "Creates a filesystem-backed cache for `fetch_value` API responses.",
+						"examples": [
+							"```ts\nconst cache = await create_fs_fetch_cache({\n  name: 'repos',\n  dir: '.gro/build/fetch',\n});\n// Use cache.data (a FetchValueCache Map) with fetch_value\nawait fetch_value(url, {cache: cache.data});\n// Persist only if changed\nawait cache.save();\n```"
+						],
+						"source_line": 53,
+						"type_signature": "(options: CreateFsFetchCacheOptions): Promise<FsFetchCache>",
+						"return_type": "Promise<FsFetchCache>",
+						"parameters": [
+							{
+								"name": "options",
+								"type": "CreateFsFetchCacheOptions"
+							}
+						]
+					}
+				],
+				"module_comment": "Convenience wrapper combining `cache_store` with `FetchValueCache` serialization.\n\nReplaces fuz_gitops's `fs_fetch_value_cache.ts` with a version built on `cache_store` primitives.",
+				"dependencies": ["cache_store.ts", "fetch.ts"]
+			},
+			{
+				"path": "fs_operations_node.ts",
+				"declarations": [
+					{
+						"name": "default_fs_operations",
+						"kind": "variable",
+						"doc_comment": "Default filesystem operations implementation using `node:fs/promises`.",
+						"source_line": 17,
+						"type_signature": "FsOperations"
+					}
+				],
+				"module_comment": "Default Node.js implementation of `FsOperations` using `node:fs/promises`.\n\nSeparated from the interface module (`fs_operations.ts`) so that\nnon-Node runtimes (e.g., Deno) can import the interface without pulling in `node:fs`.",
+				"dependents": ["cache_store.ts", "file_snapshot.ts"]
+			},
+			{
+				"path": "fs_operations.ts",
+				"declarations": [
+					{
+						"name": "FsStatResult",
+						"kind": "type",
+						"doc_comment": "Subset of filesystem stat results.\nAvoids coupling to Node's full `Stats` object.",
+						"source_line": 22,
+						"type_signature": "FsStatResult",
+						"properties": [
+							{
+								"name": "size",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "mtime_ms",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "ctime_ms",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "mode",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "is_file",
+								"kind": "variable",
+								"type_signature": "boolean"
+							},
+							{
+								"name": "is_directory",
+								"kind": "variable",
+								"type_signature": "boolean"
+							}
+						]
+					},
+					{
+						"name": "FsDirent",
+						"kind": "type",
+						"doc_comment": "Directory entry with file type information.",
+						"source_line": 34,
+						"type_signature": "FsDirent",
+						"properties": [
+							{
+								"name": "name",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "is_file",
+								"kind": "variable",
+								"type_signature": "boolean"
+							},
+							{
+								"name": "is_directory",
+								"kind": "variable",
+								"type_signature": "boolean"
+							}
+						]
+					},
+					{
+						"name": "FsOperations",
+						"kind": "type",
+						"doc_comment": "Pluggable filesystem operations interface.\n\nSee `fs_operations_node.ts` for the default implementation using `node:fs/promises`.\nProvide a custom implementation for testing or alternative runtimes (e.g., Deno).",
+						"source_line": 46,
+						"type_signature": "FsOperations",
+						"properties": [
+							{
+								"name": "read_file",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\tencoding?: BufferEncoding;\n\t}) => Promise<Result<{value: string}, {message: string}>>"
+							},
+							{
+								"name": "read_file_buffer",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Uint8Array}, {message: string}>>"
+							},
+							{
+								"name": "write_file",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\tcontent: string | Uint8Array;\n\t}) => Promise<Result<object, {message: string}>>"
+							},
+							{
+								"name": "stat",
+								"kind": "variable",
+								"type_signature": "(options: {path: string}) => Promise<Result<{value: FsStatResult}, {message: string}>>"
+							},
+							{
+								"name": "exists",
+								"kind": "variable",
+								"type_signature": "(options: {path: string}) => Promise<boolean>"
+							},
+							{
+								"name": "readdir",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t}) => Promise<Result<{value: Array<FsDirent>}, {message: string}>>"
+							},
+							{
+								"name": "mkdir",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t}) => Promise<Result<object, {message: string}>>"
+							},
+							{
+								"name": "rm",
+								"kind": "variable",
+								"type_signature": "(options: {\n\t\tpath: string;\n\t\trecursive?: boolean;\n\t\tforce?: boolean;\n\t}) => Promise<Result<object, {message: string}>>"
+							}
+						]
+					}
+				],
+				"module_comment": "Pluggable filesystem operations interface for dependency injection.\n\nFollows the operations pattern from fuz_gitops:\n- All operations accept a single options object parameter\n- All fallible operations return `Result`\n- Never throw `Error` in operations — return `Result` with `ok: false`\n- Use `null` for expected \"not found\" cases\n\nThis module contains only the interface and types — no Node.js imports.\nSee `fs_operations_node.ts` for the default Node.js implementation."
 			},
 			{
 				"path": "fs.ts",
@@ -3532,7 +4054,8 @@
 						]
 					}
 				],
-				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides both secure (cryptographic) and insecure (fast) hash functions."
+				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides both secure (cryptographic) and insecure (fast) hash functions.",
+				"dependents": ["file_snapshot.ts"]
 			},
 			{
 				"path": "id.ts",
