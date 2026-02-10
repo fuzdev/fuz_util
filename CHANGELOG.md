@@ -709,7 +709,7 @@
 
 ### Patch Changes
 
-- upgrade `@ryanatkn/gro` which adds `modules` to `package.ts` ([4b0fc13](https://github.com/ryanatkn/belt/commit/4b0fc13))
+- upgrade `@fuzdev/gro` which adds `modules` to `package.ts` ([4b0fc13](https://github.com/ryanatkn/belt/commit/4b0fc13))
 
 ## 0.15.2
 
@@ -739,7 +739,7 @@
 
 - fix some snake_case ([#20](https://github.com/ryanatkn/belt/pull/20))
 - bump node engine to 20.10 ([#20](https://github.com/ryanatkn/belt/pull/20))
-- upgrade to @ryanatkn/gro@0.86 from @feltjs/gro@0.83 ([#20](https://github.com/ryanatkn/belt/pull/20))
+- upgrade to @fuzdev/gro@0.86 from @feltjs/gro@0.83 ([#20](https://github.com/ryanatkn/belt/pull/20))
 - add `spawn_out` to process ([#20](https://github.com/ryanatkn/belt/pull/20))
 
 ## 0.13.1
