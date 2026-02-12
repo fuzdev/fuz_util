@@ -3799,7 +3799,7 @@
 							},
 							{
 								"name": "source_json",
-								"type": "{ [x: string]: unknown; name: string; version: string; modules?: { [x: string]: unknown; path: string; declarations?: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; ... 19 more ...; alias_of?: { ...; } | undefined; }[] | undefine..."
+								"type": "{ [x: string]: unknown; name: string; version: string; modules?: { [x: string]: unknown; path: string; declarations?: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; ... 20 more ...; alias_of?: { ...; } | undefined; }[] | undefine..."
 							}
 						]
 					},
@@ -6011,43 +6011,44 @@
 						"kind": "type",
 						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from ParameterInfo despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
 						"source_line": 68,
-						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; default_value: ZodOptional<...>; bindable: ZodOptional<...>; }, $loose>"
+						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 6 more ...; since: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "DeclarationJson",
 						"kind": "type",
 						"doc_comment": "Metadata for an exported declaration (function, type, class, component, etc.).\n\nExtracted from TypeScript source and JSDoc/TSDoc comments at build time.",
-						"source_line": 83,
-						"type_signature": "ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loose>"
+						"source_line": 93,
+						"type_signature": "ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 20 more ...; alias_of: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "ModuleJson",
 						"kind": "type",
 						"doc_comment": "A source file in `src/lib/` with its exported declarations.",
-						"source_line": 147,
-						"type_signature": "ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loo..."
+						"source_line": 160,
+						"type_signature": "ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; type: \"type\"; variable: \"variable\"; class: \"class\"; constructor: \"constructor\"; component: \"component\"; json: \"json\"; css: \"css\"; }>; ... 20 more ...; alias_of: ZodOptional<...>; }, $loo..."
 					},
 					{
 						"name": "SourceJson",
 						"kind": "type",
 						"doc_comment": "Metadata for a library's `src/lib/` exports.",
-						"source_line": 168,
-						"type_signature": "ZodObject<{ name: ZodString; version: ZodString; modules: ZodOptional<ZodArray<ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; ... 6 more ...; css: \"css\"; }>; ... 19 more ...; alias_of: ZodOptional<...>; }, $loose>>>; module_comment: ..."
+						"source_line": 181,
+						"type_signature": "ZodObject<{ name: ZodString; version: ZodString; modules: ZodOptional<ZodArray<ZodObject<{ path: ZodString; declarations: ZodOptional<ZodArray<ZodObject<{ name: ZodString; kind: ZodEnum<{ function: \"function\"; ... 6 more ...; css: \"css\"; }>; ... 20 more ...; alias_of: ZodOptional<...>; }, $loose>>>; module_comment: ..."
 					},
 					{
 						"name": "declaration_get_display_name",
 						"kind": "function",
 						"doc_comment": "Format declaration name with generic parameters for display.",
+						"deprecated_message": "Use `getDisplayName` from `@fuzdev/svelte-docinfo/types.js` instead.",
 						"examples": [
 							"```ts\ndeclaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})\n// => 'Map<K, V>'\n```"
 						],
-						"source_line": 183,
-						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }): string",
+						"source_line": 199,
+						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 18 more ...; alias_of?: { ...; } | undefined; }): string",
 						"return_type": "string",
 						"parameters": [
 							{
 								"name": "declaration",
-								"type": "{ [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }"
+								"type": "{ [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 18 more ...; alias_of?: { ...; } | undefined; }"
 							}
 						]
 					},
@@ -6055,16 +6056,17 @@
 						"name": "declaration_generate_import",
 						"kind": "function",
 						"doc_comment": "Generate TypeScript import statement for a declaration.",
+						"deprecated_message": "Use `generateImport` from `@fuzdev/svelte-docinfo/types.js` instead.",
 						"examples": [
 							"```ts\ndeclaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')\n// => \"import type {Foo} from '@pkg/lib/foo.js';\"\n```"
 						],
-						"source_line": 202,
-						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }, module_path: string, library_name: string): string",
+						"source_line": 221,
+						"type_signature": "(declaration: { [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 18 more ...; alias_of?: { ...; } | undefined; }, module_path: string, library_name: string): string",
 						"return_type": "string",
 						"parameters": [
 							{
 								"name": "declaration",
-								"type": "{ [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 17 more ...; alias_of?: { ...; } | undefined; }"
+								"type": "{ [x: string]: unknown; name: string; kind: \"function\" | \"type\" | \"variable\" | \"class\" | \"constructor\" | \"component\" | \"json\" | \"css\"; doc_comment?: string | undefined; type_signature?: string | undefined; ... 18 more ...; alias_of?: { ...; } | undefined; }"
 							},
 							{
 								"name": "module_path",
