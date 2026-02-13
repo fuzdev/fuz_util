@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.51.0
+
+### Minor Changes
+
+- improve `source_json.ts` ([#71](https://github.com/fuzdev/fuz_util/pull/71))
+
 ## 0.50.1
 
 ### Patch Changes
