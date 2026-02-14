@@ -120,6 +120,11 @@ export interface DespawnOptions {
 	timeout_ms?: number;
 }
 
+/**
+ * Result of spawning a detached process.
+ */
+export type SpawnDetachedResult = {ok: true; child: ChildProcess} | {ok: false; message: string};
+
 //
 // Process Handle Types
 //
@@ -553,6 +558,57 @@ export const attach_process_error_handler = (
 	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
 ): (() => void) => process_registry_default.attach_error_handler(options);
 
+/**
+ * Spawns a detached process that continues after parent exits.
+ *
+ * Unlike other spawn functions, this is NOT tracked in any ProcessRegistry.
+ * The spawned process is meant to outlive the parent (e.g., daemon processes).
+ *
+ * @param command - The command to run
+ * @param args - Arguments to pass to the command
+ * @param options - Spawn options (use `stdio` to redirect output to file descriptors)
+ * @returns Result with pid on success, or error message on failure
+ *
+ * @example
+ * ```ts
+ * // Simple detached process
+ * const result = spawn_detached('node', ['daemon.js'], {cwd: '/app'});
+ *
+ * // With log file (caller handles file opening)
+ * import {openSync, closeSync} from 'node:fs';
+ * const log_fd = openSync('/var/log/daemon.log', 'a');
+ * const result = spawn_detached('node', ['daemon.js'], {
+ *   cwd: '/app',
+ *   stdio: ['ignore', log_fd, log_fd],
+ * });
+ * closeSync(log_fd);
+ * ```
+ */
+export const spawn_detached = (
+	command: string,
+	args: ReadonlyArray<string> = [],
+	options?: SpawnOptions,
+): SpawnDetachedResult => {
+	try {
+		const child = node_spawn_child_process(command, args, {
+			stdio: 'ignore',
+			...options,
+			detached: true,
+		});
+
+		// Allow parent to exit independently
+		child.unref();
+
+		if (child.pid === undefined) {
+			return {ok: false, message: 'Failed to get child PID'};
+		}
+
+		return {ok: true, child};
+	} catch (error) {
+		return {ok: false, message: error instanceof Error ? error.message : String(error)};
+	}
+};
+
 //
 // Formatting Utilities
 //
@@ -560,7 +616,10 @@ export const attach_process_error_handler = (
 /**
  * Formats a child process for display.
  *
- * @example `pid(1234) <- node server.js`
+ * @example
+ * ```ts
+ * `pid(1234) <- node server.js`
+ * ```
  */
 export const print_child_process = (child: ChildProcess): string =>
 	`${st('gray', 'pid(')}${child.pid ?? 'none'}${st('gray', ')')} ← ${st('green', child.spawnargs.join(' '))}`;

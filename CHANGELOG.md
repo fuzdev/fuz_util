@@ -1,5 +1,70 @@
 # @fuzdev/fuz_util
 
+## 0.51.0
+
+### Minor Changes
+
+- improve `source_json.ts` ([#71](https://github.com/fuzdev/fuz_util/pull/71))
+
+## 0.50.1
+
+### Patch Changes
+
+- fix: skip import type declarations in `resolve_component_names` ([87f4287](https://github.com/fuzdev/fuz_util/commit/87f4287))
+
+## 0.50.0
+
+### Minor Changes
+
+- `handle_preprocess_error`: preserve error cause chain, simplify `format_named_specifiers` type ([e6c5b82](https://github.com/fuzdev/fuz_util/commit/e6c5b82))
+
+## 0.49.3
+
+### Patch Changes
+
+- add `try_extract_conditional` to `svelte_preprocess_helpers.ts` ([0a966ec](https://github.com/fuzdev/fuz_util/commit/0a966ec))
+
+## 0.49.2
+
+### Patch Changes
+
+- improve `has_identifier_in_tree` skip behavior ([74f5025](https://github.com/fuzdev/fuz_util/commit/74f5025))
+
+## 0.49.1
+
+### Patch Changes
+
+- add `build_static_bindings` and support it from `evaluate_static_expr` ([3aeb47c](https://github.com/fuzdev/fuz_util/commit/3aeb47c))
+
+## 0.49.0
+
+### Minor Changes
+
+- rename `string_is_binary` from `is_binary` ([#69](https://github.com/fuzdev/fuz_util/pull/69))
+
+### Patch Changes
+
+- add `svelte_preprocess_helpers.ts` ([#69](https://github.com/fuzdev/fuz_util/pull/69))
+
+## 0.48.4
+
+### Patch Changes
+
+- add `dag.ts`, `diff.ts`, and `sort.ts` ([7b3bf38](https://github.com/fuzdev/fuz_util/commit/7b3bf38))
+- add `AsyncSemaphore` to `async.ts` ([7b3bf38](https://github.com/fuzdev/fuz_util/commit/7b3bf38))
+
+## 0.48.3
+
+### Patch Changes
+
+- add `hash.ts` ([#68](https://github.com/fuzdev/fuz_util/pull/68))
+
+## 0.48.2
+
+### Patch Changes
+
+- add `spawn_detached` ([129b37e](https://github.com/fuzdev/fuz_util/commit/129b37e))
+
 ## 0.48.1
 
 ### Patch Changes
@@ -650,7 +715,7 @@
 
 ### Patch Changes
 
-- upgrade `@ryanatkn/gro` which adds `modules` to `package.ts` ([4b0fc13](https://github.com/ryanatkn/belt/commit/4b0fc13))
+- upgrade `@fuzdev/gro` which adds `modules` to `package.ts` ([4b0fc13](https://github.com/ryanatkn/belt/commit/4b0fc13))
 
 ## 0.15.2
 
@@ -680,7 +745,7 @@
 
 - fix some snake_case ([#20](https://github.com/ryanatkn/belt/pull/20))
 - bump node engine to 20.10 ([#20](https://github.com/ryanatkn/belt/pull/20))
-- upgrade to @ryanatkn/gro@0.86 from @feltjs/gro@0.83 ([#20](https://github.com/ryanatkn/belt/pull/20))
+- upgrade to @fuzdev/gro@0.86 from @feltjs/gro@0.83 ([#20](https://github.com/ryanatkn/belt/pull/20))
 - add `spawn_out` to process ([#20](https://github.com/ryanatkn/belt/pull/20))
 
 ## 0.13.1

@@ -1,18 +1,81 @@
-import {test, expect, describe} from 'vitest';
+import {test, expect, assert, describe} from 'vitest';
 
 import {
 	wait,
+	is_promise,
 	create_deferred,
+	AsyncSemaphore,
 	each_concurrent,
 	map_concurrent,
 	map_concurrent_settled,
 } from '$lib/async.ts';
 
 /* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable no-await-in-loop */
 
-test('basic behavior', async () => {
-	await wait();
-	await wait(10);
+describe('wait', () => {
+	test('resolves with no args', async () => {
+		await wait();
+	});
+
+	test('resolves after approximately the given duration', async () => {
+		const start = Date.now();
+		await wait(50);
+		const elapsed = Date.now() - start;
+		assert.isAtLeast(elapsed, 30);
+	});
+});
+
+describe('is_promise', () => {
+	test('actual Promise returns true', () => {
+		assert.isTrue(is_promise(Promise.resolve(42)));
+		assert.isTrue(is_promise(new Promise(() => {})));
+	});
+
+	test('thenable object returns true', () => {
+		assert.isTrue(is_promise({then: () => {}}));
+	});
+
+	test('null returns false', () => {
+		assert.isFalse(is_promise(null));
+	});
+
+	test('undefined returns false', () => {
+		assert.isFalse(is_promise(undefined));
+	});
+
+	test('number returns false', () => {
+		assert.isFalse(is_promise(42));
+	});
+
+	test('string returns false', () => {
+		assert.isFalse(is_promise('hello'));
+	});
+
+	test('plain object returns false', () => {
+		assert.isFalse(is_promise({}));
+		assert.isFalse(is_promise({value: 42}));
+	});
+
+	test('object with non-function then returns false', () => {
+		assert.isFalse(is_promise({then: 'not a function'}));
+		assert.isFalse(is_promise({then: 42}));
+		assert.isFalse(is_promise({then: true}));
+	});
+
+	test('boolean returns false', () => {
+		assert.isFalse(is_promise(true));
+		assert.isFalse(is_promise(false));
+	});
+
+	test('array returns false', () => {
+		assert.isFalse(is_promise([1, 2, 3]));
+	});
+
+	test('function returns false', () => {
+		assert.isFalse(is_promise(() => {}));
+	});
 });
 
 describe('create_deferred', () => {
@@ -44,6 +107,12 @@ describe('create_deferred', () => {
 		setTimeout(() => deferred.resolve('hello'), 10);
 		const result = await promise;
 		expect(result).toBe('hello!');
+	});
+
+	test('works with void type', async () => {
+		const deferred = create_deferred<void>();
+		deferred.resolve();
+		await deferred.promise;
 	});
 });
 
@@ -666,5 +735,128 @@ describe('map_concurrent_settled', () => {
 		expect(results[0]).toEqual({status: 'fulfilled', value: undefined});
 		expect(results[1]!.status).toBe('rejected');
 		expect(results[2]).toEqual({status: 'fulfilled', value: 3});
+	});
+});
+
+describe('AsyncSemaphore', () => {
+	test('acquire resolves immediately when permits available', async () => {
+		const sem = new AsyncSemaphore(2);
+		await sem.acquire(); // should not block
+		await sem.acquire(); // should not block
+	});
+
+	test('acquire blocks when no permits available', async () => {
+		const sem = new AsyncSemaphore(1);
+		await sem.acquire();
+
+		let acquired = false;
+		const pending = sem.acquire().then(() => {
+			acquired = true;
+		});
+
+		// Give microtasks a chance to run
+		await new Promise((r) => setTimeout(r, 10));
+		assert.isFalse(acquired, 'should be blocked waiting for permit');
+
+		sem.release();
+		await pending;
+		assert.isTrue(acquired, 'should have acquired after release');
+	});
+
+	test('release grants permit to next waiter', async () => {
+		const sem = new AsyncSemaphore(1);
+		await sem.acquire();
+
+		const order: Array<string> = [];
+		const p1 = sem.acquire().then(() => order.push('first'));
+		const p2 = sem.acquire().then(() => order.push('second'));
+
+		sem.release(); // grants to first waiter
+		await p1;
+		sem.release(); // grants to second waiter
+		await p2;
+
+		assert.deepEqual(order, ['first', 'second']);
+	});
+
+	test('release increments permits when no waiters', async () => {
+		const sem = new AsyncSemaphore(1);
+		await sem.acquire();
+		sem.release();
+		// Should be able to acquire again without blocking
+		await sem.acquire();
+	});
+
+	test('infinity permits never blocks', async () => {
+		const sem = new AsyncSemaphore(Infinity);
+		// Acquire many times without releasing — should never block
+		for (let i = 0; i < 100; i++) {
+			await sem.acquire();
+		}
+	});
+
+	test('zero permits blocks immediately', async () => {
+		const sem = new AsyncSemaphore(0);
+		let acquired = false;
+		const pending = sem.acquire().then(() => {
+			acquired = true;
+		});
+
+		await new Promise((r) => setTimeout(r, 10));
+		assert.isFalse(acquired);
+
+		sem.release();
+		await pending;
+		assert.isTrue(acquired);
+	});
+
+	test('limits concurrency in practice', async () => {
+		const sem = new AsyncSemaphore(2);
+		let current = 0;
+		let max_concurrent = 0;
+
+		const task = async (): Promise<void> => {
+			await sem.acquire();
+			current++;
+			if (current > max_concurrent) max_concurrent = current;
+			await new Promise((r) => setTimeout(r, 20));
+			current--;
+			sem.release();
+		};
+
+		await Promise.all([task(), task(), task(), task(), task()]);
+
+		assert.strictEqual(max_concurrent, 2);
+		assert.strictEqual(current, 0);
+	});
+
+	test('FIFO ordering of waiters', async () => {
+		const sem = new AsyncSemaphore(0);
+		const order: Array<number> = [];
+
+		const p1 = sem.acquire().then(() => order.push(1));
+		const p2 = sem.acquire().then(() => order.push(2));
+		const p3 = sem.acquire().then(() => order.push(3));
+
+		sem.release();
+		await p1;
+		sem.release();
+		await p2;
+		sem.release();
+		await p3;
+
+		assert.deepEqual(order, [1, 2, 3]);
+	});
+
+	test('multiple releases before acquires', async () => {
+		const sem = new AsyncSemaphore(0);
+		sem.release();
+		sem.release();
+		sem.release();
+
+		// Should be able to acquire 3 times without blocking
+		await sem.acquire();
+		await sem.acquire();
+		await sem.acquire();
 	});
 });

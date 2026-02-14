@@ -1,6 +1,8 @@
 import {describe, test, assert} from 'vitest';
 
 import {
+	string_is_binary,
+	escape_js_string,
 	plural,
 	truncate,
 	strip_start,
@@ -12,6 +14,7 @@ import {
 	deindent,
 	count_graphemes,
 	strip_ansi,
+	stringify,
 	string_display_width,
 	pad_width,
 	levenshtein_distance,
@@ -301,6 +304,14 @@ world
 	test('strips trailing spaces', () => {
 		assert.strictEqual(deindent('  hey  '), 'hey');
 	});
+
+	test('empty string', () => {
+		assert.strictEqual(deindent(''), '');
+	});
+
+	test('no indentation', () => {
+		assert.strictEqual(deindent('a\nb'), 'a\nb');
+	});
 });
 
 describe('plural', () => {
@@ -319,6 +330,14 @@ describe('plural', () => {
 	test('does not pluralize 1', () => {
 		assert.strictEqual(plural(1), '');
 	});
+
+	test('undefined returns suffix', () => {
+		assert.strictEqual(plural(undefined), 's');
+	});
+
+	test('null returns suffix', () => {
+		assert.strictEqual(plural(null), 's');
+	});
 });
 
 describe('count_graphemes', () => {
@@ -327,6 +346,14 @@ describe('count_graphemes', () => {
 		assert.strictEqual(count_graphemes('🙋‍♂️'), 1);
 		assert.strictEqual(count_graphemes('👩‍👩‍👧‍👦🙋‍♂️👩‍👩‍👧‍👦'), 3);
 		assert.strictEqual(count_graphemes('a👩‍👩‍👧‍👦5🙋‍♂️👩‍❤️‍💋‍👩~'), 6);
+	});
+
+	test('empty string', () => {
+		assert.strictEqual(count_graphemes(''), 0);
+	});
+
+	test('simple ASCII', () => {
+		assert.strictEqual(count_graphemes('abc'), 3);
 	});
 });
 
@@ -391,6 +418,10 @@ describe('string_display_width', () => {
 		assert.strictEqual(string_display_width('\x1B[1;33;40mhello\x1B[0m'), 5);
 		assert.strictEqual(string_display_width('\x1B[31m🐆\x1B[0m'), 2);
 	});
+
+	test('only emoji', () => {
+		assert.strictEqual(string_display_width('🐆🐇🐢'), 6);
+	});
 });
 
 describe('pad_width', () => {
@@ -420,6 +451,15 @@ describe('pad_width', () => {
 	test('handles mixed content', () => {
 		// 'a🐆' = 1 + 2 = 3 columns, pad to 5 needs 2 more
 		assert.strictEqual(pad_width('a🐆', 5), 'a🐆  ');
+	});
+
+	test('empty string gets padded', () => {
+		assert.strictEqual(pad_width('', 5), '     ');
+		assert.strictEqual(pad_width('', 5, 'right'), '     ');
+	});
+
+	test('zero target width', () => {
+		assert.strictEqual(pad_width('hello', 0), 'hello');
 	});
 });
 
@@ -458,5 +498,139 @@ describe('levenshtein_distance', () => {
 	test('case sensitive', () => {
 		assert.strictEqual(levenshtein_distance('Hello', 'hello'), 1);
 		assert.strictEqual(levenshtein_distance('ABC', 'abc'), 3);
+	});
+
+	test('single character strings', () => {
+		assert.strictEqual(levenshtein_distance('a', 'b'), 1);
+		assert.strictEqual(levenshtein_distance('a', 'a'), 0);
+		assert.strictEqual(levenshtein_distance('a', ''), 1);
+		assert.strictEqual(levenshtein_distance('', 'a'), 1);
+	});
+});
+
+describe('stringify', () => {
+	test('string', () => {
+		assert.strictEqual(stringify('hello'), '"hello"');
+	});
+
+	test('number', () => {
+		assert.strictEqual(stringify(42), '42');
+		assert.strictEqual(stringify(3.14), '3.14');
+		assert.strictEqual(stringify(0), '0');
+	});
+
+	test('boolean', () => {
+		assert.strictEqual(stringify(true), 'true');
+		assert.strictEqual(stringify(false), 'false');
+	});
+
+	test('null', () => {
+		assert.strictEqual(stringify(null), 'null');
+	});
+
+	test('undefined', () => {
+		assert.strictEqual(stringify(undefined), 'undefined');
+	});
+
+	test('bigint', () => {
+		assert.strictEqual(stringify(42n), '42n');
+		assert.strictEqual(stringify(0n), '0n');
+		assert.strictEqual(stringify(-100n), '-100n');
+	});
+
+	test('object', () => {
+		assert.strictEqual(stringify({a: 1}), '{"a":1}');
+	});
+
+	test('array', () => {
+		assert.strictEqual(stringify([1, 2, 3]), '[1,2,3]');
+	});
+
+	test('symbol', () => {
+		assert.strictEqual(stringify(Symbol('test')), 'Symbol(test)');
+	});
+});
+
+describe('escape_js_string', () => {
+	test('escapes single quotes', () => {
+		assert.equal(escape_js_string("it's"), "it\\'s");
+	});
+
+	test('escapes backslashes', () => {
+		assert.equal(escape_js_string('a\\b'), 'a\\\\b');
+	});
+
+	test('escapes newlines', () => {
+		assert.equal(escape_js_string('line 1\nline 2'), 'line 1\\nline 2');
+	});
+
+	test('escapes carriage returns', () => {
+		assert.equal(escape_js_string('line 1\rline 2'), 'line 1\\rline 2');
+	});
+
+	test('escapes mixed special characters', () => {
+		assert.equal(escape_js_string("it's a\nnew\\day"), "it\\'s a\\nnew\\\\day");
+	});
+
+	test('returns empty string unchanged', () => {
+		assert.equal(escape_js_string(''), '');
+	});
+
+	test('returns string without special chars unchanged', () => {
+		assert.equal(escape_js_string('hello world'), 'hello world');
+	});
+
+	test('backslashes are escaped before quotes', () => {
+		// Input: \'  (backslash then quote)
+		// Expected: \\\' (escaped backslash then escaped quote)
+		assert.equal(escape_js_string("\\'"), "\\\\\\'");
+	});
+
+	test('escapes CRLF line endings', () => {
+		assert.equal(escape_js_string('a\r\nb'), 'a\\r\\nb');
+	});
+
+	test('escapes line separator U+2028', () => {
+		assert.equal(escape_js_string('a\u2028b'), 'a\\u2028b');
+	});
+
+	test('escapes paragraph separator U+2029', () => {
+		assert.equal(escape_js_string('a\u2029b'), 'a\\u2029b');
+	});
+
+	test('escapes mixed line terminators', () => {
+		assert.equal(escape_js_string('\n\r\u2028\u2029'), '\\n\\r\\u2028\\u2029');
+	});
+});
+
+describe('string_is_binary', () => {
+	test('empty string is not binary', () => {
+		assert.isFalse(string_is_binary(''));
+	});
+
+	test('plain text is not binary', () => {
+		assert.isFalse(string_is_binary('hello world\nline two\n'));
+	});
+
+	test('string with null byte is binary', () => {
+		assert.isTrue(string_is_binary('hello\0world'));
+	});
+
+	test('null byte at start is binary', () => {
+		assert.isTrue(string_is_binary('\0rest of content'));
+	});
+
+	test('null byte at end is binary', () => {
+		assert.isTrue(string_is_binary('content\0'));
+	});
+
+	test('checks only first 8KB', () => {
+		const content = 'a'.repeat(8192) + '\0';
+		assert.isFalse(string_is_binary(content));
+	});
+
+	test('null byte within first 8KB is detected', () => {
+		const content = 'a'.repeat(8191) + '\0';
+		assert.isTrue(string_is_binary(content));
 	});
 });

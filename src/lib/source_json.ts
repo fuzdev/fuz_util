@@ -72,6 +72,16 @@ export const ComponentPropInfo = z.looseObject({
 	description: z.string().optional(),
 	default_value: z.string().optional(),
 	bindable: z.boolean().optional(),
+	/** Code examples from `@example` tags. */
+	examples: z.array(z.string()).optional(),
+	/** Deprecation message from `@deprecated` tag. */
+	deprecated_message: z.string().optional(),
+	/** Related items from `@see` tags, in raw TSDoc format. */
+	see_also: z.array(z.string()).optional(),
+	/** Exceptions from `@throws` tags. */
+	throws: z.array(z.looseObject({type: z.string().optional(), description: z.string()})).optional(),
+	/** Version introduced, from `@since` tag. */
+	since: z.string().optional(),
 });
 export type ComponentPropInfo = z.infer<typeof ComponentPropInfo>;
 
@@ -110,6 +120,8 @@ export const DeclarationJson = z.looseObject({
 	throws: z.array(z.looseObject({type: z.string().optional(), description: z.string()})).optional(),
 	/** Version introduced, from `@since` tag. */
 	since: z.string().optional(),
+	/** Mutation documentation from `@mutates` tags (non-standard), mapping parameter names to descriptions. */
+	mutates: z.record(z.string(), z.string()).optional(),
 	/** Extended classes/interfaces. */
 	extends: z.array(z.string()).optional(),
 	/** Implemented interfaces. */
@@ -136,6 +148,7 @@ export const DeclarationJson = z.looseObject({
 		.object({
 			module: z.string(),
 			name: z.string(),
+			kind: DeclarationKind,
 		})
 		.optional(),
 });
@@ -174,8 +187,14 @@ export type SourceJson = z.infer<typeof SourceJson>;
 
 /**
  * Format declaration name with generic parameters for display.
- * @example declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})
+ *
+ * @deprecated Use `getDisplayName` from `@fuzdev/svelte-docinfo/types.js` instead.
+ *
+ * @example
+ * ```ts
+ * declaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})
  * // => 'Map<K, V>'
+ * ```
  */
 export const declaration_get_display_name = (declaration: DeclarationJson): string => {
 	if (!declaration.generic_params?.length) return declaration.name;
@@ -190,8 +209,14 @@ export const declaration_get_display_name = (declaration: DeclarationJson): stri
 
 /**
  * Generate TypeScript import statement for a declaration.
- * @example declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')
+ *
+ * @deprecated Use `generateImport` from `@fuzdev/svelte-docinfo/types.js` instead.
+ *
+ * @example
+ * ```ts
+ * declaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')
  * // => "import type {Foo} from '@pkg/lib/foo.js';"
+ * ```
  */
 export const declaration_generate_import = (
 	declaration: DeclarationJson,

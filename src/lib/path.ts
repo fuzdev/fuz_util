@@ -37,7 +37,10 @@ export const to_file_path = (path_or_url: string | URL): string =>
 	typeof path_or_url === 'string' ? path_or_url : decodeURIComponent(path_or_url.pathname);
 
 /**
- * @example parse_path_parts('./foo/bar/baz.ts') => ['foo', 'foo/bar', 'foo/bar/baz.ts']
+ * @example
+ * ```ts
+ * parse_path_parts('./foo/bar/baz.ts') // => ['foo', 'foo/bar', 'foo/bar/baz.ts']
+ * ```
  */
 export const parse_path_parts = (path: string): Array<string> => {
 	const segments = parse_path_segments(path);
@@ -53,7 +56,10 @@ export const parse_path_parts = (path: string): Array<string> => {
 
 /**
  * Gets the individual parts of a path, ignoring dots and separators.
- * @example parse_path_segments('/foo/bar/baz.ts') => ['foo', 'bar', 'baz.ts']
+ * @example
+ * ```ts
+ * parse_path_segments('/foo/bar/baz.ts') // => ['foo', 'bar', 'baz.ts']
+ * ```
  */
 export const parse_path_segments = (path: string): Array<string> =>
 	path.split('/').filter((s) => s && s !== '.' && s !== '..');
@@ -92,6 +98,26 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
 		}
 	}
 	return pieces;
+};
+
+/**
+ * Checks if a filename matches any exclusion pattern.
+ *
+ * Returns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.
+ * String patterns use substring matching. RegExp patterns use `.test()`.
+ *
+ * @param filename The file path to check, or `undefined` for virtual files.
+ * @param exclude Array of string or RegExp exclusion patterns.
+ * @returns `true` if the file should be excluded from processing.
+ */
+export const should_exclude_path = (
+	filename: string | undefined,
+	exclude: Array<string | RegExp>,
+): boolean => {
+	if (!filename || exclude.length === 0) return false;
+	return exclude.some((pattern) =>
+		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename),
+	);
 };
 
 /**
