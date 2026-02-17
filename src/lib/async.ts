@@ -68,9 +68,7 @@ export const each_concurrent = async <T>(
 	let rejected = false;
 
 	return new Promise((resolve, reject) => {
-		const cleanup = signal
-			? () => signal.removeEventListener('abort', on_abort)
-			: undefined;
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
 
 		const done = (): void => {
 			cleanup?.();
@@ -157,9 +155,7 @@ export const map_concurrent = async <T, R>(
 	let rejected = false;
 
 	return new Promise((resolve, reject) => {
-		const cleanup = signal
-			? () => signal.removeEventListener('abort', on_abort)
-			: undefined;
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
 
 		const done = (): void => {
 			cleanup?.();
@@ -254,9 +250,7 @@ export const map_concurrent_settled = async <T, R>(
 	let aborted = false;
 
 	return new Promise((resolve) => {
-		const cleanup = signal
-			? () => signal.removeEventListener('abort', on_abort)
-			: undefined;
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
 
 		const done = (): void => {
 			cleanup?.();
