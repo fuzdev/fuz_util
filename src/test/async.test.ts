@@ -130,7 +130,10 @@ describe('each_concurrent', () => {
 		await each_concurrent(items, 3, async (x) => {
 			processed.push(x);
 		});
-		assert.deepEqual(processed.sort((a, b) => a - b), [1, 2, 3, 4, 5]);
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3, 4, 5],
+		);
 	});
 
 	test('respects concurrency limit', async () => {
@@ -224,7 +227,10 @@ describe('each_concurrent', () => {
 		await each_concurrent(items, 3, async (_, index) => {
 			indices.push(index);
 		});
-		assert.deepEqual(indices.sort((a, b) => a - b), [0, 1, 2]);
+		assert.deepEqual(
+			indices.sort((a, b) => a - b),
+			[0, 1, 2],
+		);
 	});
 
 	test('high concurrency with fewer items', async () => {
@@ -233,7 +239,10 @@ describe('each_concurrent', () => {
 		await each_concurrent(items, 100, async (x) => {
 			processed.push(x);
 		});
-		assert.deepEqual(processed.sort((a, b) => a - b), [1, 2, 3]);
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
+		);
 	});
 
 	test('preserves error object', async () => {
@@ -307,17 +316,32 @@ describe('each_concurrent', () => {
 		await each_concurrent(new Set([1, 2, 3]), 2, async (x) => {
 			processed.push(x);
 		});
-		assert.deepEqual(processed.sort((a, b) => a - b), [1, 2, 3]);
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
+		);
 	});
 
 	test('accepts a Map', async () => {
 		const processed: Array<[string, number]> = [];
-		await each_concurrent(new Map([['a', 1], ['b', 2], ['c', 3]]), 2, async (entry) => {
-			processed.push(entry);
-		});
+		await each_concurrent(
+			new Map([
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			]),
+			2,
+			async (entry) => {
+				processed.push(entry);
+			},
+		);
 		assert.deepEqual(
 			processed.sort((a, b) => a[0].localeCompare(b[0])),
-			[['a', 1], ['b', 2], ['c', 3]],
+			[
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			],
 		);
 	});
 
@@ -331,7 +355,10 @@ describe('each_concurrent', () => {
 		await each_concurrent(gen(), 2, async (x) => {
 			processed.push(x);
 		});
-		assert.deepEqual(processed.sort((a, b) => a - b), [10, 20, 30]);
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[10, 20, 30],
+		);
 	});
 
 	test('accepts a sync callback', async () => {
@@ -339,7 +366,10 @@ describe('each_concurrent', () => {
 		await each_concurrent([1, 2, 3], 3, (x) => {
 			processed.push(x);
 		});
-		assert.deepEqual(processed.sort((a, b) => a - b), [1, 2, 3]);
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
+		);
 	});
 
 	test('catches sync throw in sync callback', async () => {
@@ -360,9 +390,14 @@ describe('each_concurrent', () => {
 		const processed: Array<number> = [];
 
 		try {
-			await each_concurrent([1, 2, 3], 3, async (x) => {
-				processed.push(x);
-			}, controller.signal);
+			await each_concurrent(
+				[1, 2, 3],
+				3,
+				async (x) => {
+					processed.push(x);
+				},
+				controller.signal,
+			);
 			assert.fail('should have rejected');
 		} catch (error) {
 			assert.strictEqual(error, 'already aborted');
@@ -376,11 +411,16 @@ describe('each_concurrent', () => {
 		const processed: Array<number> = [];
 
 		try {
-			await each_concurrent([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 1, async (x) => {
-				await new Promise((r) => setTimeout(r, 10));
-				processed.push(x);
-				if (x === 3) controller.abort('stop now');
-			}, controller.signal);
+			await each_concurrent(
+				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+				1,
+				async (x) => {
+					await new Promise((r) => setTimeout(r, 10));
+					processed.push(x);
+					if (x === 3) controller.abort('stop now');
+				},
+				controller.signal,
+			);
 			assert.fail('should have rejected');
 		} catch (error) {
 			assert.strictEqual(error, 'stop now');
@@ -627,7 +667,11 @@ describe('map_concurrent', () => {
 
 	test('accepts a Map', async () => {
 		const results = await map_concurrent(
-			new Map([['a', 1], ['b', 2], ['c', 3]]),
+			new Map([
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			]),
 			3,
 			async ([key, value]) => `${key}=${value}`,
 		);
@@ -679,12 +723,17 @@ describe('map_concurrent', () => {
 		const processed: Array<number> = [];
 
 		try {
-			await map_concurrent([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 1, async (x) => {
-				await new Promise((r) => setTimeout(r, 10));
-				processed.push(x);
-				if (x === 3) controller.abort('stop now');
-				return x;
-			}, controller.signal);
+			await map_concurrent(
+				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+				1,
+				async (x) => {
+					await new Promise((r) => setTimeout(r, 10));
+					processed.push(x);
+					if (x === 3) controller.abort('stop now');
+					return x;
+				},
+				controller.signal,
+			);
 			assert.fail('should have rejected');
 		} catch (error) {
 			assert.strictEqual(error, 'stop now');
@@ -787,7 +836,7 @@ describe('map_concurrent_settled', () => {
 		assert.strictEqual(rejected.reason, custom_error);
 		assert.instanceOf(rejected.reason, Error);
 		assert.strictEqual(rejected.reason.message, 'custom');
-		assert.strictEqual(rejected.reason.code, 'CUSTOM_CODE');
+		assert.strictEqual((rejected.reason as any).code, 'CUSTOM_CODE');
 	});
 
 	test('error indices are correct with varying delays', async () => {
@@ -898,7 +947,10 @@ describe('map_concurrent_settled', () => {
 
 	test('accepts a Map', async () => {
 		const results = await map_concurrent_settled(
-			new Map([['a', 1], ['b', 2]]),
+			new Map([
+				['a', 1],
+				['b', 2],
+			]),
 			2,
 			async ([key, value]) => `${key}=${value}`,
 		);
@@ -949,12 +1001,7 @@ describe('map_concurrent_settled', () => {
 		const controller = new AbortController();
 		controller.abort('already aborted');
 
-		const results = await map_concurrent_settled(
-			[1, 2, 3],
-			3,
-			async (x) => x,
-			controller.signal,
-		);
+		const results = await map_concurrent_settled([1, 2, 3], 3, async (x) => x, controller.signal);
 
 		assert.deepEqual(results, []);
 		assert.strictEqual(results.length, 0);
@@ -986,12 +1033,17 @@ describe('map_concurrent_settled', () => {
 	test('abort preserves completed settlements', async () => {
 		const controller = new AbortController();
 
-		const results = await map_concurrent_settled([1, 2, 3, 4, 5], 1, async (x) => {
-			if (x === 2) throw new Error('item error');
-			await new Promise((r) => setTimeout(r, 5));
-			if (x === 4) controller.abort('cancel');
-			return x * 10;
-		}, controller.signal);
+		const results = await map_concurrent_settled(
+			[1, 2, 3, 4, 5],
+			1,
+			async (x) => {
+				if (x === 2) throw new Error('item error');
+				await new Promise((r) => setTimeout(r, 5));
+				if (x === 4) controller.abort('cancel');
+				return x * 10;
+			},
+			controller.signal,
+		);
 
 		// Items 1, 2, 3 completed before abort — keep their real settlements
 		assert.deepEqual(results[0], {status: 'fulfilled', value: 10});
