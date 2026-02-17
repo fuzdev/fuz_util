@@ -89,7 +89,7 @@ export const each_concurrent = async <T>(
 		}
 
 		if (signal?.aborted) {
-			reject(signal.reason); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+			fail(signal.reason);
 			return;
 		}
 		signal?.addEventListener('abort', on_abort);
@@ -178,7 +178,7 @@ export const map_concurrent = async <T, R>(
 		}
 
 		if (signal?.aborted) {
-			reject(signal.reason); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+			fail(signal.reason);
 			return;
 		}
 		signal?.addEventListener('abort', on_abort);
