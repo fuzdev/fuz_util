@@ -485,17 +485,13 @@ describe('map_concurrent', () => {
 	});
 
 	test('concurrency 1 is sequential', async () => {
-		const order: Array<number> = [];
 		const items = [30, 10, 20]; // different delays
-
-		await map_concurrent(items, 1, async (delay, index) => {
+		const results = await map_concurrent(items, 1, async (delay, index) => {
 			await new Promise((r) => setTimeout(r, delay));
-			order.push(index);
 			return index;
 		});
-
-		// With concurrency 1, should process in input order regardless of delay
-		assert.deepEqual(order, [0, 1, 2]);
+		// With concurrency 1, results are in input order regardless of delay
+		assert.deepEqual(results, [0, 1, 2]);
 	});
 
 	test('passes index to callback', async () => {
@@ -701,9 +697,13 @@ describe('map_concurrent_settled', () => {
 			await new Promise((r) => setTimeout(r, delay));
 			return index;
 		});
-		const values = results.map((r) => (r.status === 'fulfilled' ? r.value : undefined));
-		assert.deepEqual(values, [0, 1, 2, 3, 4]);
-		assert.isTrue(results.every((r) => r.status === 'fulfilled'));
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 0},
+			{status: 'fulfilled', value: 1},
+			{status: 'fulfilled', value: 2},
+			{status: 'fulfilled', value: 3},
+			{status: 'fulfilled', value: 4},
+		]);
 	});
 
 	test('handles empty array', async () => {
@@ -769,16 +769,13 @@ describe('map_concurrent_settled', () => {
 
 		assert.strictEqual(results.length, 5);
 		// Error indices should reflect original array positions, not completion order
-		assert.strictEqual(results[0]!.status, 'fulfilled');
-		assert.strictEqual((results[0] as PromiseFulfilledResult<number>).value, 1);
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
 		assert.strictEqual(results[1]!.status, 'rejected'); // index 1 = item 2
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'error 2');
-		assert.strictEqual(results[2]!.status, 'fulfilled');
-		assert.strictEqual((results[2] as PromiseFulfilledResult<number>).value, 3);
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
 		assert.strictEqual(results[3]!.status, 'rejected'); // index 3 = item 4
 		assert.strictEqual((results[3] as PromiseRejectedResult).reason.message, 'error 4');
-		assert.strictEqual(results[4]!.status, 'fulfilled');
-		assert.strictEqual((results[4] as PromiseFulfilledResult<number>).value, 5);
+		assert.deepEqual(results[4], {status: 'fulfilled', value: 5});
 	});
 
 	test('respects concurrency limit', async () => {
