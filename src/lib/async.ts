@@ -13,7 +13,7 @@ export const is_promise = (value: unknown): value is Promise<unknown> =>
 	value != null && typeof (value as Promise<unknown>).then === 'function';
 
 /**
- * Creates a deferred object with a promise and its resolve/reject handlers.
+ * A deferred object with a promise and its resolve/reject handlers.
  */
 export interface Deferred<T> {
 	promise: Promise<T>;
@@ -22,7 +22,7 @@ export interface Deferred<T> {
 }
 
 /**
- * Creates a object with a `promise` and its `resolve`/`reject` handlers.
+ * Creates an object with a `promise` and its `resolve`/`reject` handlers.
  */
 export const create_deferred = <T>(): Deferred<T> => {
 	let resolve!: (value: T) => void;
@@ -58,7 +58,7 @@ export const each_concurrent = async <T>(
 	fn: (item: T, index: number) => Promise<void> | void,
 	signal?: AbortSignal,
 ): Promise<void> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
@@ -144,7 +144,7 @@ export const map_concurrent = async <T, R>(
 	fn: (item: T, index: number) => Promise<R> | R,
 	signal?: AbortSignal,
 ): Promise<Array<R>> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
@@ -239,7 +239,7 @@ export const map_concurrent_settled = async <T, R>(
 	fn: (item: T, index: number) => Promise<R> | R,
 	signal?: AbortSignal,
 ): Promise<Array<PromiseSettledResult<R>>> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
@@ -320,13 +320,16 @@ export class AsyncSemaphore {
 	#waiters: Array<() => void> = [];
 
 	constructor(permits: number) {
+		if (!(permits >= 0)) {
+			throw new Error('permits must be >= 0');
+		}
 		this.#permits = permits;
 	}
 
-	async acquire(): Promise<void> {
+	acquire(): Promise<void> {
 		if (this.#permits > 0) {
 			this.#permits--;
-			return;
+			return Promise.resolve();
 		}
 		return new Promise<void>((resolve) => {
 			this.#waiters.push(resolve);
