@@ -70,9 +70,9 @@
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@fuzdev/fuz_code": "^0.45.1",
-    "@fuzdev/fuz_css": "^0.52.0",
+    "@fuzdev/fuz_css": "^0.53.0",
     "@fuzdev/fuz_ui": "^0.184.0",
-    "@fuzdev/gro": "^0.194.0",
+    "@fuzdev/gro": "^0.195.0",
     "@jridgewell/trace-mapping": "^0.3.31",
     "@ryanatkn/eslint-config": "^0.9.0",
     "@sveltejs/adapter-static": "^3.0.10",
