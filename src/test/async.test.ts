@@ -1,4 +1,4 @@
-import {test, expect, assert, describe} from 'vitest';
+import {test, assert, describe, expect} from 'vitest';
 
 import {
 	wait,
@@ -14,6 +14,23 @@ import {
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable no-await-in-loop */
 
+const make_concurrency_tracker = () => {
+	let max = 0;
+	let current = 0;
+	return {
+		enter(): void {
+			current++;
+			if (current > max) max = current;
+		},
+		exit(): void {
+			current--;
+		},
+		get max(): number {
+			return max;
+		},
+	};
+};
+
 describe('wait', () => {
 	test('resolves with no args', async () => {
 		await wait();
@@ -24,6 +41,7 @@ describe('wait', () => {
 		await wait(50);
 		const elapsed = Date.now() - start;
 		assert.isAtLeast(elapsed, 30);
+		assert.isBelow(elapsed, 500);
 	});
 });
 
@@ -83,14 +101,17 @@ describe('create_deferred', () => {
 		const deferred = create_deferred<number>();
 		deferred.resolve(42);
 		const result = await deferred.promise;
-		expect(result).toBe(42);
+		assert.strictEqual(result, 42);
 	});
 
 	test('rejects with error', async () => {
 		const deferred = create_deferred<number>();
 		const error = new Error('test error');
 		deferred.reject(error);
-		await expect(deferred.promise).rejects.toBe(error);
+		const caught = await deferred.promise.catch((e: unknown) => e);
+		assert.strictEqual(caught, error);
+		assert.instanceOf(caught, Error);
+		assert.strictEqual(caught.message, 'test error');
 	});
 
 	test('promise resolves only once', async () => {
@@ -98,7 +119,25 @@ describe('create_deferred', () => {
 		deferred.resolve(1);
 		deferred.resolve(2); // second resolve is ignored
 		const result = await deferred.promise;
-		expect(result).toBe(1);
+		assert.strictEqual(result, 1);
+	});
+
+	test('promise rejects only once', async () => {
+		const deferred = create_deferred<number>();
+		const error = new Error('first rejection');
+		deferred.reject(error);
+		deferred.reject(new Error('second rejection')); // second reject is ignored
+		const caught = await deferred.promise.catch((e: unknown) => e);
+		assert.strictEqual(caught, error);
+	});
+
+	test('resolve after reject is ignored', async () => {
+		const deferred = create_deferred<number>();
+		const error = new Error('rejection');
+		deferred.reject(error);
+		deferred.resolve(42); // ignored — already rejected
+		const caught = await deferred.promise.catch((e: unknown) => e);
+		assert.strictEqual(caught, error);
 	});
 
 	test('can be awaited before resolving', async () => {
@@ -106,7 +145,7 @@ describe('create_deferred', () => {
 		const promise = deferred.promise.then((v) => v + '!');
 		setTimeout(() => deferred.resolve('hello'), 10);
 		const result = await promise;
-		expect(result).toBe('hello!');
+		assert.strictEqual(result, 'hello!');
 	});
 
 	test('works with void type', async () => {
@@ -120,434 +159,512 @@ describe('each_concurrent', () => {
 	test('processes all items', async () => {
 		const processed: Array<number> = [];
 		const items = [1, 2, 3, 4, 5];
-		await each_concurrent(
-			items,
-			async (x) => {
-				processed.push(x);
-			},
-			3,
+		await each_concurrent(items, 3, async (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3, 4, 5],
 		);
-		expect(processed.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5]);
 	});
 
 	test('respects concurrency limit', async () => {
-		let max_concurrent = 0;
-		let current_concurrent = 0;
-
+		const tracker = make_concurrency_tracker();
 		const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-		await each_concurrent(
-			items,
-			async () => {
-				current_concurrent++;
-				max_concurrent = Math.max(max_concurrent, current_concurrent);
-				await new Promise((r) => setTimeout(r, 10));
-				current_concurrent--;
-			},
-			3,
-		);
-
-		expect(max_concurrent).toBe(3);
+		await each_concurrent(items, 3, async () => {
+			tracker.enter();
+			await new Promise((r) => setTimeout(r, 10));
+			tracker.exit();
+		});
+		assert.strictEqual(tracker.max, 3);
 	});
 
 	test('handles empty array', async () => {
 		const processed: Array<number> = [];
-		await each_concurrent(
-			[],
-			async (x: number) => {
-				processed.push(x);
-			},
-			3,
-		);
-		expect(processed).toEqual([]);
+		await each_concurrent([], 3, async (x: number) => {
+			processed.push(x);
+		});
+		assert.deepEqual(processed, []);
 	});
 
 	test('handles single item', async () => {
 		const processed: Array<number> = [];
-		await each_concurrent(
-			[42],
-			async (x) => {
-				processed.push(x);
-			},
-			3,
-		);
-		expect(processed).toEqual([42]);
+		await each_concurrent([42], 3, async (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(processed, [42]);
 	});
 
 	test('fails fast on error', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			each_concurrent(
-				[1, 2, 3, 4, 5],
-				async (x) => {
-					await new Promise((r) => setTimeout(r, 10));
-					if (x === 3) throw new Error('test error');
-					processed.push(x);
-				},
-				2,
-			),
+			each_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
+				await new Promise((r) => setTimeout(r, 10));
+				if (x === 3) throw new Error('test error');
+				processed.push(x);
+			}),
 		).rejects.toThrow('test error');
-
-		// Should have processed some items before failing
-		expect(processed.length).toBeLessThan(5);
+		assert.notInclude(processed, 3); // item 3 threw before pushing
+		assert.isBelow(processed.length, 5);
 	});
 
 	test('throws on invalid concurrency', async () => {
 		const noop = async () => {
 			/* noop */
 		};
-		await expect(each_concurrent([1], noop, 0)).rejects.toThrow('concurrency must be at least 1');
-		await expect(each_concurrent([1], noop, -1)).rejects.toThrow('concurrency must be at least 1');
+		await expect(each_concurrent([1], 0, noop)).rejects.toThrow('concurrency must be at least 1');
+		await expect(each_concurrent([1], -1, noop)).rejects.toThrow('concurrency must be at least 1');
+		await expect(each_concurrent([1], NaN, noop)).rejects.toThrow('concurrency must be at least 1');
+	});
+
+	test('rejects with abort reason even when items is empty', async () => {
+		const controller = new AbortController();
+		controller.abort('no work needed');
+		await expect(each_concurrent([], 3, async () => {}, controller.signal)).rejects.toBe(
+			'no work needed',
+		);
 	});
 
 	test('concurrency 1 is sequential', async () => {
 		const order: Array<number> = [];
 		const items = [30, 10, 20]; // different delays
 
-		await each_concurrent(
-			items,
-			async (delay, index) => {
-				await new Promise((r) => setTimeout(r, delay));
-				order.push(index);
-			},
-			1,
-		);
+		await each_concurrent(items, 1, async (delay, index) => {
+			await new Promise((r) => setTimeout(r, delay));
+			order.push(index);
+		});
 
 		// With concurrency 1, should process in input order regardless of delay
-		expect(order).toEqual([0, 1, 2]);
+		assert.deepEqual(order, [0, 1, 2]);
 	});
 
 	test('passes index to callback', async () => {
 		const indices: Array<number> = [];
 		const items = ['a', 'b', 'c'];
-		await each_concurrent(
-			items,
-			async (_, index) => {
-				indices.push(index);
-			},
-			3,
+		await each_concurrent(items, 3, async (_, index) => {
+			indices.push(index);
+		});
+		assert.deepEqual(
+			indices.sort((a, b) => a - b),
+			[0, 1, 2],
 		);
-		expect(indices.sort((a, b) => a - b)).toEqual([0, 1, 2]);
 	});
 
 	test('high concurrency with fewer items', async () => {
 		const processed: Array<number> = [];
 		const items = [1, 2, 3];
-		await each_concurrent(
-			items,
-			async (x) => {
-				processed.push(x);
-			},
-			100,
+		await each_concurrent(items, 100, async (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
 		);
-		expect(processed.sort((a, b) => a - b)).toEqual([1, 2, 3]);
 	});
 
 	test('preserves error object', async () => {
 		const custom_error = new Error('custom');
 		(custom_error as any).code = 'ENOENT';
-
-		try {
-			await each_concurrent(
-				[1],
-				async () => {
-					throw custom_error;
-				},
-				3,
-			);
-			expect.fail('should have thrown');
-		} catch (error) {
-			expect(error).toBe(custom_error);
-			expect(error.code).toBe('ENOENT');
-		}
+		const caught = await each_concurrent([1], 3, async () => {
+			throw custom_error;
+		}).catch((e: unknown) => e);
+		assert.strictEqual(caught, custom_error);
+		assert.instanceOf(caught, Error);
+		assert.strictEqual(caught.message, 'custom');
+		assert.strictEqual((caught as any).code, 'ENOENT');
 	});
 
 	test('error on first item', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			each_concurrent(
-				[1, 2, 3],
-				async (x) => {
-					if (x === 1) throw new Error('first item error');
-					processed.push(x);
-				},
-				1,
-			),
+			each_concurrent([1, 2, 3], 1, async (x) => {
+				if (x === 1) throw new Error('first item error');
+				processed.push(x);
+			}),
 		).rejects.toThrow('first item error');
-
 		// With concurrency 1, should not process any items after the first fails
-		expect(processed).toEqual([]);
+		assert.deepEqual(processed, []);
 	});
 
 	test('error on last item', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			each_concurrent(
-				[1, 2, 3],
-				async (x) => {
-					if (x === 3) throw new Error('last item error');
-					processed.push(x);
-				},
-				1,
-			),
+			each_concurrent([1, 2, 3], 1, async (x) => {
+				if (x === 3) throw new Error('last item error');
+				processed.push(x);
+			}),
 		).rejects.toThrow('last item error');
-
-		expect(processed).toEqual([1, 2]);
+		assert.deepEqual(processed, [1, 2]);
 	});
 
 	test('handles synchronous throw in async function', async () => {
 		await expect(
+			each_concurrent([1, 2, 3], 3, async (x) => {
+				if (x === 2) throw new Error('sync throw');
+			}),
+		).rejects.toThrow('sync throw');
+	});
+
+	test('accepts a Set', async () => {
+		const processed: Array<number> = [];
+		await each_concurrent(new Set([1, 2, 3]), 2, async (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
+		);
+	});
+
+	test('accepts a Map', async () => {
+		const processed: Array<[string, number]> = [];
+		await each_concurrent(
+			new Map([
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			]),
+			2,
+			async (entry) => {
+				processed.push(entry);
+			},
+		);
+		assert.deepEqual(
+			processed.sort((a, b) => a[0].localeCompare(b[0])),
+			[
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			],
+		);
+	});
+
+	test('accepts a generator', async () => {
+		function* gen(): Generator<number> {
+			yield 10;
+			yield 20;
+			yield 30;
+		}
+		const processed: Array<number> = [];
+		await each_concurrent(gen(), 2, async (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[10, 20, 30],
+		);
+	});
+
+	test('accepts a sync callback', async () => {
+		const processed: Array<number> = [];
+		await each_concurrent([1, 2, 3], 3, (x) => {
+			processed.push(x);
+		});
+		assert.deepEqual(
+			processed.sort((a, b) => a - b),
+			[1, 2, 3],
+		);
+	});
+
+	test('catches sync throw in sync callback', async () => {
+		await expect(
+			each_concurrent([1, 2, 3], 3, (x) => {
+				if (x === 2) throw new Error('sync cb throw');
+			}),
+		).rejects.toThrow('sync cb throw');
+	});
+
+	test('rejects immediately with already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort('already aborted');
+		const processed: Array<number> = [];
+		await expect(
 			each_concurrent(
 				[1, 2, 3],
-				async (x) => {
-					if (x === 2) {
-						throw new Error('sync throw');
-					}
-				},
 				3,
+				async (x) => {
+					processed.push(x);
+				},
+				controller.signal,
 			),
-		).rejects.toThrow('sync throw');
+		).rejects.toBe('already aborted');
+		assert.deepEqual(processed, []);
+	});
+
+	test('aborts mid-flight', async () => {
+		const controller = new AbortController();
+		const processed: Array<number> = [];
+		await expect(
+			each_concurrent(
+				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+				1,
+				async (x) => {
+					await new Promise((r) => setTimeout(r, 10));
+					processed.push(x);
+					if (x === 3) controller.abort('stop now');
+				},
+				controller.signal,
+			),
+		).rejects.toBe('stop now');
+		// With concurrency 1, items are sequential: 1, 2, 3 processed, then abort fires
+		assert.deepEqual(processed, [1, 2, 3]);
 	});
 });
 
 describe('map_concurrent', () => {
 	test('processes all items', async () => {
 		const items = [1, 2, 3, 4, 5];
-		const results = await map_concurrent(items, async (x) => x * 2, 3);
-		expect(results).toEqual([2, 4, 6, 8, 10]);
+		const results = await map_concurrent(items, 3, async (x) => x * 2);
+		assert.deepEqual(results, [2, 4, 6, 8, 10]);
 	});
 
 	test('preserves order with varying delays', async () => {
 		const items = [50, 10, 30, 20, 40]; // delays in ms
-		const results = await map_concurrent(
-			items,
-			async (delay, index) => {
-				await new Promise((r) => setTimeout(r, delay));
-				return index;
-			},
-			3,
-		);
+		const results = await map_concurrent(items, 3, async (delay, index) => {
+			await new Promise((r) => setTimeout(r, delay));
+			return index;
+		});
 		// Results should be in original order, not completion order
-		expect(results).toEqual([0, 1, 2, 3, 4]);
+		assert.deepEqual(results, [0, 1, 2, 3, 4]);
 	});
 
 	test('respects concurrency limit', async () => {
-		let max_concurrent = 0;
-		let current_concurrent = 0;
-
+		const tracker = make_concurrency_tracker();
 		const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-		await map_concurrent(
-			items,
-			async (x) => {
-				current_concurrent++;
-				max_concurrent = Math.max(max_concurrent, current_concurrent);
-				await new Promise((r) => setTimeout(r, 10));
-				current_concurrent--;
-				return x;
-			},
-			3,
-		);
-
-		expect(max_concurrent).toBe(3);
+		await map_concurrent(items, 3, async (x) => {
+			tracker.enter();
+			await new Promise((r) => setTimeout(r, 10));
+			tracker.exit();
+			return x;
+		});
+		assert.strictEqual(tracker.max, 3);
 	});
 
 	test('handles empty array', async () => {
-		const results = await map_concurrent([], async (x: number) => x * 2, 3);
-		expect(results).toEqual([]);
+		const results = await map_concurrent([], 3, async (x: number) => x * 2);
+		assert.deepEqual(results, []);
 	});
 
 	test('handles single item', async () => {
-		const results = await map_concurrent([42], async (x) => x * 2, 3);
-		expect(results).toEqual([84]);
+		const results = await map_concurrent([42], 3, async (x) => x * 2);
+		assert.deepEqual(results, [84]);
 	});
 
 	test('fails fast on error', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			map_concurrent(
-				[1, 2, 3, 4, 5],
-				async (x) => {
-					await new Promise((r) => setTimeout(r, 10));
-					if (x === 3) throw new Error('test error');
-					processed.push(x);
-					return x;
-				},
-				2,
-			),
+			map_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
+				await new Promise((r) => setTimeout(r, 10));
+				if (x === 3) throw new Error('test error');
+				processed.push(x);
+				return x;
+			}),
 		).rejects.toThrow('test error');
-
-		// Should have processed some items before failing
-		// With concurrency 2: items 1,2 start, then 3 starts when one finishes
-		expect(processed.length).toBeLessThan(5);
+		assert.notInclude(processed, 3); // item 3 threw before pushing
+		assert.isBelow(processed.length, 5);
 	});
 
 	test('throws on invalid concurrency', async () => {
-		await expect(map_concurrent([1], async (x) => x, 0)).rejects.toThrow(
+		await expect(map_concurrent([1], 0, async (x) => x)).rejects.toThrow(
 			'concurrency must be at least 1',
 		);
-		await expect(map_concurrent([1], async (x) => x, -1)).rejects.toThrow(
+		await expect(map_concurrent([1], -1, async (x) => x)).rejects.toThrow(
 			'concurrency must be at least 1',
+		);
+		await expect(map_concurrent([1], NaN, async (x) => x)).rejects.toThrow(
+			'concurrency must be at least 1',
+		);
+	});
+
+	test('rejects with abort reason even when items is empty', async () => {
+		const controller = new AbortController();
+		controller.abort('no work needed');
+		await expect(map_concurrent([], 3, async (x: number) => x, controller.signal)).rejects.toBe(
+			'no work needed',
 		);
 	});
 
 	test('concurrency 1 is sequential', async () => {
-		const order: Array<number> = [];
 		const items = [30, 10, 20]; // different delays
-
-		await map_concurrent(
-			items,
-			async (delay, index) => {
-				await new Promise((r) => setTimeout(r, delay));
-				order.push(index);
-				return index;
-			},
-			1,
-		);
-
-		// With concurrency 1, should process in input order regardless of delay
-		expect(order).toEqual([0, 1, 2]);
+		const results = await map_concurrent(items, 1, async (delay, index) => {
+			await new Promise((r) => setTimeout(r, delay));
+			return index;
+		});
+		// With concurrency 1, results are in input order regardless of delay
+		assert.deepEqual(results, [0, 1, 2]);
 	});
 
 	test('passes index to callback', async () => {
 		const items = ['a', 'b', 'c'];
-		const results = await map_concurrent(items, async (item, index) => `${item}:${index}`, 3);
-		expect(results).toEqual(['a:0', 'b:1', 'c:2']);
+		const results = await map_concurrent(items, 3, async (item, index) => `${item}:${index}`);
+		assert.deepEqual(results, ['a:0', 'b:1', 'c:2']);
 	});
 
 	test('high concurrency with fewer items', async () => {
 		const items = [1, 2, 3];
-		const results = await map_concurrent(items, async (x) => x * 2, 100);
-		expect(results).toEqual([2, 4, 6]);
+		const results = await map_concurrent(items, 100, async (x) => x * 2);
+		assert.deepEqual(results, [2, 4, 6]);
 	});
 
 	test('handles undefined results correctly', async () => {
-		const results = await map_concurrent([1, 2, 3], async () => undefined, 3);
-		expect(results).toEqual([undefined, undefined, undefined]);
-		expect(results).toHaveLength(3);
+		const results = await map_concurrent([1, 2, 3], 3, async () => undefined);
+		assert.deepEqual(results, [undefined, undefined, undefined]);
 	});
 
 	test('handles null results correctly', async () => {
-		const results = await map_concurrent([1, 2, 3], async () => null, 3);
-		expect(results).toEqual([null, null, null]);
+		const results = await map_concurrent([1, 2, 3], 3, async () => null);
+		assert.deepEqual(results, [null, null, null]);
 	});
 
 	test('preserves error object', async () => {
 		const custom_error = new Error('custom');
 		(custom_error as any).code = 'ENOENT';
-
-		try {
-			await map_concurrent(
-				[1],
-				async () => {
-					throw custom_error;
-				},
-				3,
-			);
-			expect.fail('should have thrown');
-		} catch (error) {
-			expect(error).toBe(custom_error);
-			expect(error.code).toBe('ENOENT');
-		}
+		const caught = await map_concurrent([1], 3, async () => {
+			throw custom_error;
+		}).catch((e: unknown) => e);
+		assert.strictEqual(caught, custom_error);
+		assert.instanceOf(caught, Error);
+		assert.strictEqual(caught.message, 'custom');
+		assert.strictEqual((caught as any).code, 'ENOENT');
 	});
 
 	test('error on first item', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			map_concurrent(
-				[1, 2, 3],
-				async (x) => {
-					if (x === 1) throw new Error('first item error');
-					processed.push(x);
-					return x;
-				},
-				1,
-			),
+			map_concurrent([1, 2, 3], 1, async (x) => {
+				if (x === 1) throw new Error('first item error');
+				processed.push(x);
+				return x;
+			}),
 		).rejects.toThrow('first item error');
-
 		// With concurrency 1, should not process any items after the first fails
-		expect(processed).toEqual([]);
+		assert.deepEqual(processed, []);
 	});
 
 	test('error on last item', async () => {
 		const processed: Array<number> = [];
-
 		await expect(
-			map_concurrent(
-				[1, 2, 3],
-				async (x) => {
-					if (x === 3) throw new Error('last item error');
-					processed.push(x);
-					return x;
-				},
-				1,
-			),
+			map_concurrent([1, 2, 3], 1, async (x) => {
+				if (x === 3) throw new Error('last item error');
+				processed.push(x);
+				return x;
+			}),
 		).rejects.toThrow('last item error');
-
-		expect(processed).toEqual([1, 2]);
+		assert.deepEqual(processed, [1, 2]);
 	});
 
 	test('items.length equals concurrency', async () => {
-		let max_concurrent = 0;
-		let current_concurrent = 0;
-
+		const tracker = make_concurrency_tracker();
 		const items = [1, 2, 3];
-		const results = await map_concurrent(
-			items,
-			async (x) => {
-				current_concurrent++;
-				max_concurrent = Math.max(max_concurrent, current_concurrent);
-				await new Promise((r) => setTimeout(r, 10));
-				current_concurrent--;
-				return x * 2;
-			},
-			3, // same as items.length
-		);
-
-		expect(results).toEqual([2, 4, 6]);
-		expect(max_concurrent).toBe(3);
+		const results = await map_concurrent(items, 3, async (x) => {
+			tracker.enter();
+			await new Promise((r) => setTimeout(r, 10));
+			tracker.exit();
+			return x * 2;
+		});
+		assert.deepEqual(results, [2, 4, 6]);
+		assert.strictEqual(tracker.max, 3);
 	});
 
 	test('handles synchronous throw in async function', async () => {
 		await expect(
-			map_concurrent(
-				[1, 2, 3],
-				async (x) => {
-					if (x === 2) {
-						// Synchronous throw, not a rejection
-						throw new Error('sync throw');
-					}
-					return x;
-				},
-				3,
-			),
+			map_concurrent([1, 2, 3], 3, async (x) => {
+				if (x === 2) {
+					// throw rather than returning a rejected promise
+					throw new Error('sync throw');
+				}
+				return x;
+			}),
 		).rejects.toThrow('sync throw');
 	});
 
 	test('nested calls', async () => {
-		const results = await map_concurrent(
-			[1, 2],
-			async (x) => {
-				const inner = await map_concurrent([10, 20], async (y) => x * y, 2);
-				return inner;
-			},
-			2,
-		);
-		expect(results).toEqual([
+		const results = await map_concurrent([1, 2], 2, async (x) => {
+			const inner = await map_concurrent([10, 20], 2, async (y) => x * y);
+			return inner;
+		});
+		assert.deepEqual(results, [
 			[10, 20],
 			[20, 40],
 		]);
+	});
+
+	test('accepts a Set', async () => {
+		const results = await map_concurrent(new Set([1, 2, 3]), 3, async (x) => x * 2);
+		assert.deepEqual(results, [2, 4, 6]);
+	});
+
+	test('accepts a Map', async () => {
+		const results = await map_concurrent(
+			new Map([
+				['a', 1],
+				['b', 2],
+				['c', 3],
+			]),
+			3,
+			async ([key, value]) => `${key}=${value}`,
+		);
+		assert.deepEqual(results, ['a=1', 'b=2', 'c=3']);
+	});
+
+	test('accepts a generator', async () => {
+		function* gen(): Generator<number> {
+			yield 10;
+			yield 20;
+			yield 30;
+		}
+		const results = await map_concurrent(gen(), 2, async (x) => x * 2);
+		assert.deepEqual(results, [20, 40, 60]);
+	});
+
+	test('accepts a sync callback', async () => {
+		const results = await map_concurrent([1, 2, 3], 3, (x) => x * 2);
+		assert.deepEqual(results, [2, 4, 6]);
+	});
+
+	test('catches sync throw in sync callback', async () => {
+		await expect(
+			map_concurrent([1, 2, 3], 3, (x) => {
+				if (x === 2) throw new Error('sync cb throw');
+				return x;
+			}),
+		).rejects.toThrow('sync cb throw');
+	});
+
+	test('rejects immediately with already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort('already aborted');
+		await expect(map_concurrent([1, 2, 3], 3, async (x) => x, controller.signal)).rejects.toBe(
+			'already aborted',
+		);
+	});
+
+	test('aborts mid-flight', async () => {
+		const controller = new AbortController();
+		const processed: Array<number> = [];
+		await expect(
+			map_concurrent(
+				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+				1,
+				async (x) => {
+					await new Promise((r) => setTimeout(r, 10));
+					processed.push(x);
+					if (x === 3) controller.abort('stop now');
+					return x;
+				},
+				controller.signal,
+			),
+		).rejects.toBe('stop now');
+		// With concurrency 1, items are sequential: 1, 2, 3 processed, then abort fires
+		assert.deepEqual(processed, [1, 2, 3]);
 	});
 });
 
 describe('map_concurrent_settled', () => {
 	test('collects all results', async () => {
 		const items = [1, 2, 3, 4, 5];
-		const results = await map_concurrent_settled(items, async (x) => x * 2, 3);
-		expect(results).toEqual([
+		const results = await map_concurrent_settled(items, 3, async (x) => x * 2);
+		assert.deepEqual(results, [
 			{status: 'fulfilled', value: 2},
 			{status: 'fulfilled', value: 4},
 			{status: 'fulfilled', value: 6},
@@ -557,188 +674,332 @@ describe('map_concurrent_settled', () => {
 	});
 
 	test('collects errors without failing', async () => {
-		const results = await map_concurrent_settled(
-			[1, 2, 3, 4, 5],
-			async (x) => {
-				if (x === 2 || x === 4) throw new Error(`error ${x}`);
-				return x * 2;
-			},
-			2,
-		);
+		const results = await map_concurrent_settled([1, 2, 3, 4, 5], 2, async (x) => {
+			if (x === 2 || x === 4) throw new Error(`error ${x}`);
+			return x * 2;
+		});
 
-		expect(results[0]).toEqual({status: 'fulfilled', value: 2});
-		expect(results[1]!.status).toBe('rejected');
-		expect(results[2]).toEqual({status: 'fulfilled', value: 6});
-		expect(results[3]!.status).toBe('rejected');
-		expect(results[4]).toEqual({status: 'fulfilled', value: 10});
-
-		const rejected = results.filter((r) => r.status === 'rejected');
-		expect(rejected).toHaveLength(2);
+		assert.strictEqual(results.length, 5);
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 2});
+		assert.strictEqual(results[1]!.status, 'rejected');
+		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'error 2');
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 6});
+		assert.strictEqual(results[3]!.status, 'rejected');
+		assert.instanceOf((results[3] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[3] as PromiseRejectedResult).reason.message, 'error 4');
+		assert.deepEqual(results[4], {status: 'fulfilled', value: 10});
 	});
 
 	test('preserves order with varying delays', async () => {
 		const items = [50, 10, 30, 20, 40];
-		const results = await map_concurrent_settled(
-			items,
-			async (delay, index) => {
-				await new Promise((r) => setTimeout(r, delay));
-				return index;
-			},
-			3,
-		);
-		const values = results.map((r) => (r.status === 'fulfilled' ? r.value : undefined));
-		expect(values).toEqual([0, 1, 2, 3, 4]);
+		const results = await map_concurrent_settled(items, 3, async (delay, index) => {
+			await new Promise((r) => setTimeout(r, delay));
+			return index;
+		});
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 0},
+			{status: 'fulfilled', value: 1},
+			{status: 'fulfilled', value: 2},
+			{status: 'fulfilled', value: 3},
+			{status: 'fulfilled', value: 4},
+		]);
 	});
 
 	test('handles empty array', async () => {
-		const results = await map_concurrent_settled([], async (x: number) => x, 3);
-		expect(results).toEqual([]);
+		const results = await map_concurrent_settled([], 3, async (x: number) => x);
+		assert.deepEqual(results, []);
 	});
 
 	test('throws on invalid concurrency', async () => {
-		await expect(map_concurrent_settled([1], async (x) => x, 0)).rejects.toThrow(
+		await expect(map_concurrent_settled([1], 0, async (x) => x)).rejects.toThrow(
+			'concurrency must be at least 1',
+		);
+		await expect(map_concurrent_settled([1], -1, async (x) => x)).rejects.toThrow(
+			'concurrency must be at least 1',
+		);
+		await expect(map_concurrent_settled([1], NaN, async (x) => x)).rejects.toThrow(
 			'concurrency must be at least 1',
 		);
 	});
 
 	test('all items fail', async () => {
-		const results = await map_concurrent_settled(
-			[1, 2, 3],
-			async (x) => {
-				throw new Error(`error ${x}`);
-			},
-			2,
-		);
+		const results = await map_concurrent_settled([1, 2, 3], 2, async (x) => {
+			throw new Error(`error ${x}`);
+		});
 
-		expect(results.every((r) => r.status === 'rejected')).toBe(true);
-		expect(results).toHaveLength(3);
+		assert.strictEqual(results.length, 3);
+		for (const [i, r] of results.entries()) {
+			assert.strictEqual(r.status, 'rejected');
+			assert.instanceOf((r as PromiseRejectedResult).reason, Error);
+			assert.strictEqual((r as PromiseRejectedResult).reason.message, `error ${i + 1}`);
+		}
 	});
 
 	test('preserves error objects', async () => {
 		const custom_error = new Error('custom');
 		(custom_error as any).code = 'CUSTOM_CODE';
 
-		const results = await map_concurrent_settled(
-			[1],
-			async () => {
-				throw custom_error;
-			},
-			3,
-		);
+		const results = await map_concurrent_settled([1], 3, async () => {
+			throw custom_error;
+		});
 
-		expect(results).toHaveLength(1);
-		expect(results[0]!.status).toBe('rejected');
+		assert.strictEqual(results.length, 1);
+		assert.strictEqual(results[0]!.status, 'rejected');
 		const rejected = results[0] as PromiseRejectedResult;
-		expect(rejected.reason).toBe(custom_error);
-		expect(rejected.reason.code).toBe('CUSTOM_CODE');
+		assert.strictEqual(rejected.reason, custom_error);
+		assert.instanceOf(rejected.reason, Error);
+		assert.strictEqual(rejected.reason.message, 'custom');
+		assert.strictEqual((rejected.reason as any).code, 'CUSTOM_CODE');
 	});
 
 	test('error indices are correct with varying delays', async () => {
-		const results = await map_concurrent_settled(
-			[1, 2, 3, 4, 5],
-			async (x) => {
-				// Items 2 and 4 fail, but 4 completes before 2 due to shorter delay
-				if (x === 2) {
-					await new Promise((r) => setTimeout(r, 50));
-					throw new Error('error 2');
-				}
-				if (x === 4) {
-					await new Promise((r) => setTimeout(r, 10));
-					throw new Error('error 4');
-				}
-				return x;
-			},
-			5,
-		);
+		const results = await map_concurrent_settled([1, 2, 3, 4, 5], 5, async (x) => {
+			// Items 2 and 4 fail, but 4 completes before 2 due to shorter delay
+			if (x === 2) {
+				await new Promise((r) => setTimeout(r, 50));
+				throw new Error('error 2');
+			}
+			if (x === 4) {
+				await new Promise((r) => setTimeout(r, 10));
+				throw new Error('error 4');
+			}
+			return x;
+		});
 
+		assert.strictEqual(results.length, 5);
 		// Error indices should reflect original array positions, not completion order
-		expect(results[0]!.status).toBe('fulfilled');
-		expect(results[1]!.status).toBe('rejected'); // index 1 = item 2
-		expect(results[2]!.status).toBe('fulfilled');
-		expect(results[3]!.status).toBe('rejected'); // index 3 = item 4
-		expect(results[4]!.status).toBe('fulfilled');
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
+		assert.strictEqual(results[1]!.status, 'rejected'); // index 1 = item 2
+		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'error 2');
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+		assert.strictEqual(results[3]!.status, 'rejected'); // index 3 = item 4
+		assert.strictEqual((results[3] as PromiseRejectedResult).reason.message, 'error 4');
+		assert.deepEqual(results[4], {status: 'fulfilled', value: 5});
 	});
 
 	test('respects concurrency limit', async () => {
-		let max_concurrent = 0;
-		let current_concurrent = 0;
-
-		await map_concurrent_settled(
-			[1, 2, 3, 4, 5, 6],
-			async () => {
-				current_concurrent++;
-				max_concurrent = Math.max(max_concurrent, current_concurrent);
-				await new Promise((r) => setTimeout(r, 10));
-				current_concurrent--;
-			},
-			2,
-		);
-
-		expect(max_concurrent).toBe(2);
+		const tracker = make_concurrency_tracker();
+		await map_concurrent_settled([1, 2, 3, 4, 5, 6], 2, async () => {
+			tracker.enter();
+			await new Promise((r) => setTimeout(r, 10));
+			tracker.exit();
+		});
+		assert.strictEqual(tracker.max, 2);
 	});
 
 	test('single item fails', async () => {
-		const results = await map_concurrent_settled(
-			[1],
-			async () => {
-				throw new Error('single failure');
-			},
-			1,
-		);
+		const results = await map_concurrent_settled([1], 1, async () => {
+			throw new Error('single failure');
+		});
 
-		expect(results).toHaveLength(1);
-		expect(results[0]!.status).toBe('rejected');
+		assert.strictEqual(results.length, 1);
+		assert.strictEqual(results[0]!.status, 'rejected');
+		assert.instanceOf((results[0] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[0] as PromiseRejectedResult).reason.message, 'single failure');
 	});
 
 	test('first item fails, rest succeed', async () => {
-		const results = await map_concurrent_settled(
-			[1, 2, 3],
-			async (x) => {
-				if (x === 1) throw new Error('first fails');
-				return x * 2;
-			},
-			1,
-		);
+		const results = await map_concurrent_settled([1, 2, 3], 1, async (x) => {
+			if (x === 1) throw new Error('first fails');
+			return x * 2;
+		});
 
-		expect(results[0]!.status).toBe('rejected');
-		expect(results[1]).toEqual({status: 'fulfilled', value: 4});
-		expect(results[2]).toEqual({status: 'fulfilled', value: 6});
+		assert.strictEqual(results.length, 3);
+		assert.strictEqual(results[0]!.status, 'rejected');
+		assert.instanceOf((results[0] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[0] as PromiseRejectedResult).reason.message, 'first fails');
+		assert.deepEqual(results[1], {status: 'fulfilled', value: 4});
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 6});
 	});
 
 	test('last item fails, rest succeed', async () => {
-		const results = await map_concurrent_settled(
-			[1, 2, 3],
-			async (x) => {
-				if (x === 3) throw new Error('last fails');
-				return x * 2;
-			},
-			1,
-		);
+		const results = await map_concurrent_settled([1, 2, 3], 1, async (x) => {
+			if (x === 3) throw new Error('last fails');
+			return x * 2;
+		});
 
-		expect(results[0]).toEqual({status: 'fulfilled', value: 2});
-		expect(results[1]).toEqual({status: 'fulfilled', value: 4});
-		expect(results[2]!.status).toBe('rejected');
+		assert.strictEqual(results.length, 3);
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 2});
+		assert.deepEqual(results[1], {status: 'fulfilled', value: 4});
+		assert.strictEqual(results[2]!.status, 'rejected');
+		assert.instanceOf((results[2] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[2] as PromiseRejectedResult).reason.message, 'last fails');
 	});
 
 	test('distinguishes undefined value from failure', async () => {
+		const results = await map_concurrent_settled([1, 2, 3], 3, async (x) => {
+			if (x === 1) return undefined;
+			if (x === 2) throw new Error('fail');
+			return x;
+		});
+
+		assert.strictEqual(results.length, 3);
+		// undefined return is fulfilled, not rejected
+		assert.deepEqual(results[0], {status: 'fulfilled', value: undefined});
+		assert.strictEqual(results[1]!.status, 'rejected');
+		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'fail');
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+	});
+
+	test('accepts a Set', async () => {
+		const results = await map_concurrent_settled(new Set([1, 2, 3]), 3, async (x) => x * 2);
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 2},
+			{status: 'fulfilled', value: 4},
+			{status: 'fulfilled', value: 6},
+		]);
+	});
+
+	test('accepts a Map', async () => {
 		const results = await map_concurrent_settled(
-			[1, 2, 3],
+			new Map([
+				['a', 1],
+				['b', 2],
+			]),
+			2,
+			async ([key, value]) => `${key}=${value}`,
+		);
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 'a=1'},
+			{status: 'fulfilled', value: 'b=2'},
+		]);
+	});
+
+	test('accepts a generator', async () => {
+		function* gen(): Generator<number> {
+			yield 10;
+			yield 20;
+			yield 30;
+		}
+		const results = await map_concurrent_settled(gen(), 2, async (x) => x * 2);
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 20},
+			{status: 'fulfilled', value: 40},
+			{status: 'fulfilled', value: 60},
+		]);
+	});
+
+	test('accepts a sync callback', async () => {
+		const results = await map_concurrent_settled([1, 2, 3], 3, (x) => x * 2);
+		assert.deepEqual(results, [
+			{status: 'fulfilled', value: 2},
+			{status: 'fulfilled', value: 4},
+			{status: 'fulfilled', value: 6},
+		]);
+	});
+
+	test('catches sync throw in sync callback', async () => {
+		const results = await map_concurrent_settled([1, 2, 3], 3, (x) => {
+			if (x === 2) throw new Error('sync cb throw');
+			return x;
+		});
+
+		assert.strictEqual(results.length, 3);
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
+		assert.strictEqual(results[1]!.status, 'rejected');
+		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'sync cb throw');
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+	});
+
+	test('resolves immediately with already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort('already aborted');
+
+		const results = await map_concurrent_settled([1, 2, 3], 3, async (x) => x, controller.signal);
+
+		assert.deepEqual(results, []);
+	});
+
+	test('abort resolves with partial results', async () => {
+		const controller = new AbortController();
+
+		// With concurrency 1, items are sequential: items 1 and 2 complete (fulfilled).
+		// Item 3 awaits, then calls controller.abort('stop') — the abort event fires
+		// synchronously within that call, settling index 2 as rejected before the fn's
+		// return value can be recorded. Items 4-10 are never started.
+		const results = await map_concurrent_settled(
+			[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+			1,
 			async (x) => {
-				if (x === 1) return undefined;
-				if (x === 2) throw new Error('fail');
+				await new Promise((r) => setTimeout(r, 10));
+				if (x === 3) controller.abort('stop');
 				return x;
 			},
-			3,
+			controller.signal,
 		);
 
-		// undefined return is fulfilled, not rejected
-		expect(results[0]).toEqual({status: 'fulfilled', value: undefined});
-		expect(results[1]!.status).toBe('rejected');
-		expect(results[2]).toEqual({status: 'fulfilled', value: 3});
+		assert.strictEqual(results.length, 3);
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
+		assert.deepEqual(results[1], {status: 'fulfilled', value: 2});
+		assert.deepEqual(results[2], {status: 'rejected', reason: 'stop'});
+	});
+
+	test('abort preserves completed settlements', async () => {
+		const controller = new AbortController();
+
+		const results = await map_concurrent_settled(
+			[1, 2, 3, 4, 5],
+			1,
+			async (x) => {
+				if (x === 2) throw new Error('item error');
+				await new Promise((r) => setTimeout(r, 5));
+				if (x === 4) controller.abort('cancel');
+				return x * 10;
+			},
+			controller.signal,
+		);
+
+		// Items 1, 2, 3 completed before abort — keep their real settlements
+		assert.deepEqual(results[0], {status: 'fulfilled', value: 10});
+		assert.strictEqual(results[1]!.status, 'rejected');
+		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
+		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'item error');
+		assert.deepEqual(results[2], {status: 'fulfilled', value: 30});
+		// Item 4 triggered abort synchronously within its fn — settled as rejected with abort reason
+		assert.deepEqual(results[3], {status: 'rejected', reason: 'cancel'});
+		// Item 5 was never started
+		assert.strictEqual(results.length, 4);
+	});
+
+	test('abort settles multiple in-flight items', async () => {
+		const controller = new AbortController();
+
+		// With concurrency=2, items 1 and 2 start together.
+		// Item 1 finishes first and calls abort; at that moment item 2 is still in-flight.
+		// on_abort fires synchronously, settling both unsettled slots as rejected
+		// before either fn's .then can record their fulfilled values.
+		const results = await map_concurrent_settled(
+			[1, 2],
+			2,
+			async (x) => {
+				if (x === 1) {
+					await new Promise((r) => setTimeout(r, 10));
+					controller.abort('stop');
+					return x;
+				}
+				// item 2 takes longer, still in-flight when abort fires
+				await new Promise((r) => setTimeout(r, 100));
+				return x;
+			},
+			controller.signal,
+		);
+
+		assert.strictEqual(results.length, 2);
+		assert.deepEqual(results[0], {status: 'rejected', reason: 'stop'});
+		assert.deepEqual(results[1], {status: 'rejected', reason: 'stop'});
 	});
 });
 
 describe('AsyncSemaphore', () => {
+	test('throws on invalid permits', () => {
+		assert.throws(() => new AsyncSemaphore(-1), /permits must be >= 0/);
+		assert.throws(() => new AsyncSemaphore(NaN), /permits must be >= 0/);
+		assert.throws(() => new AsyncSemaphore(-Infinity), /permits must be >= 0/);
+	});
+
 	test('acquire resolves immediately when permits available', async () => {
 		const sem = new AsyncSemaphore(2);
 		await sem.acquire(); // should not block
@@ -812,22 +1073,19 @@ describe('AsyncSemaphore', () => {
 
 	test('limits concurrency in practice', async () => {
 		const sem = new AsyncSemaphore(2);
-		let current = 0;
-		let max_concurrent = 0;
+		const tracker = make_concurrency_tracker();
 
 		const task = async (): Promise<void> => {
 			await sem.acquire();
-			current++;
-			if (current > max_concurrent) max_concurrent = current;
+			tracker.enter();
 			await new Promise((r) => setTimeout(r, 20));
-			current--;
+			tracker.exit();
 			sem.release();
 		};
 
 		await Promise.all([task(), task(), task(), task(), task()]);
 
-		assert.strictEqual(max_concurrent, 2);
-		assert.strictEqual(current, 0);
+		assert.strictEqual(tracker.max, 2);
 	});
 
 	test('FIFO ordering of waiters', async () => {

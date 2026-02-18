@@ -75,10 +75,10 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
-			"@fuzdev/fuz_code": "^0.45.0",
-			"@fuzdev/fuz_css": "^0.50.0",
-			"@fuzdev/fuz_ui": "^0.183.1",
-			"@fuzdev/gro": "^0.192.1",
+			"@fuzdev/fuz_code": "^0.45.1",
+			"@fuzdev/fuz_css": "^0.52.0",
+			"@fuzdev/fuz_ui": "^0.184.0",
+			"@fuzdev/gro": "^0.194.0",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.9.0",
 			"@sveltejs/adapter-static": "^3.0.10",
@@ -413,7 +413,7 @@
 					{
 						"name": "Deferred",
 						"kind": "type",
-						"doc_comment": "Creates a deferred object with a promise and its resolve/reject handlers.",
+						"doc_comment": "A deferred object with a promise and its resolve/reject handlers.",
 						"source_line": 18,
 						"type_signature": "Deferred<T>",
 						"generic_params": [
@@ -442,7 +442,7 @@
 					{
 						"name": "create_deferred",
 						"kind": "function",
-						"doc_comment": "Creates a object with a `promise` and its `resolve`/`reject` handlers.",
+						"doc_comment": "Creates an object with a `promise` and its `resolve`/`reject` handlers.",
 						"source_line": 27,
 						"type_signature": "<T>(): Deferred<T>",
 						"return_type": "Deferred<T>",
@@ -451,28 +451,34 @@
 					{
 						"name": "each_concurrent",
 						"kind": "function",
-						"doc_comment": "Runs an async function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
+						"doc_comment": "Runs a function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
 						"examples": [
-							"```ts\nawait each_concurrent(\n  file_paths,\n  async (path) => { await unlink(path); },\n  5, // max 5 concurrent deletions\n);\n```"
+							"```ts\nawait each_concurrent(\n  file_paths,\n  5, // max 5 concurrent deletions\n  async (path) => { await unlink(path); },\n);\n```"
 						],
-						"source_line": 54,
-						"type_signature": "<T>(items: T[], fn: (item: T, index: number) => Promise<void>, concurrency: number): Promise<void>",
+						"source_line": 55,
+						"type_signature": "<T>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => void | Promise<void>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<void>",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<void>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => void | Promise<void>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
@@ -481,56 +487,68 @@
 						"kind": "function",
 						"doc_comment": "Maps over items with controlled concurrency, preserving input order.",
 						"examples": [
-							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  async (path) => readFile(path, 'utf8'),\n  5, // max 5 concurrent reads\n);\n```"
+							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  5, // max 5 concurrent reads\n  async (path) => readFile(path, 'utf8'),\n);\n```"
 						],
-						"source_line": 125,
-						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<R[]>",
+						"source_line": 141,
+						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<R[]>",
 						"return_description": "promise resolving to array of results in same order as input",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<R>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => R | Promise<R>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
 					{
 						"name": "map_concurrent_settled",
 						"kind": "function",
-						"doc_comment": "Like `map_concurrent` but collects all results/errors instead of failing fast.\nReturns an array of settlement objects matching the `Promise.allSettled` pattern.",
+						"doc_comment": "Like `map_concurrent` but collects all results/errors instead of failing fast.\nReturns an array of settlement objects matching the `Promise.allSettled` pattern.\n\nOn abort, resolves with partial results: completed items keep their real settlements,\nin-flight and un-started items are settled as rejected with the abort reason.",
 						"examples": [
-							"```ts\nconst results = await map_concurrent_settled(urls, fetch, 5);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
+							"```ts\nconst results = await map_concurrent_settled(urls, 5, fetch);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
 						],
-						"source_line": 202,
-						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<PromiseSettledResult<R>[]>",
+						"source_line": 236,
+						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<PromiseSettledResult<R>[]>",
 						"return_description": "promise resolving to array of `PromiseSettledResult` objects in input order",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<R>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => R | Promise<R>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
@@ -538,7 +556,7 @@
 						"name": "AsyncSemaphore",
 						"kind": "class",
 						"doc_comment": "Async semaphore for concurrency limiting.\n\nWith `Infinity` permits, `acquire()` always resolves immediately.",
-						"source_line": 258,
+						"source_line": 318,
 						"members": [
 							{
 								"name": "constructor",

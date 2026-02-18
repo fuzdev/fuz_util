@@ -13,7 +13,7 @@ export const is_promise = (value: unknown): value is Promise<unknown> =>
 	value != null && typeof (value as Promise<unknown>).then === 'function';
 
 /**
- * Creates a deferred object with a promise and its resolve/reject handlers.
+ * A deferred object with a promise and its resolve/reject handlers.
  */
 export interface Deferred<T> {
 	promise: Promise<T>;
@@ -22,7 +22,7 @@ export interface Deferred<T> {
 }
 
 /**
- * Creates a object with a `promise` and its `resolve`/`reject` handlers.
+ * Creates an object with a `promise` and its `resolve`/`reject` handlers.
  */
 export const create_deferred = <T>(): Deferred<T> => {
 	let resolve!: (value: T) => void;
@@ -35,71 +35,86 @@ export const create_deferred = <T>(): Deferred<T> => {
 };
 
 /**
- * Runs an async function on each item with controlled concurrency.
+ * Runs a function on each item with controlled concurrency.
  * Like `map_concurrent` but doesn't collect results (more efficient for side effects).
  *
- * @param items array of items to process
- * @param fn async function to apply to each item
+ * @param items items to process
  * @param concurrency maximum number of concurrent operations
+ * @param fn function to apply to each item
+ * @param signal optional `AbortSignal` to cancel processing
  *
  * @example
  * ```ts
  * await each_concurrent(
  *   file_paths,
- *   async (path) => { await unlink(path); },
  *   5, // max 5 concurrent deletions
+ *   async (path) => { await unlink(path); },
  * );
  * ```
  */
 export const each_concurrent = async <T>(
-	items: Array<T>,
-	fn: (item: T, index: number) => Promise<void>,
+	items: Iterable<T>,
 	concurrency: number,
+	fn: (item: T, index: number) => Promise<void> | void,
+	signal?: AbortSignal,
 ): Promise<void> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
+	const iterator = items[Symbol.iterator]();
 	let next_index = 0;
 	let active_count = 0;
 	let rejected = false;
 
 	return new Promise((resolve, reject) => {
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
+
+		const done = (): void => {
+			cleanup?.();
+			resolve();
+		};
+
+		const fail = (error: unknown): void => {
+			if (rejected) return;
+			rejected = true;
+			cleanup?.();
+			reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+		};
+
+		function on_abort(): void {
+			fail(signal!.reason);
+		}
+
+		if (signal?.aborted) {
+			fail(signal.reason);
+			return;
+		}
+		signal?.addEventListener('abort', on_abort);
+
 		const run_next = (): void => {
-			// Stop spawning if we've rejected
 			if (rejected) return;
 
-			// Check if we're done
-			if (next_index >= items.length && active_count === 0) {
-				resolve();
-				return;
-			}
-
 			// Spawn workers up to concurrency limit
-			while (active_count < concurrency && next_index < items.length) {
+			while (active_count < concurrency) {
+				const next = iterator.next();
+				if (next.done) {
+					if (active_count === 0) done();
+					return;
+				}
 				const index = next_index++;
-				const item = items[index]!;
+				const item = next.value;
 				active_count++;
 
-				fn(item, index)
+				new Promise<void>((r) => r(fn(item, index)))
 					.then(() => {
 						if (rejected) return;
 						active_count--;
 						run_next();
 					})
-					.catch((error) => {
-						if (rejected) return;
-						rejected = true;
-						reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
-					});
+					.catch(fail);
 			}
 		};
-
-		// Handle empty array
-		if (items.length === 0) {
-			resolve();
-			return;
-		}
 
 		run_next();
 	});
@@ -108,71 +123,86 @@ export const each_concurrent = async <T>(
 /**
  * Maps over items with controlled concurrency, preserving input order.
  *
- * @param items array of items to process
- * @param fn async function to apply to each item
+ * @param items items to process
  * @param concurrency maximum number of concurrent operations
+ * @param fn function to apply to each item
+ * @param signal optional `AbortSignal` to cancel processing
  * @returns promise resolving to array of results in same order as input
  *
  * @example
  * ```ts
  * const results = await map_concurrent(
  *   file_paths,
- *   async (path) => readFile(path, 'utf8'),
  *   5, // max 5 concurrent reads
+ *   async (path) => readFile(path, 'utf8'),
  * );
  * ```
  */
 export const map_concurrent = async <T, R>(
-	items: Array<T>,
-	fn: (item: T, index: number) => Promise<R>,
+	items: Iterable<T>,
 	concurrency: number,
+	fn: (item: T, index: number) => Promise<R> | R,
+	signal?: AbortSignal,
 ): Promise<Array<R>> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
-	const results: Array<R> = new Array(items.length);
+	const results: Array<R> = [];
+	const iterator = items[Symbol.iterator]();
 	let next_index = 0;
 	let active_count = 0;
 	let rejected = false;
 
 	return new Promise((resolve, reject) => {
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
+
+		const done = (): void => {
+			cleanup?.();
+			resolve(results);
+		};
+
+		const fail = (error: unknown): void => {
+			if (rejected) return;
+			rejected = true;
+			cleanup?.();
+			reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
+		};
+
+		function on_abort(): void {
+			fail(signal!.reason);
+		}
+
+		if (signal?.aborted) {
+			fail(signal.reason);
+			return;
+		}
+		signal?.addEventListener('abort', on_abort);
+
 		const run_next = (): void => {
-			// Stop spawning if we've rejected
 			if (rejected) return;
 
-			// Check if we're done
-			if (next_index >= items.length && active_count === 0) {
-				resolve(results);
-				return;
-			}
-
 			// Spawn workers up to concurrency limit
-			while (active_count < concurrency && next_index < items.length) {
+			while (active_count < concurrency) {
+				const next = iterator.next();
+				if (next.done) {
+					if (active_count === 0) done();
+					return;
+				}
 				const index = next_index++;
-				const item = items[index]!;
+				const item = next.value;
 				active_count++;
 
-				fn(item, index)
+				new Promise<R>((r) => r(fn(item, index)))
 					.then((result) => {
 						if (rejected) return;
 						results[index] = result;
 						active_count--;
 						run_next();
 					})
-					.catch((error) => {
-						if (rejected) return;
-						rejected = true;
-						reject(error); // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors
-					});
+					.catch(fail);
 			}
 		};
-
-		// Handle empty array
-		if (items.length === 0) {
-			resolve(results);
-			return;
-		}
 
 		run_next();
 	});
@@ -182,14 +212,18 @@ export const map_concurrent = async <T, R>(
  * Like `map_concurrent` but collects all results/errors instead of failing fast.
  * Returns an array of settlement objects matching the `Promise.allSettled` pattern.
  *
- * @param items array of items to process
- * @param fn async function to apply to each item
+ * On abort, resolves with partial results: completed items keep their real settlements,
+ * in-flight and un-started items are settled as rejected with the abort reason.
+ *
+ * @param items items to process
  * @param concurrency maximum number of concurrent operations
+ * @param fn function to apply to each item
+ * @param signal optional `AbortSignal` to cancel processing
  * @returns promise resolving to array of `PromiseSettledResult` objects in input order
  *
  * @example
  * ```ts
- * const results = await map_concurrent_settled(urls, fetch, 5);
+ * const results = await map_concurrent_settled(urls, 5, fetch);
  * for (const [i, result] of results.entries()) {
  *   if (result.status === 'fulfilled') {
  *     console.log(`${urls[i]}: ${result.value.status}`);
@@ -200,51 +234,77 @@ export const map_concurrent = async <T, R>(
  * ```
  */
 export const map_concurrent_settled = async <T, R>(
-	items: Array<T>,
-	fn: (item: T, index: number) => Promise<R>,
+	items: Iterable<T>,
 	concurrency: number,
+	fn: (item: T, index: number) => Promise<R> | R,
+	signal?: AbortSignal,
 ): Promise<Array<PromiseSettledResult<R>>> => {
-	if (concurrency < 1) {
+	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
 	}
 
-	const results: Array<PromiseSettledResult<R>> = new Array(items.length);
+	const results: Array<PromiseSettledResult<R>> = [];
+	const iterator = items[Symbol.iterator]();
 	let next_index = 0;
 	let active_count = 0;
+	let aborted = false;
 
 	return new Promise((resolve) => {
-		const run_next = (): void => {
-			// Check if we're done
-			if (next_index >= items.length && active_count === 0) {
-				resolve(results);
-				return;
+		const cleanup = signal ? () => signal.removeEventListener('abort', on_abort) : undefined;
+
+		const done = (): void => {
+			cleanup?.();
+			resolve(results);
+		};
+
+		function on_abort(): void {
+			if (aborted) return;
+			aborted = true;
+			cleanup?.();
+			// Settle in-flight items as rejected with the abort reason
+			const reason: unknown = signal!.reason;
+			for (let i = 0; i < next_index; i++) {
+				if (!(i in results)) {
+					results[i] = {status: 'rejected', reason};
+				}
 			}
+			resolve(results);
+		}
+
+		if (signal?.aborted) {
+			resolve(results);
+			return;
+		}
+		signal?.addEventListener('abort', on_abort);
+
+		const run_next = (): void => {
+			if (aborted) return;
 
 			// Spawn workers up to concurrency limit
-			while (active_count < concurrency && next_index < items.length) {
+			while (active_count < concurrency) {
+				const next = iterator.next();
+				if (next.done) {
+					if (active_count === 0) done();
+					return;
+				}
 				const index = next_index++;
-				const item = items[index]!;
+				const item = next.value;
 				active_count++;
 
-				fn(item, index)
+				new Promise<R>((r) => r(fn(item, index)))
 					.then((value) => {
-						results[index] = {status: 'fulfilled', value};
+						if (!aborted) results[index] = {status: 'fulfilled', value};
 					})
 					.catch((reason: unknown) => {
-						results[index] = {status: 'rejected', reason};
+						if (!aborted) results[index] = {status: 'rejected', reason};
 					})
 					.finally(() => {
+						if (aborted) return;
 						active_count--;
 						run_next();
 					});
 			}
 		};
-
-		// Handle empty array
-		if (items.length === 0) {
-			resolve(results);
-			return;
-		}
 
 		run_next();
 	});
@@ -260,13 +320,16 @@ export class AsyncSemaphore {
 	#waiters: Array<() => void> = [];
 
 	constructor(permits: number) {
+		if (!(permits >= 0)) {
+			throw new Error('permits must be >= 0');
+		}
 		this.#permits = permits;
 	}
 
-	async acquire(): Promise<void> {
+	acquire(): Promise<void> {
 		if (this.#permits > 0) {
 			this.#permits--;
-			return;
+			return Promise.resolve();
 		}
 		return new Promise<void>((resolve) => {
 			this.#waiters.push(resolve);
