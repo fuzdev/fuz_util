@@ -92,6 +92,11 @@ See `docs/benchmark.md` for full documentation.
 - `args.ts` - `args_parse()` for CLI arguments with Zod schemas, supports
   aliases, `--no-flag` negation, boolean coercion
 
+### Schema introspection
+
+- `zod.ts` - Zod schema introspection for CLI help generation (extracting
+  descriptions, defaults, aliases, type strings, properties from Zod schemas)
+
 ### System utilities
 
 - `process.ts` - process/spawn helpers with typed results

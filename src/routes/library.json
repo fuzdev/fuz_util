@@ -7997,6 +7997,174 @@
 				],
 				"dependencies": ["string.ts"],
 				"dependents": ["package_json.ts"]
+			},
+			{
+				"path": "zod.ts",
+				"declarations": [
+					{
+						"name": "zod_to_subschema",
+						"kind": "function",
+						"doc_comment": "Unwrap nested schema types (optional, default, nullable, etc).",
+						"source_line": 22,
+						"type_signature": "(def: $ZodTypeDef): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+						"return_description": "Inner schema if wrapped, undefined otherwise.",
+						"parameters": [
+							{
+								"name": "def",
+								"type": "$ZodTypeDef",
+								"description": "- Zod type definition to unwrap."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_description",
+						"kind": "function",
+						"doc_comment": "Get the description from a schema's metadata, unwrapping if needed.",
+						"source_line": 39,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string | null",
+						"return_type": "string | null",
+						"return_description": "Description string or null if not found.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod schema to extract description from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_default",
+						"kind": "function",
+						"doc_comment": "Get the default value from a schema, unwrapping if needed.",
+						"source_line": 57,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): unknown",
+						"return_type": "unknown",
+						"return_description": "Default value or undefined.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod schema to extract default from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_aliases",
+						"kind": "function",
+						"doc_comment": "Get aliases from a schema's metadata, unwrapping if needed.",
+						"source_line": 75,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string[]",
+						"return_type": "string[]",
+						"return_description": "Array of alias strings.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod schema to extract aliases from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_type_string",
+						"kind": "function",
+						"doc_comment": "Get the type string for a schema, suitable for display.",
+						"source_line": 93,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string",
+						"return_type": "string",
+						"return_description": "Human-readable type string.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod schema to get type string for."
+							}
+						]
+					},
+					{
+						"name": "zod_format_value",
+						"kind": "function",
+						"doc_comment": "Format a value for display in help text.",
+						"source_line": 145,
+						"type_signature": "(value: unknown): string",
+						"return_type": "string",
+						"return_description": "Formatted string representation.",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "unknown",
+								"description": "- Value to format."
+							}
+						]
+					},
+					{
+						"name": "ZodSchemaProperty",
+						"kind": "type",
+						"doc_comment": "Property extracted from an object schema.",
+						"source_line": 162,
+						"type_signature": "ZodSchemaProperty",
+						"properties": [
+							{
+								"name": "name",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "type",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "description",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "default",
+								"kind": "variable",
+								"type_signature": "unknown"
+							},
+							{
+								"name": "aliases",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_properties",
+						"kind": "function",
+						"doc_comment": "Extract properties from a Zod object schema.",
+						"source_line": 176,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodSchemaProperty[]",
+						"return_type": "ZodSchemaProperty[]",
+						"return_description": "Array of property definitions.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod object schema to extract from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_names_with_aliases",
+						"kind": "function",
+						"doc_comment": "Get all property names and their aliases from an object schema.",
+						"source_line": 207,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): Set<string>",
+						"return_type": "Set<string>",
+						"return_description": "Set of all names and aliases.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "- Zod object schema."
+							}
+						]
+					}
+				],
+				"module_comment": "Zod schema introspection utilities.\n\nGeneric helpers for extracting metadata from Zod schemas.\nDesigned for CLI argument parsing but applicable elsewhere."
 			}
 		]
 	}
