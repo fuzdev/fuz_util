@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.52.1
+
+### Patch Changes
+
+- feat: add `zod.ts` ([459313d](https://github.com/fuzdev/fuz_util/commit/459313d))
+
 ## 0.52.0
 
 ### Minor Changes
