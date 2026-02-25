@@ -415,7 +415,12 @@ export class Logger {
 	 */
 	info(...args: Array<unknown>): void {
 		if (this.#get_cached_level() < LOG_LEVEL_VALUES.info) return;
-		this.console.log(this.#get_info_prefix(), ...args);
+		const prefix = this.#get_info_prefix();
+		if (prefix) {
+			this.console.log(prefix, ...args);
+		} else {
+			this.console.log(...args);
+		}
 	}
 
 	/**

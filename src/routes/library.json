@@ -4071,7 +4071,7 @@
 					{
 						"name": "LoggerOptions",
 						"kind": "type",
-						"source_line": 445,
+						"source_line": 450,
 						"type_signature": "LoggerOptions",
 						"properties": [
 							{
