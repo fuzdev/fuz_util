@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.51.0",
+		"version": "0.52.1",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -75,10 +75,10 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
-			"@fuzdev/fuz_code": "^0.45.0",
-			"@fuzdev/fuz_css": "^0.51.0",
-			"@fuzdev/fuz_ui": "^0.183.1",
-			"@fuzdev/gro": "^0.192.1",
+			"@fuzdev/fuz_code": "^0.45.1",
+			"@fuzdev/fuz_css": "^0.54.0",
+			"@fuzdev/fuz_ui": "^0.185.2",
+			"@fuzdev/gro": "^0.196.0",
 			"@fuzdev/svelte-docinfo": "file:../private_svelte-docinfo",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.9.0",
@@ -138,7 +138,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.51.0",
+		"version": "0.52.1",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -414,7 +414,7 @@
 					{
 						"name": "Deferred",
 						"kind": "type",
-						"doc_comment": "Creates a deferred object with a promise and its resolve/reject handlers.",
+						"doc_comment": "A deferred object with a promise and its resolve/reject handlers.",
 						"source_line": 18,
 						"type_signature": "Deferred<T>",
 						"generic_params": [
@@ -443,7 +443,7 @@
 					{
 						"name": "create_deferred",
 						"kind": "function",
-						"doc_comment": "Creates a object with a `promise` and its `resolve`/`reject` handlers.",
+						"doc_comment": "Creates an object with a `promise` and its `resolve`/`reject` handlers.",
 						"source_line": 27,
 						"type_signature": "<T>(): Deferred<T>",
 						"return_type": "Deferred<T>",
@@ -452,28 +452,34 @@
 					{
 						"name": "each_concurrent",
 						"kind": "function",
-						"doc_comment": "Runs an async function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
+						"doc_comment": "Runs a function on each item with controlled concurrency.\nLike `map_concurrent` but doesn't collect results (more efficient for side effects).",
 						"examples": [
-							"```ts\nawait each_concurrent(\n  file_paths,\n  async (path) => { await unlink(path); },\n  5, // max 5 concurrent deletions\n);\n```"
+							"```ts\nawait each_concurrent(\n  file_paths,\n  5, // max 5 concurrent deletions\n  async (path) => { await unlink(path); },\n);\n```"
 						],
-						"source_line": 54,
-						"type_signature": "<T>(items: T[], fn: (item: T, index: number) => Promise<void>, concurrency: number): Promise<void>",
+						"source_line": 55,
+						"type_signature": "<T>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => void | Promise<void>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<void>",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<void>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => void | Promise<void>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
@@ -482,56 +488,68 @@
 						"kind": "function",
 						"doc_comment": "Maps over items with controlled concurrency, preserving input order.",
 						"examples": [
-							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  async (path) => readFile(path, 'utf8'),\n  5, // max 5 concurrent reads\n);\n```"
+							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  5, // max 5 concurrent reads\n  async (path) => readFile(path, 'utf8'),\n);\n```"
 						],
-						"source_line": 125,
-						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<R[]>",
+						"source_line": 141,
+						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<R[]>",
 						"return_description": "promise resolving to array of results in same order as input",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<R>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => R | Promise<R>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
 					{
 						"name": "map_concurrent_settled",
 						"kind": "function",
-						"doc_comment": "Like `map_concurrent` but collects all results/errors instead of failing fast.\nReturns an array of settlement objects matching the `Promise.allSettled` pattern.",
+						"doc_comment": "Like `map_concurrent` but collects all results/errors instead of failing fast.\nReturns an array of settlement objects matching the `Promise.allSettled` pattern.\n\nOn abort, resolves with partial results: completed items keep their real settlements,\nin-flight and un-started items are settled as rejected with the abort reason.",
 						"examples": [
-							"```ts\nconst results = await map_concurrent_settled(urls, fetch, 5);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
+							"```ts\nconst results = await map_concurrent_settled(urls, 5, fetch);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
 						],
-						"source_line": 202,
-						"type_signature": "<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, concurrency: number): Promise<PromiseSettledResult<R>[]>",
+						"source_line": 236,
+						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<PromiseSettledResult<R>[]>",
 						"return_description": "promise resolving to array of `PromiseSettledResult` objects in input order",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "T[]",
-								"description": "array of items to process"
-							},
-							{
-								"name": "fn",
-								"type": "(item: T, index: number) => Promise<R>",
-								"description": "async function to apply to each item"
+								"type": "Iterable<T>",
+								"description": "items to process"
 							},
 							{
 								"name": "concurrency",
 								"type": "number",
 								"description": "maximum number of concurrent operations"
+							},
+							{
+								"name": "fn",
+								"type": "(item: T, index: number) => R | Promise<R>",
+								"description": "function to apply to each item"
+							},
+							{
+								"name": "signal",
+								"type": "AbortSignal | undefined",
+								"optional": true,
+								"description": "optional `AbortSignal` to cancel processing"
 							}
 						]
 					},
@@ -539,7 +557,7 @@
 						"name": "AsyncSemaphore",
 						"kind": "class",
 						"doc_comment": "Async semaphore for concurrency limiting.\n\nWith `Infinity` permits, `acquire()` always resolves immediately.",
-						"source_line": 258,
+						"source_line": 318,
 						"members": [
 							{
 								"name": "constructor",
@@ -770,12 +788,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Benchmark results to save"
+								"description": "Benchmark results to save"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "- Save options",
+								"description": "Save options",
 								"default_value": "{}"
 							}
 						]
@@ -795,7 +813,7 @@
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "- Load options",
+								"description": "Load options",
 								"default_value": "{}"
 							}
 						]
@@ -815,12 +833,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Current benchmark results"
+								"description": "Current benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineCompareOptions",
-								"description": "- Comparison options including regression threshold and staleness warning",
+								"description": "Comparison options including regression threshold and staleness warning",
 								"default_value": "{}"
 							}
 						]
@@ -837,7 +855,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "- Comparison result from benchmark_baseline_compare"
+								"description": "Comparison result from benchmark_baseline_compare"
 							}
 						]
 					},
@@ -853,12 +871,12 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "- Comparison result from benchmark_baseline_compare"
+								"description": "Comparison result from benchmark_baseline_compare"
 							},
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "- Formatting options",
+								"description": "Formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -885,13 +903,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -910,13 +928,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "- Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -935,12 +953,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "- Array of group definitions"
+								"description": "Array of group definitions"
 							}
 						]
 					},
@@ -979,13 +997,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
 								"optional": true,
-								"description": "- Formatting options"
+								"description": "Formatting options"
 							}
 						]
 					},
@@ -1004,12 +1022,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "- Array of benchmark results"
+								"description": "Array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "- Array of group definitions"
+								"description": "Array of group definitions"
 							}
 						]
 					},
@@ -1297,18 +1315,18 @@
 							{
 								"name": "a",
 								"type": "BenchmarkStatsComparable",
-								"description": "- First benchmark stats (or any object with required properties)"
+								"description": "First benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "b",
 								"type": "BenchmarkStatsComparable",
-								"description": "- Second benchmark stats (or any object with required properties)"
+								"description": "Second benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
 								"optional": true,
-								"description": "- Comparison options"
+								"description": "Comparison options"
 							}
 						]
 					}
@@ -1535,18 +1553,18 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "- Function to warmup (sync or async)"
+								"description": "Function to warmup (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "- Number of warmup iterations"
+								"description": "Number of warmup iterations"
 							},
 							{
 								"name": "async_hint",
 								"type": "boolean | undefined",
 								"optional": true,
-								"description": "- If provided, use this instead of detecting"
+								"description": "If provided, use this instead of detecting"
 							}
 						]
 					},
@@ -1579,12 +1597,12 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Task name or full task object"
+										"description": "Task name or full task object"
 									},
 									{
 										"name": "fn",
 										"type": "() => unknown",
-										"description": "- Function to benchmark (if name is string). Return values are ignored."
+										"description": "Function to benchmark (if name is string). Return values are ignored."
 									}
 								]
 							},
@@ -1631,7 +1649,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to remove"
+										"description": "Name of the task to remove"
 									}
 								],
 								"throws": [
@@ -1652,7 +1670,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to skip"
+										"description": "Name of the task to skip"
 									}
 								],
 								"throws": [
@@ -1673,7 +1691,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "- Name of the task to run exclusively"
+										"description": "Name of the task to run exclusively"
 									}
 								],
 								"throws": [
@@ -1704,7 +1722,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options"
+										"description": "Formatting options"
 									}
 								]
 							},
@@ -1720,7 +1738,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options (groups for organized output with optional baselines)"
+										"description": "Formatting options (groups for organized output with optional baselines)"
 									}
 								]
 							},
@@ -1736,7 +1754,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatJsonOptions | undefined",
 										"optional": true,
-										"description": "- Formatting options (pretty, include_timings)"
+										"description": "Formatting options (pretty, include_timings)"
 									}
 								]
 							},
@@ -2293,7 +2311,7 @@
 							{
 								"name": "options",
 								"type": "DagOptions<T>",
-								"description": "- DAG execution options."
+								"description": "DAG execution options."
 							}
 						]
 					}
@@ -2361,12 +2379,12 @@
 							{
 								"name": "a",
 								"type": "string",
-								"description": "- The original/current content."
+								"description": "The original/current content."
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "- The new/desired content."
+								"description": "The new/desired content."
 							}
 						]
 					},
@@ -2382,12 +2400,12 @@
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "- The full diff lines."
+								"description": "The full diff lines."
 							},
 							{
 								"name": "context_lines",
 								"type": "number",
-								"description": "- Number of context lines to show around changes (default: 3).",
+								"description": "Number of context lines to show around changes (default: 3).",
 								"default_value": "3"
 							}
 						]
@@ -2431,22 +2449,22 @@
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "- The diff lines to format."
+								"description": "The diff lines to format."
 							},
 							{
 								"name": "current_path",
 								"type": "string",
-								"description": "- Path label for \"current\" content."
+								"description": "Path label for \"current\" content."
 							},
 							{
 								"name": "desired_path",
 								"type": "string",
-								"description": "- Path label for \"desired\" content."
+								"description": "Path label for \"desired\" content."
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "- Formatting options.",
+								"description": "Formatting options.",
 								"default_value": "{}"
 							}
 						]
@@ -2463,22 +2481,22 @@
 							{
 								"name": "current",
 								"type": "string",
-								"description": "- Current content."
+								"description": "Current content."
 							},
 							{
 								"name": "desired",
 								"type": "string",
-								"description": "- Desired content."
+								"description": "Desired content."
 							},
 							{
 								"name": "path",
 								"type": "string",
-								"description": "- File path for labels."
+								"description": "File path for labels."
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "- Formatting options.",
+								"description": "Formatting options.",
 								"default_value": "{}"
 							}
 						]
@@ -3121,7 +3139,7 @@
 							{
 								"name": "stdout",
 								"type": "string | null",
-								"description": "- The raw output from `git status --porcelain -z`"
+								"description": "The raw output from `git status --porcelain -z`"
 							}
 						]
 					},
@@ -3506,12 +3524,12 @@
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "- String or binary data to hash. Strings are UTF-8 encoded."
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
 							},
 							{
 								"name": "algorithm",
 								"type": "\"SHA-256\" | \"SHA-384\" | \"SHA-512\"",
-								"description": "- Hash algorithm. Defaults to SHA-256.",
+								"description": "Hash algorithm. Defaults to SHA-256.",
 								"default_value": "'SHA-256'"
 							}
 						]
@@ -3528,7 +3546,7 @@
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "- String or binary data to hash."
+								"description": "String or binary data to hash."
 							}
 						]
 					}
@@ -4054,7 +4072,7 @@
 					{
 						"name": "LoggerOptions",
 						"kind": "type",
-						"source_line": 445,
+						"source_line": 450,
 						"type_signature": "LoggerOptions",
 						"properties": [
 							{
@@ -4457,12 +4475,12 @@
 							{
 								"name": "obj",
 								"type": "any",
-								"description": "- any object with enumerable properties"
+								"description": "any object with enumerable properties"
 							},
 							{
 								"name": "cb",
 								"type": "(key: string, value: any, obj: any) => void",
-								"description": "- receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
+								"description": "receives the key, value, and `obj` for every enumerable property on `obj` and its descendents"
 							}
 						]
 					},
@@ -5193,19 +5211,19 @@
 									{
 										"name": "command",
 										"type": "string",
-										"description": "- The command to run"
+										"description": "The command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "- Arguments to pass to the command",
+										"description": "Arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "- Spawn options including `signal` and `timeout_ms`"
+										"description": "Spawn options including `signal` and `timeout_ms`"
 									}
 								]
 							},
@@ -5220,19 +5238,19 @@
 									{
 										"name": "command",
 										"type": "string",
-										"description": "- The command to run"
+										"description": "The command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "- Arguments to pass to the command",
+										"description": "Arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "- Spawn options"
+										"description": "Spawn options"
 									}
 								]
 							},
@@ -5247,13 +5265,13 @@
 									{
 										"name": "child",
 										"type": "ChildProcess",
-										"description": "- The child process to kill"
+										"description": "The child process to kill"
 									},
 									{
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "- Kill options including signal and timeout"
+										"description": "Kill options including signal and timeout"
 									}
 								]
 							},
@@ -5269,7 +5287,7 @@
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "- Kill options applied to all processes"
+										"description": "Kill options applied to all processes"
 									}
 								]
 							},
@@ -5285,7 +5303,7 @@
 										"name": "options",
 										"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 										"optional": true,
-										"description": "- Configuration options"
+										"description": "Configuration options"
 									}
 								]
 							}
@@ -5447,19 +5465,19 @@
 							{
 								"name": "command",
 								"type": "string",
-								"description": "- The command to run"
+								"description": "The command to run"
 							},
 							{
 								"name": "args",
 								"type": "readonly string[]",
-								"description": "- Arguments to pass to the command",
+								"description": "Arguments to pass to the command",
 								"default_value": "[]"
 							},
 							{
 								"name": "options",
 								"type": "SpawnOptions | undefined",
 								"optional": true,
-								"description": "- Spawn options (use `stdio` to redirect output to file descriptors)"
+								"description": "Spawn options (use `stdio` to redirect output to file descriptors)"
 							}
 						]
 					},
@@ -5595,7 +5613,7 @@
 							{
 								"name": "pid",
 								"type": "number",
-								"description": "- The process ID to check (must be a positive integer)"
+								"description": "The process ID to check (must be a positive integer)"
 							}
 						]
 					}
@@ -5969,12 +5987,12 @@
 							{
 								"name": "items",
 								"type": "T[]",
-								"description": "- Array of items to sort."
+								"description": "Array of items to sort."
 							},
 							{
 								"name": "label",
 								"type": "string",
-								"description": "- Label for error messages (e.g. \"resource\", \"step\").",
+								"description": "Label for error messages (e.g. \"resource\", \"step\").",
 								"default_value": "'item'"
 							}
 						]
@@ -6162,12 +6180,12 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "- Array of numbers"
+								"description": "Array of numbers"
 							},
 							{
 								"name": "p",
 								"type": "number",
-								"description": "- Percentile (0-1, e.g., 0.95 for 95th percentile)"
+								"description": "Percentile (0-1, e.g., 0.95 for 95th percentile)"
 							}
 						]
 					},
@@ -6397,13 +6415,13 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "- Array of numbers"
+								"description": "Array of numbers"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "- Configuration options"
+								"description": "Configuration options"
 							}
 						]
 					},
@@ -6419,23 +6437,23 @@
 							{
 								"name": "mean",
 								"type": "number",
-								"description": "- Mean of the data"
+								"description": "Mean of the data"
 							},
 							{
 								"name": "std_dev",
 								"type": "number",
-								"description": "- Standard deviation of the data"
+								"description": "Standard deviation of the data"
 							},
 							{
 								"name": "sample_size",
 								"type": "number",
-								"description": "- Number of samples"
+								"description": "Number of samples"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "- Configuration options"
+								"description": "Configuration options"
 							}
 						]
 					},
@@ -6471,32 +6489,32 @@
 							{
 								"name": "mean1",
 								"type": "number",
-								"description": "- Mean of first sample"
+								"description": "Mean of first sample"
 							},
 							{
 								"name": "std1",
 								"type": "number",
-								"description": "- Standard deviation of first sample"
+								"description": "Standard deviation of first sample"
 							},
 							{
 								"name": "n1",
 								"type": "number",
-								"description": "- Size of first sample"
+								"description": "Size of first sample"
 							},
 							{
 								"name": "mean2",
 								"type": "number",
-								"description": "- Mean of second sample"
+								"description": "Mean of second sample"
 							},
 							{
 								"name": "std2",
 								"type": "number",
-								"description": "- Standard deviation of second sample"
+								"description": "Standard deviation of second sample"
 							},
 							{
 								"name": "n2",
 								"type": "number",
-								"description": "- Size of second sample"
+								"description": "Size of second sample"
 							}
 						]
 					},
@@ -6562,12 +6580,12 @@
 							{
 								"name": "t",
 								"type": "number",
-								"description": "- Absolute value of t-statistic"
+								"description": "Absolute value of t-statistic"
 							},
 							{
 								"name": "df",
 								"type": "number",
-								"description": "- Degrees of freedom"
+								"description": "Degrees of freedom"
 							}
 						]
 					}
@@ -6833,12 +6851,12 @@
 							{
 								"name": "a",
 								"type": "string",
-								"description": "- First string"
+								"description": "First string"
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "- Second string"
+								"description": "Second string"
 							}
 						]
 					},
@@ -6868,7 +6886,7 @@
 							{
 								"name": "content",
 								"type": "string",
-								"description": "- Content to check."
+								"description": "Content to check."
 							}
 						]
 					}
@@ -7447,7 +7465,7 @@
 							{
 								"name": "values_ns",
 								"type": "number[]",
-								"description": "- Array of times in nanoseconds"
+								"description": "Array of times in nanoseconds"
 							}
 						]
 					},
@@ -7463,17 +7481,17 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "- Time in nanoseconds"
+								"description": "Time in nanoseconds"
 							},
 							{
 								"name": "unit",
 								"type": "TimeUnit",
-								"description": "- Unit to use ('ns', 'us', 'ms', 's')"
+								"description": "Unit to use ('ns', 'us', 'ms', 's')"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "- Number of decimal places (default: 2)",
+								"description": "Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -7493,12 +7511,12 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "- Time in nanoseconds"
+								"description": "Time in nanoseconds"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "- Number of decimal places (default: 2)",
+								"description": "Number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -7557,12 +7575,12 @@
 							{
 								"name": "fn",
 								"type": "() => Promise<T>",
-								"description": "- Async function to time"
+								"description": "Async function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -7582,12 +7600,12 @@
 							{
 								"name": "fn",
 								"type": "() => T",
-								"description": "- Sync function to time"
+								"description": "Sync function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -7607,17 +7625,17 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "- Function to measure (sync or async)"
+								"description": "Function to measure (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "- Number of times to execute"
+								"description": "Number of times to execute"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "- Timer to use (defaults to timer_default)",
+								"description": "Timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -7980,6 +7998,174 @@
 				],
 				"dependencies": ["string.ts"],
 				"dependents": ["package_json.ts"]
+			},
+			{
+				"path": "zod.ts",
+				"declarations": [
+					{
+						"name": "zod_to_subschema",
+						"kind": "function",
+						"doc_comment": "Unwrap nested schema types (optional, default, nullable, etc).",
+						"source_line": 22,
+						"type_signature": "(def: $ZodTypeDef): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
+						"return_description": "Inner schema if wrapped, undefined otherwise.",
+						"parameters": [
+							{
+								"name": "def",
+								"type": "$ZodTypeDef",
+								"description": "Zod type definition to unwrap."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_description",
+						"kind": "function",
+						"doc_comment": "Get the description from a schema's metadata, unwrapping if needed.",
+						"source_line": 39,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string | null",
+						"return_type": "string | null",
+						"return_description": "Description string or null if not found.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod schema to extract description from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_default",
+						"kind": "function",
+						"doc_comment": "Get the default value from a schema, unwrapping if needed.",
+						"source_line": 57,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): unknown",
+						"return_type": "unknown",
+						"return_description": "Default value or undefined.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod schema to extract default from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_aliases",
+						"kind": "function",
+						"doc_comment": "Get aliases from a schema's metadata, unwrapping if needed.",
+						"source_line": 75,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string[]",
+						"return_type": "string[]",
+						"return_description": "Array of alias strings.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod schema to extract aliases from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_type_string",
+						"kind": "function",
+						"doc_comment": "Get the type string for a schema, suitable for display.",
+						"source_line": 93,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string",
+						"return_type": "string",
+						"return_description": "Human-readable type string.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod schema to get type string for."
+							}
+						]
+					},
+					{
+						"name": "zod_format_value",
+						"kind": "function",
+						"doc_comment": "Format a value for display in help text.",
+						"source_line": 145,
+						"type_signature": "(value: unknown): string",
+						"return_type": "string",
+						"return_description": "Formatted string representation.",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "unknown",
+								"description": "Value to format."
+							}
+						]
+					},
+					{
+						"name": "ZodSchemaProperty",
+						"kind": "type",
+						"doc_comment": "Property extracted from an object schema.",
+						"source_line": 162,
+						"type_signature": "ZodSchemaProperty",
+						"properties": [
+							{
+								"name": "name",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "type",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "description",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "default",
+								"kind": "variable",
+								"type_signature": "unknown"
+							},
+							{
+								"name": "aliases",
+								"kind": "variable",
+								"type_signature": "Array<string>"
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_properties",
+						"kind": "function",
+						"doc_comment": "Extract properties from a Zod object schema.",
+						"source_line": 176,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodSchemaProperty[]",
+						"return_type": "ZodSchemaProperty[]",
+						"return_description": "Array of property definitions.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema to extract from."
+							}
+						]
+					},
+					{
+						"name": "zod_to_schema_names_with_aliases",
+						"kind": "function",
+						"doc_comment": "Get all property names and their aliases from an object schema.",
+						"source_line": 207,
+						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): Set<string>",
+						"return_type": "Set<string>",
+						"return_description": "Set of all names and aliases.",
+						"parameters": [
+							{
+								"name": "schema",
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
+								"description": "Zod object schema."
+							}
+						]
+					}
+				],
+				"module_comment": "Zod schema introspection utilities.\n\nGeneric helpers for extracting metadata from Zod schemas.\nDesigned for CLI argument parsing but applicable elsewhere."
 			}
 		]
 	}
