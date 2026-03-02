@@ -1,10 +1,35 @@
+/**
+ * Alea: a seedable pseudo-random number generator by Johannes Baagøe.
+ *
+ * DO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.
+ *
+ * Alea passes all 11 distribution quality tests at 10M samples,
+ * performing on par with `Math.random` (V8's xorshift128+):
+ *
+ * - mean, variance, chi-squared uniformity, Kolmogorov-Smirnov
+ * - lag-1 through lag-8 autocorrelation
+ * - runs test, gap test, permutation test (triples)
+ * - bit-level frequency (bits 0-7)
+ * - 2D serial pairs (25x25 through 200x200 grids)
+ * - birthday spacings (Marsaglia parameters)
+ *
+ * Speed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).
+ *
+ * To reproduce:
+ *
+ * ```bash
+ * npm run benchmark_random_quality          # distribution tests (N=1M)
+ * npm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)
+ * npm run benchmark_random                  # speed comparison
+ * ```
+ *
+ * @see http://baagoe.com/en/RandomMusings/javascript/
+ * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
+ *
+ * @module
+ */
+
 /*
-
-DO NOT USE when security matters, use webcrypto APIs instead.
-This is the Alea pseudo-random number generator by Johannes Baagøe.
-
-From http://baagoe.com/en/RandomMusings/javascript/
-via https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 
 Copyright (C) 2010 by Johannes Baagøe <baagoe@baagoe.org>
 
