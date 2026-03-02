@@ -5626,12 +5626,12 @@
 				"path": "random_alea.ts",
 				"declarations": [
 					{
-						"name": "Alea",
+						"name": "RandomAlea",
 						"kind": "type",
-						"doc_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
+						"doc_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\nSupports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).\nFor numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
 						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
-						"source_line": 55,
-						"type_signature": "Alea",
+						"source_line": 57,
+						"type_signature": "RandomAlea",
 						"properties": [
 							{
 								"name": "uint32",
@@ -5660,27 +5660,73 @@
 						"kind": "function",
 						"doc_comment": "Seeded pseudo-random number generator.\nDO NOT USE when security matters, use webcrypto APIs instead.",
 						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
-						"source_line": 69,
-						"type_signature": "(...seed: unknown[]): Alea",
-						"return_type": "Alea",
+						"source_line": 71,
+						"type_signature": "(...seed: unknown[]): RandomAlea",
+						"return_type": "RandomAlea",
 						"parameters": [
 							{
 								"name": "seed",
 								"type": "unknown[]"
 							}
 						]
-					},
-					{
-						"name": "masher",
-						"kind": "function",
-						"doc_comment": "",
-						"source_line": 114,
-						"type_signature": "(): Mash",
-						"return_type": "Mash",
-						"parameters": []
 					}
 				],
-				"module_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
+				"module_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\nSupports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).\nFor numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
+			},
+			{
+				"path": "random_xoshiro.ts",
+				"declarations": [
+					{
+						"name": "RandomXoshiro",
+						"kind": "type",
+						"doc_comment": "Xoshiro128**: a seedable pseudo-random number generator by Blackman & Vigna (2018).\nRecommended for reproducible randomness (testing, simulations, procedural generation).\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nXoshiro128** has a 2^128-1 period and passes BigCrush.\nIt uses pure 32-bit arithmetic (shifts, rotates, XOR, multiply)\nmaking it very fast in JavaScript via `Math.imul`.\n\nXoshiro128** passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is near-native (~4% slower than `Math.random`) and ~18% faster than Alea\n(~14.4M ops/sec vs ~15.0M and ~12.2M respectively).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
+						"see_also": [
+							"https://prng.di.unimi.it/",
+							"https://vigna.di.unimi.it/ftp/papers/ScrambledLinear.pdf"
+						],
+						"source_line": 50,
+						"type_signature": "RandomXoshiro",
+						"properties": [
+							{
+								"name": "uint32",
+								"kind": "variable",
+								"type_signature": "() => number"
+							},
+							{
+								"name": "fract53",
+								"kind": "variable",
+								"type_signature": "() => number"
+							},
+							{
+								"name": "version",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "seed",
+								"kind": "variable",
+								"type_signature": "number"
+							}
+						]
+					},
+					{
+						"name": "create_random_xoshiro",
+						"kind": "function",
+						"doc_comment": "Seeded pseudo-random number generator using the Xoshiro128** algorithm.\nDO NOT USE when security matters, use webcrypto APIs instead.",
+						"see_also": ["https://prng.di.unimi.it/"],
+						"source_line": 64,
+						"type_signature": "(seed?: number | undefined): RandomXoshiro",
+						"return_type": "RandomXoshiro",
+						"parameters": [
+							{
+								"name": "seed",
+								"type": "number | undefined",
+								"optional": true
+							}
+						]
+					}
+				],
+				"module_comment": "Xoshiro128**: a seedable pseudo-random number generator by Blackman & Vigna (2018).\nRecommended for reproducible randomness (testing, simulations, procedural generation).\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nXoshiro128** has a 2^128-1 period and passes BigCrush.\nIt uses pure 32-bit arithmetic (shifts, rotates, XOR, multiply)\nmaking it very fast in JavaScript via `Math.imul`.\n\nXoshiro128** passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is near-native (~4% slower than `Math.random`) and ~18% faster than Alea\n(~14.4M ops/sec vs ~15.0M and ~12.2M respectively).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://prng.di.unimi.it/\n@see https://vigna.di.unimi.it/ftp/papers/ScrambledLinear.pdf"
 			},
 			{
 				"path": "random.ts",
@@ -5689,7 +5735,7 @@
 						"name": "random_float",
 						"kind": "function",
 						"doc_comment": "Generates a random `number` between `min` and `max`.",
-						"source_line": 6,
+						"source_line": 16,
 						"type_signature": "(min: number, max: number, random?: () => number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5712,7 +5758,7 @@
 						"name": "random_int",
 						"kind": "function",
 						"doc_comment": "Returns a random integer between `min` and `max` inclusive.\nNode's `randomInt` is similar but exclusive of the max value, and makes `min` optional -\nhttps://nodejs.org/docs/latest-v20.x/api/crypto.html#cryptorandomintmin-max-callback",
-						"source_line": 14,
+						"source_line": 24,
 						"type_signature": "(min: number, max: number, random?: () => number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5735,7 +5781,7 @@
 						"name": "random_boolean",
 						"kind": "function",
 						"doc_comment": "Generates a random `boolean`.",
-						"source_line": 20,
+						"source_line": 30,
 						"type_signature": "(random?: () => number): boolean",
 						"return_type": "boolean",
 						"parameters": [
@@ -5750,7 +5796,7 @@
 						"name": "random_item",
 						"kind": "function",
 						"doc_comment": "Selects a random item from an array.",
-						"source_line": 25,
+						"source_line": 35,
 						"type_signature": "<T extends ReadonlyArray<any>>(arr: T, random?: () => number): ArrayElement<T>",
 						"return_type": "ArrayElement<T>",
 						"parameters": [
@@ -5769,7 +5815,7 @@
 						"name": "shuffle",
 						"kind": "function",
 						"doc_comment": "Mutates `array` with random ordering.",
-						"source_line": 34,
+						"source_line": 44,
 						"type_signature": "<T extends Array<any>>(array: T, random?: ((min: number, max: number, random?: () => number) => number) | undefined): T",
 						"return_type": "T",
 						"parameters": [
@@ -5784,7 +5830,8 @@
 							}
 						]
 					}
-				]
+				],
+				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- {@link create_random_xoshiro} — fast, high-quality numeric seeding (recommended)\n- {@link create_random_alea} — supports string and variadic seeds"
 			},
 			{
 				"path": "regexp.ts",

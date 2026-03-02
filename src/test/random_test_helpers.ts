@@ -1,7 +1,9 @@
 /**
  * Custom PRNG factories for distribution testing and benchmarking.
  * These are NOT for production use — they exist to compare quality and speed
- * against `Math.random` and `create_random_alea`.
+ * against `Math.random`, `create_random_alea`, and `create_random_xoshiro`.
+ *
+ * @module
  */
 
 /**

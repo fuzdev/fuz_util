@@ -6,6 +6,7 @@
 import {describe, test, assert} from 'vitest';
 
 import {create_random_alea} from '$lib/random_alea.ts';
+import {create_random_xoshiro} from '$lib/random_xoshiro.ts';
 import {stats_mean, stats_variance, stats_std_dev} from '$lib/stats.ts';
 
 import {
@@ -22,6 +23,7 @@ const N = 100_000;
 const generators: Array<{name: string; create: () => Prng; expect_good: boolean}> = [
 	{name: 'Math.random', create: () => Math.random, expect_good: true},
 	{name: 'Alea', create: () => create_random_alea(42), expect_good: true},
+	{name: 'Xoshiro128**', create: () => create_random_xoshiro(42), expect_good: true},
 	{name: 'Xorshift32', create: () => create_random_xorshift32(42), expect_good: true},
 	{name: 'LCG', create: () => create_random_lcg(42), expect_good: false},
 	{name: 'Middle Square', create: () => create_random_middle_square(5678), expect_good: false},

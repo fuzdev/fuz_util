@@ -10,6 +10,7 @@
 /* eslint-disable no-console */
 
 import {create_random_alea} from '$lib/random_alea.js';
+import {create_random_xoshiro} from '$lib/random_xoshiro.js';
 import {stats_mean, stats_variance} from '$lib/stats.js';
 import {string_display_width, pad_width} from '$lib/string.js';
 
@@ -17,7 +18,6 @@ import {
 	type Prng,
 	create_random_lcg,
 	create_random_xorshift32,
-	create_random_middle_square,
 } from '../test/random_test_helpers.js';
 
 const deep = process.argv.includes('--deep');
@@ -35,9 +35,9 @@ interface Generator {
 const generators: Array<Generator> = [
 	{name: 'Math.random', create: () => Math.random},
 	{name: 'Alea', create: () => create_random_alea(42)},
+	{name: 'Xoshiro128**', create: () => create_random_xoshiro(42)},
 	{name: 'Xorshift32', create: () => create_random_xorshift32(42)},
 	{name: 'LCG', create: () => create_random_lcg(42)},
-	{name: 'Mid Square', create: () => create_random_middle_square(5678)},
 ];
 
 const generate_samples = (prng: Prng, count: number): Array<number> => {

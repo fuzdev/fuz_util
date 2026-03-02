@@ -1,5 +1,7 @@
 /**
  * Alea: a seedable pseudo-random number generator by Johannes Baagøe.
+ * Supports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).
+ * For numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.
  *
  * DO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.
  *
@@ -13,7 +15,7 @@
  * - 2D serial pairs (25x25 through 200x200 grids)
  * - birthday spacings (Marsaglia parameters)
  *
- * Speed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).
+ * Speed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).
  *
  * To reproduce:
  *
@@ -52,7 +54,7 @@ THE SOFTWARE.
 
 */
 
-export interface Alea {
+export interface RandomAlea {
 	(): number;
 	uint32: () => number;
 	fract53: () => number;
@@ -66,7 +68,7 @@ export interface Alea {
  *
  * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  */
-export const create_random_alea = (...seed: Array<unknown>): Alea => {
+export const create_random_alea = (...seed: Array<unknown>): RandomAlea => {
 	let s0 = 0;
 	let s1 = 0;
 	let s2 = 0;
@@ -88,7 +90,7 @@ export const create_random_alea = (...seed: Array<unknown>): Alea => {
 	}
 	mash = null;
 
-	const random: Alea = (): number => {
+	const random: RandomAlea = (): number => {
 		const t = 2091639 * s0 + c * 2.3283064365386963e-10; // 2^-32
 		s0 = s1;
 		s1 = s2;
@@ -111,7 +113,7 @@ type Mash = (data: any) => number;
  * @source https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  * @copyright Johannes Baagøe <baagoe@baagoe.com>, 2010
  */
-export const masher = (): Mash => {
+const masher = (): Mash => {
 	let n = 0xefc8249d;
 	return (data) => {
 		const d = data + '';
