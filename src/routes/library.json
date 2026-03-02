@@ -5629,11 +5629,8 @@
 						"name": "Alea",
 						"kind": "type",
 						"doc_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
-						"see_also": [
-							"http://baagoe.com/en/RandomMusings/javascript/",
-							"https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
-						],
-						"source_line": 56,
+						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
+						"source_line": 55,
 						"type_signature": "Alea",
 						"properties": [
 							{
@@ -5662,11 +5659,8 @@
 						"name": "create_random_alea",
 						"kind": "function",
 						"doc_comment": "Seeded pseudo-random number generator.\nDO NOT USE when security matters, use webcrypto APIs instead.",
-						"see_also": [
-							"http://baagoe.com/en/RandomMusings/javascript/",
-							"https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
-						],
-						"source_line": 71,
+						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
+						"source_line": 69,
 						"type_signature": "(...seed: unknown[]): Alea",
 						"return_type": "Alea",
 						"parameters": [
@@ -5680,13 +5674,13 @@
 						"name": "masher",
 						"kind": "function",
 						"doc_comment": "",
-						"source_line": 116,
+						"source_line": 114,
 						"type_signature": "(): Mash",
 						"return_type": "Mash",
 						"parameters": []
 					}
 				],
-				"module_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see http://baagoe.com/en/RandomMusings/javascript/\n@see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
+				"module_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12M ops/sec vs ~14M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
 			},
 			{
 				"path": "random.ts",

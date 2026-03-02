@@ -23,7 +23,6 @@
  * npm run benchmark_random                  # speed comparison
  * ```
  *
- * @see http://baagoe.com/en/RandomMusings/javascript/
  * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  *
  * @module
@@ -65,7 +64,6 @@ export interface Alea {
  * Seeded pseudo-random number generator.
  * DO NOT USE when security matters, use webcrypto APIs instead.
  *
- * @see http://baagoe.com/en/RandomMusings/javascript/
  * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  */
 export const create_random_alea = (...seed: Array<unknown>): Alea => {
@@ -110,7 +108,7 @@ export const create_random_alea = (...seed: Array<unknown>): Alea => {
 type Mash = (data: any) => number;
 
 /**
- * @source http://baagoe.com/en/RandomMusings/javascript/
+ * @source https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  * @copyright Johannes Baagøe <baagoe@baagoe.com>, 2010
  */
 export const masher = (): Mash => {
