@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.53.1
+
+### Patch Changes
+
+- add `from_hex`, `hash_sha1`, `hash_sha384`, and `hash_sha512` ([d16f560](https://github.com/fuzdev/fuz_util/commit/d16f560))
+
 ## 0.53.0
 
 ### Minor Changes
