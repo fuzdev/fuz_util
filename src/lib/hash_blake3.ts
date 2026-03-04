@@ -17,6 +17,4 @@ import {to_bytes} from './bytes.js';
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
  * @returns 64-character hexadecimal hash string (32 bytes).
  */
-export const hash_blake3 = (data: BufferSource | string): string => {
-	return to_hex(hash(to_bytes(data)));
-};
+export const hash_blake3 = (data: BufferSource | string): string => to_hex(hash(to_bytes(data)));
