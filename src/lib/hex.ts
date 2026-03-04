@@ -1,5 +1,5 @@
 /**
- * Hex encoding helpers.
+ * Hex encoding and decoding helpers.
  *
  * @module
  */
@@ -17,6 +17,23 @@ export const to_hex = (bytes: Uint8Array): string => {
 		hex += lookup[byte];
 	}
 	return hex;
+};
+
+/**
+ * Decodes a hex string to a `Uint8Array`.
+ * Whitespace is stripped before parsing. Returns `null` for invalid hex.
+ *
+ * @param hex - Hex string to decode (case-insensitive, whitespace allowed).
+ * @returns Decoded bytes, or `null` if the input is not valid hex.
+ */
+export const from_hex = (hex: string): Uint8Array | null => {
+	const clean = hex.replace(/\s/g, '');
+	if (clean.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(clean)) return null;
+	const bytes = new Uint8Array(clean.length / 2);
+	for (let i = 0; i < clean.length; i += 2) {
+		bytes[i / 2] = parseInt(clean.substring(i, i + 2), 16);
+	}
+	return bytes;
 };
 
 // Lazily computed lookup table for byte to hex conversion
