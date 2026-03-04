@@ -1816,6 +1816,29 @@
 				"dependencies": ["async.ts", "benchmark_format.ts", "benchmark_stats.ts", "time.ts"]
 			},
 			{
+				"path": "bytes.ts",
+				"declarations": [
+					{
+						"name": "to_bytes",
+						"kind": "function",
+						"doc_comment": "Converts string or binary data to a `Uint8Array`.\nStrings are UTF-8 encoded. `Uint8Array` inputs are returned as-is.",
+						"source_line": 16,
+						"type_signature": "(data: string | BufferSource): Uint8Array<ArrayBufferLike>",
+						"return_type": "Uint8Array<ArrayBufferLike>",
+						"return_description": "`Uint8Array` view of the data.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or `BufferSource` to convert."
+							}
+						]
+					}
+				],
+				"module_comment": "Binary data conversion helpers.",
+				"dependents": ["hash_blake3.ts"]
+			},
+			{
 				"path": "colors.ts",
 				"declarations": [
 					{
@@ -3516,13 +3539,36 @@
 				"dependents": ["benchmark_baseline.ts"]
 			},
 			{
+				"path": "hash_blake3.ts",
+				"declarations": [
+					{
+						"name": "hash_blake3",
+						"kind": "function",
+						"doc_comment": "Computes a BLAKE3 hash synchronously.",
+						"source_line": 20,
+						"type_signature": "(data: string | BufferSource): string",
+						"return_type": "string",
+						"return_description": "64-character hexadecimal hash string (32 bytes).",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
+							}
+						]
+					}
+				],
+				"module_comment": "BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.\n\nSynchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.",
+				"dependencies": ["bytes.ts", "hex.ts"]
+			},
+			{
 				"path": "hash.ts",
 				"declarations": [
 					{
-						"name": "hash_secure",
+						"name": "hash_sha256",
 						"kind": "function",
 						"doc_comment": "Computes a cryptographic hash using Web Crypto API.",
-						"source_line": 30,
+						"source_line": 21,
 						"type_signature": "(data: string | BufferSource, algorithm?: \"SHA-256\" | \"SHA-384\" | \"SHA-512\"): Promise<string>",
 						"return_type": "Promise<string>",
 						"return_description": "Hexadecimal hash string.",
@@ -3544,7 +3590,7 @@
 						"name": "hash_insecure",
 						"kind": "function",
 						"doc_comment": "Computes a fast non-cryptographic hash using DJB2 algorithm.\nUse for content comparison and cache keys, not security.\n\nNote: Strings use UTF-16 code units, buffers use raw bytes.\nFor non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.",
-						"source_line": 55,
+						"source_line": 40,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
 						"return_description": "8-character hex-encoded unsigned 32-bit hash.",
@@ -3557,7 +3603,31 @@
 						]
 					}
 				],
-				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides both secure (cryptographic) and insecure (fast) hash functions."
+				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides SHA-256 (Web Crypto, async) and DJB2 (fast non-cryptographic) hash functions.\nFor BLAKE3, see {@link hash_blake3} in `hash_blake3.ts`.",
+				"dependencies": ["hex.ts"]
+			},
+			{
+				"path": "hex.ts",
+				"declarations": [
+					{
+						"name": "to_hex",
+						"kind": "function",
+						"doc_comment": "Converts a `Uint8Array` to a lowercase hex string.",
+						"source_line": 13,
+						"type_signature": "(bytes: Uint8Array<ArrayBufferLike>): string",
+						"return_type": "string",
+						"return_description": "Hex string with two characters per byte.",
+						"parameters": [
+							{
+								"name": "bytes",
+								"type": "Uint8Array<ArrayBufferLike>",
+								"description": "Binary data to encode."
+							}
+						]
+					}
+				],
+				"module_comment": "Hex encoding helpers.",
+				"dependents": ["hash.ts", "hash_blake3.ts"]
 			},
 			{
 				"path": "id.ts",
