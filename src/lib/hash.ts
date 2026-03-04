@@ -8,7 +8,8 @@
  */
 
 import {to_hex} from './hex.js';
-import {to_bytes} from './bytes.js';
+
+const encoder = new TextEncoder();
 
 /**
  * Computes a cryptographic hash using Web Crypto API.
@@ -21,7 +22,7 @@ export const hash_sha256 = async (
 	data: BufferSource | string,
 	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256',
 ): Promise<string> => {
-	const buffer = to_bytes(data);
+	const buffer = typeof data === 'string' ? encoder.encode(data) : data;
 	const digested = await crypto.subtle.digest(algorithm, buffer);
 	return to_hex(new Uint8Array(digested));
 };
