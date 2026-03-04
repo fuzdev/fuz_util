@@ -1,8 +1,8 @@
 /**
  * Hash utilities for content comparison and cache invalidation.
  *
- * Provides SHA-256 (Web Crypto, async) and DJB2 (fast non-cryptographic) hash functions.
- * For BLAKE3, see {@link hash_blake3} in `hash_blake3.ts`.
+ * Provides `hash_sha256` (Web Crypto, async) and `hash_insecure` (DJB2, fast non-cryptographic).
+ * For BLAKE3, see `hash_blake3` in `hash_blake3.ts`.
  *
  * @module
  */
@@ -12,18 +12,14 @@ import {to_hex} from './hex.js';
 const encoder = new TextEncoder();
 
 /**
- * Computes a cryptographic hash using Web Crypto API.
+ * Computes a SHA-256 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @param algorithm - Hash algorithm. Defaults to SHA-256.
- * @returns Hexadecimal hash string.
+ * @returns 64-character hexadecimal hash string.
  */
-export const hash_sha256 = async (
-	data: BufferSource | string,
-	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256',
-): Promise<string> => {
+export const hash_sha256 = async (data: BufferSource | string): Promise<string> => {
 	const buffer = typeof data === 'string' ? encoder.encode(data) : data;
-	const digested = await crypto.subtle.digest(algorithm, buffer);
+	const digested = await crypto.subtle.digest('SHA-256', buffer);
 	return to_hex(new Uint8Array(digested));
 };
 

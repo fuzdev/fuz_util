@@ -86,34 +86,6 @@ describe('hash_sha256', () => {
 		});
 	});
 
-	describe('algorithms', () => {
-		const algorithm_cases: Array<[string, 'SHA-256' | 'SHA-384' | 'SHA-512', number]> = [
-			['SHA-256', 'SHA-256', 64],
-			['SHA-384', 'SHA-384', 96],
-			['SHA-512', 'SHA-512', 128],
-		];
-
-		test.each(algorithm_cases)('%s produces correct length', async (_desc, algorithm, length) => {
-			const result = await hash_sha256('test', algorithm);
-			expect(result).toHaveLength(length);
-			expect(result).toMatch(/^[0-9a-f]+$/);
-		});
-
-		test('SHA-384 hash value', async () => {
-			const result = await hash_sha256('hello', 'SHA-384');
-			expect(result).toBe(
-				'59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f',
-			);
-		});
-
-		test('SHA-512 hash value', async () => {
-			const result = await hash_sha256('hello', 'SHA-512');
-			expect(result).toBe(
-				'9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043',
-			);
-		});
-	});
-
 	describe('consistency', () => {
 		test('same input produces same output', async () => {
 			const input = 'consistent input';
@@ -137,18 +109,6 @@ describe('hash_sha256', () => {
 			const results = await Promise.all(inputs.map((input) => hash_sha256(input)));
 			const expected = await Promise.all(inputs.map((input) => hash_sha256(input)));
 			expect(results).toEqual(expected);
-		});
-	});
-
-	describe('algorithm differences', () => {
-		test('different algorithms produce different hashes for same input', async () => {
-			const input = 'test';
-			const sha256 = await hash_sha256(input, 'SHA-256');
-			const sha384 = await hash_sha256(input, 'SHA-384');
-			const sha512 = await hash_sha256(input, 'SHA-512');
-			expect(sha256).not.toBe(sha384);
-			expect(sha256).not.toBe(sha512);
-			expect(sha384).not.toBe(sha512);
 		});
 	});
 
