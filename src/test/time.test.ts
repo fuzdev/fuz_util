@@ -15,8 +15,6 @@ import {
 	type Timer,
 } from '$lib/time.js';
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 test('is_promise: detects promises', ({expect}) => {
 	// True for promises
 	expect(is_promise(Promise.resolve())).toBe(true);

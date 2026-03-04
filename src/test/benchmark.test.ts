@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-
 import {test} from 'vitest';
 
 import {Benchmark} from '$lib/benchmark.js';

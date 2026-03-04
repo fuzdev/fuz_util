@@ -1,5 +1,22 @@
 # @fuzdev/fuz_util
 
+## 0.53.0
+
+### Minor Changes
+
+- unexport `masher` from `random_alea.ts` ([06d675b](https://github.com/fuzdev/fuz_util/commit/06d675b))
+- rename `RandomAlea` from `Alea` ([06d675b](https://github.com/fuzdev/fuz_util/commit/06d675b))
+- switch to blake3 hashing ([#73](https://github.com/fuzdev/fuz_util/pull/73))
+  - add `hash_blake3`, sync BLAKE3 via optional peer dep `@fuzdev/blake3_wasm`
+  - rename `hash_sha256` from `hash_secure` and remove the custom algorithm param
+  - add `hex.ts` with `to_hex`
+  - add `bytes.ts` with `to_bytes`
+
+### Patch Changes
+
+- add `random_xoshiro.ts` ([06d675b](https://github.com/fuzdev/fuz_util/commit/06d675b))
+- fix empty string logging ([72dc8f4](https://github.com/fuzdev/fuz_util/commit/72dc8f4))
+
 ## 0.52.1
 
 ### Patch Changes

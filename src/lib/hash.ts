@@ -1,45 +1,26 @@
 /**
  * Hash utilities for content comparison and cache invalidation.
  *
- * Provides both secure (cryptographic) and insecure (fast) hash functions.
+ * Provides `hash_sha256` (Web Crypto, async) and `hash_insecure` (DJB2, fast non-cryptographic).
+ * For BLAKE3, see `hash_blake3` in `hash_blake3.ts`.
  *
  * @module
  */
 
+import {to_hex} from './hex.js';
+
 const encoder = new TextEncoder();
 
-// Lazily computed lookup table for byte to hex conversion
-let byte_to_hex: Array<string> | undefined;
-const get_byte_to_hex = (): Array<string> => {
-	if (byte_to_hex === undefined) {
-		byte_to_hex = new Array(256); // 256 possible byte values (0x00-0xff)
-		for (let i = 0; i < 256; i++) {
-			byte_to_hex[i] = i.toString(16).padStart(2, '0');
-		}
-	}
-	return byte_to_hex;
-};
-
 /**
- * Computes a cryptographic hash using Web Crypto API.
+ * Computes a SHA-256 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @param algorithm - Hash algorithm. Defaults to SHA-256.
- * @returns Hexadecimal hash string.
+ * @returns 64-character hexadecimal hash string.
  */
-export const hash_secure = async (
-	data: BufferSource | string,
-	algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256',
-): Promise<string> => {
+export const hash_sha256 = async (data: BufferSource | string): Promise<string> => {
 	const buffer = typeof data === 'string' ? encoder.encode(data) : data;
-	const digested = await crypto.subtle.digest(algorithm, buffer);
-	const bytes = new Uint8Array(digested);
-	const lookup = get_byte_to_hex();
-	let hex = '';
-	for (const byte of bytes) {
-		hex += lookup[byte];
-	}
-	return hex;
+	const digested = await crypto.subtle.digest('SHA-256', buffer);
+	return to_hex(new Uint8Array(digested));
 };
 
 /**

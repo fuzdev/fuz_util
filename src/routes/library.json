@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.52.1",
+		"version": "0.53.0",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -42,7 +42,9 @@
 			"benchmark:save": "gro run src/benchmarks/run.ts --save",
 			"benchmark_slugify": "gro run src/benchmarks/slugify.benchmark.ts",
 			"benchmark_deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
-			"benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts"
+			"benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
+			"benchmark_random": "gro run src/benchmarks/random.benchmark.ts",
+			"benchmark_random_quality": "gro run src/benchmarks/random_quality.ts"
 		},
 		"type": "module",
 		"engines": {
@@ -50,6 +52,7 @@
 		},
 		"keywords": ["js", "typescript", "utilities", "web"],
 		"peerDependencies": {
+			"@fuzdev/blake3_wasm": "^0.1.0",
 			"@types/estree": "^1",
 			"@types/node": "^24",
 			"esm-env": "^1.2.2",
@@ -57,13 +60,16 @@
 			"zod": "^4.0.14"
 		},
 		"peerDependenciesMeta": {
+			"@fuzdev/blake3_wasm": {
+				"optional": true
+			},
+			"@types/estree": {
+				"optional": true
+			},
 			"@types/node": {
 				"optional": true
 			},
 			"esm-env": {
-				"optional": true
-			},
-			"@types/estree": {
 				"optional": true
 			},
 			"svelte": {
@@ -75,13 +81,14 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
+			"@fuzdev/blake3_wasm": "^0.1.0",
 			"@fuzdev/fuz_code": "^0.45.1",
-			"@fuzdev/fuz_css": "^0.54.0",
-			"@fuzdev/fuz_ui": "file:../fuz_ui",
-			"@fuzdev/gro": "^0.196.0",
+			"@fuzdev/fuz_css": "^0.55.0",
+			"@fuzdev/fuz_ui": "^0.185.2",
+			"@fuzdev/gro": "^0.197.0",
 			"@fuzdev/svelte-docinfo": "file:../private_svelte-docinfo",
 			"@jridgewell/trace-mapping": "^0.3.31",
-			"@ryanatkn/eslint-config": "^0.9.0",
+			"@ryanatkn/eslint-config": "^0.10.0",
 			"@sveltejs/adapter-static": "^3.0.10",
 			"@sveltejs/kit": "^2.50.1",
 			"@sveltejs/package": "^2.5.7",
@@ -138,7 +145,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.52.1",
+		"version": "0.53.0",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -1808,6 +1815,29 @@
 				],
 				"module_comment": "Benchmarking library.\n\n@example\n```ts\nimport {Benchmark} from '@fuzdev/fuz_util/benchmark.js';\n\nconst bench = new Benchmark({\n  duration_ms: 5000,\n  warmup_iterations: 5,\n});\n\nbench\n  .add('slugify', () => slugify(title))\n  .add('slugify_slower', () => slugify_slower(title));\n\nconst results = await bench.run();\nconsole.log(bench.table());\n```",
 				"dependencies": ["async.ts", "benchmark_format.ts", "benchmark_stats.ts", "time.ts"]
+			},
+			{
+				"path": "bytes.ts",
+				"declarations": [
+					{
+						"name": "to_bytes",
+						"kind": "function",
+						"doc_comment": "Converts string or binary data to a `Uint8Array`.\nStrings are UTF-8 encoded. `Uint8Array` inputs are returned as-is.",
+						"source_line": 16,
+						"type_signature": "(data: string | BufferSource): Uint8Array<ArrayBufferLike>",
+						"return_type": "Uint8Array<ArrayBufferLike>",
+						"return_description": "`Uint8Array` view of the data.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or `BufferSource` to convert."
+							}
+						]
+					}
+				],
+				"module_comment": "Binary data conversion helpers.",
+				"dependents": ["hash_blake3.ts"]
 			},
 			{
 				"path": "colors.ts",
@@ -3510,27 +3540,44 @@
 				"dependents": ["benchmark_baseline.ts"]
 			},
 			{
-				"path": "hash.ts",
+				"path": "hash_blake3.ts",
 				"declarations": [
 					{
-						"name": "hash_secure",
+						"name": "hash_blake3",
 						"kind": "function",
-						"doc_comment": "Computes a cryptographic hash using Web Crypto API.",
-						"source_line": 30,
-						"type_signature": "(data: string | BufferSource, algorithm?: \"SHA-256\" | \"SHA-384\" | \"SHA-512\"): Promise<string>",
-						"return_type": "Promise<string>",
-						"return_description": "Hexadecimal hash string.",
+						"doc_comment": "Computes a BLAKE3 hash synchronously.",
+						"source_line": 20,
+						"type_signature": "(data: string | BufferSource): string",
+						"return_type": "string",
+						"return_description": "64-character hexadecimal hash string (32 bytes).",
 						"parameters": [
 							{
 								"name": "data",
 								"type": "string | BufferSource",
 								"description": "String or binary data to hash. Strings are UTF-8 encoded."
-							},
+							}
+						]
+					}
+				],
+				"module_comment": "BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.\n\nSynchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.",
+				"dependencies": ["bytes.ts", "hex.ts"]
+			},
+			{
+				"path": "hash.ts",
+				"declarations": [
+					{
+						"name": "hash_sha256",
+						"kind": "function",
+						"doc_comment": "Computes a SHA-256 hash using Web Crypto API.",
+						"source_line": 20,
+						"type_signature": "(data: string | BufferSource): Promise<string>",
+						"return_type": "Promise<string>",
+						"return_description": "64-character hexadecimal hash string.",
+						"parameters": [
 							{
-								"name": "algorithm",
-								"type": "\"SHA-256\" | \"SHA-384\" | \"SHA-512\"",
-								"description": "Hash algorithm. Defaults to SHA-256.",
-								"default_value": "'SHA-256'"
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
 							}
 						]
 					},
@@ -3538,7 +3585,7 @@
 						"name": "hash_insecure",
 						"kind": "function",
 						"doc_comment": "Computes a fast non-cryptographic hash using DJB2 algorithm.\nUse for content comparison and cache keys, not security.\n\nNote: Strings use UTF-16 code units, buffers use raw bytes.\nFor non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.",
-						"source_line": 55,
+						"source_line": 36,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
 						"return_description": "8-character hex-encoded unsigned 32-bit hash.",
@@ -3551,7 +3598,31 @@
 						]
 					}
 				],
-				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides both secure (cryptographic) and insecure (fast) hash functions."
+				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides `hash_sha256` (Web Crypto, async) and `hash_insecure` (DJB2, fast non-cryptographic).\nFor BLAKE3, see `hash_blake3` in `hash_blake3.ts`.",
+				"dependencies": ["hex.ts"]
+			},
+			{
+				"path": "hex.ts",
+				"declarations": [
+					{
+						"name": "to_hex",
+						"kind": "function",
+						"doc_comment": "Converts a `Uint8Array` to a lowercase hex string.",
+						"source_line": 13,
+						"type_signature": "(bytes: Uint8Array<ArrayBufferLike>): string",
+						"return_type": "string",
+						"return_description": "Hex string with two characters per byte.",
+						"parameters": [
+							{
+								"name": "bytes",
+								"type": "Uint8Array<ArrayBufferLike>",
+								"description": "Binary data to encode."
+							}
+						]
+					}
+				],
+				"module_comment": "Hex encoding helpers.",
+				"dependents": ["hash.ts", "hash_blake3.ts"]
 			},
 			{
 				"path": "id.ts",
@@ -5625,10 +5696,12 @@
 				"path": "random_alea.ts",
 				"declarations": [
 					{
-						"name": "Alea",
+						"name": "RandomAlea",
 						"kind": "type",
-						"source_line": 31,
-						"type_signature": "Alea",
+						"doc_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\nSupports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).\nFor numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
+						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
+						"source_line": 57,
+						"type_signature": "RandomAlea",
 						"properties": [
 							{
 								"name": "uint32",
@@ -5656,30 +5729,74 @@
 						"name": "create_random_alea",
 						"kind": "function",
 						"doc_comment": "Seeded pseudo-random number generator.\nDO NOT USE when security matters, use webcrypto APIs instead.",
-						"see_also": [
-							"http://baagoe.com/en/RandomMusings/javascript/",
-							"https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
-						],
-						"source_line": 46,
-						"type_signature": "(...seed: unknown[]): Alea",
-						"return_type": "Alea",
+						"see_also": ["https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"],
+						"source_line": 71,
+						"type_signature": "(...seed: unknown[]): RandomAlea",
+						"return_type": "RandomAlea",
 						"parameters": [
 							{
 								"name": "seed",
 								"type": "unknown[]"
 							}
 						]
+					}
+				],
+				"module_comment": "Alea: a seedable pseudo-random number generator by Johannes Baagøe.\nSupports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).\nFor numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nAlea passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror"
+			},
+			{
+				"path": "random_xoshiro.ts",
+				"declarations": [
+					{
+						"name": "RandomXoshiro",
+						"kind": "type",
+						"doc_comment": "Xoshiro128**: a seedable pseudo-random number generator by Blackman & Vigna (2018).\nRecommended for reproducible randomness (testing, simulations, procedural generation).\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nXoshiro128** has a 2^128-1 period and passes BigCrush.\nIt uses pure 32-bit arithmetic (shifts, rotates, XOR, multiply)\nmaking it very fast in JavaScript via `Math.imul`.\n\nXoshiro128** passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is near-native (~4% slower than `Math.random`) and ~18% faster than Alea\n(~14.4M ops/sec vs ~15.0M and ~12.2M respectively).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```",
+						"see_also": [
+							"https://prng.di.unimi.it/",
+							"https://vigna.di.unimi.it/ftp/papers/ScrambledLinear.pdf"
+						],
+						"source_line": 50,
+						"type_signature": "RandomXoshiro",
+						"properties": [
+							{
+								"name": "uint32",
+								"kind": "variable",
+								"type_signature": "() => number"
+							},
+							{
+								"name": "fract53",
+								"kind": "variable",
+								"type_signature": "() => number"
+							},
+							{
+								"name": "version",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "seed",
+								"kind": "variable",
+								"type_signature": "number"
+							}
+						]
 					},
 					{
-						"name": "masher",
+						"name": "create_random_xoshiro",
 						"kind": "function",
-						"doc_comment": "",
-						"source_line": 91,
-						"type_signature": "(): Mash",
-						"return_type": "Mash",
-						"parameters": []
+						"doc_comment": "Seeded pseudo-random number generator using the Xoshiro128** algorithm.\nDO NOT USE when security matters, use webcrypto APIs instead.",
+						"see_also": ["https://prng.di.unimi.it/"],
+						"source_line": 64,
+						"type_signature": "(seed?: number | undefined): RandomXoshiro",
+						"return_type": "RandomXoshiro",
+						"parameters": [
+							{
+								"name": "seed",
+								"type": "number | undefined",
+								"optional": true
+							}
+						]
 					}
-				]
+				],
+				"module_comment": "Xoshiro128**: a seedable pseudo-random number generator by Blackman & Vigna (2018).\nRecommended for reproducible randomness (testing, simulations, procedural generation).\n\nDO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.\n\nXoshiro128** has a 2^128-1 period and passes BigCrush.\nIt uses pure 32-bit arithmetic (shifts, rotates, XOR, multiply)\nmaking it very fast in JavaScript via `Math.imul`.\n\nXoshiro128** passes all 11 distribution quality tests at 10M samples,\nperforming on par with `Math.random` (V8's xorshift128+):\n\n- mean, variance, chi-squared uniformity, Kolmogorov-Smirnov\n- lag-1 through lag-8 autocorrelation\n- runs test, gap test, permutation test (triples)\n- bit-level frequency (bits 0-7)\n- 2D serial pairs (25x25 through 200x200 grids)\n- birthday spacings (Marsaglia parameters)\n\nSpeed is near-native (~4% slower than `Math.random`) and ~18% faster than Alea\n(~14.4M ops/sec vs ~15.0M and ~12.2M respectively).\n\nTo reproduce:\n\n```bash\nnpm run benchmark_random_quality          # distribution tests (N=1M)\nnpm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)\nnpm run benchmark_random                  # speed comparison\n```\n\n@see https://prng.di.unimi.it/\n@see https://vigna.di.unimi.it/ftp/papers/ScrambledLinear.pdf"
 			},
 			{
 				"path": "random.ts",
@@ -5688,7 +5805,7 @@
 						"name": "random_float",
 						"kind": "function",
 						"doc_comment": "Generates a random `number` between `min` and `max`.",
-						"source_line": 6,
+						"source_line": 16,
 						"type_signature": "(min: number, max: number, random?: () => number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5711,7 +5828,7 @@
 						"name": "random_int",
 						"kind": "function",
 						"doc_comment": "Returns a random integer between `min` and `max` inclusive.\nNode's `randomInt` is similar but exclusive of the max value, and makes `min` optional -\nhttps://nodejs.org/docs/latest-v20.x/api/crypto.html#cryptorandomintmin-max-callback",
-						"source_line": 14,
+						"source_line": 24,
 						"type_signature": "(min: number, max: number, random?: () => number): number",
 						"return_type": "number",
 						"parameters": [
@@ -5734,7 +5851,7 @@
 						"name": "random_boolean",
 						"kind": "function",
 						"doc_comment": "Generates a random `boolean`.",
-						"source_line": 20,
+						"source_line": 30,
 						"type_signature": "(random?: () => number): boolean",
 						"return_type": "boolean",
 						"parameters": [
@@ -5749,7 +5866,7 @@
 						"name": "random_item",
 						"kind": "function",
 						"doc_comment": "Selects a random item from an array.",
-						"source_line": 25,
+						"source_line": 35,
 						"type_signature": "<T extends ReadonlyArray<any>>(arr: T, random?: () => number): ArrayElement<T>",
 						"return_type": "ArrayElement<T>",
 						"parameters": [
@@ -5768,7 +5885,7 @@
 						"name": "shuffle",
 						"kind": "function",
 						"doc_comment": "Mutates `array` with random ordering.",
-						"source_line": 34,
+						"source_line": 44,
 						"type_signature": "<T extends Array<any>>(array: T, random?: ((min: number, max: number, random?: () => number) => number) | undefined): T",
 						"return_type": "T",
 						"parameters": [
@@ -5783,7 +5900,8 @@
 							}
 						]
 					}
-				]
+				],
+				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- {@link create_random_xoshiro} — fast, high-quality numeric seeding (recommended)\n- {@link create_random_alea} — supports string and variadic seeds"
 			},
 			{
 				"path": "regexp.ts",

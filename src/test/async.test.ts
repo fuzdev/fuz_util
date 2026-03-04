@@ -10,10 +10,6 @@ import {
 	map_concurrent_settled,
 } from '$lib/async.ts';
 
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable no-await-in-loop */
-
 const make_concurrency_tracker = () => {
 	let max = 0;
 	let current = 0;

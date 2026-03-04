@@ -5,8 +5,7 @@ This is the Alea pseudo-random number generator by Johannes Baagøe
 Security disclaimer: Felt cannot vouch for the cryotographic security of this code.
 Use Node/browser/platform crypto APIs instead of this when security matters.
 
-From http://baagoe.com/en/RandomMusings/javascript/
-via https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
+From https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 
 Copyright (C) 2010 by Johannes Baagøe <baagoe@baagoe.org>
 
@@ -35,8 +34,7 @@ import {test, assert} from 'vitest';
 import {create_random_alea} from '$lib/random_alea.ts';
 
 test('Math.random() replacement', () => {
-	// From http://baagoe.com/en/RandomMusings/javascript/
-	// via https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
+	// From https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 	const random = create_random_alea('my', 3, 'seeds');
 	assert.strictEqual(random(), 0.30802189325913787);
 	assert.strictEqual(random(), 0.5190450621303171);

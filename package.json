@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_util",
-  "version": "0.52.1",
+  "version": "0.53.0",
   "description": "utility belt for JS",
   "glyph": "🦕",
   "logo": "logo.svg",
@@ -31,7 +31,9 @@
     "benchmark:save": "gro run src/benchmarks/run.ts --save",
     "benchmark_slugify": "gro run src/benchmarks/slugify.benchmark.ts",
     "benchmark_deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
-    "benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts"
+    "benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
+    "benchmark_random": "gro run src/benchmarks/random.benchmark.ts",
+    "benchmark_random_quality": "gro run src/benchmarks/random_quality.ts"
   },
   "type": "module",
   "engines": {
@@ -44,6 +46,7 @@
     "web"
   ],
   "peerDependencies": {
+    "@fuzdev/blake3_wasm": "^0.1.0",
     "@types/estree": "^1",
     "@types/node": "^24",
     "esm-env": "^1.2.2",
@@ -51,13 +54,16 @@
     "zod": "^4.0.14"
   },
   "peerDependenciesMeta": {
+    "@fuzdev/blake3_wasm": {
+      "optional": true
+    },
+    "@types/estree": {
+      "optional": true
+    },
     "@types/node": {
       "optional": true
     },
     "esm-env": {
-      "optional": true
-    },
-    "@types/estree": {
       "optional": true
     },
     "svelte": {
@@ -69,13 +75,14 @@
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
+    "@fuzdev/blake3_wasm": "^0.1.0",
     "@fuzdev/fuz_code": "^0.45.1",
-    "@fuzdev/fuz_css": "^0.54.0",
-    "@fuzdev/fuz_ui": "file:../fuz_ui",
-    "@fuzdev/gro": "^0.196.0",
+    "@fuzdev/fuz_css": "^0.55.0",
+    "@fuzdev/fuz_ui": "^0.185.2",
+    "@fuzdev/gro": "^0.197.0",
     "@fuzdev/svelte-docinfo": "file:../private_svelte-docinfo",
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@ryanatkn/eslint-config": "^0.9.0",
+    "@ryanatkn/eslint-config": "^0.10.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.1",
     "@sveltejs/package": "^2.5.7",

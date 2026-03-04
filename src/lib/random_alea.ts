@@ -1,10 +1,36 @@
+/**
+ * Alea: a seedable pseudo-random number generator by Johannes Baagøe.
+ * Supports variadic and string seeds (`create_random_alea('my', 3, 'seeds')`).
+ * For numeric seeds, prefer `create_random_xoshiro` which is faster with equal quality.
+ *
+ * DO NOT USE when security matters — use the Web Crypto API (`crypto.getRandomValues`) instead.
+ *
+ * Alea passes all 11 distribution quality tests at 10M samples,
+ * performing on par with `Math.random` (V8's xorshift128+):
+ *
+ * - mean, variance, chi-squared uniformity, Kolmogorov-Smirnov
+ * - lag-1 through lag-8 autocorrelation
+ * - runs test, gap test, permutation test (triples)
+ * - bit-level frequency (bits 0-7)
+ * - 2D serial pairs (25x25 through 200x200 grids)
+ * - birthday spacings (Marsaglia parameters)
+ *
+ * Speed is ~19% slower than `Math.random` (~12.2M ops/sec vs ~15.0M ops/sec).
+ *
+ * To reproduce:
+ *
+ * ```bash
+ * npm run benchmark_random_quality          # distribution tests (N=1M)
+ * npm run benchmark_random_quality -- --deep # thorough (N=10M, multi-trial)
+ * npm run benchmark_random                  # speed comparison
+ * ```
+ *
+ * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
+ *
+ * @module
+ */
+
 /*
-
-DO NOT USE when security matters, use webcrypto APIs instead.
-This is the Alea pseudo-random number generator by Johannes Baagøe.
-
-From http://baagoe.com/en/RandomMusings/javascript/
-via https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 
 Copyright (C) 2010 by Johannes Baagøe <baagoe@baagoe.org>
 
@@ -28,7 +54,7 @@ THE SOFTWARE.
 
 */
 
-export interface Alea {
+export interface RandomAlea {
 	(): number;
 	uint32: () => number;
 	fract53: () => number;
@@ -40,10 +66,9 @@ export interface Alea {
  * Seeded pseudo-random number generator.
  * DO NOT USE when security matters, use webcrypto APIs instead.
  *
- * @see http://baagoe.com/en/RandomMusings/javascript/
  * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  */
-export const create_random_alea = (...seed: Array<unknown>): Alea => {
+export const create_random_alea = (...seed: Array<unknown>): RandomAlea => {
 	let s0 = 0;
 	let s1 = 0;
 	let s2 = 0;
@@ -65,7 +90,7 @@ export const create_random_alea = (...seed: Array<unknown>): Alea => {
 	}
 	mash = null;
 
-	const random: Alea = (): number => {
+	const random: RandomAlea = (): number => {
 		const t = 2091639 * s0 + c * 2.3283064365386963e-10; // 2^-32
 		s0 = s1;
 		s1 = s2;
@@ -85,10 +110,10 @@ export const create_random_alea = (...seed: Array<unknown>): Alea => {
 type Mash = (data: any) => number;
 
 /**
- * @source http://baagoe.com/en/RandomMusings/javascript/
+ * @source https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
  * @copyright Johannes Baagøe <baagoe@baagoe.com>, 2010
  */
-export const masher = (): Mash => {
+const masher = (): Mash => {
 	let n = 0xefc8249d;
 	return (data) => {
 		const d = data + '';
