@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.53.2
+
+### Patch Changes
+
+- add `format_bytes` ([de16196](https://github.com/fuzdev/fuz_util/commit/de16196))
+- add `blake3_ready` with auto-init ([de16196](https://github.com/fuzdev/fuz_util/commit/de16196))
+
 ## 0.53.1
 
 ### Patch Changes
