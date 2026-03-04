@@ -2,4 +2,4 @@
 '@fuzdev/fuz_util': minor
 ---
 
-switch to blake3
+switch to `@fuzdev/blake3_wasm`
