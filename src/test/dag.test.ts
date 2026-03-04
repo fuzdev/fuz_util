@@ -8,9 +8,6 @@ import {assert, test, describe} from 'vitest';
 
 import {run_dag, type DagNode, type DagResult} from '$lib/dag.js';
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable @typescript-eslint/require-await */
-
 /**
  * Helper to create a simple DAG node.
  */

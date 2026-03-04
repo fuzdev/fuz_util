@@ -4,7 +4,7 @@ import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.
 
 // shared test values
 const symbol = Symbol('test');
-const fn = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
+const fn = () => {};
 
 describe('primitives', () => {
 	describe('equal values', () => {
@@ -72,7 +72,7 @@ describe('primitives', () => {
 			['symbol and string', Symbol('test'), 'test'],
 
 			// functions
-			['different functions', () => {}, () => {}], // eslint-disable-line @typescript-eslint/no-empty-function
+			['different functions', () => {}, () => {}],
 
 			// bigint
 			['different bigints', 1n, 2n],
