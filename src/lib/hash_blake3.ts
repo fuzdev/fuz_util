@@ -8,7 +8,8 @@
 
 import {hash} from '@fuzdev/blake3_wasm';
 
-import {to_hex, to_bytes} from './hex.js';
+import {to_hex} from './hex.js';
+import {to_bytes} from './bytes.js';
 
 /**
  * Computes a BLAKE3 hash synchronously.

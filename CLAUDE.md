@@ -41,7 +41,8 @@ fuz_util is a **foundational utility library**:
 - `json.ts` - JSON helpers
 - `map.ts` - Map utilities
 - `iterator.ts` - iterator helpers
-- `hex.ts` - hex encoding (`to_hex`) and binary conversion (`to_bytes`) helpers
+- `bytes.ts` - binary data conversion (`to_bytes`)
+- `hex.ts` - hex encoding (`to_hex`)
 - `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex, via
   `@fuzdev/blake3_wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
