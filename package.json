@@ -46,6 +46,7 @@
     "web"
   ],
   "peerDependencies": {
+    "@fuzdev/blake3_wasm": "^0.1.0",
     "@types/estree": "^1",
     "@types/node": "^24",
     "esm-env": "^1.2.2",
@@ -53,13 +54,16 @@
     "zod": "^4.0.14"
   },
   "peerDependenciesMeta": {
+    "@fuzdev/blake3_wasm": {
+      "optional": true
+    },
+    "@types/estree": {
+      "optional": true
+    },
     "@types/node": {
       "optional": true
     },
     "esm-env": {
-      "optional": true
-    },
-    "@types/estree": {
       "optional": true
     },
     "svelte": {
@@ -71,6 +75,7 @@
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
+    "@fuzdev/blake3_wasm": "^0.1.0",
     "@fuzdev/fuz_code": "^0.45.1",
     "@fuzdev/fuz_css": "^0.54.0",
     "@fuzdev/fuz_ui": "^0.185.2",
