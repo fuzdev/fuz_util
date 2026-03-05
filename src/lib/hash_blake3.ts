@@ -2,14 +2,23 @@
  * BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.
  *
  * Synchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.
+ * WASM initialization starts eagerly on import. Await `blake3_ready` before first use
+ * in browser contexts where the WASM must be fetched asynchronously.
  *
  * @module
  */
 
-import {hash} from '@fuzdev/blake3_wasm';
+import {hash, init} from '@fuzdev/blake3_wasm';
 
 import {to_hex} from './hex.js';
 import {to_bytes} from './bytes.js';
+
+/**
+ * Resolves when the BLAKE3 WASM module is initialized and ready.
+ * Initialization starts eagerly on import. Idempotent — safe to await multiple times.
+ * In Node.js/Deno (sync init), this resolves immediately.
+ */
+export const blake3_ready = init();
 
 /**
  * Computes a BLAKE3 hash synchronously.

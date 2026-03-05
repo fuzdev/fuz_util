@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.53.0",
+		"version": "0.53.2",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -145,7 +145,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.53.0",
+		"version": "0.53.2",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -1832,6 +1832,22 @@
 								"name": "data",
 								"type": "string | BufferSource",
 								"description": "String or `BufferSource` to convert."
+							}
+						]
+					},
+					{
+						"name": "format_bytes",
+						"kind": "function",
+						"doc_comment": "Formats a byte count as a human-readable string.",
+						"source_line": 29,
+						"type_signature": "(n: number): string",
+						"return_type": "string",
+						"return_description": "formatted string like `'1.2 KB'` or `'3.4 MB'`.",
+						"parameters": [
+							{
+								"name": "n",
+								"type": "number",
+								"description": "byte count."
 							}
 						]
 					}
@@ -3543,10 +3559,17 @@
 				"path": "hash_blake3.ts",
 				"declarations": [
 					{
+						"name": "blake3_ready",
+						"kind": "variable",
+						"doc_comment": "Resolves when the BLAKE3 WASM module is initialized and ready.\nInitialization starts eagerly on import. Idempotent — safe to await multiple times.\nIn Node.js/Deno (sync init), this resolves immediately.",
+						"source_line": 21,
+						"type_signature": "Promise<void>"
+					},
+					{
 						"name": "hash_blake3",
 						"kind": "function",
 						"doc_comment": "Computes a BLAKE3 hash synchronously.",
-						"source_line": 20,
+						"source_line": 29,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
 						"return_description": "64-character hexadecimal hash string (32 bytes).",
@@ -3559,17 +3582,33 @@
 						]
 					}
 				],
-				"module_comment": "BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.\n\nSynchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.",
+				"module_comment": "BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.\n\nSynchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.\nWASM initialization starts eagerly on import. Await `blake3_ready` before first use\nin browser contexts where the WASM must be fetched asynchronously.",
 				"dependencies": ["bytes.ts", "hex.ts"]
 			},
 			{
 				"path": "hash.ts",
 				"declarations": [
 					{
+						"name": "hash_sha1",
+						"kind": "function",
+						"doc_comment": "Computes a SHA-1 hash using Web Crypto API.",
+						"source_line": 34,
+						"type_signature": "(data: string | BufferSource): Promise<string>",
+						"return_type": "Promise<string>",
+						"return_description": "40-character hexadecimal hash string.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
+							}
+						]
+					},
+					{
 						"name": "hash_sha256",
 						"kind": "function",
 						"doc_comment": "Computes a SHA-256 hash using Web Crypto API.",
-						"source_line": 20,
+						"source_line": 43,
 						"type_signature": "(data: string | BufferSource): Promise<string>",
 						"return_type": "Promise<string>",
 						"return_description": "64-character hexadecimal hash string.",
@@ -3582,10 +3621,42 @@
 						]
 					},
 					{
+						"name": "hash_sha384",
+						"kind": "function",
+						"doc_comment": "Computes a SHA-384 hash using Web Crypto API.",
+						"source_line": 52,
+						"type_signature": "(data: string | BufferSource): Promise<string>",
+						"return_type": "Promise<string>",
+						"return_description": "96-character hexadecimal hash string.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
+							}
+						]
+					},
+					{
+						"name": "hash_sha512",
+						"kind": "function",
+						"doc_comment": "Computes a SHA-512 hash using Web Crypto API.",
+						"source_line": 61,
+						"type_signature": "(data: string | BufferSource): Promise<string>",
+						"return_type": "Promise<string>",
+						"return_description": "128-character hexadecimal hash string.",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | BufferSource",
+								"description": "String or binary data to hash. Strings are UTF-8 encoded."
+							}
+						]
+					},
+					{
 						"name": "hash_insecure",
 						"kind": "function",
 						"doc_comment": "Computes a fast non-cryptographic hash using DJB2 algorithm.\nUse for content comparison and cache keys, not security.\n\nNote: Strings use UTF-16 code units, buffers use raw bytes.\nFor non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.",
-						"source_line": 36,
+						"source_line": 74,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
 						"return_description": "8-character hex-encoded unsigned 32-bit hash.",
@@ -3598,7 +3669,7 @@
 						]
 					}
 				],
-				"module_comment": "Hash utilities for content comparison and cache invalidation.\n\nProvides `hash_sha256` (Web Crypto, async) and `hash_insecure` (DJB2, fast non-cryptographic).\nFor BLAKE3, see `hash_blake3` in `hash_blake3.ts`.",
+				"module_comment": "Hash utilities using Web Crypto API and DJB2.\n\nProvides `hash_sha256`, `hash_sha384`, `hash_sha512`, `hash_sha1` (Web Crypto, async)\nand `hash_insecure` (DJB2, fast non-cryptographic).\nFor BLAKE3, see `hash_blake3` in `hash_blake3.ts`.",
 				"dependencies": ["hex.ts"]
 			},
 			{
@@ -3619,9 +3690,25 @@
 								"description": "Binary data to encode."
 							}
 						]
+					},
+					{
+						"name": "from_hex",
+						"kind": "function",
+						"doc_comment": "Decodes a hex string to a `Uint8Array`.\nWhitespace is stripped before parsing. Returns `null` for invalid hex.",
+						"source_line": 29,
+						"type_signature": "(hex: string): Uint8Array<ArrayBufferLike> | null",
+						"return_type": "Uint8Array<ArrayBufferLike> | null",
+						"return_description": "Decoded bytes, or `null` if the input is not valid hex.",
+						"parameters": [
+							{
+								"name": "hex",
+								"type": "string",
+								"description": "Hex string to decode (case-insensitive, whitespace allowed)."
+							}
+						]
 					}
 				],
-				"module_comment": "Hex encoding helpers.",
+				"module_comment": "Hex encoding and decoding helpers.",
 				"dependents": ["hash.ts", "hash_blake3.ts"]
 			},
 			{

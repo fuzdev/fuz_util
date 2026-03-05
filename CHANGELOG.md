@@ -1,5 +1,18 @@
 # @fuzdev/fuz_util
 
+## 0.53.2
+
+### Patch Changes
+
+- add `format_bytes` ([de16196](https://github.com/fuzdev/fuz_util/commit/de16196))
+- add `blake3_ready` with auto-init ([de16196](https://github.com/fuzdev/fuz_util/commit/de16196))
+
+## 0.53.1
+
+### Patch Changes
+
+- add `from_hex`, `hash_sha1`, `hash_sha384`, and `hash_sha512` ([d16f560](https://github.com/fuzdev/fuz_util/commit/d16f560))
+
 ## 0.53.0
 
 ### Minor Changes

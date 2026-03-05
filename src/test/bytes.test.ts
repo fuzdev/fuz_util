@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'vitest';
 
-import {to_bytes} from '$lib/bytes.js';
+import {format_bytes, to_bytes} from '$lib/bytes.js';
 
 describe('to_bytes', () => {
 	describe('string input', () => {
@@ -87,5 +87,25 @@ describe('to_bytes', () => {
 			expect(result).toBeInstanceOf(Uint8Array);
 			expect(result).toHaveLength(4);
 		});
+	});
+});
+
+describe('format_bytes', () => {
+	const cases: Array<[number, string]> = [
+		[0, '0 B'],
+		[1, '1 B'],
+		[512, '512 B'],
+		[1023, '1023 B'],
+		[1024, '1.0 KB'],
+		[1536, '1.5 KB'],
+		[10240, '10.0 KB'],
+		[1048576, '1.0 MB'],
+		[1572864, '1.5 MB'],
+		[1073741824, '1.0 GB'],
+		[1610612736, '1.5 GB'],
+	];
+
+	test.each(cases)('%d → %s', (input, expected) => {
+		expect(format_bytes(input)).toBe(expected);
 	});
 });
