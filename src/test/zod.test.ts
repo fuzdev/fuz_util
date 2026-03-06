@@ -374,11 +374,7 @@ describe('zod_to_schema_description', () => {
 	});
 
 	test('prefers outer description over inner', () => {
-		const schema = z
-			.string()
-			.meta({description: 'inner'})
-			.optional()
-			.meta({description: 'outer'});
+		const schema = z.string().meta({description: 'inner'}).optional().meta({description: 'outer'});
 		assert.equal(zod_to_schema_description(schema), 'outer');
 	});
 
@@ -436,12 +432,25 @@ describe('zod_to_schema_aliases', () => {
 	});
 
 	test('unwraps optional to find aliases', () => {
-		assert.deepEqual(zod_to_schema_aliases(z.string().meta({aliases: ['v']}).optional()), ['v']);
+		assert.deepEqual(
+			zod_to_schema_aliases(
+				z
+					.string()
+					.meta({aliases: ['v']})
+					.optional(),
+			),
+			['v'],
+		);
 	});
 
 	test('unwraps default to find aliases', () => {
 		assert.deepEqual(
-			zod_to_schema_aliases(z.boolean().meta({aliases: ['h']}).default(false)),
+			zod_to_schema_aliases(
+				z
+					.boolean()
+					.meta({aliases: ['h']})
+					.default(false),
+			),
 			['h'],
 		);
 	});
@@ -602,8 +611,14 @@ describe('zod_to_schema_properties', () => {
 describe('zod_to_schema_names_with_aliases', () => {
 	test('collects names and aliases', () => {
 		const schema = z.strictObject({
-			help: z.boolean().meta({aliases: ['h']}).default(false),
-			version: z.boolean().meta({aliases: ['v', 'V']}).default(false),
+			help: z
+				.boolean()
+				.meta({aliases: ['h']})
+				.default(false),
+			version: z
+				.boolean()
+				.meta({aliases: ['v', 'V']})
+				.default(false),
 			name: z.string().default(''),
 		});
 		const names = zod_to_schema_names_with_aliases(schema);
@@ -628,7 +643,10 @@ describe('zod_to_schema_names_with_aliases', () => {
 
 	test('does not include aliases of _ field', () => {
 		const schema = z.strictObject({
-			_: z.array(z.string()).meta({aliases: ['positional']}).default([]),
+			_: z
+				.array(z.string())
+				.meta({aliases: ['positional']})
+				.default([]),
 		});
 		const names = zod_to_schema_names_with_aliases(schema);
 		assert.ok(!names.has('positional'));
