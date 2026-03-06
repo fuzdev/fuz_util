@@ -82,7 +82,7 @@
     "@fuzdev/gro": "^0.197.0",
     "@fuzdev/svelte-docinfo": "file:../private_svelte-docinfo",
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@ryanatkn/eslint-config": "^0.10.0",
+    "@ryanatkn/eslint-config": "^0.10.1",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.50.1",
     "@sveltejs/package": "^2.5.7",
