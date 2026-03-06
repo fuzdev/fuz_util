@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.53.3
+
+### Patch Changes
+
+- feat: add more zod helpers ([a86bab6](https://github.com/fuzdev/fuz_util/commit/a86bab6))
+
 ## 0.53.2
 
 ### Patch Changes

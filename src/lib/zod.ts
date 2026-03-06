@@ -1,8 +1,8 @@
 /**
  * Zod schema introspection utilities.
  *
- * Generic helpers for extracting metadata from Zod schemas.
- * Designed for CLI argument parsing but applicable elsewhere.
+ * Generic helpers for walking, unwrapping, and extracting metadata from Zod schemas.
+ * Used by CLI argument parsing, adversarial input testing, and surface generation.
  *
  * @module
  */
@@ -29,6 +29,131 @@ export const zod_to_subschema = (def: z.core.$ZodTypeDef): z.ZodType | undefined
 	}
 	return undefined;
 };
+
+/** Zod wrapper type names that `zod_unwrap_def` traverses through. */
+export const ZOD_WRAPPER_TYPES = new Set([
+	'optional',
+	'nullable',
+	'default',
+	'transform',
+	'pipe',
+	'prefault',
+]);
+
+/**
+ * Unwrap Zod wrappers (optional, default, nullable, pipe, transform)
+ * to get the base type definition.
+ *
+ * @param schema - Zod schema to unwrap
+ * @returns the innermost non-wrapper type definition
+ */
+export const zod_unwrap_def = (schema: z.ZodType): z.core.$ZodTypeDef => {
+	const def = schema._zod.def;
+	if (ZOD_WRAPPER_TYPES.has(def.type)) {
+		const sub = zod_to_subschema(def);
+		if (sub) return zod_unwrap_def(sub);
+	}
+	return def;
+};
+
+/**
+ * Get the base type name for a Zod schema, unwrapping all wrappers.
+ *
+ * @param schema - Zod schema to inspect
+ * @returns base type name (e.g. `'string'`, `'object'`, `'uuid'`)
+ */
+export const zod_get_base_type = (schema: z.ZodType): string => zod_unwrap_def(schema).type;
+
+/**
+ * Check if a schema is optional at the outermost level.
+ *
+ * @param schema - Zod schema to check
+ */
+export const zod_is_optional = (schema: z.ZodType): boolean => schema._zod.def.type === 'optional';
+
+/**
+ * Check if a schema accepts null at any wrapping level.
+ *
+ * @param schema - Zod schema to check
+ */
+export const zod_is_nullable = (schema: z.ZodType): boolean => {
+	const def = schema._zod.def;
+	if (def.type === 'nullable') return true;
+	if (ZOD_WRAPPER_TYPES.has(def.type)) {
+		const sub = zod_to_subschema(def);
+		if (sub) return zod_is_nullable(sub);
+	}
+	return false;
+};
+
+/**
+ * Check if a schema has a default value at any wrapping level.
+ *
+ * Unlike `zod_to_schema_default` (which returns the value), this returns a boolean.
+ * Distinguishes "no default" from "default is undefined".
+ *
+ * @param schema - Zod schema to check
+ */
+export const zod_has_default = (schema: z.ZodType): boolean => {
+	const def = schema._zod.def;
+	if ('defaultValue' in def) return true;
+	const sub = zod_to_subschema(def);
+	if (sub) return zod_has_default(sub);
+	return false;
+};
+
+/**
+ * Unwrap a schema to find the inner `ZodObject`, or `null` if not an object schema.
+ * Handles wrappers like `z.strictObject({...}).default({...})`.
+ *
+ * @param schema - Zod schema to unwrap
+ * @returns the inner ZodObject or null
+ */
+export const zod_unwrap_to_object = (schema: z.ZodType): z.ZodObject | null => {
+	const def = zod_unwrap_def(schema);
+	if (def.type !== 'object') return null;
+	let s: z.ZodType = schema;
+	while (s._zod.def.type !== 'object') {
+		const sub = zod_to_subschema(s._zod.def);
+		if (!sub) return null;
+		s = sub;
+	}
+	return s as z.ZodObject;
+};
+
+// --- Field extraction ---
+
+/** Metadata extracted from a single field of a Zod object schema. */
+export interface ZodFieldInfo {
+	name: string;
+	base_type: string;
+	required: boolean;
+	has_default: boolean;
+	nullable: boolean;
+}
+
+/**
+ * Extract field metadata from a Zod object schema.
+ *
+ * @param schema - Zod object schema to extract from
+ * @returns array of field info for each property
+ */
+export const zod_extract_fields = (schema: z.ZodObject): Array<ZodFieldInfo> => {
+	const fields: Array<ZodFieldInfo> = [];
+	for (const [name, field_schema] of Object.entries(schema.shape)) {
+		const field = field_schema as z.ZodType;
+		fields.push({
+			name,
+			base_type: zod_get_base_type(field),
+			required: !zod_is_optional(field),
+			has_default: zod_has_default(field),
+			nullable: zod_is_nullable(field),
+		});
+	}
+	return fields;
+};
+
+// --- Metadata extraction ---
 
 /**
  * Get the description from a schema's metadata, unwrapping if needed.
