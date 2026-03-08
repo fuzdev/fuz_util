@@ -87,7 +87,7 @@
 			"@fuzdev/fuz_ui": "^0.185.2",
 			"@fuzdev/gro": "^0.197.0",
 			"@jridgewell/trace-mapping": "^0.3.31",
-			"@ryanatkn/eslint-config": "^0.10.0",
+			"@ryanatkn/eslint-config": "^0.10.1",
 			"@sveltejs/adapter-static": "^3.0.10",
 			"@sveltejs/kit": "^2.50.1",
 			"@sveltejs/package": "^2.5.7",
@@ -3561,14 +3561,14 @@
 						"name": "blake3_ready",
 						"kind": "variable",
 						"doc_comment": "Resolves when the BLAKE3 WASM module is initialized and ready.\nInitialization starts eagerly on import. Idempotent — safe to await multiple times.\nIn Node.js/Deno (sync init), this resolves immediately.",
-						"source_line": 21,
+						"source_line": 22,
 						"type_signature": "Promise<void>"
 					},
 					{
 						"name": "hash_blake3",
 						"kind": "function",
 						"doc_comment": "Computes a BLAKE3 hash synchronously.",
-						"source_line": 29,
+						"source_line": 30,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
 						"return_description": "64-character hexadecimal hash string (32 bytes).",
@@ -3579,6 +3579,13 @@
 								"description": "String or binary data to hash. Strings are UTF-8 encoded."
 							}
 						]
+					},
+					{
+						"name": "Blake3Hash",
+						"kind": "type",
+						"doc_comment": "Zod schema for a BLAKE3 hex hash — 64 lowercase hex characters (256-bit output).",
+						"source_line": 33,
+						"type_signature": "ZodString"
 					}
 				],
 				"module_comment": "BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.\n\nSynchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.\nWASM initialization starts eagerly on import. Await `blake3_ready` before first use\nin browser contexts where the WASM must be fetched asynchronously.",

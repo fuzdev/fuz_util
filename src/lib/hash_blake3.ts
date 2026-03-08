@@ -8,6 +8,7 @@
  * @module
  */
 
+import {z} from 'zod';
 import {hash, init} from '@fuzdev/blake3_wasm';
 
 import {to_hex} from './hex.js';
@@ -27,3 +28,9 @@ export const blake3_ready = init();
  * @returns 64-character hexadecimal hash string (32 bytes).
  */
 export const hash_blake3 = (data: BufferSource | string): string => to_hex(hash(to_bytes(data)));
+
+/** Zod schema for a BLAKE3 hex hash — 64 lowercase hex characters (256-bit output). */
+export const Blake3Hash = z
+	.string()
+	.regex(/^[0-9a-f]{64}$/, 'Expected a 64-character lowercase hex blake3 hash');
+export type Blake3Hash = z.infer<typeof Blake3Hash>;
