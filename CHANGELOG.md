@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.53.4
+
+### Patch Changes
+
+- add `Blake3Hash` schema ([b3b33ee](https://github.com/fuzdev/fuz_util/commit/b3b33ee))
+
 ## 0.53.3
 
 ### Patch Changes

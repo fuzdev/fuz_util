@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'vitest';
 
-import {hash_blake3} from '$lib/hash_blake3.js';
+import {hash_blake3, Blake3Hash} from '$lib/hash_blake3.js';
 
 describe('hash_blake3', () => {
 	// Known test vectors from blake3_wasm test suite (~/dev/blake3/test/test_vectors.json)
@@ -105,6 +105,95 @@ describe('hash_blake3', () => {
 			const inputs = ['hello', 'world', 'foo', 'bar', 'baz'];
 			const hashes = new Set(inputs.map(hash_blake3));
 			expect(hashes.size).toBe(inputs.length);
+		});
+	});
+
+	describe('Blake3Hash schema', () => {
+		test('accepts valid hash output', () => {
+			const valid = hash_blake3('test');
+			expect(Blake3Hash.safeParse(valid).success).toBe(true);
+		});
+
+		test('accepts all-zeros', () => {
+			expect(Blake3Hash.safeParse('0'.repeat(64)).success).toBe(true);
+		});
+
+		test('accepts all-f', () => {
+			expect(Blake3Hash.safeParse('f'.repeat(64)).success).toBe(true);
+		});
+
+		test('rejects too short', () => {
+			expect(Blake3Hash.safeParse('abcdef').success).toBe(false);
+		});
+
+		test('rejects too long', () => {
+			expect(Blake3Hash.safeParse('a'.repeat(65)).success).toBe(false);
+		});
+
+		test('rejects uppercase hex', () => {
+			expect(Blake3Hash.safeParse('A'.repeat(64)).success).toBe(false);
+		});
+
+		test('rejects non-hex characters', () => {
+			expect(Blake3Hash.safeParse('g'.repeat(64)).success).toBe(false);
+		});
+
+		test('rejects empty string', () => {
+			expect(Blake3Hash.safeParse('').success).toBe(false);
+		});
+
+		test('rejects 63 chars (off-by-one short)', () => {
+			expect(Blake3Hash.safeParse('a'.repeat(63)).success).toBe(false);
+		});
+
+		test('rejects 65 chars (off-by-one long)', () => {
+			expect(Blake3Hash.safeParse('a'.repeat(65)).success).toBe(false);
+		});
+
+		test('rejects UUID format', () => {
+			// Regression: session IDs were validated as UUIDs but are blake3 hashes
+			expect(Blake3Hash.safeParse('00000000-0000-4000-8000-000000000040').success).toBe(false);
+		});
+
+		test('rejects mixed case hex', () => {
+			const mixed = 'aAbBcCdDeEfF'.repeat(5) + 'aAbB';
+			expect(mixed.length).toBe(64);
+			expect(Blake3Hash.safeParse(mixed).success).toBe(false);
+		});
+
+		test('rejects leading whitespace', () => {
+			expect(Blake3Hash.safeParse(' ' + 'a'.repeat(64)).success).toBe(false);
+		});
+
+		test('rejects trailing whitespace', () => {
+			expect(Blake3Hash.safeParse('a'.repeat(64) + ' ').success).toBe(false);
+		});
+
+		test('rejects embedded spaces', () => {
+			expect(Blake3Hash.safeParse('a'.repeat(32) + ' ' + 'a'.repeat(31)).success).toBe(false);
+		});
+
+		test('rejects number', () => {
+			expect(Blake3Hash.safeParse(12345).success).toBe(false);
+		});
+
+		test('rejects null', () => {
+			expect(Blake3Hash.safeParse(null).success).toBe(false);
+		});
+
+		test('rejects undefined', () => {
+			expect(Blake3Hash.safeParse(undefined).success).toBe(false);
+		});
+
+		test('rejects boolean', () => {
+			expect(Blake3Hash.safeParse(true).success).toBe(false);
+		});
+
+		test('hash_blake3 output always passes Blake3Hash', () => {
+			for (const input of ['', 'hello', 'test', '🎉', 'a'.repeat(1000)]) {
+				const h = hash_blake3(input);
+				expect(Blake3Hash.safeParse(h).success).toBe(true);
+			}
 		});
 	});
 
