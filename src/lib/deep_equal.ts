@@ -147,7 +147,7 @@ export const deep_equal = (a: unknown, b: unknown): boolean => {
 	if (a_keys_length !== Object.keys(b!).length) return false;
 	for (let i = 0; i < a_keys_length; i++) {
 		const key = a_keys[i]!;
-		if (!(key in (b as any))) return false;
+		if (!Object.hasOwn(b as object, key)) return false;
 		if (!deep_equal((a as any)[key], (b as any)[key])) return false;
 	}
 
