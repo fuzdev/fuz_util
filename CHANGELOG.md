@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.54.0
+
+### Minor Changes
+
+- rename `tagline` from `motto` ([8906cac](https://github.com/fuzdev/fuz_util/commit/8906cac))
+
+### Patch Changes
+
+- use `Object.hasOwn` instead of `in` for own-property checks in `deep_equal` ([38fd976](https://github.com/fuzdev/fuz_util/commit/38fd976))
+
 ## 0.53.4
 
 ### Patch Changes
