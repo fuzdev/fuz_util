@@ -72,14 +72,14 @@ export const PackageJson = z.looseObject({
 		.meta({description: 'disallow publishing to the configured registry'})
 		.optional(),
 	description: z.string().optional(),
-	motto: z
+	tagline: z
 		.string()
-		.meta({description: "a Gro extension that's a short phrase that represents this project"})
+		.meta({description: "a Fuz extension that's a short phrase that represents this project"})
 		.optional(),
 	glyph: z
 		.string()
 		.meta({
-			description: "a Gro extension that's a single unicode character that represents this project",
+			description: "a Fuz extension that's a single unicode character that represents this project",
 		})
 		.refine((v) => count_graphemes(v) === 1, 'must be a single unicode character')
 		.optional(),
@@ -87,12 +87,12 @@ export const PackageJson = z.looseObject({
 		.string()
 		.meta({
 			description:
-				"a Gro extension that's a link relative to the `homepage` to an image that represents this project",
+				"a Fuz extension that's a link relative to the `homepage` to an image that represents this project",
 		})
 		.optional(),
 	logo_alt: z
 		.string()
-		.meta({description: "a Gro extension that's the alt text for the `logo`"})
+		.meta({description: "a Fuz extension that's the alt text for the `logo`"})
 		.optional(),
 	license: z.string().optional(),
 	scripts: z.record(z.string(), z.string()).optional(),
