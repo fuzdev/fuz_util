@@ -3,7 +3,7 @@
 	import '@fuzdev/fuz_code/theme.css';
 	import '$routes/style.css';
 
-	import Themed from '@fuzdev/fuz_ui/Themed.svelte';
+	import ThemeRoot from '@fuzdev/fuz_ui/ThemeRoot.svelte';
 	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 	import type {Snippet} from 'svelte';
 
@@ -22,6 +22,6 @@
 	<title>@fuzdev/fuz_util</title>
 </svelte:head>
 
-<Themed>
+<ThemeRoot>
 	{@render children()}
-</Themed>
+</ThemeRoot>
