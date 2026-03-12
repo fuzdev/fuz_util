@@ -12,9 +12,9 @@ const bench = new Benchmark({
 	warmup_iterations: 10, // Warmup iterations before measuring
 });
 
-// =============================================================================
+//
 // 1. FAST PATHS (should be nanoseconds - baseline)
-// =============================================================================
+//
 
 const obj = {a: 1, b: 2, c: 3};
 const arr = [1, 2, 3, 4, 5];
@@ -39,9 +39,9 @@ bench.add('constructor mismatch: array vs object', () => {
 	deep_equal(arr, obj);
 });
 
-// =============================================================================
+//
 // 2. COMMON CASES (microseconds - typical usage)
-// =============================================================================
+//
 
 const small_obj_a = {id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b']};
 const small_obj_b = {id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b']};
@@ -67,9 +67,9 @@ bench.add('small array: not equal (last element)', () => {
 	deep_equal(small_arr_a, small_arr_c);
 });
 
-// =============================================================================
+//
 // 3. TYPED ARRAYS
-// =============================================================================
+//
 
 const uint8_a = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const uint8_b = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
@@ -105,9 +105,9 @@ bench.add('typed array: large Uint8Array (1000 elements)', () => {
 	deep_equal(large_uint8_a, large_uint8_b);
 });
 
-// =============================================================================
+//
 // 4. NEW BUG FIXES (verify no performance regression)
-// =============================================================================
+//
 
 const date_a = new Date('2024-01-15T10:30:00Z');
 const date_b = new Date('2024-01-15T10:30:00Z');
@@ -176,9 +176,9 @@ bench.add('boxed Number: different values', () => {
 	deep_equal(boxed_num_a, boxed_num_c);
 });
 
-// =============================================================================
+//
 // 5. NESTED STRUCTURES (recursive performance)
-// =============================================================================
+//
 
 const nested_2_levels = {
 	a: {x: 1, y: 2},
@@ -202,9 +202,9 @@ bench.add('nested object: 5 levels deep', () => {
 	deep_equal(nested_5_levels, nested_5_levels_copy);
 });
 
-// =============================================================================
+//
 // 6. STRESS TESTS (worst case performance)
-// =============================================================================
+//
 
 const large_obj: Record<string, number> = {};
 const large_obj_copy: Record<string, number> = {};
@@ -224,9 +224,9 @@ bench.add('large array: 1000 elements', () => {
 	deep_equal(large_arr_a, large_arr_b);
 });
 
-// =============================================================================
+//
 // 7. COLLECTIONS (Map, Set)
-// =============================================================================
+//
 
 const map_a = new Map([
 	['a', 1],
@@ -250,9 +250,9 @@ bench.add('Set: equal (5 elements)', () => {
 	deep_equal(set_a, set_b);
 });
 
-// =============================================================================
+//
 // Run and report
-// =============================================================================
+//
 
 await bench.run();
 

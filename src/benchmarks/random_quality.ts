@@ -327,9 +327,9 @@ const tests: Array<TestDef> = [
 	},
 ];
 
-// ============================================
+//
 // Table rendering helper
-// ============================================
+//
 
 const render_table = (all_rows: Array<Array<string>>, left_align_cols = 1): string => {
 	const col_widths = all_rows[0]!.map((_, col) =>
@@ -355,9 +355,9 @@ const render_table = (all_rows: Array<Array<string>>, left_align_cols = 1): stri
 	return lines.join('\n');
 };
 
-// ============================================
+//
 // Run main tests
-// ============================================
+//
 
 const mode = deep ? 'deep' : 'default';
 console.log(`\nPRNG Distribution Quality Report (N=${N.toLocaleString()}, ${mode})\n`);
@@ -388,9 +388,9 @@ console.log(
 	'\nScore: ' + generators.map((g, i) => `${g.name} ${pass_counts[i]}/${tests.length}`).join('  '),
 );
 
-// ============================================
+//
 // Detailed analysis
-// ============================================
+//
 
 console.log('\n\n── Detailed Analysis ──\n');
 

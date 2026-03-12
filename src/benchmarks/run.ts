@@ -31,9 +31,9 @@ const bench = new Benchmark({
 	min_iterations: 50,
 });
 
-// ============================================
+//
 // Slugify benchmarks
-// ============================================
+//
 
 const slugify_title = 'this Is a Test of Things to Do';
 const slugify_results: Array<string> = [];
@@ -46,9 +46,9 @@ bench.add('slugify (no special chars)', () => {
 	slugify_results.push(slugify(slugify_title, false));
 });
 
-// ============================================
+//
 // Deep equal benchmarks
-// ============================================
+//
 
 const deep_equal_small_obj = {a: 1, b: 2, c: 3};
 const deep_equal_small_obj_copy = {a: 1, b: 2, c: 3};
@@ -74,9 +74,9 @@ bench.add('deep_equal: same reference', () => {
 	deep_equal_result = deep_equal(deep_equal_small_obj, deep_equal_small_obj);
 });
 
-// ============================================
+//
 // Run benchmarks
-// ============================================
+//
 
 console.log('Running benchmarks...\n');
 await bench.run();
@@ -84,9 +84,9 @@ await bench.run();
 console.log('📊 Benchmark Results\n');
 console.log(bench.table());
 
-// ============================================
+//
 // Baseline comparison
-// ============================================
+//
 
 const comparison = await benchmark_baseline_compare(bench.results(), {
 	path: BASELINE_PATH,
