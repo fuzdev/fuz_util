@@ -44,9 +44,9 @@ export interface ResolvedComponentImport {
  * Iterates the node's `attributes` array and returns the first `Attribute`
  * node whose `name` matches. Skips `SpreadAttribute`, directive, and other node types.
  *
- * @param node The component AST node to search.
- * @param name The attribute name to find.
- * @returns The matching `Attribute` node, or `undefined` if not found.
+ * @param node - the component AST node to search
+ * @param name - the attribute name to find
+ * @returns the matching `Attribute` node, or `undefined` if not found
  */
 export const find_attribute = (node: AST.Component, name: string): AST.Attribute | undefined => {
 	for (const attr of node.attributes) {
@@ -65,9 +65,9 @@ export const find_attribute = (node: AST.Component, name: string): AST.Attribute
  * via an optional bindings map built by `build_static_bindings`.
  * Returns `null` for dynamic expressions, non-string literals, or unsupported node types.
  *
- * @param expr An ESTree expression AST node.
- * @param bindings Optional map of variable names to their resolved static string values.
- * @returns The resolved static string, or `null` if the expression is dynamic.
+ * @param expr - an ESTree expression AST node
+ * @param bindings - optional map of variable names to their resolved static string values
+ * @returns the resolved static string, or `null` if the expression is dynamic
  */
 export const evaluate_static_expr = (
 	expr: Expression,
@@ -116,9 +116,9 @@ export const evaluate_static_expr = (
  *
  * Returns `null` for null literals, mixed arrays, dynamic expressions, and non-string values.
  *
- * @param value The attribute value from `AST.Attribute['value']`.
- * @param bindings Optional map of variable names to their resolved static string values.
- * @returns The resolved static string, or `null` if the value is dynamic.
+ * @param value - the attribute value from `AST.Attribute['value']`
+ * @param bindings - optional map of variable names to their resolved static string values
+ * @returns the resolved static string, or `null` if the value is dynamic
  */
 export const extract_static_string = (
 	value: AST.Attribute['value'],
@@ -165,10 +165,10 @@ export interface ConditionalChainBranch {
  *
  * A 2-branch result covers the simple ternary case (`a ? 'x' : 'y'`).
  *
- * @param value The attribute value from `AST.Attribute['value']`.
- * @param source The full source string (needed to slice test expression source text).
- * @param bindings Map of variable names to their resolved static string values.
- * @returns Array of conditional chain branches, or `null` if not extractable.
+ * @param value - the attribute value from `AST.Attribute['value']`
+ * @param source - the full source string (needed to slice test expression source text)
+ * @param bindings - map of variable names to their resolved static string values
+ * @returns array of conditional chain branches, or `null` if not extractable
  */
 export const try_extract_conditional_chain = (
 	value: AST.Attribute['value'],
@@ -223,8 +223,8 @@ export const try_extract_conditional_chain = (
  * Skips destructuring patterns, `let`/`var` declarations, and declarations
  * whose initializers reference dynamic values.
  *
- * @param ast The parsed Svelte AST root node.
- * @returns Map of variable names to their resolved static string values.
+ * @param ast - the parsed Svelte AST root node
+ * @returns map of variable names to their resolved static string values
  */
 export const build_static_bindings = (ast: AST.Root): Map<string, string> => {
 	const bindings: Map<string, string> = new Map();
@@ -253,9 +253,9 @@ export const build_static_bindings = (ast: AST.Root): Map<string, string> => {
  * and `import type` declarations (both whole-declaration and per-specifier).
  * Returns import node references alongside names to support import removal.
  *
- * @param ast The parsed Svelte AST root node.
- * @param component_imports Array of import source paths to match against.
- * @returns Map of local names to their resolved import info.
+ * @param ast - the parsed Svelte AST root node
+ * @param component_imports - array of import source paths to match against
+ * @returns map of local names to their resolved import info
  */
 export const resolve_component_names = (
 	ast: AST.Root,
@@ -287,8 +287,8 @@ export const resolve_component_names = (
  * Returns the end position of the last `ImportDeclaration`, or the start
  * of the script body content if no imports exist.
  *
- * @param script The parsed `AST.Script` node.
- * @returns The character position where new imports should be inserted.
+ * @param script - the parsed `AST.Script` node
+ * @returns the character position where new imports should be inserted
  */
 export const find_import_insert_position = (script: AST.Script): number => {
 	let last_import_end = -1;
@@ -310,9 +310,9 @@ export const find_import_insert_position = (script: AST.Script): number => {
  * Default imports produce `import Name from 'path';` lines.
  * Named imports are grouped by path into `import {a, b} from 'path';` lines.
  *
- * @param imports Map of local names to their import info.
- * @param indent Indentation prefix for each line. @default '\t'
- * @returns A string of newline-separated import statements.
+ * @param imports - map of local names to their import info
+ * @param indent - indentation prefix for each line @default '\t'
+ * @returns a string of newline-separated import statements
  */
 export const generate_import_lines = (
 	imports: Map<string, PreprocessImportInfo>,
@@ -383,10 +383,10 @@ const NON_REFERENCE_FIELDS: Map<
  * Safe for Svelte template ASTs: `Component.name` is a plain string property
  * (not an `Identifier` node), so `<Mdz>` tags do not produce false matches.
  *
- * @param node The AST subtree to search.
- * @param name The identifier name to look for.
- * @param skip Set of AST nodes to skip during traversal.
- * @returns `true` if a matching `Identifier` node is found.
+ * @param node - the AST subtree to search
+ * @param name - the identifier name to look for
+ * @param skip - set of AST nodes to skip during traversal
+ * @returns `true` if a matching `Identifier` node is found
  */
 export const has_identifier_in_tree = (
 	node: unknown,
@@ -449,9 +449,9 @@ export const escape_svelte_text = (text: string): string =>
  * blank lines. Only safe for single-declarator statements (`const x = 'val';`);
  * callers must verify `node.declarations.length === 1` before calling.
  *
- * @param s The MagicString instance to modify.
- * @param declaration_node The `VariableDeclaration` AST node with Svelte position data.
- * @param source The original source string.
+ * @param s - the MagicString instance to modify
+ * @param declaration_node - the `VariableDeclaration` AST node with Svelte position data
+ * @param source - the original source string
  */
 export const remove_variable_declaration = (
 	s: {remove: (start: number, end: number) => unknown},
@@ -467,9 +467,9 @@ export const remove_variable_declaration = (
  * Consumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving
  * blank lines.
  *
- * @param s The MagicString instance to modify.
- * @param import_node The `ImportDeclaration` AST node with Svelte position data.
- * @param source The original source string.
+ * @param s - the MagicString instance to modify
+ * @param import_node - the `ImportDeclaration` AST node with Svelte position data
+ * @param source - the original source string
  */
 export const remove_import_declaration = (
 	s: {remove: (start: number, end: number) => unknown},
@@ -520,11 +520,11 @@ const remove_positioned_node = (
  * - `import {default as Mdz, other} from '...'` → `import {other} from '...'`
  * - `import {Mdz, other} from '...'` → `import {other} from '...'`
  *
- * @param s The MagicString instance to modify.
- * @param node The positioned `ImportDeclaration` AST node.
- * @param specifier_to_remove The specifier to remove from the import.
- * @param source The original source string.
- * @param additional_lines Extra content appended after the reconstructed import
+ * @param s - the MagicString instance to modify
+ * @param node - the positioned `ImportDeclaration` AST node
+ * @param specifier_to_remove - the specifier to remove from the import
+ * @param source - the original source string
+ * @param additional_lines - extra content appended after the reconstructed import
  *   (used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).
  */
 export const remove_import_specifier = (
@@ -585,10 +585,10 @@ const format_named_specifiers = (specs: Array<ImportDeclaration['specifiers'][nu
 /**
  * Handles errors during Svelte preprocessing with configurable behavior.
  *
- * @param error The caught error.
- * @param prefix Log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`).
- * @param filename The file being processed.
- * @param on_error `'throw'` to re-throw as a new Error, `'log'` to console.error.
+ * @param error - the caught error
+ * @param prefix - log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`)
+ * @param filename - the file being processed
+ * @param on_error - `'throw'` to re-throw as a new Error, `'log'` to console.error
  */
 export const handle_preprocess_error = (
 	error: unknown,

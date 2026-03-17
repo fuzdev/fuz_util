@@ -25,7 +25,7 @@ export const blake3_ready = init();
  * Computes a BLAKE3 hash synchronously.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns 64-character hexadecimal hash string (32 bytes).
+ * @returns 64-character hexadecimal hash string (32 bytes)
  */
 export const hash_blake3 = (data: BufferSource | string): string => to_hex(hash(to_bytes(data)));
 

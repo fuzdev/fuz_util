@@ -518,7 +518,7 @@ export const stats_incomplete_beta = (x: number, a: number, b: number): number =
  *
  * @param t - Absolute value of t-statistic
  * @param df - Degrees of freedom
- * @returns Two-tailed p-value
+ * @returns two-tailed p-value
  */
 export const stats_t_distribution_p_value = (t: number, df: number): number => {
 	// Use normal approximation for large df

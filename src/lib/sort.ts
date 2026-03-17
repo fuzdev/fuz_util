@@ -30,7 +30,7 @@ export type TopologicalSortResult<T extends Sortable> =
  *
  * @param items - Array of items to sort.
  * @param label - Label for error messages (e.g. "resource", "step").
- * @returns Sorted items or error if cycle detected.
+ * @returns sorted items or error if cycle detected
  */
 export const topological_sort = <T extends Sortable>(
 	items: Array<T>,

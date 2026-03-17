@@ -17,7 +17,7 @@ const encoder = new TextEncoder();
  *
  * @param algorithm - Web Crypto algorithm name (e.g. `'SHA-256'`).
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns hexadecimal hash string.
+ * @returns hexadecimal hash string
  */
 const hash_webcrypto = async (algorithm: string, data: BufferSource | string): Promise<string> => {
 	const buffer = typeof data === 'string' ? encoder.encode(data) : data;
@@ -29,7 +29,7 @@ const hash_webcrypto = async (algorithm: string, data: BufferSource | string): P
  * Computes a SHA-1 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns 40-character hexadecimal hash string.
+ * @returns 40-character hexadecimal hash string
  */
 export const hash_sha1 = (data: BufferSource | string): Promise<string> =>
 	hash_webcrypto('SHA-1', data);
@@ -38,7 +38,7 @@ export const hash_sha1 = (data: BufferSource | string): Promise<string> =>
  * Computes a SHA-256 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns 64-character hexadecimal hash string.
+ * @returns 64-character hexadecimal hash string
  */
 export const hash_sha256 = (data: BufferSource | string): Promise<string> =>
 	hash_webcrypto('SHA-256', data);
@@ -47,7 +47,7 @@ export const hash_sha256 = (data: BufferSource | string): Promise<string> =>
  * Computes a SHA-384 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns 96-character hexadecimal hash string.
+ * @returns 96-character hexadecimal hash string
  */
 export const hash_sha384 = (data: BufferSource | string): Promise<string> =>
 	hash_webcrypto('SHA-384', data);
@@ -56,7 +56,7 @@ export const hash_sha384 = (data: BufferSource | string): Promise<string> =>
  * Computes a SHA-512 hash using Web Crypto API.
  *
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
- * @returns 128-character hexadecimal hash string.
+ * @returns 128-character hexadecimal hash string
  */
 export const hash_sha512 = (data: BufferSource | string): Promise<string> =>
 	hash_webcrypto('SHA-512', data);
@@ -69,7 +69,7 @@ export const hash_sha512 = (data: BufferSource | string): Promise<string> =>
  * For non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.
  *
  * @param data - String or binary data to hash.
- * @returns 8-character hex-encoded unsigned 32-bit hash.
+ * @returns 8-character hex-encoded unsigned 32-bit hash
  */
 export const hash_insecure = (data: BufferSource | string): string => {
 	let hash = 5381; // DJB2 initial value, chosen empirically for good distribution

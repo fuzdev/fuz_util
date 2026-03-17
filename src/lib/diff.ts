@@ -17,7 +17,7 @@ export interface DiffLine {
  *
  * @param a - The original/current content.
  * @param b - The new/desired content.
- * @returns Array of diff lines with type annotations.
+ * @returns array of diff lines with type annotations
  */
 export const diff_lines = (a: string, b: string): Array<DiffLine> => {
 	const a_lines = a.split('\n');
@@ -96,7 +96,7 @@ const compute_lcs = (a: Array<string>, b: Array<string>): Array<string> => {
  *
  * @param diff - The full diff lines.
  * @param context_lines - Number of context lines to show around changes (default: 3).
- * @returns Filtered diff with ellipsis markers for skipped regions.
+ * @returns filtered diff with ellipsis markers for skipped regions
  */
 export const filter_diff_context = (diff: Array<DiffLine>, context_lines = 3): Array<DiffLine> => {
 	if (diff.length === 0) return [];
@@ -167,7 +167,7 @@ export interface FormatDiffOptions {
  * @param current_path - Path label for "current" content.
  * @param desired_path - Path label for "desired" content.
  * @param options - Formatting options.
- * @returns Formatted diff string.
+ * @returns formatted diff string
  */
 export const format_diff = (
 	diff: Array<DiffLine>,
@@ -215,7 +215,7 @@ export const format_diff = (
  * @param desired - Desired content.
  * @param path - File path for labels.
  * @param options - Formatting options.
- * @returns Formatted diff string, or null if binary.
+ * @returns formatted diff string, or null if binary
  */
 export const generate_diff = (
 	current: string,

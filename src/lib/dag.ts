@@ -81,7 +81,7 @@ export interface DagResult {
  * per the options.
  *
  * @param options - DAG execution options.
- * @returns Aggregated result with per-node details.
+ * @returns aggregated result with per-node details
  */
 export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promise<DagResult> => {
 	const {

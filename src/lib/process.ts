@@ -253,7 +253,7 @@ export class ProcessRegistry {
 	 * @param command - The command to run
 	 * @param args - Arguments to pass to the command
 	 * @param options - Spawn options including `signal` and `timeout_ms`
-	 * @returns Handle with `child` process and `closed` promise
+	 * @returns handle with `child` process and `closed` promise
 	 */
 	spawn(
 		command: string,
@@ -298,7 +298,7 @@ export class ProcessRegistry {
 	 * @param command - The command to run
 	 * @param args - Arguments to pass to the command
 	 * @param options - Spawn options
-	 * @returns Result with captured `stdout` and `stderr`.
+	 * @returns result with captured `stdout` and `stderr`
 	 *   - `null` means spawn failed (ENOENT, etc.) or stream was unavailable
 	 *   - `''` (empty string) means process ran but produced no output
 	 *   - non-empty string contains the captured output
@@ -339,7 +339,7 @@ export class ProcessRegistry {
 	 *
 	 * @param child - The child process to kill
 	 * @param options - Kill options including signal and timeout
-	 * @returns The spawn result after the process exits
+	 * @returns the spawn result after the process exits
 	 */
 	async despawn(child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> {
 		const {signal = 'SIGTERM', timeout_ms} = options ?? {};
@@ -383,7 +383,7 @@ export class ProcessRegistry {
 	 * Kills all processes in this registry.
 	 *
 	 * @param options - Kill options applied to all processes
-	 * @returns Array of spawn results
+	 * @returns array of spawn results
 	 */
 	async despawn_all(options?: DespawnOptions): Promise<Array<SpawnResult>> {
 		return Promise.all([...this.processes].map((child) => this.despawn(child, options)));
@@ -408,7 +408,7 @@ export class ProcessRegistry {
 	 * @param options.graceful_timeout_ms - If set, sends SIGTERM first and waits this
 	 *   many ms before SIGKILL. Recommended: 100-500ms. If null/undefined, uses
 	 *   immediate SIGKILL (default).
-	 * @returns Cleanup function to remove the handler
+	 * @returns cleanup function to remove the handler
 	 */
 	attach_error_handler(options?: {
 		to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null;
@@ -567,7 +567,7 @@ export const attach_process_error_handler = (
  * @param command - The command to run
  * @param args - Arguments to pass to the command
  * @param options - Spawn options (use `stdio` to redirect output to file descriptors)
- * @returns Result with pid on success, or error message on failure
+ * @returns result with pid on success, or error message on failure
  *
  * @example
  * ```ts

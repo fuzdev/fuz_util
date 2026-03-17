@@ -61,8 +61,8 @@ export const is_interactive = (el: any): boolean => {
 /**
  * Stops an event from bubbling and doing default behavior.
  * @param event
- * @param immediate defaults to `true` to use `stopImmediatePropagation` over `stopPropagation`
- * @param preventDefault defaults to `true`
+ * @param immediate - defaults to `true` to use `stopImmediatePropagation` over `stopPropagation`
+ * @param preventDefault - defaults to `true`
  * @mutates event - calls preventDefault(), stopPropagation(), or stopImmediatePropagation()
  * @returns
  */

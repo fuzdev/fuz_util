@@ -8,7 +8,7 @@ import {format_number} from './maths.js';
  * All times use the same unit for easy comparison.
  * @param results - Array of benchmark results
  * @param baseline - Optional task name to use as baseline for comparison (defaults to fastest)
- * @returns Formatted table string with enhanced metrics
+ * @returns formatted table string with enhanced metrics
  *
  * @example
  * ```ts
@@ -128,7 +128,7 @@ export const benchmark_format_table = (
  * All times use the same unit for easy comparison.
  * @param results - Array of benchmark results
  * @param baseline - Optional task name to use as baseline for comparison (defaults to fastest)
- * @returns Formatted markdown table string
+ * @returns formatted markdown table string
  *
  * @example
  * ```ts
@@ -240,7 +240,7 @@ export const benchmark_format_markdown = (
  * Format results as grouped Markdown tables with headers between groups.
  * @param results - Array of benchmark results
  * @param groups - Array of group definitions
- * @returns Formatted markdown string with group headers and tables
+ * @returns formatted markdown string with group headers and tables
  *
  * @example
  * ```ts
@@ -350,7 +350,7 @@ export const benchmark_format_json = (
  * Format results as a grouped table with visual separators between groups.
  * @param results - Array of benchmark results
  * @param groups - Array of group definitions
- * @returns Formatted table string with group separators
+ * @returns formatted table string with group separators
  *
  * @example
  * ```ts

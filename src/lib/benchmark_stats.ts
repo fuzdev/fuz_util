@@ -207,7 +207,7 @@ export class BenchmarkStats {
  * @param a - First benchmark stats (or any object with required properties)
  * @param b - Second benchmark stats (or any object with required properties)
  * @param options - Comparison options
- * @returns Comparison result with significance, effect size, and recommendation
+ * @returns comparison result with significance, effect size, and recommendation
  *
  * @example
  * ```ts

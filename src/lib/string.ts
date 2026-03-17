@@ -170,7 +170,7 @@ export const pad_width = (
  *
  * @param a - First string
  * @param b - Second string
- * @returns The edit distance between the strings
+ * @returns the edit distance between the strings
  */
 export const levenshtein_distance = (a: string, b: string): number => {
 	if (a.length === 0) return b.length;
@@ -241,6 +241,6 @@ export const escape_js_string = (value: string): string =>
  * Checks for null bytes in the first 8KB of content.
  *
  * @param content - Content to check.
- * @returns True if content appears to be binary.
+ * @returns true if content appears to be binary
  */
 export const string_is_binary = (content: string): boolean => content.slice(0, 8192).includes('\0');

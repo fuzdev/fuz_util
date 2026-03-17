@@ -205,7 +205,7 @@ export const benchmark_baseline_save = async (
  * Load the current baseline from disk.
  *
  * @param options - Load options
- * @returns The baseline, or null if not found or invalid
+ * @returns the baseline, or null if not found or invalid
  *
  * @example
  * ```ts
@@ -257,7 +257,7 @@ export const benchmark_baseline_load = async (
  *
  * @param results - Current benchmark results
  * @param options - Comparison options including regression threshold and staleness warning
- * @returns Comparison result with regressions, improvements, and unchanged tasks
+ * @returns comparison result with regressions, improvements, and unchanged tasks
  *
  * @example
  * ```ts
@@ -421,7 +421,7 @@ export const benchmark_baseline_compare = async (
  * Format a baseline comparison result as a human-readable string.
  *
  * @param result - Comparison result from benchmark_baseline_compare
- * @returns Formatted string summary
+ * @returns formatted string summary
  */
 export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonResult): string => {
 	if (!result.baseline_found) {

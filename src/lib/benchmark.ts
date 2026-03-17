@@ -93,7 +93,7 @@ interface BenchmarkTaskInternal extends BenchmarkTask {
  * @param fn - Function to warmup (sync or async)
  * @param iterations - Number of warmup iterations
  * @param async_hint - If provided, use this instead of detecting
- * @returns Whether the function is async
+ * @returns whether the function is async
  *
  * @example
  * ```ts
@@ -158,7 +158,7 @@ export class Benchmark {
 	 * Add a benchmark task.
 	 * @param name - Task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 *
 	 * @example
 	 * ```ts
@@ -195,7 +195,7 @@ export class Benchmark {
 	/**
 	 * Remove a benchmark task by name.
 	 * @param name - Name of the task to remove
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -218,7 +218,7 @@ export class Benchmark {
 	/**
 	 * Mark a task to be skipped during benchmark runs.
 	 * @param name - Name of the task to skip
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -241,7 +241,7 @@ export class Benchmark {
 	/**
 	 * Mark a task to run exclusively (along with other `only` tasks).
 	 * @param name - Name of the task to run exclusively
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -264,7 +264,7 @@ export class Benchmark {
 
 	/**
 	 * Run all benchmark tasks.
-	 * @returns Array of benchmark results
+	 * @returns array of benchmark results
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this.#results = [];
@@ -386,7 +386,7 @@ export class Benchmark {
 	/**
 	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
 	 * @param options - Formatting options
-	 * @returns Formatted table string
+	 * @returns formatted table string
 	 *
 	 * @example
 	 * ```ts
@@ -411,7 +411,7 @@ export class Benchmark {
 	/**
 	 * Format results as a Markdown table.
 	 * @param options - Formatting options (groups for organized output with optional baselines)
-	 * @returns Formatted markdown string
+	 * @returns formatted markdown string
 	 *
 	 * @example
 	 * ```ts
@@ -445,7 +445,7 @@ export class Benchmark {
 	/**
 	 * Get the benchmark results.
 	 * Returns a shallow copy to prevent external mutation.
-	 * @returns Array of benchmark results
+	 * @returns array of benchmark results
 	 */
 	results(): Array<BenchmarkResult> {
 		return [...this.#results];
@@ -453,7 +453,7 @@ export class Benchmark {
 
 	/**
 	 * Check if the benchmark has been run and has results.
-	 * @returns True if results are available
+	 * @returns true if results are available
 	 *
 	 * @example
 	 * ```ts
@@ -469,7 +469,7 @@ export class Benchmark {
 	/**
 	 * Get results as a map for convenient lookup by task name.
 	 * Returns a new Map each call to prevent external mutation.
-	 * @returns Map of task name to benchmark result
+	 * @returns map of task name to benchmark result
 	 *
 	 * @example
 	 * ```ts
@@ -487,7 +487,7 @@ export class Benchmark {
 	/**
 	 * Reset the benchmark results.
 	 * Keeps tasks intact so benchmarks can be rerun.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 */
 	reset(): this {
 		this.#results = [];
@@ -497,7 +497,7 @@ export class Benchmark {
 	/**
 	 * Clear everything (results and tasks).
 	 * Use this to start fresh with a new set of benchmarks.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this Benchmark instance for chaining
 	 */
 	clear(): this {
 		this.#results = [];
@@ -507,7 +507,7 @@ export class Benchmark {
 
 	/**
 	 * Get a quick text summary of the fastest task.
-	 * @returns Human-readable summary string
+	 * @returns human-readable summary string
 	 *
 	 * @example
 	 * ```ts
