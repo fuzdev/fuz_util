@@ -82,7 +82,7 @@ See `docs/benchmark.md` for full documentation.
 
 - `types.ts` - TypeScript utility types (Flavored, Branded, union helpers)
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
-  logo, motto, etc.)
+  logo, tagline, etc.)
 - `source_json.ts` - `SourceJson`, `ModuleJson`, `DeclarationJson` Zod schemas
   for `.well-known/src.json` metadata
 - `library_json.ts` - `LibraryJson` combining package.json + source metadata
