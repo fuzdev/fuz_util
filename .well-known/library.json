@@ -826,12 +826,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Benchmark results to save"
+								"description": "benchmark results to save"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "Save options",
+								"description": "save options",
 								"default_value": "{}"
 							}
 						]
@@ -851,7 +851,7 @@
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "Load options",
+								"description": "load options",
 								"default_value": "{}"
 							}
 						]
@@ -871,12 +871,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Current benchmark results"
+								"description": "current benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineCompareOptions",
-								"description": "Comparison options including regression threshold and staleness warning",
+								"description": "comparison options including regression threshold and staleness warning",
 								"default_value": "{}"
 							}
 						]
@@ -893,7 +893,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "comparison result from benchmark_baseline_compare"
 							}
 						]
 					},
@@ -909,12 +909,12 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "comparison result from benchmark_baseline_compare"
 							},
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "Formatting options",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -946,13 +946,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -971,13 +971,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -996,12 +996,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "array of group definitions"
 							}
 						]
 					},
@@ -1040,13 +1040,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
 								"optional": true,
-								"description": "Formatting options"
+								"description": "formatting options"
 							}
 						]
 					},
@@ -1065,12 +1065,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "array of group definitions"
 							}
 						]
 					},
@@ -1412,18 +1412,18 @@
 							{
 								"name": "a",
 								"type": "BenchmarkStatsComparable",
-								"description": "First benchmark stats (or any object with required properties)"
+								"description": "first benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "b",
 								"type": "BenchmarkStatsComparable",
-								"description": "Second benchmark stats (or any object with required properties)"
+								"description": "second benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
 								"optional": true,
-								"description": "Comparison options"
+								"description": "comparison options"
 							}
 						]
 					}
@@ -1656,18 +1656,18 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to warmup (sync or async)"
+								"description": "function to warmup (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of warmup iterations"
+								"description": "number of warmup iterations"
 							},
 							{
 								"name": "async_hint",
 								"type": "boolean | undefined",
 								"optional": true,
-								"description": "If provided, use this instead of detecting"
+								"description": "if provided, use this instead of detecting"
 							}
 						]
 					},
@@ -1700,7 +1700,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Task name or full task object"
+										"description": "task name or full task object"
 									},
 									{
 										"name": "fn",
@@ -1752,7 +1752,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to remove"
+										"description": "name of the task to remove"
 									}
 								],
 								"throws": [
@@ -1773,7 +1773,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to skip"
+										"description": "name of the task to skip"
 									}
 								],
 								"throws": [
@@ -1794,7 +1794,7 @@
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to run exclusively"
+										"description": "name of the task to run exclusively"
 									}
 								],
 								"throws": [
@@ -1825,7 +1825,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options"
+										"description": "formatting options"
 									}
 								]
 							},
@@ -1841,7 +1841,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (groups for organized output with optional baselines)"
+										"description": "formatting options (groups for organized output with optional baselines)"
 									}
 								]
 							},
@@ -1857,7 +1857,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatJsonOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (pretty, include_timings)"
+										"description": "formatting options (pretty, include_timings)"
 									}
 								]
 							},
@@ -1932,7 +1932,7 @@
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "String or `BufferSource` to convert."
+								"description": "string or `BufferSource` to convert"
 							}
 						]
 					},
@@ -2466,7 +2466,7 @@
 							{
 								"name": "options",
 								"type": "DagOptions<T>",
-								"description": "DAG execution options."
+								"description": "DAG execution options"
 							}
 						]
 					}
@@ -2537,12 +2537,12 @@
 							{
 								"name": "a",
 								"type": "string",
-								"description": "The original/current content."
+								"description": "the original/current content"
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "The new/desired content."
+								"description": "the new/desired content"
 							}
 						]
 					},
@@ -2558,12 +2558,12 @@
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "The full diff lines."
+								"description": "the full diff lines"
 							},
 							{
 								"name": "context_lines",
 								"type": "number",
-								"description": "Number of context lines to show around changes (default: 3).",
+								"description": "number of context lines to show around changes (default: 3)",
 								"default_value": "3"
 							}
 						]
@@ -2607,22 +2607,22 @@
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "The diff lines to format."
+								"description": "the diff lines to format"
 							},
 							{
 								"name": "current_path",
 								"type": "string",
-								"description": "Path label for \"current\" content."
+								"description": "path label for \"current\" content"
 							},
 							{
 								"name": "desired_path",
 								"type": "string",
-								"description": "Path label for \"desired\" content."
+								"description": "path label for \"desired\" content"
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "Formatting options.",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2639,22 +2639,22 @@
 							{
 								"name": "current",
 								"type": "string",
-								"description": "Current content."
+								"description": "current content"
 							},
 							{
 								"name": "desired",
 								"type": "string",
-								"description": "Desired content."
+								"description": "desired content"
 							},
 							{
 								"name": "path",
 								"type": "string",
-								"description": "File path for labels."
+								"description": "file path for labels"
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "Formatting options.",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2717,10 +2717,12 @@
 						"source_line": 69,
 						"type_signature": "<T extends Pick<Event, \"preventDefault\" | \"stopPropagation\" | \"stopImmediatePropagation\">>(event: T, immediate?: boolean, preventDefault?: boolean): T",
 						"return_type": "T",
+						"return_description": "the swallowed event",
 						"parameters": [
 							{
 								"name": "event",
-								"type": "T"
+								"type": "T",
+								"description": "the event to swallow"
 							},
 							{
 								"name": "immediate",
@@ -3313,7 +3315,7 @@
 							{
 								"name": "stdout",
 								"type": "string | null",
-								"description": "The raw output from `git status --porcelain -z`"
+								"description": "the raw output from `git status --porcelain -z`"
 							}
 						]
 					},
@@ -3808,7 +3810,7 @@
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "String or binary data to hash."
+								"description": "string or binary data to hash"
 							}
 						]
 					}
@@ -3833,7 +3835,7 @@
 							{
 								"name": "bytes",
 								"type": "Uint8Array<ArrayBufferLike>",
-								"description": "Binary data to encode."
+								"description": "binary data to encode"
 							}
 						]
 					},
@@ -3849,7 +3851,7 @@
 							{
 								"name": "hex",
 								"type": "string",
-								"description": "Hex string to decode (case-insensitive, whitespace allowed)."
+								"description": "hex string to decode (case-insensitive, whitespace allowed)"
 							}
 						]
 					}
@@ -4764,7 +4766,8 @@
 						"parameters": [
 							{
 								"name": "obj",
-								"type": "T"
+								"type": "T",
+								"description": "the object to filter"
 							}
 						]
 					},
@@ -5563,19 +5566,19 @@
 									{
 										"name": "command",
 										"type": "string",
-										"description": "The command to run"
+										"description": "the command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "Arguments to pass to the command",
+										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "Spawn options including `signal` and `timeout_ms`"
+										"description": "spawn options including `signal` and `timeout_ms`"
 									}
 								]
 							},
@@ -5590,19 +5593,19 @@
 									{
 										"name": "command",
 										"type": "string",
-										"description": "The command to run"
+										"description": "the command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "Arguments to pass to the command",
+										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "Spawn options"
+										"description": "spawn options"
 									}
 								]
 							},
@@ -5617,13 +5620,13 @@
 									{
 										"name": "child",
 										"type": "ChildProcess",
-										"description": "The child process to kill"
+										"description": "the child process to kill"
 									},
 									{
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "Kill options including signal and timeout"
+										"description": "kill options including signal and timeout"
 									}
 								]
 							},
@@ -5639,7 +5642,7 @@
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "Kill options applied to all processes"
+										"description": "kill options applied to all processes"
 									}
 								]
 							},
@@ -5655,7 +5658,7 @@
 										"name": "options",
 										"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 										"optional": true,
-										"description": "Configuration options"
+										"description": "configuration options"
 									}
 								]
 							}
@@ -5819,19 +5822,19 @@
 							{
 								"name": "command",
 								"type": "string",
-								"description": "The command to run"
+								"description": "the command to run"
 							},
 							{
 								"name": "args",
 								"type": "readonly string[]",
-								"description": "Arguments to pass to the command",
+								"description": "arguments to pass to the command",
 								"default_value": "[]"
 							},
 							{
 								"name": "options",
 								"type": "SpawnOptions | undefined",
 								"optional": true,
-								"description": "Spawn options (use `stdio` to redirect output to file descriptors)"
+								"description": "spawn options (use `stdio` to redirect output to file descriptors)"
 							}
 						]
 					},
@@ -5977,7 +5980,7 @@
 							{
 								"name": "pid",
 								"type": "number",
-								"description": "The process ID to check (must be a positive integer)"
+								"description": "the process ID to check (must be a positive integer)"
 							}
 						]
 					}
@@ -6416,12 +6419,12 @@
 							{
 								"name": "items",
 								"type": "T[]",
-								"description": "Array of items to sort."
+								"description": "array of items to sort"
 							},
 							{
 								"name": "label",
 								"type": "string",
-								"description": "Label for error messages (e.g. \"resource\", \"step\").",
+								"description": "label for error messages (e.g. \"resource\", \"step\")",
 								"default_value": "'item'"
 							}
 						]
@@ -6611,12 +6614,12 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "array of numbers"
 							},
 							{
 								"name": "p",
 								"type": "number",
-								"description": "Percentile (0-1, e.g., 0.95 for 95th percentile)"
+								"description": "percentile (0-1, e.g., 0.95 for 95th percentile)"
 							}
 						]
 					},
@@ -6846,13 +6849,13 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "array of numbers"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "configuration options"
 							}
 						]
 					},
@@ -6868,23 +6871,23 @@
 							{
 								"name": "mean",
 								"type": "number",
-								"description": "Mean of the data"
+								"description": "mean of the data"
 							},
 							{
 								"name": "std_dev",
 								"type": "number",
-								"description": "Standard deviation of the data"
+								"description": "standard deviation of the data"
 							},
 							{
 								"name": "sample_size",
 								"type": "number",
-								"description": "Number of samples"
+								"description": "number of samples"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "configuration options"
 							}
 						]
 					},
@@ -6920,32 +6923,32 @@
 							{
 								"name": "mean1",
 								"type": "number",
-								"description": "Mean of first sample"
+								"description": "mean of first sample"
 							},
 							{
 								"name": "std1",
 								"type": "number",
-								"description": "Standard deviation of first sample"
+								"description": "standard deviation of first sample"
 							},
 							{
 								"name": "n1",
 								"type": "number",
-								"description": "Size of first sample"
+								"description": "size of first sample"
 							},
 							{
 								"name": "mean2",
 								"type": "number",
-								"description": "Mean of second sample"
+								"description": "mean of second sample"
 							},
 							{
 								"name": "std2",
 								"type": "number",
-								"description": "Standard deviation of second sample"
+								"description": "standard deviation of second sample"
 							},
 							{
 								"name": "n2",
 								"type": "number",
-								"description": "Size of second sample"
+								"description": "size of second sample"
 							}
 						]
 					},
@@ -7011,12 +7014,12 @@
 							{
 								"name": "t",
 								"type": "number",
-								"description": "Absolute value of t-statistic"
+								"description": "absolute value of t-statistic"
 							},
 							{
 								"name": "df",
 								"type": "number",
-								"description": "Degrees of freedom"
+								"description": "degrees of freedom"
 							}
 						]
 					}
@@ -7285,12 +7288,12 @@
 							{
 								"name": "a",
 								"type": "string",
-								"description": "First string"
+								"description": "first string"
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "Second string"
+								"description": "second string"
 							}
 						]
 					},
@@ -7320,7 +7323,7 @@
 							{
 								"name": "content",
 								"type": "string",
-								"description": "Content to check."
+								"description": "content to check"
 							}
 						]
 					}
@@ -7904,7 +7907,7 @@
 							{
 								"name": "values_ns",
 								"type": "number[]",
-								"description": "Array of times in nanoseconds"
+								"description": "array of times in nanoseconds"
 							}
 						]
 					},
@@ -7920,17 +7923,17 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "time in nanoseconds"
 							},
 							{
 								"name": "unit",
 								"type": "TimeUnit",
-								"description": "Unit to use ('ns', 'us', 'ms', 's')"
+								"description": "unit to use ('ns', 'us', 'ms', 's')"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -7950,12 +7953,12 @@
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "time in nanoseconds"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -8014,12 +8017,12 @@
 							{
 								"name": "fn",
 								"type": "() => Promise<T>",
-								"description": "Async function to time"
+								"description": "async function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8039,12 +8042,12 @@
 							{
 								"name": "fn",
 								"type": "() => T",
-								"description": "Sync function to time"
+								"description": "sync function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8064,17 +8067,17 @@
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to measure (sync or async)"
+								"description": "function to measure (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of times to execute"
+								"description": "number of times to execute"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to timer_default)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8465,7 +8468,7 @@
 							{
 								"name": "def",
 								"type": "$ZodTypeDef",
-								"description": "Zod type definition to unwrap."
+								"description": "Zod type definition to unwrap"
 							}
 						]
 					},
@@ -8631,7 +8634,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract description from."
+								"description": "Zod schema to extract description from"
 							}
 						]
 					},
@@ -8647,7 +8650,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract default from."
+								"description": "Zod schema to extract default from"
 							}
 						]
 					},
@@ -8663,7 +8666,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract aliases from."
+								"description": "Zod schema to extract aliases from"
 							}
 						]
 					},
@@ -8679,7 +8682,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to get type string for."
+								"description": "Zod schema to get type string for"
 							}
 						]
 					},
@@ -8695,7 +8698,7 @@
 							{
 								"name": "value",
 								"type": "unknown",
-								"description": "Value to format."
+								"description": "value to format"
 							}
 						]
 					},
@@ -8745,7 +8748,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema to extract from."
+								"description": "Zod object schema to extract from"
 							}
 						]
 					},
@@ -8761,7 +8764,7 @@
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema."
+								"description": "Zod object schema"
 							}
 						]
 					}
