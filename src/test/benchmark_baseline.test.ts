@@ -207,6 +207,7 @@ test('benchmark_baseline_format: with results', ({expect}) => {
 					speedup_ratio: 2.0,
 					significant: true,
 					p_value: 0.001,
+					percent_difference: 1.0,
 					effect_size: 5.0,
 					effect_magnitude: 'large' as const,
 					ci_overlap: false,
@@ -228,6 +229,7 @@ test('benchmark_baseline_format: with results', ({expect}) => {
 	expect(formatted).toContain('Regressions (1)');
 	expect(formatted).toContain('slow_task');
 	expect(formatted).toContain('2.00x slower');
+	expect(formatted).toContain('100.0%');
 	expect(formatted).toContain('Unchanged (1)');
 });
 
@@ -435,6 +437,7 @@ test('benchmark_baseline_format_json: produces valid JSON', ({expect}) => {
 					speedup_ratio: 2.0,
 					significant: true,
 					p_value: 0.001,
+					percent_difference: 1.0,
 					effect_size: 5.0,
 					effect_magnitude: 'large' as const,
 					ci_overlap: false,
@@ -456,6 +459,7 @@ test('benchmark_baseline_format_json: produces valid JSON', ({expect}) => {
 	expect(parsed.summary.new_tasks).toBe(1);
 	expect(parsed.regressions[0].name).toBe('slow_task');
 	expect(parsed.regressions[0].speedup_ratio).toBe(2.0);
+	expect(parsed.regressions[0].percent_difference).toBe(1.0);
 	expect(parsed.new_tasks).toEqual(['new_task']);
 	expect(parsed.removed_tasks).toEqual(['old_task']);
 });
