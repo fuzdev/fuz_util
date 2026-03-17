@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.55.0
+
+### Minor Changes
+
+- feat: improve benchmark stats and reliability ([#74](https://github.com/fuzdev/fuz_util/pull/74))
+
 ## 0.54.0
 
 ### Minor Changes
