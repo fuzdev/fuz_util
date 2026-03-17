@@ -1,4 +1,4 @@
-import {test, expect, describe} from 'vitest';
+import {describe, test, assert} from 'vitest';
 import {
 	benchmark_format_table,
 	benchmark_format_markdown,
@@ -36,17 +36,13 @@ const create_result = (name: string, ops_per_second: number): BenchmarkResult =>
 
 describe('benchmark_format_table', () => {
 	test('table columns align properly with emojis', () => {
-		const results = [
-			create_result('fast task', 2_000_000), // 🐆 emoji
-			create_result('slow task', 50_000), // 🐢 emoji
-		];
+		const results = [create_result('fast task', 2_000_000), create_result('slow task', 50_000)];
 
 		const table = benchmark_format_table(results);
 		const lines = table.split('\n');
 
-		// Check that all lines have the same length (proper alignment)
+		// Count display width, not string length (emojis are 2 wide)
 		const line_lengths = lines.map((line) => {
-			// Count display width, not string length (emojis are 2 wide)
 			let width = 0;
 			for (const char of line) {
 				const code = char.codePointAt(0)!;
@@ -67,7 +63,7 @@ describe('benchmark_format_table', () => {
 		// All lines should have the same display width
 		const first_width = line_lengths[0];
 		for (let i = 1; i < line_lengths.length; i++) {
-			expect(line_lengths[i]).toBe(first_width);
+			assert.strictEqual(line_lengths[i], first_width);
 		}
 	});
 
@@ -77,28 +73,30 @@ describe('benchmark_format_table', () => {
 		const table = benchmark_format_table(results);
 		const lines = table.split('\n');
 
-		// Top border
-		const top_border = lines[0]!;
-		// Header content
-		const header = lines[1]!;
+		assert.isDefined(lines[0]);
+		assert.isDefined(lines[1]);
+		const top_border = lines[0];
+		const header = lines[1];
 
 		// Count segments between box characters
 		const border_segments = top_border.split(/[┌┬┐]/).filter(Boolean);
 		const header_segments = header.split('│').filter(Boolean);
 
 		// Each segment should have matching width
-		expect(border_segments.length).toBe(header_segments.length);
+		assert.strictEqual(border_segments.length, header_segments.length);
 
 		for (let i = 0; i < border_segments.length; i++) {
-			const border_width = border_segments[i]!.length;
-			const header_width = header_segments[i]!.length;
-			expect(border_width).toBe(header_width);
+			const border_seg = border_segments[i];
+			const header_seg = header_segments[i];
+			assert.isDefined(border_seg);
+			assert.isDefined(header_seg);
+			assert.strictEqual(border_seg.length, header_seg.length);
 		}
 	});
 
 	test('empty results returns placeholder', () => {
 		const table = benchmark_format_table([]);
-		expect(table).toBe('(no results)');
+		assert.strictEqual(table, '(no results)');
 	});
 
 	test('baseline parameter changes comparison column header', () => {
@@ -106,29 +104,26 @@ describe('benchmark_format_table', () => {
 
 		const table = benchmark_format_table(results, 'prettier');
 
-		// Should have "vs prettier" instead of "vs Best"
-		expect(table).toContain('vs prettier');
-		expect(table).not.toContain('vs Best');
+		assert.include(table, 'vs prettier');
+		assert.notInclude(table, 'vs Best');
 	});
 
 	test('baseline parameter computes ratios against baseline task', () => {
-		const results = [
-			create_result('prettier', 500_000), // baseline
-			create_result('tsv', 2_000_000), // 4x faster than prettier
-		];
+		const results = [create_result('prettier', 500_000), create_result('tsv', 2_000_000)];
 
 		const table = benchmark_format_table(results, 'prettier');
 
 		// prettier should show "baseline" (1.0x)
 		// tsv is 4x faster, so ratio = 500000/2000000 = 0.25x
-		expect(table).toContain('baseline');
-		expect(table).toContain('0.25x');
+		assert.include(table, 'baseline');
+		assert.include(table, '0.25x');
 	});
 
 	test('throws error when baseline task not found', () => {
 		const results = [create_result('task1', 1_000_000), create_result('task2', 500_000)];
 
-		expect(() => benchmark_format_table(results, 'nonexistent')).toThrow(
+		assert.throws(
+			() => benchmark_format_table(results, 'nonexistent'),
 			'Baseline task "nonexistent" not found in results. Available tasks: task1, task2',
 		);
 	});
@@ -140,14 +135,15 @@ describe('benchmark_format_markdown', () => {
 
 		const markdown = benchmark_format_markdown(results, 'prettier');
 
-		expect(markdown).toContain('vs prettier');
-		expect(markdown).not.toContain('vs Best');
+		assert.include(markdown, 'vs prettier');
+		assert.notInclude(markdown, 'vs Best');
 	});
 
 	test('throws error when baseline task not found', () => {
 		const results = [create_result('task1', 1_000_000)];
 
-		expect(() => benchmark_format_markdown(results, 'nonexistent')).toThrow(
+		assert.throws(
+			() => benchmark_format_markdown(results, 'nonexistent'),
 			'Baseline task "nonexistent" not found',
 		);
 	});
@@ -173,24 +169,25 @@ describe('benchmark_format_table_grouped', () => {
 			},
 		]);
 
-		// Format group should use "vs format/prettier"
-		expect(table).toContain('vs format/prettier');
+		assert.include(table, 'vs format/prettier');
 		// Parse group should use "vs Best" (no baseline specified)
-		expect(table).toContain('vs Best');
+		assert.include(table, 'vs Best');
 	});
 
 	test('throws when group baseline not found in group results', () => {
 		const results = [create_result('format/tsv', 2_000_000)];
 
-		expect(() =>
-			benchmark_format_table_grouped(results, [
-				{
-					name: 'Format',
-					filter: (r) => r.name.startsWith('format/'),
-					baseline: 'format/prettier', // not in results
-				},
-			]),
-		).toThrow('Baseline task "format/prettier" not found');
+		assert.throws(
+			() =>
+				benchmark_format_table_grouped(results, [
+					{
+						name: 'Format',
+						filter: (r) => r.name.startsWith('format/'),
+						baseline: 'format/prettier',
+					},
+				]),
+			'Baseline task "format/prettier" not found',
+		);
 	});
 });
 
@@ -214,11 +211,9 @@ describe('benchmark_format_markdown_grouped', () => {
 			},
 		]);
 
-		// Should have markdown headers
-		expect(markdown).toContain('### Format');
-		expect(markdown).toContain('### Parse');
-		// Format group should use baseline
-		expect(markdown).toContain('vs format/prettier');
+		assert.include(markdown, '### Format');
+		assert.include(markdown, '### Parse');
+		assert.include(markdown, 'vs format/prettier');
 	});
 
 	test('includes group description when provided', () => {
@@ -232,12 +227,12 @@ describe('benchmark_format_markdown_grouped', () => {
 			},
 		]);
 
-		expect(markdown).toContain('### Test Group');
-		expect(markdown).toContain('This is a description');
+		assert.include(markdown, '### Test Group');
+		assert.include(markdown, 'This is a description');
 	});
 
 	test('empty results returns placeholder', () => {
 		const markdown = benchmark_format_markdown_grouped([], []);
-		expect(markdown).toBe('(no results)');
+		assert.strictEqual(markdown, '(no results)');
 	});
 });
