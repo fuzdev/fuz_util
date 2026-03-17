@@ -90,9 +90,9 @@ interface BenchmarkTaskInternal extends BenchmarkTask {
  * Warmup function by running it multiple times.
  * Detects whether the function is async based on return value.
  *
- * @param fn - Function to warmup (sync or async)
- * @param iterations - Number of warmup iterations
- * @param async_hint - If provided, use this instead of detecting
+ * @param fn - function to warmup (sync or async)
+ * @param iterations - number of warmup iterations
+ * @param async_hint - if provided, use this instead of detecting
  * @returns whether the function is async
  *
  * @example
@@ -156,7 +156,7 @@ export class Benchmark {
 
 	/**
 	 * Add a benchmark task.
-	 * @param name - Task name or full task object
+	 * @param name - task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
 	 * @returns this Benchmark instance for chaining
 	 *
@@ -194,7 +194,7 @@ export class Benchmark {
 
 	/**
 	 * Remove a benchmark task by name.
-	 * @param name - Name of the task to remove
+	 * @param name - name of the task to remove
 	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -217,7 +217,7 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to be skipped during benchmark runs.
-	 * @param name - Name of the task to skip
+	 * @param name - name of the task to skip
 	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -240,7 +240,7 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to run exclusively (along with other `only` tasks).
-	 * @param name - Name of the task to run exclusively
+	 * @param name - name of the task to run exclusively
 	 * @returns this Benchmark instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -385,7 +385,7 @@ export class Benchmark {
 
 	/**
 	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
-	 * @param options - Formatting options
+	 * @param options - formatting options
 	 * @returns formatted table string
 	 *
 	 * @example
@@ -410,7 +410,7 @@ export class Benchmark {
 
 	/**
 	 * Format results as a Markdown table.
-	 * @param options - Formatting options (groups for organized output with optional baselines)
+	 * @param options - formatting options (groups for organized output with optional baselines)
 	 * @returns formatted markdown string
 	 *
 	 * @example
@@ -435,7 +435,7 @@ export class Benchmark {
 
 	/**
 	 * Format results as JSON.
-	 * @param options - Formatting options (pretty, include_timings)
+	 * @param options - formatting options (pretty, include_timings)
 	 * @returns JSON string
 	 */
 	json(options?: BenchmarkFormatJsonOptions): string {

@@ -54,9 +54,9 @@ export interface BenchmarkConfig {
 	 * after the timing capture. However, frequent GC calls will slow overall benchmark
 	 * execution time.
 	 *
-	 * @param task_name - Name of the current task being benchmarked
-	 * @param iteration - Current iteration number (1-indexed)
-	 * @param abort - Call to stop the benchmark early for this task
+	 * @param task_name - name of the current task being benchmarked
+	 * @param iteration - current iteration number (1-indexed)
+	 * @param abort - call to stop the benchmark early for this task
 	 *
 	 * @example
 	 * ```ts
@@ -90,9 +90,9 @@ export interface BenchmarkConfig {
 	 * Callback invoked after each task completes.
 	 * Useful for logging progress during long benchmark runs.
 	 *
-	 * @param result - The completed benchmark result
-	 * @param index - Zero-based index of the completed task
-	 * @param total - Total number of tasks to run
+	 * @param result - the completed benchmark result
+	 * @param index - zero-based index of the completed task
+	 * @param total - total number of tasks to run
 	 *
 	 * @example
 	 * ```ts

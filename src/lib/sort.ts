@@ -28,8 +28,8 @@ export type TopologicalSortResult<T extends Sortable> =
  * Returns items ordered so that dependencies come before dependents.
  * If a cycle is detected, returns an error with the cycle path.
  *
- * @param items - Array of items to sort.
- * @param label - Label for error messages (e.g. "resource", "step").
+ * @param items - array of items to sort
+ * @param label - label for error messages (e.g. "resource", "step")
  * @returns sorted items or error if cycle detected
  */
 export const topological_sort = <T extends Sortable>(

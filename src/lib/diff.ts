@@ -15,8 +15,8 @@ export interface DiffLine {
 /**
  * Generate a line-based diff between two strings using LCS algorithm.
  *
- * @param a - The original/current content.
- * @param b - The new/desired content.
+ * @param a - the original/current content
+ * @param b - the new/desired content
  * @returns array of diff lines with type annotations
  */
 export const diff_lines = (a: string, b: string): Array<DiffLine> => {
@@ -94,8 +94,8 @@ const compute_lcs = (a: Array<string>, b: Array<string>): Array<string> => {
 /**
  * Filter diff to only include lines within N lines of context around changes.
  *
- * @param diff - The full diff lines.
- * @param context_lines - Number of context lines to show around changes (default: 3).
+ * @param diff - the full diff lines
+ * @param context_lines - number of context lines to show around changes (default: 3)
  * @returns filtered diff with ellipsis markers for skipped regions
  */
 export const filter_diff_context = (diff: Array<DiffLine>, context_lines = 3): Array<DiffLine> => {
@@ -163,10 +163,10 @@ export interface FormatDiffOptions {
 /**
  * Format a diff for display.
  *
- * @param diff - The diff lines to format.
- * @param current_path - Path label for "current" content.
- * @param desired_path - Path label for "desired" content.
- * @param options - Formatting options.
+ * @param diff - the diff lines to format
+ * @param current_path - path label for "current" content
+ * @param desired_path - path label for "desired" content
+ * @param options - formatting options
  * @returns formatted diff string
  */
 export const format_diff = (
@@ -211,10 +211,10 @@ export const format_diff = (
  * Combines diff_lines, filter_diff_context, and format_diff for convenience.
  * Returns null if content is binary.
  *
- * @param current - Current content.
- * @param desired - Desired content.
- * @param path - File path for labels.
- * @param options - Formatting options.
+ * @param current - current content
+ * @param desired - desired content
+ * @param path - file path for labels
+ * @param options - formatting options
  * @returns formatted diff string, or null if binary
  */
 export const generate_diff = (

@@ -15,7 +15,7 @@ const encoder = new TextEncoder();
 /**
  * Computes a hash using Web Crypto API.
  *
- * @param algorithm - Web Crypto algorithm name (e.g. `'SHA-256'`).
+ * @param algorithm - Web Crypto algorithm name (e.g. `'SHA-256'`)
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
  * @returns hexadecimal hash string
  */
@@ -68,7 +68,7 @@ export const hash_sha512 = (data: BufferSource | string): Promise<string> =>
  * Note: Strings use UTF-16 code units, buffers use raw bytes.
  * For non-ASCII, `hash_insecure(str) !== hash_insecure(encoder.encode(str))`.
  *
- * @param data - String or binary data to hash.
+ * @param data - string or binary data to hash
  * @returns 8-character hex-encoded unsigned 32-bit hash
  */
 export const hash_insecure = (data: BufferSource | string): string => {
