@@ -420,7 +420,7 @@ const set_arg = (args: Args, key: string, value: string | number | boolean): voi
  * and allow any key name including `__proto__` and `constructor`.
  *
  * @param argv - raw argument array (typically process.argv.slice(2))
- * @returns parsed Args object with guaranteed `_` array (null prototype)
+ * @returns parsed `Args` object with guaranteed `_` array (null prototype)
  */
 export const argv_parse = (argv: Array<string>): ParsedArgs => {
 	// Use Object.create(null) to allow __proto__ as a normal key

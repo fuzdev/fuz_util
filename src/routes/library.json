@@ -312,7 +312,7 @@
 						"source_line": 425,
 						"type_signature": "(argv: string[]): ParsedArgs",
 						"return_type": "ParsedArgs",
-						"return_description": "parsed Args object with guaranteed `_` array (null prototype)",
+						"return_description": "parsed `Args` object with guaranteed `_` array (null prototype)",
 						"parameters": [
 							{
 								"name": "argv",
@@ -1618,7 +1618,7 @@
 								"doc_comment": "Add a benchmark task.",
 								"type_signature": "(name: string, fn: () => unknown): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
@@ -1670,7 +1670,7 @@
 								"doc_comment": "Remove a benchmark task by name.",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
@@ -1691,7 +1691,7 @@
 								"doc_comment": "Mark a task to be skipped during benchmark runs.",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
@@ -1712,7 +1712,7 @@
 								"doc_comment": "Mark a task to run exclusively (along with other `only` tasks).",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
@@ -1808,7 +1808,7 @@
 								"doc_comment": "Reset the benchmark results.\nKeeps tasks intact so benchmarks can be rerun.",
 								"type_signature": "(): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": []
 							},
 							{
@@ -1817,7 +1817,7 @@
 								"doc_comment": "Clear everything (results and tasks).\nUse this to start fresh with a new set of benchmarks.",
 								"type_signature": "(): this",
 								"return_type": "this",
-								"return_description": "this Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": []
 							},
 							{
@@ -4166,7 +4166,7 @@
 								"doc_comment": "Creates a child logger with automatic label concatenation.\nChildren inherit parent configuration unless overridden.",
 								"type_signature": "(label: string, options?: LoggerOptions): Logger",
 								"return_type": "Logger",
-								"return_description": "new Logger instance with concatenated label",
+								"return_description": "new `Logger` instance with concatenated label",
 								"parameters": [
 									{
 										"name": "label",

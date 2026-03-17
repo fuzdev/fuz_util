@@ -364,7 +364,7 @@ export class Logger {
 	 *   Cannot be an empty string - empty labels would result in confusing output like `parent:`
 	 *   with a trailing colon. Use `undefined` or `''` only for root loggers.
 	 * @param options - optional configuration overrides
-	 * @returns new Logger instance with concatenated label
+	 * @returns new `Logger` instance with concatenated label
 	 * @throws Error if label is an empty string
 	 *
 	 * @example

@@ -158,7 +158,7 @@ export class Benchmark {
 	 * Add a benchmark task.
 	 * @param name - task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 *
 	 * @example
 	 * ```ts
@@ -195,7 +195,7 @@ export class Benchmark {
 	/**
 	 * Remove a benchmark task by name.
 	 * @param name - name of the task to remove
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -218,7 +218,7 @@ export class Benchmark {
 	/**
 	 * Mark a task to be skipped during benchmark runs.
 	 * @param name - name of the task to skip
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -241,7 +241,7 @@ export class Benchmark {
 	/**
 	 * Mark a task to run exclusively (along with other `only` tasks).
 	 * @param name - name of the task to run exclusively
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -487,7 +487,7 @@ export class Benchmark {
 	/**
 	 * Reset the benchmark results.
 	 * Keeps tasks intact so benchmarks can be rerun.
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 */
 	reset(): this {
 		this.#results = [];
@@ -497,7 +497,7 @@ export class Benchmark {
 	/**
 	 * Clear everything (results and tasks).
 	 * Use this to start fresh with a new set of benchmarks.
-	 * @returns this Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 */
 	clear(): this {
 		this.#results = [];
