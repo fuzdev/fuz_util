@@ -323,3 +323,121 @@ test('benchmark_stats_compare: single sample each', ({expect}) => {
 	// Zero variance case should still work
 	expect(comparison.effect_magnitude).toBe('large');
 });
+
+test('benchmark_stats_compare: percent_difference is computed', ({expect}) => {
+	const a = new BenchmarkStats(Array(100).fill(1000));
+	const b = new BenchmarkStats(Array(100).fill(2000));
+
+	const comparison = benchmark_stats_compare(a, b);
+
+	// speedup_ratio = 2.0, so percent_difference = 1.0 (100%)
+	expect(comparison.percent_difference).toBeCloseTo(1.0, 2);
+});
+
+test('benchmark_stats_compare: small percent difference is negligible', ({expect}) => {
+	// 2% difference with realistic variance — exercises the actual large-n oversensitivity path
+	// Values cycle through offsets to produce ~3% CV, giving non-zero std_dev
+	const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
+	const b_data = Array.from({length: 1000}, (_, i) => 10200 + ((i % 11) - 5) * 100);
+	const a = new BenchmarkStats(a_data);
+	const b = new BenchmarkStats(b_data);
+
+	const comparison = benchmark_stats_compare(a, b);
+
+	// 2% difference should be negligible despite large n making p≈0 via Welch's t-test
+	expect(comparison.percent_difference).toBeCloseTo(0.02, 1);
+	expect(comparison.effect_magnitude).toBe('negligible');
+	expect(comparison.significant).toBe(false);
+	expect(comparison.faster).toBe('equal');
+	// the t-test itself DOES detect the difference — that's the whole problem we're fixing
+	expect(comparison.p_value).toBeLessThan(0.001);
+});
+
+test('benchmark_stats_compare: min_percent_difference option', ({expect}) => {
+	// 15% difference with realistic variance
+	const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
+	const b_data = Array.from({length: 1000}, (_, i) => 11500 + ((i % 11) - 5) * 100);
+	const a = new BenchmarkStats(a_data);
+	const b = new BenchmarkStats(b_data);
+
+	// With default 10% threshold, 15% is "small" and significant
+	const default_comparison = benchmark_stats_compare(a, b);
+	expect(default_comparison.effect_magnitude).toBe('small');
+	expect(default_comparison.significant).toBe(true);
+
+	// With 20% threshold, 15% is negligible and not significant
+	const strict_comparison = benchmark_stats_compare(a, b, {min_percent_difference: 0.2});
+	expect(strict_comparison.effect_magnitude).toBe('negligible');
+	expect(strict_comparison.significant).toBe(false);
+	expect(strict_comparison.faster).toBe('equal');
+});
+
+test('benchmark_stats_compare: effect magnitude scales with min_percent_difference', ({expect}) => {
+	// 30% difference
+	const a_data = Array.from({length: 100}, (_, i) => 10000 + ((i % 11) - 5) * 100);
+	const b_data = Array.from({length: 100}, (_, i) => 13000 + ((i % 11) - 5) * 100);
+	const a = new BenchmarkStats(a_data);
+	const b = new BenchmarkStats(b_data);
+
+	// Default min_pct=0.10: 30% < 50% (5*min_pct) → medium
+	const comparison = benchmark_stats_compare(a, b);
+	expect(comparison.effect_magnitude).toBe('medium');
+
+	// min_pct=0.20: 30% < 60% (3*min_pct) → small
+	const comparison2 = benchmark_stats_compare(a, b, {min_percent_difference: 0.2});
+	expect(comparison2.effect_magnitude).toBe('small');
+});
+
+test('benchmark_stats_compare: large n system noise stays negligible', ({expect}) => {
+	// Simulates system-level noise: same code, n=1000, means differ by 3%
+	// This is the core scenario that was producing false "large" regressions.
+	// Uses realistic variance (CV ~3%) so the test exercises Welch's t-test, not the
+	// zero-variance special case.
+	const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
+	const b_data = Array.from({length: 1000}, (_, i) => 10300 + ((i % 11) - 5) * 100);
+	const a = new BenchmarkStats(a_data);
+	const b = new BenchmarkStats(b_data);
+
+	const comparison = benchmark_stats_compare(a, b);
+
+	// 3% difference should be negligible (below 10% default threshold)
+	expect(comparison.effect_magnitude).toBe('negligible');
+	expect(comparison.significant).toBe(false);
+	expect(comparison.faster).toBe('equal');
+	// p-value is tiny from Welch's t-test (large n, real variance, SE→0) but we
+	// gate on practical significance — this is the exact fix for the reported bug
+	expect(comparison.p_value).toBeLessThan(0.001);
+	// Cohen's d > 0.8 — the old system classified this as "large" (threshold 0.8),
+	// which is exactly the false positive this fix addresses
+	expect(comparison.effect_size).toBeGreaterThan(0.8);
+});
+
+test('benchmark_stats_compare: boundary at min_percent_difference', ({expect}) => {
+	// Exactly at the 10% boundary — should be 'small', not 'negligible'
+	const a = new BenchmarkStats(Array(100).fill(10000));
+	const b = new BenchmarkStats(Array(100).fill(11000));
+
+	const comparison = benchmark_stats_compare(a, b);
+
+	// 10% = min_pct exactly → NOT < min_pct, so should be 'small'
+	expect(comparison.percent_difference).toBeCloseTo(0.1, 2);
+	expect(comparison.effect_magnitude).toBe('small');
+	expect(comparison.significant).toBe(true);
+});
+
+test('benchmark_stats_compare: large difference with small n and high p', ({expect}) => {
+	// Large percent difference but too few samples / high variance to be statistically significant
+	const a = new BenchmarkStats([1000, 3000, 2000]);
+	const b = new BenchmarkStats([4000, 6000, 5000]);
+
+	const comparison = benchmark_stats_compare(a, b);
+
+	// percent_difference is large (~150%) but p-value may be > alpha with n=3
+	expect(comparison.percent_difference).toBeGreaterThan(1.0);
+	// Even if not statistically significant, effect_magnitude reflects the percentage
+	expect(comparison.effect_magnitude).toBe('large');
+	// recommendation should mention the percentage even without significance
+	if (!comparison.significant) {
+		expect(comparison.recommendation).toContain('difference observed');
+	}
+});

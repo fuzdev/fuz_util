@@ -89,6 +89,12 @@ export interface BenchmarkBaselineCompareOptions extends BenchmarkBaselineLoadOp
 	 * Default: undefined (no staleness warning)
 	 */
 	staleness_warning_days?: number;
+	/**
+	 * Minimum percentage difference to consider meaningful, as a ratio.
+	 * Passed through to `benchmark_stats_compare`. See `BenchmarkCompareOptions`.
+	 * Default: 0.10 (10%)
+	 */
+	min_percent_difference?: number;
 }
 
 /**
@@ -344,7 +350,9 @@ export const benchmark_baseline_compare = async (
 			),
 		};
 
-		const comparison = benchmark_stats_compare(baseline_stats, current_stats);
+		const comparison = benchmark_stats_compare(baseline_stats, current_stats, {
+			min_percent_difference: options.min_percent_difference,
+		});
 
 		const task_comparison: BenchmarkBaselineTaskComparison = {
 			name: current.name,
@@ -357,7 +365,8 @@ export const benchmark_baseline_compare = async (
 
 		// Categorize based on comparison result
 		// Note: comparison.faster is 'a' (baseline) or 'b' (current)
-		if (comparison.significant && comparison.effect_magnitude !== 'negligible') {
+		// significant implies percent_difference >= min_pct, which implies effect_magnitude !== 'negligible'
+		if (comparison.significant) {
 			if (comparison.faster === 'a') {
 				// Baseline was faster = potential regression
 				// Only count as regression if it exceeds the threshold
@@ -384,14 +393,14 @@ export const benchmark_baseline_compare = async (
 		}
 	}
 
-	// Sort regressions and improvements by effect size (largest first)
-	const sort_by_effect_size = (
+	// Sort regressions and improvements by percentage difference (largest first)
+	const sort_by_percent_difference = (
 		a: BenchmarkBaselineTaskComparison,
 		b: BenchmarkBaselineTaskComparison,
-	) => b.comparison.effect_size - a.comparison.effect_size;
+	) => b.comparison.percent_difference - a.comparison.percent_difference;
 
-	regressions.sort(sort_by_effect_size);
-	improvements.sort(sort_by_effect_size);
+	regressions.sort(sort_by_percent_difference);
+	improvements.sort(sort_by_percent_difference);
 
 	return {
 		baseline_found: true,
@@ -440,8 +449,11 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 		lines.push(`Regressions (${result.regressions.length}):`);
 		for (const r of result.regressions) {
 			const ratio = r.comparison.speedup_ratio.toFixed(2);
+			const pct = (r.comparison.percent_difference * 100).toFixed(1);
 			const p = r.comparison.p_value.toFixed(3);
-			lines.push(`  ${r.name}: ${ratio}x slower (p=${p}, ${r.comparison.effect_magnitude})`);
+			lines.push(
+				`  ${r.name}: ${ratio}x slower (${pct}%, p=${p}, ${r.comparison.effect_magnitude})`,
+			);
 		}
 		lines.push('');
 	}
@@ -450,8 +462,11 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 		lines.push(`Improvements (${result.improvements.length}):`);
 		for (const r of result.improvements) {
 			const ratio = r.comparison.speedup_ratio.toFixed(2);
+			const pct = (r.comparison.percent_difference * 100).toFixed(1);
 			const p = r.comparison.p_value.toFixed(3);
-			lines.push(`  ${r.name}: ${ratio}x faster (p=${p}, ${r.comparison.effect_magnitude})`);
+			lines.push(
+				`  ${r.name}: ${ratio}x faster (${pct}%, p=${p}, ${r.comparison.effect_magnitude})`,
+			);
 		}
 		lines.push('');
 	}
@@ -516,6 +531,7 @@ export const benchmark_baseline_format_json = (
 		regressions: result.regressions.map((r) => ({
 			name: r.name,
 			speedup_ratio: r.comparison.speedup_ratio,
+			percent_difference: r.comparison.percent_difference,
 			effect_size: r.comparison.effect_size,
 			effect_magnitude: r.comparison.effect_magnitude,
 			p_value: r.comparison.p_value,
@@ -525,6 +541,7 @@ export const benchmark_baseline_format_json = (
 		improvements: result.improvements.map((r) => ({
 			name: r.name,
 			speedup_ratio: r.comparison.speedup_ratio,
+			percent_difference: r.comparison.percent_difference,
 			effect_size: r.comparison.effect_size,
 			effect_magnitude: r.comparison.effect_magnitude,
 			p_value: r.comparison.p_value,

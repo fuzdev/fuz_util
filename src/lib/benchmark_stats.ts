@@ -44,13 +44,15 @@ export interface BenchmarkComparison {
 	faster: 'a' | 'b' | 'equal';
 	/** How much faster the winner is (e.g., 1.5 means 1.5x faster) */
 	speedup_ratio: number;
-	/** Whether the difference is statistically significant at the given alpha */
+	/** Whether the difference is both statistically and practically significant */
 	significant: boolean;
 	/** P-value from Welch's t-test (lower = more confident the difference is real) */
 	p_value: number;
-	/** Cohen's d effect size (magnitude of difference independent of sample size) */
+	/** Percentage difference between means as a ratio (0.05 = 5%, 1.0 = 100%) */
+	percent_difference: number;
+	/** Cohen's d effect size (informational — not used for classification) */
 	effect_size: number;
-	/** Interpretation of effect size */
+	/** Interpretation of practical significance based on percentage difference */
 	effect_magnitude: EffectMagnitude;
 	/** Whether the 95% confidence intervals overlap */
 	ci_overlap: boolean;
@@ -64,6 +66,20 @@ export interface BenchmarkComparison {
 export interface BenchmarkCompareOptions {
 	/** Significance level for hypothesis testing (default: 0.05) */
 	alpha?: number;
+	/**
+	 * Minimum percentage difference to consider practically meaningful, as a ratio.
+	 * Below this threshold, differences are classified as 'negligible' and
+	 * `significant` is forced to `false`, regardless of p-value.
+	 * This prevents the t-test's oversensitivity at large sample sizes from
+	 * flagging system-level noise (thermal throttle, OS scheduler, cache pressure)
+	 * as meaningful differences.
+	 *
+	 * Effect magnitude thresholds scale from this value:
+	 * negligible < min, small < min*3, medium < min*5, large >= min*5.
+	 *
+	 * Default: 0.10 (10%).
+	 */
+	min_percent_difference?: number;
 }
 
 /**
@@ -181,8 +197,12 @@ export class BenchmarkStats {
 }
 
 /**
- * Compare two benchmark results for statistical significance.
- * Uses Welch's t-test (handles unequal variances) and Cohen's d effect size.
+ * Compare two benchmark results for practical and statistical significance.
+ * Uses percentage difference for effect magnitude classification, with Welch's
+ * t-test for statistical confidence. Cohen's d is computed as an informational
+ * metric but does not drive classification — its thresholds (0.2/0.5/0.8) are
+ * calibrated for social science and produce false positives in benchmarking
+ * where within-run variance is tight.
  *
  * @param a - First benchmark stats (or any object with required properties)
  * @param b - Second benchmark stats (or any object with required properties)
@@ -203,6 +223,7 @@ export const benchmark_stats_compare = (
 	options?: BenchmarkCompareOptions,
 ): BenchmarkComparison => {
 	const alpha = options?.alpha ?? 0.05;
+	const min_pct = options?.min_percent_difference ?? 0.1;
 
 	// Handle edge cases
 	if (a.sample_size === 0 || b.sample_size === 0) {
@@ -211,6 +232,7 @@ export const benchmark_stats_compare = (
 			speedup_ratio: 1,
 			significant: false,
 			p_value: 1,
+			percent_difference: 0,
 			effect_size: 0,
 			effect_magnitude: 'negligible',
 			ci_overlap: true,
@@ -222,6 +244,9 @@ export const benchmark_stats_compare = (
 	const speedup_ratio = a.mean_ns < b.mean_ns ? b.mean_ns / a.mean_ns : a.mean_ns / b.mean_ns;
 	const faster: 'a' | 'b' | 'equal' =
 		a.mean_ns < b.mean_ns ? 'a' : a.mean_ns > b.mean_ns ? 'b' : 'equal';
+
+	// Percentage difference relative to the faster mean (always >= 0)
+	const percent_difference = speedup_ratio - 1;
 
 	// Welch's t-test (handles unequal variances)
 	// Special case: if both have zero variance, t-test is undefined
@@ -242,38 +267,33 @@ export const benchmark_stats_compare = (
 		p_value = stats_t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
 	}
 
-	// Cohen's d effect size
+	// Cohen's d effect size (informational only — not used for classification)
 	const pooled_std_dev = Math.sqrt(
 		((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
 			(a.sample_size + b.sample_size - 2),
 	);
-
-	// When pooled_std_dev is 0 but means differ, effect is maximal (infinite)
-	// When means are equal, effect is 0
 	let effect_size: number;
-	let effect_magnitude: EffectMagnitude;
-
 	if (pooled_std_dev === 0) {
-		// Zero variance case - if means differ, it's a definitive difference
-		if (a.mean_ns === b.mean_ns) {
-			effect_size = 0;
-			effect_magnitude = 'negligible';
-		} else {
-			// Any difference is 100% reliable when there's no variance
-			effect_size = Infinity;
-			effect_magnitude = 'large';
-		}
+		effect_size = a.mean_ns === b.mean_ns ? 0 : Infinity;
 	} else {
 		effect_size = Math.abs(a.mean_ns - b.mean_ns) / pooled_std_dev;
-		// Interpret effect size (Cohen's conventions)
-		effect_magnitude =
-			effect_size < 0.2
-				? 'negligible'
-				: effect_size < 0.5
-					? 'small'
-					: effect_size < 0.8
-						? 'medium'
-						: 'large';
+	}
+
+	// Effect magnitude based on percentage difference, not Cohen's d.
+	// Cohen's d thresholds (0.2/0.5/0.8) are calibrated for social science, not benchmarking.
+	// Within-run variance is tight, so even small system noise (thermal throttle, OS scheduler)
+	// produces large Cohen's d. Percentage thresholds directly answer "is this difference
+	// meaningful in practice?" Thresholds scale with min_percent_difference so users can
+	// tune one knob for their system's noise floor.
+	let effect_magnitude: EffectMagnitude;
+	if (percent_difference < min_pct) {
+		effect_magnitude = 'negligible';
+	} else if (percent_difference < min_pct * 3) {
+		effect_magnitude = 'small';
+	} else if (percent_difference < min_pct * 5) {
+		effect_magnitude = 'medium';
+	} else {
+		effect_magnitude = 'large';
 	}
 
 	// Check confidence interval overlap
@@ -281,20 +301,21 @@ export const benchmark_stats_compare = (
 		a.confidence_interval_ns[0] <= b.confidence_interval_ns[1] &&
 		b.confidence_interval_ns[0] <= a.confidence_interval_ns[1];
 
-	// Determine significance
-	const significant = p_value < alpha;
+	// Significance requires both statistical significance (p < alpha)
+	// AND practical significance (percent_difference >= min_pct).
+	// With large n, the t-test finds p≈0 for any difference because
+	// SE = std_dev/sqrt(n) → 0. Gating on practical significance
+	// prevents system noise from being flagged as meaningful.
+	const significant = p_value < alpha && percent_difference >= min_pct;
 
 	// Generate recommendation
 	let recommendation: string;
-	if (!significant) {
-		recommendation =
-			effect_magnitude === 'negligible'
-				? 'No meaningful difference detected'
-				: `Difference not statistically significant (p=${p_value.toFixed(3)}), but effect size suggests ${effect_magnitude} practical difference`;
-	} else if (effect_magnitude === 'negligible') {
-		recommendation = `Statistically significant but negligible practical difference (${speedup_ratio.toFixed(2)}x)`;
+	if (percent_difference < min_pct) {
+		recommendation = 'No meaningful difference detected';
+	} else if (!significant) {
+		recommendation = `${(percent_difference * 100).toFixed(1)}% difference observed but not statistically significant (p=${p_value.toFixed(3)})`;
 	} else {
-		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (p=${p_value.toFixed(3)})`;
+		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (${(percent_difference * 100).toFixed(1)}%, p=${p_value.toFixed(3)})`;
 	}
 
 	// Adjust 'faster' to 'equal' if effect is negligible
@@ -305,6 +326,7 @@ export const benchmark_stats_compare = (
 		speedup_ratio,
 		significant,
 		p_value,
+		percent_difference,
 		effect_size,
 		effect_magnitude,
 		ci_overlap,
