@@ -41,7 +41,7 @@ export interface BenchmarkConfig {
 
 	/**
 	 * Custom timer to use for measurements.
-	 * Default: timer_default (auto-detects environment)
+	 * Default: `timer_default` (auto-detects environment)
 	 */
 	timer?: Timer;
 

@@ -25,7 +25,7 @@ export type ArgValue = string | number | boolean | undefined | Array<string | nu
 
 /**
  * Schema description for help text generation.
- * Not used by args_parse/args_serialize directly - provided for consumers
+ * Not used by `args_parse`/`args_serialize` directly - provided for consumers
  * building CLI help output.
  */
 export interface ArgSchema {

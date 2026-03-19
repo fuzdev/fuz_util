@@ -420,7 +420,7 @@ export const benchmark_baseline_compare = async (
 /**
  * Format a baseline comparison result as a human-readable string.
  *
- * @param result - comparison result from benchmark_baseline_compare
+ * @param result - comparison result from `benchmark_baseline_compare`
  * @returns formatted string summary
  */
 export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonResult): string => {
@@ -506,7 +506,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 /**
  * Format a baseline comparison result as JSON for programmatic consumption.
  *
- * @param result - comparison result from benchmark_baseline_compare
+ * @param result - comparison result from `benchmark_baseline_compare`
  * @param options - formatting options
  * @returns JSON string
  */

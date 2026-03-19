@@ -5,7 +5,7 @@
  * extracted at build time via TypeScript compiler analysis.
  * Used for generating API documentation and enabling code search.
  *
- * Hierarchy: SourceJson → ModuleJson → DeclarationJson
+ * Hierarchy: `SourceJson` → `ModuleJson` → `DeclarationJson`
  *
  * @module
  */
@@ -43,7 +43,7 @@ export type GenericParamInfo = z.infer<typeof GenericParamInfo>;
 /**
  * Parameter information for functions and methods.
  *
- * Kept distinct from ComponentPropInfo despite structural similarity.
+ * Kept distinct from `ComponentPropInfo` despite structural similarity.
  * Function parameters form a tuple with positional semantics:
  * calling order matters (`fn(a, b)` vs `fn(b, a)`),
  * may include rest parameters and destructuring patterns.
@@ -60,7 +60,7 @@ export type ParameterInfo = z.infer<typeof ParameterInfo>;
 /**
  * Component prop information for Svelte components.
  *
- * Kept distinct from ParameterInfo despite structural similarity.
+ * Kept distinct from `ParameterInfo` despite structural similarity.
  * Component props are named attributes with different semantics:
  * no positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),
  * support two-way binding via `$bindable` rune.

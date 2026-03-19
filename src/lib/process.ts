@@ -552,7 +552,7 @@ export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult
 /**
  * Attaches an `uncaughtException` handler to the default registry.
  *
- * @see ProcessRegistry.attach_error_handler
+ * @see `ProcessRegistry.attach_error_handler`
  */
 export const attach_process_error_handler = (
 	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
@@ -561,7 +561,7 @@ export const attach_process_error_handler = (
 /**
  * Spawns a detached process that continues after parent exits.
  *
- * Unlike other spawn functions, this is NOT tracked in any ProcessRegistry.
+ * Unlike other spawn functions, this is NOT tracked in any `ProcessRegistry`.
  * The spawned process is meant to outlive the parent (e.g., daemon processes).
  *
  * @param command - the command to run

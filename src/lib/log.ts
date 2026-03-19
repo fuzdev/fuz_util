@@ -12,7 +12,7 @@ import {DEV} from 'esm-env';
 export type LogLevel = 'off' | 'error' | 'warn' | 'info' | 'debug';
 
 /**
- * Console interface subset used by Logger for output.
+ * Console interface subset used by `Logger` for output.
  * Allows custom console implementations for testing.
  */
 export type LogConsole = Pick<typeof console, 'error' | 'warn' | 'log'>;

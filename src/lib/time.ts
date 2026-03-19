@@ -217,7 +217,7 @@ export interface TimeResult {
 /**
  * Time an asynchronous function execution.
  * @param fn - async function to time
- * @param timer - timer to use (defaults to timer_default)
+ * @param timer - timer to use (defaults to `timer_default`)
  * @returns object containing the function result and timing information
  *
  * @example
@@ -253,7 +253,7 @@ export const time_async = async <T>(
 /**
  * Time a synchronous function execution.
  * @param fn - sync function to time
- * @param timer - timer to use (defaults to timer_default)
+ * @param timer - timer to use (defaults to `timer_default`)
  * @returns object containing the function result and timing information
  *
  * @example
@@ -289,7 +289,7 @@ export const time_sync = <T>(
  * Measure multiple executions of a function and return all timings.
  * @param fn - function to measure (sync or async)
  * @param iterations - number of times to execute
- * @param timer - timer to use (defaults to timer_default)
+ * @param timer - timer to use (defaults to `timer_default`)
  * @returns array of elapsed times in nanoseconds
  *
  * @example

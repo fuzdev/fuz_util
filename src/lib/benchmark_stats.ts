@@ -1,6 +1,6 @@
 /**
  * Benchmark-specific statistical analysis.
- * Uses the general stats utilities from stats.ts for timing/performance analysis.
+ * Uses the general stats utilities from `stats.ts` for timing/performance analysis.
  * All timing values are in nanoseconds.
  *
  * @module

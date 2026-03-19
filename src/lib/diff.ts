@@ -208,7 +208,7 @@ export const format_diff = (
 /**
  * Generate a formatted diff between two strings.
  *
- * Combines diff_lines, filter_diff_context, and format_diff for convenience.
+ * Combines `diff_lines`, `filter_diff_context`, and `format_diff` for convenience.
  * Returns null if content is binary.
  *
  * @param current - current content

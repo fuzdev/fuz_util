@@ -2,8 +2,8 @@
  * Random helpers that accept an optional `random` parameter,
  * defaulting to `Math.random`. Pass a seeded PRNG for reproducible results:
  *
- * - {@link create_random_xoshiro} — fast, high-quality numeric seeding (recommended)
- * - {@link create_random_alea} — supports string and variadic seeds
+ * - `create_random_xoshiro` — fast, high-quality numeric seeding (recommended)
+ * - `create_random_alea` — supports string and variadic seeds
  *
  * @module
  */

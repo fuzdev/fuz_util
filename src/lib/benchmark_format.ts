@@ -405,6 +405,6 @@ export const benchmark_format_table_grouped = (
 
 /**
  * Format a number with fixed decimal places and thousands separators.
- * @see {@link format_number} in maths.ts for the underlying implementation.
+ * @see `format_number` in `maths.ts` for the underlying implementation.
  */
 export const benchmark_format_number = format_number;
