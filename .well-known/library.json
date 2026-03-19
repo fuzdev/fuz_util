@@ -206,7 +206,7 @@
 					{
 						"name": "ArgSchema",
 						"kind": "type",
-						"doc_comment": "Schema description for help text generation.\nNot used by args_parse/args_serialize directly - provided for consumers\nbuilding CLI help output.",
+						"doc_comment": "Schema description for help text generation.\nNot used by `args_parse`/`args_serialize` directly - provided for consumers\nbuilding CLI help output.",
 						"source_line": 31,
 						"type_signature": "ArgSchema",
 						"properties": [
@@ -893,7 +893,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "comparison result from benchmark_baseline_compare"
+								"description": "comparison result from `benchmark_baseline_compare`"
 							}
 						]
 					},
@@ -909,7 +909,7 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "comparison result from benchmark_baseline_compare"
+								"description": "comparison result from `benchmark_baseline_compare`"
 							},
 							{
 								"name": "options",
@@ -1079,7 +1079,7 @@
 						"kind": "variable",
 						"doc_comment": "Format a number with fixed decimal places and thousands separators.",
 						"see_also": [
-							"{@link format_number} in maths.ts for the underlying implementation."
+							"`format_number` in `maths.ts` for the underlying implementation."
 						],
 						"source_line": 410,
 						"type_signature": "(n: number, decimals?: number) => string"
@@ -1428,7 +1428,7 @@
 						]
 					}
 				],
-				"module_comment": "Benchmark-specific statistical analysis.\nUses the general stats utilities from stats.ts for timing/performance analysis.\nAll timing values are in nanoseconds.",
+				"module_comment": "Benchmark-specific statistical analysis.\nUses the general stats utilities from `stats.ts` for timing/performance analysis.\nAll timing values are in nanoseconds.",
 				"dependencies": [
 					"stats.ts",
 					"time.ts"
@@ -1482,7 +1482,7 @@
 								"name": "timer",
 								"kind": "variable",
 								"type_signature": "Timer",
-								"doc_comment": "Custom timer to use for measurements.\nDefault: timer_default (auto-detects environment)"
+								"doc_comment": "Custom timer to use for measurements.\nDefault: `timer_default` (auto-detects environment)"
 							},
 							{
 								"name": "on_iteration",
@@ -2630,7 +2630,7 @@
 					{
 						"name": "generate_diff",
 						"kind": "function",
-						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines diff_lines, filter_diff_context, and format_diff for convenience.\nReturns null if content is binary.",
+						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines `diff_lines`, `filter_diff_context`, and `format_diff` for convenience.\nReturns null if content is binary.",
 						"source_line": 220,
 						"type_signature": "(current: string, desired: string, path: string, options?: FormatDiffOptions): string | null",
 						"return_type": "string | null",
@@ -2889,7 +2889,7 @@
 					{
 						"name": "fetch_value",
 						"kind": "function",
-						"doc_comment": "Specializes `fetch` with some slightly different behavior and additional features:\n\n- throws on ratelimit errors to mitigate unintentional abuse\n- optional `parse` function called on the return value\n- optional cache (different from the browser cache,\n\t the caller can serialize it so e.g. dev setups can avoid hitting the network)\n- optional simplified API for authorization and data types\n  (you can still provide headers directly)\n\nUnlike `fetch`, this throws on ratelimits (status code 429)\nto halt whatever is happpening in its tracks to avoid accidental abuse,\nbut returns a `Result` in all other cases.\nHandling ratelimit headers with more sophistication gets tricky because behavior\ndiffers across services.\n(e.g. Mastodon returns an ISO string for `x-ratelimit-reset`,\nbut GitHub returns `Date.now()/1000`,\nand other services may do whatever, or even use a different header)\n\nIt's also stateless to avoid the complexity and bugs,\nso we don't try to track `x-ratelimit-remaining` per domain.\n\nIf the `value` is cached, only the cached safe subset of the `headers` are returned.\n(currently just `etag` and `last-modified`)\nOtherwise the full `res.headers` are included.",
+						"doc_comment": "Specializes `fetch` with some slightly different behavior and additional features:\n\n- throws on ratelimit errors to mitigate unintentional abuse\n- optional `parse` function called on the return value\n- optional cache (different from the browser cache,\n\t the caller can serialize it so e.g. dev setups can avoid hitting the network)\n- optional simplified API for authorization and data types\n  (you can still provide headers directly)\n\nUnlike `fetch`, this throws on ratelimits (status code 429)\nto halt whatever is happening in its tracks to avoid accidental abuse,\nbut returns a `Result` in all other cases.\nHandling ratelimit headers with more sophistication gets tricky because behavior\ndiffers across services.\n(e.g. Mastodon returns an ISO string for `x-ratelimit-reset`,\nbut GitHub returns `Date.now()/1000`,\nand other services may do whatever, or even use a different header)\n\nIt's also stateless to avoid the complexity and bugs,\nso we don't try to track `x-ratelimit-remaining` per domain.\n\nIf the `value` is cached, only the cached safe subset of the `headers` are returned.\n(currently just `etag` and `last-modified`)\nOtherwise the full `res.headers` are included.",
 						"source_line": 53,
 						"type_signature": "<TValue = any, TParams = undefined>(url: string | URL, options?: FetchValueOptions<TValue, TParams> | undefined): Promise<Result<{ value: TValue; headers: Headers; }, { ...; }>>",
 						"return_type": "Promise<Result<{ value: TValue; headers: Headers; }, { status: number; message: string; }>>",
@@ -4188,7 +4188,7 @@
 					{
 						"name": "LogConsole",
 						"kind": "type",
-						"doc_comment": "Console interface subset used by Logger for output.\nAllows custom console implementations for testing.",
+						"doc_comment": "Console interface subset used by `Logger` for output.\nAllows custom console implementations for testing.",
 						"source_line": 18,
 						"type_signature": "LogConsole"
 					},
@@ -4431,7 +4431,7 @@
 					{
 						"name": "sort_map",
 						"kind": "function",
-						"doc_comment": "Sorts a map by `comparator`, a function that compares two entries,\ndefaulting to using `localCompare` and `>`.",
+						"doc_comment": "Sorts a map by `comparator`, a function that compares two entries,\ndefaulting to using `localeCompare` and `>`.",
 						"source_line": 5,
 						"type_signature": "<T extends Map<any, any>>(map: T, comparator?: (a: [any, any], b: [any, any]) => number): T",
 						"return_type": "T",
@@ -5794,7 +5794,7 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": [
-							"ProcessRegistry.attach_error_handler"
+							"`ProcessRegistry.attach_error_handler`"
 						],
 						"source_line": 557,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
@@ -5810,7 +5810,7 @@
 					{
 						"name": "spawn_detached",
 						"kind": "function",
-						"doc_comment": "Spawns a detached process that continues after parent exits.\n\nUnlike other spawn functions, this is NOT tracked in any ProcessRegistry.\nThe spawned process is meant to outlive the parent (e.g., daemon processes).",
+						"doc_comment": "Spawns a detached process that continues after parent exits.\n\nUnlike other spawn functions, this is NOT tracked in any `ProcessRegistry`.\nThe spawned process is meant to outlive the parent (e.g., daemon processes).",
 						"examples": [
 							"```ts\n// Simple detached process\nconst result = spawn_detached('node', ['daemon.js'], {cwd: '/app'});\n\n// With log file (caller handles file opening)\nimport {openSync, closeSync} from 'node:fs';\nconst log_fd = openSync('/var/log/daemon.log', 'a');\nconst result = spawn_detached('node', ['daemon.js'], {\n  cwd: '/app',\n  stdio: ['ignore', log_fd, log_fd],\n});\ncloseSync(log_fd);\n```"
 						],
@@ -6209,7 +6209,7 @@
 						]
 					}
 				],
-				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- {@link create_random_xoshiro} — fast, high-quality numeric seeding (recommended)\n- {@link create_random_alea} — supports string and variadic seeds"
+				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- `create_random_xoshiro` — fast, high-quality numeric seeding (recommended)\n- `create_random_alea` — supports string and variadic seeds"
 			},
 			{
 				"path": "regexp.ts",
@@ -6455,14 +6455,14 @@
 					{
 						"name": "ParameterInfo",
 						"kind": "type",
-						"doc_comment": "Parameter information for functions and methods.\n\nKept distinct from ComponentPropInfo despite structural similarity.\nFunction parameters form a tuple with positional semantics:\ncalling order matters (`fn(a, b)` vs `fn(b, a)`),\nmay include rest parameters and destructuring patterns.",
+						"doc_comment": "Parameter information for functions and methods.\n\nKept distinct from `ComponentPropInfo` despite structural similarity.\nFunction parameters form a tuple with positional semantics:\ncalling order matters (`fn(a, b)` vs `fn(b, a)`),\nmay include rest parameters and destructuring patterns.",
 						"source_line": 51,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; default_value: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "ComponentPropInfo",
 						"kind": "type",
-						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from ParameterInfo despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
+						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from `ParameterInfo` despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
 						"source_line": 68,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 6 more ...; since: ZodOptional<...>; }, $loose>"
 					},
@@ -6532,7 +6532,7 @@
 						]
 					}
 				],
-				"module_comment": "Metadata types for library source code analysis.\n\nThese types represent the structure of `src/lib/` exports,\nextracted at build time via TypeScript compiler analysis.\nUsed for generating API documentation and enabling code search.\n\nHierarchy: SourceJson → ModuleJson → DeclarationJson"
+				"module_comment": "Metadata types for library source code analysis.\n\nThese types represent the structure of `src/lib/` exports,\nextracted at build time via TypeScript compiler analysis.\nUsed for generating API documentation and enabling code search.\n\nHierarchy: `SourceJson` → `ModuleJson` → `DeclarationJson`"
 			},
 			{
 				"path": "stats.ts",
@@ -7214,7 +7214,7 @@
 					{
 						"name": "strip_ansi",
 						"kind": "function",
-						"doc_comment": "Strips ANSI escape sequences from a string",
+						"doc_comment": "Strips ANSI escape sequences from a string.",
 						"source_line": 91,
 						"type_signature": "(str: string): string",
 						"return_type": "string",
@@ -8022,7 +8022,7 @@
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8047,7 +8047,7 @@
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8077,7 +8077,7 @@
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
