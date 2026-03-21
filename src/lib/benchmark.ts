@@ -44,8 +44,8 @@ import type {
 const DEFAULT_DURATION_MS = 1000;
 const DEFAULT_WARMUP_ITERATIONS = 10;
 const DEFAULT_COOLDOWN_MS = 100;
-const DEFAULT_MIN_ITERATIONS = 10;
-const DEFAULT_MAX_ITERATIONS = 100_000;
+const DEFAULT_ITERATIONS_MIN = 10;
+const DEFAULT_ITERATIONS_MAX = 100_000;
 
 /**
  * Validate and normalize benchmark configuration.
@@ -146,8 +146,8 @@ export class Benchmark {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
 			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
 			cooldown_ms: config.cooldown_ms ?? DEFAULT_COOLDOWN_MS,
-			min_iterations: config.min_iterations ?? DEFAULT_MIN_ITERATIONS,
-			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
+			min_iterations: config.min_iterations ?? DEFAULT_ITERATIONS_MIN,
+			max_iterations: config.max_iterations ?? DEFAULT_ITERATIONS_MAX,
 			timer: config.timer ?? timer_default,
 			on_iteration: config.on_iteration,
 			on_task_complete: config.on_task_complete,
