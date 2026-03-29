@@ -3995,12 +3995,12 @@
 						"kind": "function",
 						"doc_comment": "Creates a `LibraryJson` with computed properties from package.json and source metadata.",
 						"source_line": 39,
-						"type_signature": "(package_json: { [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson",
+						"type_signature": "(package_json: { [x: string]: unknown; name: string; version?: string | undefined; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; ... 24 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson",
 						"return_type": "LibraryJson",
 						"parameters": [
 							{
 								"name": "package_json",
-								"type": "{ [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }"
+								"type": "{ [x: string]: unknown; name: string; version?: string | undefined; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }"
 							},
 							{
 								"name": "source_json",
@@ -4727,7 +4727,7 @@
 						"doc_comment": "",
 						"see_also": ["https://docs.npmjs.com/cli/v10/configuring-npm/package-json"],
 						"source_line": 66,
-						"type_signature": "ZodObject<{ name: ZodString; version: ZodString; private: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 26 more ...; exports: ZodOptional<...>; }, $loose>"
+						"type_signature": "ZodObject<{ name: ZodString; version: ZodOptional<ZodString>; private: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 26 more ...; exports: ZodOptional<...>; }, $loose>"
 					}
 				],
 				"dependencies": ["object.ts", "string.ts", "url.ts"]
