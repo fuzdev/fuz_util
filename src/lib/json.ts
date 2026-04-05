@@ -44,8 +44,8 @@ export const json_embed = <T>(data: T, stringify: (data: T) => string = JSON.str
  * Recursively sorts object keys alphabetically for consistent hashing.
  * Arrays and primitives are serialized as-is.
  *
- * @param value Any JSON-serializable value
- * @returns Deterministic JSON string representation
+ * @param value - any JSON-serializable value
+ * @returns deterministic JSON string representation
  */
 export const json_stringify_deterministic = (value: unknown): string =>
 	JSON.stringify(value, (_key, val) => {

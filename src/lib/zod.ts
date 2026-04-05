@@ -16,8 +16,8 @@ import type {z} from 'zod';
 /**
  * Unwrap nested schema types (optional, default, nullable, etc).
  *
- * @param def - Zod type definition to unwrap.
- * @returns Inner schema if wrapped, undefined otherwise.
+ * @param def - Zod type definition to unwrap
+ * @returns inner schema if wrapped, undefined otherwise
  */
 export const zod_to_subschema = (def: z.core.$ZodTypeDef): z.ZodType | undefined => {
 	if ('innerType' in def) {
@@ -158,8 +158,8 @@ export const zod_extract_fields = (schema: z.ZodObject): Array<ZodFieldInfo> => 
 /**
  * Get the description from a schema's metadata, unwrapping if needed.
  *
- * @param schema - Zod schema to extract description from.
- * @returns Description string or null if not found.
+ * @param schema - Zod schema to extract description from
+ * @returns description string or null if not found
  */
 export const zod_to_schema_description = (schema: z.ZodType): string | null => {
 	const meta = schema.meta();
@@ -176,8 +176,8 @@ export const zod_to_schema_description = (schema: z.ZodType): string | null => {
 /**
  * Get the default value from a schema, unwrapping if needed.
  *
- * @param schema - Zod schema to extract default from.
- * @returns Default value or undefined.
+ * @param schema - Zod schema to extract default from
+ * @returns default value or undefined
  */
 export const zod_to_schema_default = (schema: z.ZodType): unknown => {
 	const {def} = schema._zod;
@@ -194,8 +194,8 @@ export const zod_to_schema_default = (schema: z.ZodType): unknown => {
 /**
  * Get aliases from a schema's metadata, unwrapping if needed.
  *
- * @param schema - Zod schema to extract aliases from.
- * @returns Array of alias strings.
+ * @param schema - Zod schema to extract aliases from
+ * @returns array of alias strings
  */
 export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
 	const meta = schema.meta();
@@ -212,8 +212,8 @@ export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
 /**
  * Get the type string for a schema, suitable for display.
  *
- * @param schema - Zod schema to get type string for.
- * @returns Human-readable type string.
+ * @param schema - Zod schema to get type string for
+ * @returns human-readable type string
  */
 export const zod_to_schema_type_string = (schema: z.ZodType): string => {
 	const {def} = schema._zod;
@@ -264,8 +264,8 @@ export const zod_to_schema_type_string = (schema: z.ZodType): string => {
 /**
  * Format a value for display in help text.
  *
- * @param value - Value to format.
- * @returns Formatted string representation.
+ * @param value - value to format
+ * @returns formatted string representation
  */
 export const zod_format_value = (value: unknown): string => {
 	if (value === undefined) return '';
@@ -295,8 +295,8 @@ export interface ZodSchemaProperty {
 /**
  * Extract properties from a Zod object schema.
  *
- * @param schema - Zod object schema to extract from.
- * @returns Array of property definitions.
+ * @param schema - Zod object schema to extract from
+ * @returns array of property definitions
  */
 export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProperty> => {
 	const {def} = schema;
@@ -326,8 +326,8 @@ export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProp
 /**
  * Get all property names and their aliases from an object schema.
  *
- * @param schema - Zod object schema.
- * @returns Set of all names and aliases.
+ * @param schema - Zod object schema
+ * @returns set of all names and aliases
  */
 export const zod_to_schema_names_with_aliases = (schema: z.ZodType): Set<string> => {
 	const names: Set<string> = new Set();

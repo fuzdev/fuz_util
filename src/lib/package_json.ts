@@ -66,7 +66,7 @@ export type PackageJsonExports = z.infer<typeof PackageJsonExports>;
 export const PackageJson = z.looseObject({
 	// according to the npm docs, `name` and `version` are the only required properties
 	name: z.string(),
-	version: z.string(),
+	version: z.string().optional(),
 	private: z
 		.boolean()
 		.meta({description: 'disallow publishing to the configured registry'})

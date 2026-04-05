@@ -7,8 +7,8 @@
 /**
  * Converts a `Uint8Array` to a lowercase hex string.
  *
- * @param bytes - Binary data to encode.
- * @returns Hex string with two characters per byte.
+ * @param bytes - binary data to encode
+ * @returns hex string with two characters per byte
  */
 export const to_hex = (bytes: Uint8Array): string => {
 	const lookup = get_byte_to_hex();
@@ -23,8 +23,8 @@ export const to_hex = (bytes: Uint8Array): string => {
  * Decodes a hex string to a `Uint8Array`.
  * Whitespace is stripped before parsing. Returns `null` for invalid hex.
  *
- * @param hex - Hex string to decode (case-insensitive, whitespace allowed).
- * @returns Decoded bytes, or `null` if the input is not valid hex.
+ * @param hex - hex string to decode (case-insensitive, whitespace allowed)
+ * @returns decoded bytes, or `null` if the input is not valid hex
  */
 export const from_hex = (hex: string): Uint8Array | null => {
 	const clean = hex.replace(/\s/g, '');

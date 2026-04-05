@@ -161,8 +161,8 @@ const results_to_entries = (results: Array<BenchmarkResult>): Array<BenchmarkBas
 /**
  * Save benchmark results as the current baseline.
  *
- * @param results - Benchmark results to save
- * @param options - Save options
+ * @param results - benchmark results to save
+ * @param options - save options
  *
  * @example
  * ```ts
@@ -204,8 +204,8 @@ export const benchmark_baseline_save = async (
 /**
  * Load the current baseline from disk.
  *
- * @param options - Load options
- * @returns The baseline, or null if not found or invalid
+ * @param options - load options
+ * @returns the baseline, or null if not found or invalid
  *
  * @example
  * ```ts
@@ -255,9 +255,9 @@ export const benchmark_baseline_load = async (
 /**
  * Compare benchmark results against the stored baseline.
  *
- * @param results - Current benchmark results
- * @param options - Comparison options including regression threshold and staleness warning
- * @returns Comparison result with regressions, improvements, and unchanged tasks
+ * @param results - current benchmark results
+ * @param options - comparison options including regression threshold and staleness warning
+ * @returns comparison result with regressions, improvements, and unchanged tasks
  *
  * @example
  * ```ts
@@ -420,8 +420,8 @@ export const benchmark_baseline_compare = async (
 /**
  * Format a baseline comparison result as a human-readable string.
  *
- * @param result - Comparison result from benchmark_baseline_compare
- * @returns Formatted string summary
+ * @param result - comparison result from `benchmark_baseline_compare`
+ * @returns formatted string summary
  */
 export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonResult): string => {
 	if (!result.baseline_found) {
@@ -506,8 +506,8 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 /**
  * Format a baseline comparison result as JSON for programmatic consumption.
  *
- * @param result - Comparison result from benchmark_baseline_compare
- * @param options - Formatting options
+ * @param result - comparison result from `benchmark_baseline_compare`
+ * @param options - formatting options
  * @returns JSON string
  */
 export const benchmark_baseline_format_json = (

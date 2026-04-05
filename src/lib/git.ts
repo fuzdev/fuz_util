@@ -122,7 +122,7 @@ export interface GitWorkspaceStatus {
  * Note: This implementation treats submodules the same as regular files.
  * Submodule-specific status codes (lowercase m, ?) are interpreted as changes.
  *
- * @param stdout - The raw output from `git status --porcelain -z`
+ * @param stdout - the raw output from `git status --porcelain -z`
  * @returns status object with flags for unstaged changes, staged changes, and untracked files
  */
 export const git_parse_workspace_status = (stdout: string | null): GitWorkspaceStatus => {

@@ -44,8 +44,8 @@ import type {
 const DEFAULT_DURATION_MS = 1000;
 const DEFAULT_WARMUP_ITERATIONS = 10;
 const DEFAULT_COOLDOWN_MS = 100;
-const DEFAULT_MIN_ITERATIONS = 10;
-const DEFAULT_MAX_ITERATIONS = 100_000;
+const DEFAULT_ITERATIONS_MIN = 10;
+const DEFAULT_ITERATIONS_MAX = 100_000;
 
 /**
  * Validate and normalize benchmark configuration.
@@ -90,10 +90,10 @@ interface BenchmarkTaskInternal extends BenchmarkTask {
  * Warmup function by running it multiple times.
  * Detects whether the function is async based on return value.
  *
- * @param fn - Function to warmup (sync or async)
- * @param iterations - Number of warmup iterations
- * @param async_hint - If provided, use this instead of detecting
- * @returns Whether the function is async
+ * @param fn - function to warmup (sync or async)
+ * @param iterations - number of warmup iterations
+ * @param async_hint - if provided, use this instead of detecting
+ * @returns whether the function is async
  *
  * @example
  * ```ts
@@ -146,8 +146,8 @@ export class Benchmark {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
 			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
 			cooldown_ms: config.cooldown_ms ?? DEFAULT_COOLDOWN_MS,
-			min_iterations: config.min_iterations ?? DEFAULT_MIN_ITERATIONS,
-			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
+			min_iterations: config.min_iterations ?? DEFAULT_ITERATIONS_MIN,
+			max_iterations: config.max_iterations ?? DEFAULT_ITERATIONS_MAX,
 			timer: config.timer ?? timer_default,
 			on_iteration: config.on_iteration,
 			on_task_complete: config.on_task_complete,
@@ -156,9 +156,9 @@ export class Benchmark {
 
 	/**
 	 * Add a benchmark task.
-	 * @param name - Task name or full task object
+	 * @param name - task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 *
 	 * @example
 	 * ```ts
@@ -194,8 +194,8 @@ export class Benchmark {
 
 	/**
 	 * Remove a benchmark task by name.
-	 * @param name - Name of the task to remove
-	 * @returns This Benchmark instance for chaining
+	 * @param name - name of the task to remove
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -217,8 +217,8 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to be skipped during benchmark runs.
-	 * @param name - Name of the task to skip
-	 * @returns This Benchmark instance for chaining
+	 * @param name - name of the task to skip
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -240,8 +240,8 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to run exclusively (along with other `only` tasks).
-	 * @param name - Name of the task to run exclusively
-	 * @returns This Benchmark instance for chaining
+	 * @param name - name of the task to run exclusively
+	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
 	 * @example
@@ -264,7 +264,7 @@ export class Benchmark {
 
 	/**
 	 * Run all benchmark tasks.
-	 * @returns Array of benchmark results
+	 * @returns array of benchmark results
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this.#results = [];
@@ -385,8 +385,8 @@ export class Benchmark {
 
 	/**
 	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
-	 * @param options - Formatting options
-	 * @returns Formatted table string
+	 * @param options - formatting options
+	 * @returns formatted table string
 	 *
 	 * @example
 	 * ```ts
@@ -410,8 +410,8 @@ export class Benchmark {
 
 	/**
 	 * Format results as a Markdown table.
-	 * @param options - Formatting options (groups for organized output with optional baselines)
-	 * @returns Formatted markdown string
+	 * @param options - formatting options (groups for organized output with optional baselines)
+	 * @returns formatted markdown string
 	 *
 	 * @example
 	 * ```ts
@@ -435,7 +435,7 @@ export class Benchmark {
 
 	/**
 	 * Format results as JSON.
-	 * @param options - Formatting options (pretty, include_timings)
+	 * @param options - formatting options (pretty, include_timings)
 	 * @returns JSON string
 	 */
 	json(options?: BenchmarkFormatJsonOptions): string {
@@ -445,7 +445,7 @@ export class Benchmark {
 	/**
 	 * Get the benchmark results.
 	 * Returns a shallow copy to prevent external mutation.
-	 * @returns Array of benchmark results
+	 * @returns array of benchmark results
 	 */
 	results(): Array<BenchmarkResult> {
 		return [...this.#results];
@@ -453,7 +453,7 @@ export class Benchmark {
 
 	/**
 	 * Check if the benchmark has been run and has results.
-	 * @returns True if results are available
+	 * @returns true if results are available
 	 *
 	 * @example
 	 * ```ts
@@ -469,7 +469,7 @@ export class Benchmark {
 	/**
 	 * Get results as a map for convenient lookup by task name.
 	 * Returns a new Map each call to prevent external mutation.
-	 * @returns Map of task name to benchmark result
+	 * @returns map of task name to benchmark result
 	 *
 	 * @example
 	 * ```ts
@@ -487,7 +487,7 @@ export class Benchmark {
 	/**
 	 * Reset the benchmark results.
 	 * Keeps tasks intact so benchmarks can be rerun.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 */
 	reset(): this {
 		this.#results = [];
@@ -497,7 +497,7 @@ export class Benchmark {
 	/**
 	 * Clear everything (results and tasks).
 	 * Use this to start fresh with a new set of benchmarks.
-	 * @returns This Benchmark instance for chaining
+	 * @returns this `Benchmark` instance for chaining
 	 */
 	clear(): this {
 		this.#results = [];
@@ -507,7 +507,7 @@ export class Benchmark {
 
 	/**
 	 * Get a quick text summary of the fastest task.
-	 * @returns Human-readable summary string
+	 * @returns human-readable summary string
 	 *
 	 * @example
 	 * ```ts

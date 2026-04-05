@@ -38,10 +38,10 @@ export const create_deferred = <T>(): Deferred<T> => {
  * Runs a function on each item with controlled concurrency.
  * Like `map_concurrent` but doesn't collect results (more efficient for side effects).
  *
- * @param items items to process
- * @param concurrency maximum number of concurrent operations
- * @param fn function to apply to each item
- * @param signal optional `AbortSignal` to cancel processing
+ * @param items - items to process
+ * @param concurrency - maximum number of concurrent operations
+ * @param fn - function to apply to each item
+ * @param signal - optional `AbortSignal` to cancel processing
  *
  * @example
  * ```ts
@@ -123,10 +123,10 @@ export const each_concurrent = async <T>(
 /**
  * Maps over items with controlled concurrency, preserving input order.
  *
- * @param items items to process
- * @param concurrency maximum number of concurrent operations
- * @param fn function to apply to each item
- * @param signal optional `AbortSignal` to cancel processing
+ * @param items - items to process
+ * @param concurrency - maximum number of concurrent operations
+ * @param fn - function to apply to each item
+ * @param signal - optional `AbortSignal` to cancel processing
  * @returns promise resolving to array of results in same order as input
  *
  * @example
@@ -215,10 +215,10 @@ export const map_concurrent = async <T, R>(
  * On abort, resolves with partial results: completed items keep their real settlements,
  * in-flight and un-started items are settled as rejected with the abort reason.
  *
- * @param items items to process
- * @param concurrency maximum number of concurrent operations
- * @param fn function to apply to each item
- * @param signal optional `AbortSignal` to cancel processing
+ * @param items - items to process
+ * @param concurrency - maximum number of concurrent operations
+ * @param fn - function to apply to each item
+ * @param signal - optional `AbortSignal` to cancel processing
  * @returns promise resolving to array of `PromiseSettledResult` objects in input order
  *
  * @example

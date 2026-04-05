@@ -106,9 +106,9 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
  * Returns `false` when `filename` is `undefined`, empty string, or `exclude` is empty.
  * String patterns use substring matching. RegExp patterns use `.test()`.
  *
- * @param filename The file path to check, or `undefined` for virtual files.
- * @param exclude Array of string or RegExp exclusion patterns.
- * @returns `true` if the file should be excluded from processing.
+ * @param filename - the file path to check, or `undefined` for virtual files
+ * @param exclude - array of string or RegExp exclusion patterns
+ * @returns `true` if the file should be excluded from processing
  */
 export const should_exclude_path = (
 	filename: string | undefined,
@@ -122,8 +122,8 @@ export const should_exclude_path = (
 
 /**
  * Converts a string into a URL-compatible slug.
- * @param str the string to convert
- * @param map_special_characters if `true`, characters like `ñ` are converted to their ASCII equivalents, runs around 5x faster when disabled
+ * @param str - the string to convert
+ * @param map_special_characters - if `true`, characters like `ñ` are converted to their ASCII equivalents, runs around 5x faster when disabled
  * @mutates special_char_mappers - calls `get_special_char_mappers()` which lazily initializes the module-level array if `map_special_characters` is true
  */
 export const slugify = (str: string, map_special_characters = true): string => {

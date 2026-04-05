@@ -86,7 +86,7 @@ export const count_graphemes = (str: string): number =>
 	count_iterator(new Intl.Segmenter().segment(str));
 
 /**
- * Strips ANSI escape sequences from a string
+ * Strips ANSI escape sequences from a string.
  */
 export const strip_ansi = (str: string): string => str.replaceAll(/\x1B\[[0-9;]*[a-zA-Z]/g, ''); // eslint-disable-line no-control-regex
 
@@ -168,9 +168,9 @@ export const pad_width = (
  * Calculates the Levenshtein distance between two strings.
  * Useful for typo detection and fuzzy matching.
  *
- * @param a - First string
- * @param b - Second string
- * @returns The edit distance between the strings
+ * @param a - first string
+ * @param b - second string
+ * @returns the edit distance between the strings
  */
 export const levenshtein_distance = (a: string, b: string): number => {
 	if (a.length === 0) return b.length;
@@ -240,7 +240,7 @@ export const escape_js_string = (value: string): string =>
  *
  * Checks for null bytes in the first 8KB of content.
  *
- * @param content - Content to check.
- * @returns True if content appears to be binary.
+ * @param content - content to check
+ * @returns true if content appears to be binary
  */
 export const string_is_binary = (content: string): boolean => content.slice(0, 8192).includes('\0');

@@ -12,7 +12,7 @@ import {DEV} from 'esm-env';
 export type LogLevel = 'off' | 'error' | 'warn' | 'info' | 'debug';
 
 /**
- * Console interface subset used by Logger for output.
+ * Console interface subset used by `Logger` for output.
  * Allows custom console implementations for testing.
  */
 export type LogConsole = Pick<typeof console, 'error' | 'warn' | 'log'>;
@@ -42,15 +42,15 @@ const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
 /**
  * Converts a log level to its numeric value for comparison.
  * Higher numbers indicate more verbose logging.
- * @param level The log level to convert
- * @returns Numeric value (0-4)
+ * @param level - the log level to convert
+ * @returns numeric value (0-4)
  */
 export const log_level_to_number = (level: LogLevel): number => LOG_LEVEL_VALUES[level];
 
 /**
  * Parses and validates a log level string.
- * @param value The value to parse as a log level
- * @returns The validated log level, or undefined if value is undefined
+ * @param value - the value to parse as a log level
+ * @returns the validated log level, or undefined if value is undefined
  * @throws Error if value is provided but invalid
  */
 export const log_level_parse = (value: string | undefined): LogLevel | undefined => {
@@ -112,10 +112,10 @@ export class Logger {
 	/**
 	 * Creates a new Logger instance.
 	 *
-	 * @param label Optional label for this logger. Can be `undefined` for no label, or an
+	 * @param label - optional label for this logger. Can be `undefined` for no label, or an
 	 *   empty string `''` which is functionally equivalent (both produce no brackets in output).
 	 *   Note: Empty strings are only allowed for root loggers - child loggers cannot have empty labels.
-	 * @param options Optional configuration for level, colors, and console
+	 * @param options - optional configuration for level, colors, and console
 	 */
 	constructor(label?: string, options: LoggerOptions = {}) {
 		this.label = label;
@@ -205,7 +205,7 @@ export class Logger {
 	/**
 	 * Gets the root logger by walking up the parent chain.
 	 * Useful for setting global configuration that affects all child loggers.
-	 * @returns The root logger (the one without a parent)
+	 * @returns the root logger (the one without a parent)
 	 */
 	get root(): Logger {
 		let current: Logger = this; // eslint-disable-line consistent-this, @typescript-eslint/no-this-alias
@@ -360,11 +360,11 @@ export class Logger {
 	 * Creates a child logger with automatic label concatenation.
 	 * Children inherit parent configuration unless overridden.
 	 *
-	 * @param label Child label (will be concatenated with parent label using `:`).
+	 * @param label - child label (will be concatenated with parent label using `:`)
 	 *   Cannot be an empty string - empty labels would result in confusing output like `parent:`
 	 *   with a trailing colon. Use `undefined` or `''` only for root loggers.
-	 * @param options Optional configuration overrides
-	 * @returns New Logger instance with concatenated label
+	 * @param options - optional configuration overrides
+	 * @returns new `Logger` instance with concatenated label
 	 * @throws Error if label is an empty string
 	 *
 	 * @example
@@ -440,7 +440,7 @@ export class Logger {
 	 * Note: This method ignores the configured log level - it always outputs regardless of
 	 * whether the logger is set to 'off' or any other level.
 	 *
-	 * @param args Values to log directly to console
+	 * @param args - values to log directly to console
 	 */
 	raw(...args: Array<unknown>): void {
 		this.console.log(...args);

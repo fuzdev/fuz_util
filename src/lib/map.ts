@@ -1,6 +1,6 @@
 /**
  * Sorts a map by `comparator`, a function that compares two entries,
- * defaulting to using `localCompare` and `>`.
+ * defaulting to using `localeCompare` and `>`.
  */
 export const sort_map = <T extends Map<any, any>>(
 	map: T,

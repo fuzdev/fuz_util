@@ -6,9 +6,9 @@ import {format_number} from './maths.js';
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
  * All times use the same unit for easy comparison.
- * @param results - Array of benchmark results
- * @param baseline - Optional task name to use as baseline for comparison (defaults to fastest)
- * @returns Formatted table string with enhanced metrics
+ * @param results - array of benchmark results
+ * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
+ * @returns formatted table string with enhanced metrics
  *
  * @example
  * ```ts
@@ -126,9 +126,9 @@ export const benchmark_format_table = (
 /**
  * Format results as a Markdown table with key metrics.
  * All times use the same unit for easy comparison.
- * @param results - Array of benchmark results
- * @param baseline - Optional task name to use as baseline for comparison (defaults to fastest)
- * @returns Formatted markdown table string
+ * @param results - array of benchmark results
+ * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
+ * @returns formatted markdown table string
  *
  * @example
  * ```ts
@@ -238,9 +238,9 @@ export const benchmark_format_markdown = (
 
 /**
  * Format results as grouped Markdown tables with headers between groups.
- * @param results - Array of benchmark results
- * @param groups - Array of group definitions
- * @returns Formatted markdown string with group headers and tables
+ * @param results - array of benchmark results
+ * @param groups - array of group definitions
+ * @returns formatted markdown string with group headers and tables
  *
  * @example
  * ```ts
@@ -301,8 +301,8 @@ export interface BenchmarkFormatJsonOptions {
 
 /**
  * Format results as JSON.
- * @param results - Array of benchmark results
- * @param options - Formatting options
+ * @param results - array of benchmark results
+ * @param options - formatting options
  * @returns JSON string
  *
  * @example
@@ -348,9 +348,9 @@ export const benchmark_format_json = (
 
 /**
  * Format results as a grouped table with visual separators between groups.
- * @param results - Array of benchmark results
- * @param groups - Array of group definitions
- * @returns Formatted table string with group separators
+ * @param results - array of benchmark results
+ * @param groups - array of group definitions
+ * @returns formatted table string with group separators
  *
  * @example
  * ```ts
@@ -405,6 +405,6 @@ export const benchmark_format_table_grouped = (
 
 /**
  * Format a number with fixed decimal places and thousands separators.
- * @see {@link format_number} in maths.ts for the underlying implementation.
+ * @see `format_number` in `maths.ts` for the underlying implementation.
  */
 export const benchmark_format_number = format_number;

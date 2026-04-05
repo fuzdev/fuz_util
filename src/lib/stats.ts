@@ -59,8 +59,8 @@ export const stats_variance = (values: Array<number>, mean?: number): number => 
  * Calculate a percentile of an array of numbers using linear interpolation.
  * Uses the "R-7" method (default in R, NumPy, Excel) which interpolates between
  * data points for more accurate percentile estimates, especially with smaller samples.
- * @param values - Array of numbers
- * @param p - Percentile (0-1, e.g., 0.95 for 95th percentile)
+ * @param values - array of numbers
+ * @param p - percentile (0-1, e.g., 0.95 for 95th percentile)
  */
 export const stats_percentile = (values: Array<number>, p: number): number => {
 	if (values.length === 0) return NaN;
@@ -329,8 +329,8 @@ export interface StatsConfidenceIntervalOptions {
 
 /**
  * Calculate confidence interval for the mean.
- * @param values - Array of numbers
- * @param options - Configuration options
+ * @param values - array of numbers
+ * @param options - configuration options
  * @returns [lower_bound, upper_bound]
  */
 export const stats_confidence_interval = (
@@ -348,10 +348,10 @@ export const stats_confidence_interval = (
 /**
  * Calculate confidence interval from summary statistics (mean, std_dev, sample_size).
  * Useful when raw data is not available.
- * @param mean - Mean of the data
- * @param std_dev - Standard deviation of the data
- * @param sample_size - Number of samples
- * @param options - Configuration options
+ * @param mean - mean of the data
+ * @param std_dev - standard deviation of the data
+ * @param sample_size - number of samples
+ * @param options - configuration options
  * @returns [lower_bound, upper_bound]
  */
 export const stats_confidence_interval_from_summary = (
@@ -393,12 +393,12 @@ export interface StatsWelchTTestResult {
  * Calculate Welch's t-test statistic and degrees of freedom.
  * Welch's t-test is more robust than Student's t-test when variances are unequal.
  *
- * @param mean1 - Mean of first sample
- * @param std1 - Standard deviation of first sample
- * @param n1 - Size of first sample
- * @param mean2 - Mean of second sample
- * @param std2 - Standard deviation of second sample
- * @param n2 - Size of second sample
+ * @param mean1 - mean of first sample
+ * @param std1 - standard deviation of first sample
+ * @param n1 - size of first sample
+ * @param mean2 - mean of second sample
+ * @param std2 - standard deviation of second sample
+ * @param n2 - size of second sample
  */
 export const stats_welch_t_test = (
 	mean1: number,
@@ -516,9 +516,9 @@ export const stats_incomplete_beta = (x: number, a: number, b: number): number =
  * For large df (>100), uses normal approximation.
  * For smaller df, uses incomplete beta function.
  *
- * @param t - Absolute value of t-statistic
- * @param df - Degrees of freedom
- * @returns Two-tailed p-value
+ * @param t - absolute value of t-statistic
+ * @param df - degrees of freedom
+ * @returns two-tailed p-value
  */
 export const stats_t_distribution_p_value = (t: number, df: number): number => {
 	// Use normal approximation for large df

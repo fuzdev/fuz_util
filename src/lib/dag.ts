@@ -80,8 +80,8 @@ export interface DagResult {
  * eligible to start. Failure cascading and stop-on-failure are handled
  * per the options.
  *
- * @param options - DAG execution options.
- * @returns Aggregated result with per-node details.
+ * @param options - DAG execution options
+ * @returns aggregated result with per-node details
  */
 export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promise<DagResult> => {
 	const {

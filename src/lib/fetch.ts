@@ -34,7 +34,7 @@ export interface FetchValueOptions<TValue, TParams = undefined> {
  *   (you can still provide headers directly)
  *
  * Unlike `fetch`, this throws on ratelimits (status code 429)
- * to halt whatever is happpening in its tracks to avoid accidental abuse,
+ * to halt whatever is happening in its tracks to avoid accidental abuse,
  * but returns a `Result` in all other cases.
  * Handling ratelimit headers with more sophistication gets tricky because behavior
  * differs across services.

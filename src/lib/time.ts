@@ -120,8 +120,8 @@ export const TIME_UNIT_DISPLAY: Record<TimeUnit, string> = {ns: 'ns', us: 'μs',
 /**
  * Detect the best time unit for a set of nanosecond values.
  * Chooses the unit where most values fall in the range 1-9999.
- * @param values_ns - Array of times in nanoseconds
- * @returns Best unit to use for all values
+ * @param values_ns - array of times in nanoseconds
+ * @returns best unit to use for all values
  */
 export const time_unit_detect_best = (values_ns: Array<number>): TimeUnit => {
 	if (values_ns.length === 0) return 'ms';
@@ -148,10 +148,10 @@ export const time_unit_detect_best = (values_ns: Array<number>): TimeUnit => {
 
 /**
  * Format time with a specific unit.
- * @param ns - Time in nanoseconds
- * @param unit - Unit to use ('ns', 'us', 'ms', 's')
- * @param decimals - Number of decimal places (default: 2)
- * @returns Formatted string like "3.87μs"
+ * @param ns - time in nanoseconds
+ * @param unit - unit to use ('ns', 'us', 'ms', 's')
+ * @param decimals - number of decimal places (default: 2)
+ * @returns formatted string like "3.87μs"
  */
 export const time_format = (ns: number, unit: TimeUnit, decimals: number = 2): string => {
 	if (!isFinite(ns)) return String(ns);
@@ -170,9 +170,9 @@ export const time_format = (ns: number, unit: TimeUnit, decimals: number = 2): s
 
 /**
  * Format time with adaptive units (ns/μs/ms/s) based on magnitude.
- * @param ns - Time in nanoseconds
- * @param decimals - Number of decimal places (default: 2)
- * @returns Formatted string like "3.87μs" or "1.23ms"
+ * @param ns - time in nanoseconds
+ * @param decimals - number of decimal places (default: 2)
+ * @returns formatted string like "3.87μs" or "1.23ms"
  *
  * @example
  * ```ts
@@ -216,9 +216,9 @@ export interface TimeResult {
 
 /**
  * Time an asynchronous function execution.
- * @param fn - Async function to time
- * @param timer - Timer to use (defaults to timer_default)
- * @returns Object containing the function result and timing information
+ * @param fn - async function to time
+ * @param timer - timer to use (defaults to `timer_default`)
+ * @returns object containing the function result and timing information
  *
  * @example
  * ```ts
@@ -252,9 +252,9 @@ export const time_async = async <T>(
 
 /**
  * Time a synchronous function execution.
- * @param fn - Sync function to time
- * @param timer - Timer to use (defaults to timer_default)
- * @returns Object containing the function result and timing information
+ * @param fn - sync function to time
+ * @param timer - timer to use (defaults to `timer_default`)
+ * @returns object containing the function result and timing information
  *
  * @example
  * ```ts
@@ -287,10 +287,10 @@ export const time_sync = <T>(
 
 /**
  * Measure multiple executions of a function and return all timings.
- * @param fn - Function to measure (sync or async)
- * @param iterations - Number of times to execute
- * @param timer - Timer to use (defaults to timer_default)
- * @returns Array of elapsed times in nanoseconds
+ * @param fn - function to measure (sync or async)
+ * @param iterations - number of times to execute
+ * @param timer - timer to use (defaults to `timer_default`)
+ * @returns array of elapsed times in nanoseconds
  *
  * @example
  * ```ts

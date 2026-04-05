@@ -83,10 +83,20 @@
 			"@changesets/changelog-git": "^0.2.1",
 			"@fuzdev/blake3_wasm": "^0.1.0",
 			"@fuzdev/fuz_code": "^0.45.1",
+<<<<<<< HEAD
 			"@fuzdev/fuz_css": "^0.55.0",
 			"@fuzdev/fuz_ui": "file:../fuz_ui",
 			"@fuzdev/gro": "^0.197.0",
-			"@fuzdev/svelte-docinfo": "file:../private_svelte-docinfo",
+			"svelte-docinfo": "file:../private_svelte-docinfo",
+||||||| d2261a9
+			"@fuzdev/fuz_css": "^0.56.0",
+			"@fuzdev/fuz_ui": "^0.190.0",
+			"@fuzdev/gro": "^0.197.0",
+=======
+			"@fuzdev/fuz_css": "^0.58.0",
+			"@fuzdev/fuz_ui": "^0.191.3",
+			"@fuzdev/gro": "^0.197.2",
+>>>>>>> main
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.10.1",
 			"@sveltejs/acorn-typescript": "^1.0.9",
@@ -105,7 +115,7 @@
 			"magic-string": "^0.30.21",
 			"prettier": "^3.7.4",
 			"prettier-plugin-svelte": "^3.4.1",
-			"svelte": "^5.53.10",
+			"svelte": "^5.55.0",
 			"svelte-check": "^4.3.6",
 			"svelte2tsx": "^0.7.47",
 			"tslib": "^2.8.1",
@@ -191,7 +201,7 @@
 					{
 						"name": "ArgSchema",
 						"kind": "type",
-						"doc_comment": "Schema description for help text generation.\nNot used by args_parse/args_serialize directly - provided for consumers\nbuilding CLI help output.",
+						"doc_comment": "Schema description for help text generation.\nNot used by `args_parse`/`args_serialize` directly - provided for consumers\nbuilding CLI help output.",
 						"source_line": 31,
 						"type_signature": "ArgSchema",
 						"properties": [
@@ -238,12 +248,12 @@
 						"source_line": 190,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): { success: true; } | { success: false; error: ZodError<unknown>; }",
 						"return_type": "{ success: true; } | { success: false; error: ZodError<unknown>; }",
-						"return_description": "Validation result with success flag and optional error",
+						"return_description": "validation result with success flag and optional error",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema with optional alias metadata"
+								"description": "zod object schema with optional alias metadata"
 							}
 						]
 					},
@@ -259,12 +269,12 @@
 							{
 								"name": "unparsed_args",
 								"type": "Args",
-								"description": "Args object from CLI parser (mri, minimist, etc.)"
+								"description": "args object from CLI parser (mri, minimist, etc.)"
 							},
 							{
 								"name": "schema",
 								"type": "ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>",
-								"description": "Zod object schema with optional alias metadata"
+								"description": "zod object schema with optional alias metadata"
 							}
 						]
 					},
@@ -275,18 +285,18 @@
 						"source_line": 283,
 						"type_signature": "(args: Args, schema?: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined): string[]",
 						"return_type": "string[]",
-						"return_description": "Array of CLI argument strings",
+						"return_description": "array of CLI argument strings",
 						"parameters": [
 							{
 								"name": "args",
 								"type": "Args",
-								"description": "Args object to serialize"
+								"description": "args object to serialize"
 							},
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 								"optional": true,
-								"description": "Optional zod schema to extract aliases for short form preference"
+								"description": "optional zod schema to extract aliases for short form preference"
 							}
 						]
 					},
@@ -297,12 +307,12 @@
 						"source_line": 355,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ArgsAliasesResult",
 						"return_type": "ArgsAliasesResult",
-						"return_description": "Object with aliases map and canonical_keys set",
+						"return_description": "object with aliases map and canonical_keys set",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema with optional `.meta({aliases})` on fields"
+								"description": "zod object schema with optional `.meta({aliases})` on fields"
 							}
 						]
 					},
@@ -313,12 +323,12 @@
 						"source_line": 425,
 						"type_signature": "(argv: string[]): ParsedArgs",
 						"return_type": "ParsedArgs",
-						"return_description": "Parsed Args object with guaranteed `_` array (null prototype)",
+						"return_description": "parsed `Args` object with guaranteed `_` array (null prototype)",
 						"parameters": [
 							{
 								"name": "argv",
 								"type": "string[]",
-								"description": "Raw argument array (typically process.argv.slice(2))"
+								"description": "raw argument array (typically process.argv.slice(2))"
 							}
 						]
 					}
@@ -803,12 +813,12 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Benchmark results to save"
+								"description": "benchmark results to save"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "Save options",
+								"description": "save options",
 								"default_value": "{}"
 							}
 						]
@@ -823,12 +833,12 @@
 						"source_line": 218,
 						"type_signature": "(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>",
 						"return_type": "Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>",
-						"return_description": "The baseline, or null if not found or invalid",
+						"return_description": "the baseline, or null if not found or invalid",
 						"parameters": [
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "Load options",
+								"description": "load options",
 								"default_value": "{}"
 							}
 						]
@@ -843,17 +853,17 @@
 						"source_line": 281,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>",
 						"return_type": "Promise<BenchmarkBaselineComparisonResult>",
-						"return_description": "Comparison result with regressions, improvements, and unchanged tasks",
+						"return_description": "comparison result with regressions, improvements, and unchanged tasks",
 						"parameters": [
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Current benchmark results"
+								"description": "current benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineCompareOptions",
-								"description": "Comparison options including regression threshold and staleness warning",
+								"description": "comparison options including regression threshold and staleness warning",
 								"default_value": "{}"
 							}
 						]
@@ -865,12 +875,12 @@
 						"source_line": 426,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult): string",
 						"return_type": "string",
-						"return_description": "Formatted string summary",
+						"return_description": "formatted string summary",
 						"parameters": [
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "comparison result from `benchmark_baseline_compare`"
 							}
 						]
 					},
@@ -886,12 +896,12 @@
 							{
 								"name": "result",
 								"type": "BenchmarkBaselineComparisonResult",
-								"description": "Comparison result from benchmark_baseline_compare"
+								"description": "comparison result from `benchmark_baseline_compare`"
 							},
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "Formatting options",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -913,18 +923,18 @@
 						"source_line": 24,
 						"type_signature": "(results: BenchmarkResult[], baseline?: string | undefined): string",
 						"return_type": "string",
-						"return_description": "Formatted table string with enhanced metrics",
+						"return_description": "formatted table string with enhanced metrics",
 						"parameters": [
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -938,18 +948,18 @@
 						"source_line": 142,
 						"type_signature": "(results: BenchmarkResult[], baseline?: string | undefined): string",
 						"return_type": "string",
-						"return_description": "Formatted markdown table string",
+						"return_description": "formatted markdown table string",
 						"parameters": [
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "baseline",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional task name to use as baseline for comparison (defaults to fastest)"
+								"description": "optional task name to use as baseline for comparison (defaults to fastest)"
 							}
 						]
 					},
@@ -963,17 +973,17 @@
 						"source_line": 263,
 						"type_signature": "(results: BenchmarkResult[], groups: BenchmarkGroup[]): string",
 						"return_type": "string",
-						"return_description": "Formatted markdown string with group headers and tables",
+						"return_description": "formatted markdown string with group headers and tables",
 						"parameters": [
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "array of group definitions"
 							}
 						]
 					},
@@ -1012,13 +1022,13 @@
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
 								"optional": true,
-								"description": "Formatting options"
+								"description": "formatting options"
 							}
 						]
 					},
@@ -1032,17 +1042,17 @@
 						"source_line": 374,
 						"type_signature": "(results: BenchmarkResult[], groups: BenchmarkGroup[]): string",
 						"return_type": "string",
-						"return_description": "Formatted table string with group separators",
+						"return_description": "formatted table string with group separators",
 						"parameters": [
 							{
 								"name": "results",
 								"type": "BenchmarkResult[]",
-								"description": "Array of benchmark results"
+								"description": "array of benchmark results"
 							},
 							{
 								"name": "groups",
 								"type": "BenchmarkGroup[]",
-								"description": "Array of group definitions"
+								"description": "array of group definitions"
 							}
 						]
 					},
@@ -1050,7 +1060,7 @@
 						"name": "benchmark_format_number",
 						"kind": "variable",
 						"doc_comment": "Format a number with fixed decimal places and thousands separators.",
-						"see_also": ["{@link format_number} in maths.ts for the underlying implementation."],
+						"see_also": ["`format_number` in `maths.ts` for the underlying implementation."],
 						"source_line": 410,
 						"type_signature": "(n: number, decimals?: number) => string"
 					}
@@ -1337,28 +1347,28 @@
 						"source_line": 220,
 						"type_signature": "(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison",
 						"return_type": "BenchmarkComparison",
-						"return_description": "Comparison result with significance, effect size, and recommendation",
+						"return_description": "comparison result with significance, effect size, and recommendation",
 						"parameters": [
 							{
 								"name": "a",
 								"type": "BenchmarkStatsComparable",
-								"description": "First benchmark stats (or any object with required properties)"
+								"description": "first benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "b",
 								"type": "BenchmarkStatsComparable",
-								"description": "Second benchmark stats (or any object with required properties)"
+								"description": "second benchmark stats (or any object with required properties)"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
 								"optional": true,
-								"description": "Comparison options"
+								"description": "comparison options"
 							}
 						]
 					}
 				],
-				"module_comment": "Benchmark-specific statistical analysis.\nUses the general stats utilities from stats.ts for timing/performance analysis.\nAll timing values are in nanoseconds.",
+				"module_comment": "Benchmark-specific statistical analysis.\nUses the general stats utilities from `stats.ts` for timing/performance analysis.\nAll timing values are in nanoseconds.",
 				"dependencies": ["stats.ts", "time.ts"],
 				"dependents": ["benchmark.ts", "benchmark_baseline.ts"]
 			},
@@ -1406,7 +1416,7 @@
 								"name": "timer",
 								"kind": "variable",
 								"type_signature": "Timer",
-								"doc_comment": "Custom timer to use for measurements.\nDefault: timer_default (auto-detects environment)"
+								"doc_comment": "Custom timer to use for measurements.\nDefault: `timer_default` (auto-detects environment)"
 							},
 							{
 								"name": "on_iteration",
@@ -1575,23 +1585,23 @@
 						"source_line": 103,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
-						"return_description": "Whether the function is async",
+						"return_description": "whether the function is async",
 						"parameters": [
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to warmup (sync or async)"
+								"description": "function to warmup (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of warmup iterations"
+								"description": "number of warmup iterations"
 							},
 							{
 								"name": "async_hint",
 								"type": "boolean | undefined",
 								"optional": true,
-								"description": "If provided, use this instead of detecting"
+								"description": "if provided, use this instead of detecting"
 							}
 						]
 					},
@@ -1619,12 +1629,12 @@
 								"doc_comment": "Add a benchmark task.",
 								"type_signature": "(name: string, fn: () => unknown): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Task name or full task object"
+										"description": "task name or full task object"
 									},
 									{
 										"name": "fn",
@@ -1671,12 +1681,12 @@
 								"doc_comment": "Remove a benchmark task by name.",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to remove"
+										"description": "name of the task to remove"
 									}
 								],
 								"throws": [
@@ -1692,12 +1702,12 @@
 								"doc_comment": "Mark a task to be skipped during benchmark runs.",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to skip"
+										"description": "name of the task to skip"
 									}
 								],
 								"throws": [
@@ -1713,12 +1723,12 @@
 								"doc_comment": "Mark a task to run exclusively (along with other `only` tasks).",
 								"type_signature": "(name: string): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": [
 									{
 										"name": "name",
 										"type": "string",
-										"description": "Name of the task to run exclusively"
+										"description": "name of the task to run exclusively"
 									}
 								],
 								"throws": [
@@ -1734,7 +1744,7 @@
 								"doc_comment": "Run all benchmark tasks.",
 								"type_signature": "(): Promise<BenchmarkResult[]>",
 								"return_type": "Promise<BenchmarkResult[]>",
-								"return_description": "Array of benchmark results",
+								"return_description": "array of benchmark results",
 								"parameters": []
 							},
 							{
@@ -1743,13 +1753,13 @@
 								"doc_comment": "Format results as an ASCII table with percentiles, min/max, and relative performance.",
 								"type_signature": "(options?: BenchmarkFormatTableOptions | undefined): string",
 								"return_type": "string",
-								"return_description": "Formatted table string",
+								"return_description": "formatted table string",
 								"parameters": [
 									{
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options"
+										"description": "formatting options"
 									}
 								]
 							},
@@ -1759,13 +1769,13 @@
 								"doc_comment": "Format results as a Markdown table.",
 								"type_signature": "(options?: BenchmarkFormatTableOptions | undefined): string",
 								"return_type": "string",
-								"return_description": "Formatted markdown string",
+								"return_description": "formatted markdown string",
 								"parameters": [
 									{
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (groups for organized output with optional baselines)"
+										"description": "formatting options (groups for organized output with optional baselines)"
 									}
 								]
 							},
@@ -1781,7 +1791,7 @@
 										"name": "options",
 										"type": "BenchmarkFormatJsonOptions | undefined",
 										"optional": true,
-										"description": "Formatting options (pretty, include_timings)"
+										"description": "formatting options (pretty, include_timings)"
 									}
 								]
 							},
@@ -1791,7 +1801,7 @@
 								"doc_comment": "Get the benchmark results.\nReturns a shallow copy to prevent external mutation.",
 								"type_signature": "(): BenchmarkResult[]",
 								"return_type": "BenchmarkResult[]",
-								"return_description": "Array of benchmark results",
+								"return_description": "array of benchmark results",
 								"parameters": []
 							},
 							{
@@ -1800,7 +1810,7 @@
 								"doc_comment": "Get results as a map for convenient lookup by task name.\nReturns a new Map each call to prevent external mutation.",
 								"type_signature": "(): Map<string, BenchmarkResult>",
 								"return_type": "Map<string, BenchmarkResult>",
-								"return_description": "Map of task name to benchmark result",
+								"return_description": "map of task name to benchmark result",
 								"parameters": []
 							},
 							{
@@ -1809,7 +1819,7 @@
 								"doc_comment": "Reset the benchmark results.\nKeeps tasks intact so benchmarks can be rerun.",
 								"type_signature": "(): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": []
 							},
 							{
@@ -1818,7 +1828,7 @@
 								"doc_comment": "Clear everything (results and tasks).\nUse this to start fresh with a new set of benchmarks.",
 								"type_signature": "(): this",
 								"return_type": "this",
-								"return_description": "This Benchmark instance for chaining",
+								"return_description": "this `Benchmark` instance for chaining",
 								"parameters": []
 							},
 							{
@@ -1827,7 +1837,7 @@
 								"doc_comment": "Get a quick text summary of the fastest task.",
 								"type_signature": "(): string",
 								"return_type": "string",
-								"return_description": "Human-readable summary string",
+								"return_description": "human-readable summary string",
 								"parameters": []
 							}
 						]
@@ -1846,12 +1856,12 @@
 						"source_line": 16,
 						"type_signature": "(data: string | BufferSource): Uint8Array<ArrayBufferLike>",
 						"return_type": "Uint8Array<ArrayBufferLike>",
-						"return_description": "`Uint8Array` view of the data.",
+						"return_description": "`Uint8Array` view of the data",
 						"parameters": [
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "String or `BufferSource` to convert."
+								"description": "string or `BufferSource` to convert"
 							}
 						]
 					},
@@ -1862,12 +1872,12 @@
 						"source_line": 29,
 						"type_signature": "(n: number): string",
 						"return_type": "string",
-						"return_description": "formatted string like `'1.2 KB'` or `'3.4 MB'`.",
+						"return_description": "formatted string like `'1.2 KB'` or `'3.4 MB'`",
 						"parameters": [
 							{
 								"name": "n",
 								"type": "number",
-								"description": "byte count."
+								"description": "byte count"
 							}
 						]
 					}
@@ -2372,12 +2382,12 @@
 						"source_line": 86,
 						"type_signature": "<T extends DagNode>(options: DagOptions<T>): Promise<DagResult>",
 						"return_type": "Promise<DagResult>",
-						"return_description": "Aggregated result with per-node details.",
+						"return_description": "aggregated result with per-node details",
 						"parameters": [
 							{
 								"name": "options",
 								"type": "DagOptions<T>",
-								"description": "DAG execution options."
+								"description": "DAG execution options"
 							}
 						]
 					}
@@ -2440,17 +2450,17 @@
 						"source_line": 22,
 						"type_signature": "(a: string, b: string): DiffLine[]",
 						"return_type": "DiffLine[]",
-						"return_description": "Array of diff lines with type annotations.",
+						"return_description": "array of diff lines with type annotations",
 						"parameters": [
 							{
 								"name": "a",
 								"type": "string",
-								"description": "The original/current content."
+								"description": "the original/current content"
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "The new/desired content."
+								"description": "the new/desired content"
 							}
 						]
 					},
@@ -2461,17 +2471,17 @@
 						"source_line": 101,
 						"type_signature": "(diff: DiffLine[], context_lines?: number): DiffLine[]",
 						"return_type": "DiffLine[]",
-						"return_description": "Filtered diff with ellipsis markers for skipped regions.",
+						"return_description": "filtered diff with ellipsis markers for skipped regions",
 						"parameters": [
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "The full diff lines."
+								"description": "the full diff lines"
 							},
 							{
 								"name": "context_lines",
 								"type": "number",
-								"description": "Number of context lines to show around changes (default: 3).",
+								"description": "number of context lines to show around changes (default: 3)",
 								"default_value": "3"
 							}
 						]
@@ -2510,27 +2520,27 @@
 						"source_line": 172,
 						"type_signature": "(diff: DiffLine[], current_path: string, desired_path: string, options?: FormatDiffOptions): string",
 						"return_type": "string",
-						"return_description": "Formatted diff string.",
+						"return_description": "formatted diff string",
 						"parameters": [
 							{
 								"name": "diff",
 								"type": "DiffLine[]",
-								"description": "The diff lines to format."
+								"description": "the diff lines to format"
 							},
 							{
 								"name": "current_path",
 								"type": "string",
-								"description": "Path label for \"current\" content."
+								"description": "path label for \"current\" content"
 							},
 							{
 								"name": "desired_path",
 								"type": "string",
-								"description": "Path label for \"desired\" content."
+								"description": "path label for \"desired\" content"
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "Formatting options.",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2538,31 +2548,31 @@
 					{
 						"name": "generate_diff",
 						"kind": "function",
-						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines diff_lines, filter_diff_context, and format_diff for convenience.\nReturns null if content is binary.",
+						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines `diff_lines`, `filter_diff_context`, and `format_diff` for convenience.\nReturns null if content is binary.",
 						"source_line": 220,
 						"type_signature": "(current: string, desired: string, path: string, options?: FormatDiffOptions): string | null",
 						"return_type": "string | null",
-						"return_description": "Formatted diff string, or null if binary.",
+						"return_description": "formatted diff string, or null if binary",
 						"parameters": [
 							{
 								"name": "current",
 								"type": "string",
-								"description": "Current content."
+								"description": "current content"
 							},
 							{
 								"name": "desired",
 								"type": "string",
-								"description": "Desired content."
+								"description": "desired content"
 							},
 							{
 								"name": "path",
 								"type": "string",
-								"description": "File path for labels."
+								"description": "file path for labels"
 							},
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "Formatting options.",
+								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2623,10 +2633,12 @@
 						"source_line": 69,
 						"type_signature": "<T extends Pick<Event, \"preventDefault\" | \"stopPropagation\" | \"stopImmediatePropagation\">>(event: T, immediate?: boolean, preventDefault?: boolean): T",
 						"return_type": "T",
+						"return_description": "the swallowed event",
 						"parameters": [
 							{
 								"name": "event",
-								"type": "T"
+								"type": "T",
+								"description": "the event to swallow"
 							},
 							{
 								"name": "immediate",
@@ -2791,7 +2803,7 @@
 					{
 						"name": "fetch_value",
 						"kind": "function",
-						"doc_comment": "Specializes `fetch` with some slightly different behavior and additional features:\n\n- throws on ratelimit errors to mitigate unintentional abuse\n- optional `parse` function called on the return value\n- optional cache (different from the browser cache,\n\t the caller can serialize it so e.g. dev setups can avoid hitting the network)\n- optional simplified API for authorization and data types\n  (you can still provide headers directly)\n\nUnlike `fetch`, this throws on ratelimits (status code 429)\nto halt whatever is happpening in its tracks to avoid accidental abuse,\nbut returns a `Result` in all other cases.\nHandling ratelimit headers with more sophistication gets tricky because behavior\ndiffers across services.\n(e.g. Mastodon returns an ISO string for `x-ratelimit-reset`,\nbut GitHub returns `Date.now()/1000`,\nand other services may do whatever, or even use a different header)\n\nIt's also stateless to avoid the complexity and bugs,\nso we don't try to track `x-ratelimit-remaining` per domain.\n\nIf the `value` is cached, only the cached safe subset of the `headers` are returned.\n(currently just `etag` and `last-modified`)\nOtherwise the full `res.headers` are included.",
+						"doc_comment": "Specializes `fetch` with some slightly different behavior and additional features:\n\n- throws on ratelimit errors to mitigate unintentional abuse\n- optional `parse` function called on the return value\n- optional cache (different from the browser cache,\n\t the caller can serialize it so e.g. dev setups can avoid hitting the network)\n- optional simplified API for authorization and data types\n  (you can still provide headers directly)\n\nUnlike `fetch`, this throws on ratelimits (status code 429)\nto halt whatever is happening in its tracks to avoid accidental abuse,\nbut returns a `Result` in all other cases.\nHandling ratelimit headers with more sophistication gets tricky because behavior\ndiffers across services.\n(e.g. Mastodon returns an ISO string for `x-ratelimit-reset`,\nbut GitHub returns `Date.now()/1000`,\nand other services may do whatever, or even use a different header)\n\nIt's also stateless to avoid the complexity and bugs,\nso we don't try to track `x-ratelimit-remaining` per domain.\n\nIf the `value` is cached, only the cached safe subset of the `headers` are returned.\n(currently just `etag` and `last-modified`)\nOtherwise the full `res.headers` are included.",
 						"source_line": 53,
 						"type_signature": "<TValue = any, TParams = undefined>(url: string | URL, options?: FetchValueOptions<TValue, TParams> | undefined): Promise<Result<{ value: TValue; headers: Headers; }, { ...; }>>",
 						"return_type": "Promise<Result<{ value: TValue; headers: Headers; }, { status: number; message: string; }>>",
@@ -3205,7 +3217,7 @@
 							{
 								"name": "stdout",
 								"type": "string | null",
-								"description": "The raw output from `git status --porcelain -z`"
+								"description": "the raw output from `git status --porcelain -z`"
 							}
 						]
 					},
@@ -3592,7 +3604,7 @@
 						"source_line": 30,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
-						"return_description": "64-character hexadecimal hash string (32 bytes).",
+						"return_description": "64-character hexadecimal hash string (32 bytes)",
 						"parameters": [
 							{
 								"name": "data",
@@ -3622,7 +3634,7 @@
 						"source_line": 34,
 						"type_signature": "(data: string | BufferSource): Promise<string>",
 						"return_type": "Promise<string>",
-						"return_description": "40-character hexadecimal hash string.",
+						"return_description": "40-character hexadecimal hash string",
 						"parameters": [
 							{
 								"name": "data",
@@ -3638,7 +3650,7 @@
 						"source_line": 43,
 						"type_signature": "(data: string | BufferSource): Promise<string>",
 						"return_type": "Promise<string>",
-						"return_description": "64-character hexadecimal hash string.",
+						"return_description": "64-character hexadecimal hash string",
 						"parameters": [
 							{
 								"name": "data",
@@ -3654,7 +3666,7 @@
 						"source_line": 52,
 						"type_signature": "(data: string | BufferSource): Promise<string>",
 						"return_type": "Promise<string>",
-						"return_description": "96-character hexadecimal hash string.",
+						"return_description": "96-character hexadecimal hash string",
 						"parameters": [
 							{
 								"name": "data",
@@ -3670,7 +3682,7 @@
 						"source_line": 61,
 						"type_signature": "(data: string | BufferSource): Promise<string>",
 						"return_type": "Promise<string>",
-						"return_description": "128-character hexadecimal hash string.",
+						"return_description": "128-character hexadecimal hash string",
 						"parameters": [
 							{
 								"name": "data",
@@ -3686,12 +3698,12 @@
 						"source_line": 74,
 						"type_signature": "(data: string | BufferSource): string",
 						"return_type": "string",
-						"return_description": "8-character hex-encoded unsigned 32-bit hash.",
+						"return_description": "8-character hex-encoded unsigned 32-bit hash",
 						"parameters": [
 							{
 								"name": "data",
 								"type": "string | BufferSource",
-								"description": "String or binary data to hash."
+								"description": "string or binary data to hash"
 							}
 						]
 					}
@@ -3709,12 +3721,12 @@
 						"source_line": 13,
 						"type_signature": "(bytes: Uint8Array<ArrayBufferLike>): string",
 						"return_type": "string",
-						"return_description": "Hex string with two characters per byte.",
+						"return_description": "hex string with two characters per byte",
 						"parameters": [
 							{
 								"name": "bytes",
 								"type": "Uint8Array<ArrayBufferLike>",
-								"description": "Binary data to encode."
+								"description": "binary data to encode"
 							}
 						]
 					},
@@ -3725,12 +3737,12 @@
 						"source_line": 29,
 						"type_signature": "(hex: string): Uint8Array<ArrayBufferLike> | null",
 						"return_type": "Uint8Array<ArrayBufferLike> | null",
-						"return_description": "Decoded bytes, or `null` if the input is not valid hex.",
+						"return_description": "decoded bytes, or `null` if the input is not valid hex",
 						"parameters": [
 							{
 								"name": "hex",
 								"type": "string",
-								"description": "Hex string to decode (case-insensitive, whitespace allowed)."
+								"description": "hex string to decode (case-insensitive, whitespace allowed)"
 							}
 						]
 					}
@@ -3899,12 +3911,12 @@
 						"source_line": 50,
 						"type_signature": "(value: unknown): string",
 						"return_type": "string",
-						"return_description": "Deterministic JSON string representation",
+						"return_description": "deterministic JSON string representation",
 						"parameters": [
 							{
 								"name": "value",
 								"type": "unknown",
-								"description": "Any JSON-serializable value"
+								"description": "any JSON-serializable value"
 							}
 						]
 					}
@@ -3994,12 +4006,12 @@
 						"kind": "function",
 						"doc_comment": "Creates a `LibraryJson` with computed properties from package.json and source metadata.",
 						"source_line": 39,
-						"type_signature": "(package_json: { [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson",
+						"type_signature": "(package_json: { [x: string]: unknown; name: string; version?: string | undefined; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; ... 24 more ...; exports?: string | ... 2 more ... | undefined; }, source_json: { ...; }): LibraryJson",
 						"return_type": "LibraryJson",
 						"parameters": [
 							{
 								"name": "package_json",
-								"type": "{ [x: string]: unknown; name: string; version: string; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }"
+								"type": "{ [x: string]: unknown; name: string; version?: string | undefined; private?: boolean | undefined; description?: string | undefined; tagline?: string | undefined; glyph?: string | undefined; logo?: string | undefined; ... 23 more ...; exports?: string | ... 2 more ... | undefined; }"
 							},
 							{
 								"name": "source_json",
@@ -4052,7 +4064,7 @@
 					{
 						"name": "LogConsole",
 						"kind": "type",
-						"doc_comment": "Console interface subset used by Logger for output.\nAllows custom console implementations for testing.",
+						"doc_comment": "Console interface subset used by `Logger` for output.\nAllows custom console implementations for testing.",
 						"source_line": 18,
 						"type_signature": "LogConsole"
 					},
@@ -4063,12 +4075,12 @@
 						"source_line": 48,
 						"type_signature": "(level: LogLevel): number",
 						"return_type": "number",
-						"return_description": "Numeric value (0-4)",
+						"return_description": "numeric value (0-4)",
 						"parameters": [
 							{
 								"name": "level",
 								"type": "LogLevel",
-								"description": "The log level to convert"
+								"description": "the log level to convert"
 							}
 						]
 					},
@@ -4085,12 +4097,12 @@
 						"source_line": 56,
 						"type_signature": "(value: string | undefined): LogLevel | undefined",
 						"return_type": "LogLevel | undefined",
-						"return_description": "The validated log level, or undefined if value is undefined",
+						"return_description": "the validated log level, or undefined if value is undefined",
 						"parameters": [
 							{
 								"name": "value",
 								"type": "string | undefined",
-								"description": "The value to parse as a log level"
+								"description": "the value to parse as a log level"
 							}
 						]
 					},
@@ -4125,12 +4137,12 @@
 										"name": "label",
 										"type": "string | undefined",
 										"optional": true,
-										"description": "Optional label for this logger. Can be `undefined` for no label, or an\nempty string `''` which is functionally equivalent (both produce no brackets in output).\nNote: Empty strings are only allowed for root loggers - child loggers cannot have empty labels."
+										"description": "optional label for this logger. Can be `undefined` for no label, or an\nempty string `''` which is functionally equivalent (both produce no brackets in output).\nNote: Empty strings are only allowed for root loggers - child loggers cannot have empty labels."
 									},
 									{
 										"name": "options",
 										"type": "LoggerOptions",
-										"description": "Optional configuration for level, colors, and console",
+										"description": "optional configuration for level, colors, and console",
 										"default_value": "{}"
 									}
 								]
@@ -4165,17 +4177,17 @@
 								"doc_comment": "Creates a child logger with automatic label concatenation.\nChildren inherit parent configuration unless overridden.",
 								"type_signature": "(label: string, options?: LoggerOptions): Logger",
 								"return_type": "Logger",
-								"return_description": "New Logger instance with concatenated label",
+								"return_description": "new `Logger` instance with concatenated label",
 								"parameters": [
 									{
 										"name": "label",
 										"type": "string",
-										"description": "Child label (will be concatenated with parent label using `:`).\nCannot be an empty string - empty labels would result in confusing output like `parent:`\nwith a trailing colon. Use `undefined` or `''` only for root loggers."
+										"description": "child label (will be concatenated with parent label using `:`)\nCannot be an empty string - empty labels would result in confusing output like `parent:`\nwith a trailing colon. Use `undefined` or `''` only for root loggers."
 									},
 									{
 										"name": "options",
 										"type": "LoggerOptions",
-										"description": "Optional configuration overrides",
+										"description": "optional configuration overrides",
 										"default_value": "{}"
 									}
 								],
@@ -4248,7 +4260,7 @@
 									{
 										"name": "args",
 										"type": "unknown[]",
-										"description": "Values to log directly to console"
+										"description": "values to log directly to console"
 									}
 								]
 							}
@@ -4289,7 +4301,7 @@
 					{
 						"name": "sort_map",
 						"kind": "function",
-						"doc_comment": "Sorts a map by `comparator`, a function that compares two entries,\ndefaulting to using `localCompare` and `>`.",
+						"doc_comment": "Sorts a map by `comparator`, a function that compares two entries,\ndefaulting to using `localeCompare` and `>`.",
 						"source_line": 5,
 						"type_signature": "<T extends Map<any, any>>(map: T, comparator?: (a: [any, any], b: [any, any]) => number): T",
 						"return_type": "T",
@@ -4620,7 +4632,8 @@
 						"parameters": [
 							{
 								"name": "obj",
-								"type": "T"
+								"type": "T",
+								"description": "the object to filter"
 							}
 						]
 					},
@@ -4725,7 +4738,7 @@
 						"doc_comment": "",
 						"see_also": ["https://docs.npmjs.com/cli/v10/configuring-npm/package-json"],
 						"source_line": 66,
-						"type_signature": "ZodObject<{ name: ZodString; version: ZodString; private: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 26 more ...; exports: ZodOptional<...>; }, $loose>"
+						"type_signature": "ZodObject<{ name: ZodString; version: ZodOptional<ZodString>; private: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 26 more ...; exports: ZodOptional<...>; }, $loose>"
 					}
 				],
 				"dependencies": ["object.ts", "string.ts", "url.ts"]
@@ -4864,17 +4877,17 @@
 						"source_line": 113,
 						"type_signature": "(filename: string | undefined, exclude: (string | RegExp)[]): boolean",
 						"return_type": "boolean",
-						"return_description": "`true` if the file should be excluded from processing.",
+						"return_description": "`true` if the file should be excluded from processing",
 						"parameters": [
 							{
 								"name": "filename",
 								"type": "string | undefined",
-								"description": "The file path to check, or `undefined` for virtual files."
+								"description": "the file path to check, or `undefined` for virtual files"
 							},
 							{
 								"name": "exclude",
 								"type": "(string | RegExp)[]",
-								"description": "Array of string or RegExp exclusion patterns."
+								"description": "array of string or RegExp exclusion patterns"
 							}
 						]
 					},
@@ -5391,24 +5404,24 @@
 								"doc_comment": "Spawns a process and tracks it in this registry.\nThe process is automatically unregistered when it exits.",
 								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 								"return_type": "SpawnedProcess",
-								"return_description": "Handle with `child` process and `closed` promise",
+								"return_description": "handle with `child` process and `closed` promise",
 								"parameters": [
 									{
 										"name": "command",
 										"type": "string",
-										"description": "The command to run"
+										"description": "the command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "Arguments to pass to the command",
+										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "Spawn options including `signal` and `timeout_ms`"
+										"description": "spawn options including `signal` and `timeout_ms`"
 									}
 								]
 							},
@@ -5418,24 +5431,24 @@
 								"doc_comment": "Spawns a process and captures stdout/stderr as strings.\nSets `stdio: 'pipe'` automatically.",
 								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 								"return_type": "Promise<SpawnedOut>",
-								"return_description": "Result with captured `stdout` and `stderr`.\n- `null` means spawn failed (ENOENT, etc.) or stream was unavailable\n- `''` (empty string) means process ran but produced no output\n- non-empty string contains the captured output",
+								"return_description": "result with captured `stdout` and `stderr`\n- `null` means spawn failed (ENOENT, etc.) or stream was unavailable\n- `''` (empty string) means process ran but produced no output\n- non-empty string contains the captured output",
 								"parameters": [
 									{
 										"name": "command",
 										"type": "string",
-										"description": "The command to run"
+										"description": "the command to run"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "Arguments to pass to the command",
+										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
-										"description": "Spawn options"
+										"description": "spawn options"
 									}
 								]
 							},
@@ -5445,18 +5458,18 @@
 								"doc_comment": "Kills a child process and waits for it to exit.",
 								"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 								"return_type": "Promise<SpawnResult>",
-								"return_description": "The spawn result after the process exits",
+								"return_description": "the spawn result after the process exits",
 								"parameters": [
 									{
 										"name": "child",
 										"type": "ChildProcess",
-										"description": "The child process to kill"
+										"description": "the child process to kill"
 									},
 									{
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "Kill options including signal and timeout"
+										"description": "kill options including signal and timeout"
 									}
 								]
 							},
@@ -5466,13 +5479,13 @@
 								"doc_comment": "Kills all processes in this registry.",
 								"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 								"return_type": "Promise<SpawnResult[]>",
-								"return_description": "Array of spawn results",
+								"return_description": "array of spawn results",
 								"parameters": [
 									{
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
-										"description": "Kill options applied to all processes"
+										"description": "kill options applied to all processes"
 									}
 								]
 							},
@@ -5482,13 +5495,13 @@
 								"doc_comment": "Attaches an `uncaughtException` handler that kills all processes before exiting.\nPrevents zombie processes when the parent crashes.\n\nBy default uses SIGKILL for immediate termination. Set `graceful_timeout_ms`\nto attempt SIGTERM first (allowing processes to clean up) before escalating\nto SIGKILL after the timeout.\n\nNote: Node's uncaughtException handler cannot await async operations, so\ngraceful shutdown uses a blocking busy-wait. This may not be sufficient\nfor processes that need significant cleanup time.",
 								"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 								"return_type": "() => void",
-								"return_description": "Cleanup function to remove the handler",
+								"return_description": "cleanup function to remove the handler",
 								"parameters": [
 									{
 										"name": "options",
 										"type": "{ to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more...",
 										"optional": true,
-										"description": "Configuration options"
+										"description": "configuration options"
 									}
 								]
 							}
@@ -5623,7 +5636,7 @@
 						"name": "attach_process_error_handler",
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
-						"see_also": ["ProcessRegistry.attach_error_handler"],
+						"see_also": ["`ProcessRegistry.attach_error_handler`"],
 						"source_line": 557,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
@@ -5638,31 +5651,31 @@
 					{
 						"name": "spawn_detached",
 						"kind": "function",
-						"doc_comment": "Spawns a detached process that continues after parent exits.\n\nUnlike other spawn functions, this is NOT tracked in any ProcessRegistry.\nThe spawned process is meant to outlive the parent (e.g., daemon processes).",
+						"doc_comment": "Spawns a detached process that continues after parent exits.\n\nUnlike other spawn functions, this is NOT tracked in any `ProcessRegistry`.\nThe spawned process is meant to outlive the parent (e.g., daemon processes).",
 						"examples": [
 							"```ts\n// Simple detached process\nconst result = spawn_detached('node', ['daemon.js'], {cwd: '/app'});\n\n// With log file (caller handles file opening)\nimport {openSync, closeSync} from 'node:fs';\nconst log_fd = openSync('/var/log/daemon.log', 'a');\nconst result = spawn_detached('node', ['daemon.js'], {\n  cwd: '/app',\n  stdio: ['ignore', log_fd, log_fd],\n});\ncloseSync(log_fd);\n```"
 						],
 						"source_line": 587,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnDetachedResult",
 						"return_type": "SpawnDetachedResult",
-						"return_description": "Result with pid on success, or error message on failure",
+						"return_description": "result with pid on success, or error message on failure",
 						"parameters": [
 							{
 								"name": "command",
 								"type": "string",
-								"description": "The command to run"
+								"description": "the command to run"
 							},
 							{
 								"name": "args",
 								"type": "readonly string[]",
-								"description": "Arguments to pass to the command",
+								"description": "arguments to pass to the command",
 								"default_value": "[]"
 							},
 							{
 								"name": "options",
 								"type": "SpawnOptions | undefined",
 								"optional": true,
-								"description": "Spawn options (use `stdio` to redirect output to file descriptors)"
+								"description": "spawn options (use `stdio` to redirect output to file descriptors)"
 							}
 						]
 					},
@@ -5798,7 +5811,7 @@
 							{
 								"name": "pid",
 								"type": "number",
-								"description": "The process ID to check (must be a positive integer)"
+								"description": "the process ID to check (must be a positive integer)"
 							}
 						]
 					}
@@ -6015,7 +6028,7 @@
 						]
 					}
 				],
-				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- {@link create_random_xoshiro} — fast, high-quality numeric seeding (recommended)\n- {@link create_random_alea} — supports string and variadic seeds"
+				"module_comment": "Random helpers that accept an optional `random` parameter,\ndefaulting to `Math.random`. Pass a seeded PRNG for reproducible results:\n\n- `create_random_xoshiro` — fast, high-quality numeric seeding (recommended)\n- `create_random_alea` — supports string and variadic seeds"
 			},
 			{
 				"path": "regexp.ts",
@@ -6091,18 +6104,18 @@
 						"source_line": 28,
 						"type_signature": "<TValue extends { value?: unknown; }, TError extends { message?: string; }>(result: Result<TValue, TError>, message?: string | undefined): TValue[\"value\"]",
 						"return_type": "TValue[\"value\"]",
-						"return_description": "The wrapped value.",
+						"return_description": "the wrapped value",
 						"parameters": [
 							{
 								"name": "result",
 								"type": "Result<TValue, TError>",
-								"description": "Some `Result` object."
+								"description": "some `Result` object"
 							},
 							{
 								"name": "message",
 								"type": "string | undefined",
 								"optional": true,
-								"description": "Optional custom error message."
+								"description": "optional custom error message"
 							}
 						]
 					},
@@ -6155,17 +6168,17 @@
 						"source_line": 61,
 						"type_signature": "<TError extends object>(result: Result<object, TError>, message?: string): { ok: false; } & TError",
 						"return_type": "{ ok: false; } & TError",
-						"return_description": "The type-narrowed result.",
+						"return_description": "the type-narrowed result",
 						"parameters": [
 							{
 								"name": "result",
 								"type": "Result<object, TError>",
-								"description": "Some `Result` object."
+								"description": "some `Result` object"
 							},
 							{
 								"name": "message",
 								"type": "string",
-								"description": "Optional custom error message.",
+								"description": "optional custom error message",
 								"default_value": "'Failed to unwrap result error'"
 							}
 						]
@@ -6214,17 +6227,17 @@
 						"source_line": 35,
 						"type_signature": "<T extends Sortable>(items: T[], label?: string): TopologicalSortResult<T>",
 						"return_type": "TopologicalSortResult<T>",
-						"return_description": "Sorted items or error if cycle detected.",
+						"return_description": "sorted items or error if cycle detected",
 						"parameters": [
 							{
 								"name": "items",
 								"type": "T[]",
-								"description": "Array of items to sort."
+								"description": "array of items to sort"
 							},
 							{
 								"name": "label",
 								"type": "string",
-								"description": "Label for error messages (e.g. \"resource\", \"step\").",
+								"description": "label for error messages (e.g. \"resource\", \"step\")",
 								"default_value": "'item'"
 							}
 						]
@@ -6253,14 +6266,14 @@
 					{
 						"name": "ParameterInfo",
 						"kind": "type",
-						"doc_comment": "Parameter information for functions and methods.\n\nKept distinct from ComponentPropInfo despite structural similarity.\nFunction parameters form a tuple with positional semantics:\ncalling order matters (`fn(a, b)` vs `fn(b, a)`),\nmay include rest parameters and destructuring patterns.",
+						"doc_comment": "Parameter information for functions and methods.\n\nKept distinct from `ComponentPropInfo` despite structural similarity.\nFunction parameters form a tuple with positional semantics:\ncalling order matters (`fn(a, b)` vs `fn(b, a)`),\nmay include rest parameters and destructuring patterns.",
 						"source_line": 51,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; default_value: ZodOptional<...>; }, $loose>"
 					},
 					{
 						"name": "ComponentPropInfo",
 						"kind": "type",
-						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from ParameterInfo despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
+						"doc_comment": "Component prop information for Svelte components.\n\nKept distinct from `ParameterInfo` despite structural similarity.\nComponent props are named attributes with different semantics:\nno positional order when passing (`<Foo {a} {b} />` = `<Foo {b} {a} />`),\nsupport two-way binding via `$bindable` rune.",
 						"source_line": 68,
 						"type_signature": "ZodObject<{ name: ZodString; type: ZodString; optional: ZodOptional<ZodBoolean>; description: ZodOptional<ZodString>; ... 6 more ...; since: ZodOptional<...>; }, $loose>"
 					},
@@ -6289,7 +6302,7 @@
 						"name": "declaration_get_display_name",
 						"kind": "function",
 						"doc_comment": "Format declaration name with generic parameters for display.",
-						"deprecated_message": "Use `getDisplayName` from `@fuzdev/svelte-docinfo/types.js` instead.",
+						"deprecated_message": "Use `getDisplayName` from `svelte-docinfo/types.js` instead.",
 						"examples": [
 							"```ts\ndeclaration_get_display_name({name: 'Map', kind: 'type', generic_params: [{name: 'K'}, {name: 'V'}]})\n// => 'Map<K, V>'\n```"
 						],
@@ -6307,7 +6320,7 @@
 						"name": "declaration_generate_import",
 						"kind": "function",
 						"doc_comment": "Generate TypeScript import statement for a declaration.",
-						"deprecated_message": "Use `generateImport` from `@fuzdev/svelte-docinfo/types.js` instead.",
+						"deprecated_message": "Use `generateImport` from `svelte-docinfo/types.js` instead.",
 						"examples": [
 							"```ts\ndeclaration_generate_import({name: 'Foo', kind: 'type'}, 'foo.ts', '@pkg/lib')\n// => \"import type {Foo} from '@pkg/lib/foo.js';\"\n```"
 						],
@@ -6330,7 +6343,7 @@
 						]
 					}
 				],
-				"module_comment": "Metadata types for library source code analysis.\n\nThese types represent the structure of `src/lib/` exports,\nextracted at build time via TypeScript compiler analysis.\nUsed for generating API documentation and enabling code search.\n\nHierarchy: SourceJson → ModuleJson → DeclarationJson"
+				"module_comment": "Metadata types for library source code analysis.\n\nThese types represent the structure of `src/lib/` exports,\nextracted at build time via TypeScript compiler analysis.\nUsed for generating API documentation and enabling code search.\n\nHierarchy: `SourceJson` → `ModuleJson` → `DeclarationJson`"
 			},
 			{
 				"path": "stats.ts",
@@ -6412,12 +6425,12 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "array of numbers"
 							},
 							{
 								"name": "p",
 								"type": "number",
-								"description": "Percentile (0-1, e.g., 0.95 for 95th percentile)"
+								"description": "percentile (0-1, e.g., 0.95 for 95th percentile)"
 							}
 						]
 					},
@@ -6647,13 +6660,13 @@
 							{
 								"name": "values",
 								"type": "number[]",
-								"description": "Array of numbers"
+								"description": "array of numbers"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "configuration options"
 							}
 						]
 					},
@@ -6669,23 +6682,23 @@
 							{
 								"name": "mean",
 								"type": "number",
-								"description": "Mean of the data"
+								"description": "mean of the data"
 							},
 							{
 								"name": "std_dev",
 								"type": "number",
-								"description": "Standard deviation of the data"
+								"description": "standard deviation of the data"
 							},
 							{
 								"name": "sample_size",
 								"type": "number",
-								"description": "Number of samples"
+								"description": "number of samples"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
 								"optional": true,
-								"description": "Configuration options"
+								"description": "configuration options"
 							}
 						]
 					},
@@ -6721,32 +6734,32 @@
 							{
 								"name": "mean1",
 								"type": "number",
-								"description": "Mean of first sample"
+								"description": "mean of first sample"
 							},
 							{
 								"name": "std1",
 								"type": "number",
-								"description": "Standard deviation of first sample"
+								"description": "standard deviation of first sample"
 							},
 							{
 								"name": "n1",
 								"type": "number",
-								"description": "Size of first sample"
+								"description": "size of first sample"
 							},
 							{
 								"name": "mean2",
 								"type": "number",
-								"description": "Mean of second sample"
+								"description": "mean of second sample"
 							},
 							{
 								"name": "std2",
 								"type": "number",
-								"description": "Standard deviation of second sample"
+								"description": "standard deviation of second sample"
 							},
 							{
 								"name": "n2",
 								"type": "number",
-								"description": "Size of second sample"
+								"description": "size of second sample"
 							}
 						]
 					},
@@ -6807,17 +6820,17 @@
 						"source_line": 523,
 						"type_signature": "(t: number, df: number): number",
 						"return_type": "number",
-						"return_description": "Two-tailed p-value",
+						"return_description": "two-tailed p-value",
 						"parameters": [
 							{
 								"name": "t",
 								"type": "number",
-								"description": "Absolute value of t-statistic"
+								"description": "absolute value of t-statistic"
 							},
 							{
 								"name": "df",
 								"type": "number",
-								"description": "Degrees of freedom"
+								"description": "degrees of freedom"
 							}
 						]
 					}
@@ -7009,7 +7022,7 @@
 					{
 						"name": "strip_ansi",
 						"kind": "function",
-						"doc_comment": "Strips ANSI escape sequences from a string",
+						"doc_comment": "Strips ANSI escape sequences from a string.",
 						"source_line": 91,
 						"type_signature": "(str: string): string",
 						"return_type": "string",
@@ -7078,17 +7091,17 @@
 						"source_line": 175,
 						"type_signature": "(a: string, b: string): number",
 						"return_type": "number",
-						"return_description": "The edit distance between the strings",
+						"return_description": "the edit distance between the strings",
 						"parameters": [
 							{
 								"name": "a",
 								"type": "string",
-								"description": "First string"
+								"description": "first string"
 							},
 							{
 								"name": "b",
 								"type": "string",
-								"description": "Second string"
+								"description": "second string"
 							}
 						]
 					},
@@ -7113,12 +7126,12 @@
 						"source_line": 246,
 						"type_signature": "(content: string): boolean",
 						"return_type": "boolean",
-						"return_description": "True if content appears to be binary.",
+						"return_description": "true if content appears to be binary",
 						"parameters": [
 							{
 								"name": "content",
 								"type": "string",
-								"description": "Content to check."
+								"description": "content to check"
 							}
 						]
 					}
@@ -7185,17 +7198,17 @@
 						"source_line": 51,
 						"type_signature": "(node: Component, name: string): Attribute | undefined",
 						"return_type": "Attribute | undefined",
-						"return_description": "The matching `Attribute` node, or `undefined` if not found.",
+						"return_description": "the matching `Attribute` node, or `undefined` if not found",
 						"parameters": [
 							{
 								"name": "node",
 								"type": "Component",
-								"description": "The component AST node to search."
+								"description": "the component AST node to search"
 							},
 							{
 								"name": "name",
 								"type": "string",
-								"description": "The attribute name to find."
+								"description": "the attribute name to find"
 							}
 						]
 					},
@@ -7206,18 +7219,18 @@
 						"source_line": 72,
 						"type_signature": "(expr: Expression, bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
-						"return_description": "The resolved static string, or `null` if the expression is dynamic.",
+						"return_description": "the resolved static string, or `null` if the expression is dynamic",
 						"parameters": [
 							{
 								"name": "expr",
 								"type": "Expression",
-								"description": "An ESTree expression AST node."
+								"description": "an ESTree expression AST node"
 							},
 							{
 								"name": "bindings",
 								"type": "ReadonlyMap<string, string> | undefined",
 								"optional": true,
-								"description": "Optional map of variable names to their resolved static string values."
+								"description": "optional map of variable names to their resolved static string values"
 							}
 						]
 					},
@@ -7228,18 +7241,18 @@
 						"source_line": 123,
 						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
-						"return_description": "The resolved static string, or `null` if the value is dynamic.",
+						"return_description": "the resolved static string, or `null` if the value is dynamic",
 						"parameters": [
 							{
 								"name": "value",
 								"type": "true | ExpressionTag | (ExpressionTag | Text)[]",
-								"description": "The attribute value from `AST.Attribute['value']`."
+								"description": "the attribute value from `AST.Attribute['value']`"
 							},
 							{
 								"name": "bindings",
 								"type": "ReadonlyMap<string, string> | undefined",
 								"optional": true,
-								"description": "Optional map of variable names to their resolved static string values."
+								"description": "optional map of variable names to their resolved static string values"
 							}
 						]
 					},
@@ -7271,22 +7284,22 @@
 						"source_line": 173,
 						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], source: string, bindings: ReadonlyMap<string, string>): ConditionalChainBranch[] | null",
 						"return_type": "ConditionalChainBranch[] | null",
-						"return_description": "Array of conditional chain branches, or `null` if not extractable.",
+						"return_description": "array of conditional chain branches, or `null` if not extractable",
 						"parameters": [
 							{
 								"name": "value",
 								"type": "true | ExpressionTag | (ExpressionTag | Text)[]",
-								"description": "The attribute value from `AST.Attribute['value']`."
+								"description": "the attribute value from `AST.Attribute['value']`"
 							},
 							{
 								"name": "source",
 								"type": "string",
-								"description": "The full source string (needed to slice test expression source text)."
+								"description": "the full source string (needed to slice test expression source text)"
 							},
 							{
 								"name": "bindings",
 								"type": "ReadonlyMap<string, string>",
-								"description": "Map of variable names to their resolved static string values."
+								"description": "map of variable names to their resolved static string values"
 							}
 						]
 					},
@@ -7297,12 +7310,12 @@
 						"source_line": 229,
 						"type_signature": "(ast: Root): Map<string, string>",
 						"return_type": "Map<string, string>",
-						"return_description": "Map of variable names to their resolved static string values.",
+						"return_description": "map of variable names to their resolved static string values",
 						"parameters": [
 							{
 								"name": "ast",
 								"type": "Root",
-								"description": "The parsed Svelte AST root node."
+								"description": "the parsed Svelte AST root node"
 							}
 						]
 					},
@@ -7313,17 +7326,17 @@
 						"source_line": 260,
 						"type_signature": "(ast: Root, component_imports: string[]): Map<string, ResolvedComponentImport>",
 						"return_type": "Map<string, ResolvedComponentImport>",
-						"return_description": "Map of local names to their resolved import info.",
+						"return_description": "map of local names to their resolved import info",
 						"parameters": [
 							{
 								"name": "ast",
 								"type": "Root",
-								"description": "The parsed Svelte AST root node."
+								"description": "the parsed Svelte AST root node"
 							},
 							{
 								"name": "component_imports",
 								"type": "string[]",
-								"description": "Array of import source paths to match against."
+								"description": "array of import source paths to match against"
 							}
 						]
 					},
@@ -7334,12 +7347,12 @@
 						"source_line": 293,
 						"type_signature": "(script: Script): number",
 						"return_type": "number",
-						"return_description": "The character position where new imports should be inserted.",
+						"return_description": "the character position where new imports should be inserted",
 						"parameters": [
 							{
 								"name": "script",
 								"type": "Script",
-								"description": "The parsed `AST.Script` node."
+								"description": "the parsed `AST.Script` node"
 							}
 						]
 					},
@@ -7350,17 +7363,17 @@
 						"source_line": 317,
 						"type_signature": "(imports: Map<string, PreprocessImportInfo>, indent?: string): string",
 						"return_type": "string",
-						"return_description": "A string of newline-separated import statements.",
+						"return_description": "a string of newline-separated import statements",
 						"parameters": [
 							{
 								"name": "imports",
 								"type": "Map<string, PreprocessImportInfo>",
-								"description": "Map of local names to their import info."
+								"description": "map of local names to their import info"
 							},
 							{
 								"name": "indent",
 								"type": "string",
-								"description": "Indentation prefix for each line.",
+								"description": "indentation prefix for each line",
 								"default_value": "'\\t'"
 							}
 						]
@@ -7372,23 +7385,23 @@
 						"source_line": 391,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
-						"return_description": "`true` if a matching `Identifier` node is found.",
+						"return_description": "`true` if a matching `Identifier` node is found",
 						"parameters": [
 							{
 								"name": "node",
 								"type": "unknown",
-								"description": "The AST subtree to search."
+								"description": "the AST subtree to search"
 							},
 							{
 								"name": "name",
 								"type": "string",
-								"description": "The identifier name to look for."
+								"description": "the identifier name to look for"
 							},
 							{
 								"name": "skip",
 								"type": "Set<unknown> | undefined",
 								"optional": true,
-								"description": "Set of AST nodes to skip during traversal."
+								"description": "set of AST nodes to skip during traversal"
 							}
 						]
 					},
@@ -7417,17 +7430,17 @@
 							{
 								"name": "s",
 								"type": "{ remove: (start: number, end: number) => unknown; }",
-								"description": "The MagicString instance to modify."
+								"description": "the MagicString instance to modify"
 							},
 							{
 								"name": "declaration_node",
 								"type": "VariableDeclaration & { start: number; end: number; }",
-								"description": "The `VariableDeclaration` AST node with Svelte position data."
+								"description": "the `VariableDeclaration` AST node with Svelte position data"
 							},
 							{
 								"name": "source",
 								"type": "string",
-								"description": "The original source string."
+								"description": "the original source string"
 							}
 						]
 					},
@@ -7442,17 +7455,17 @@
 							{
 								"name": "s",
 								"type": "{ remove: (start: number, end: number) => unknown; }",
-								"description": "The MagicString instance to modify."
+								"description": "the MagicString instance to modify"
 							},
 							{
 								"name": "import_node",
 								"type": "ImportDeclaration & { start: number; end: number; }",
-								"description": "The `ImportDeclaration` AST node with Svelte position data."
+								"description": "the `ImportDeclaration` AST node with Svelte position data"
 							},
 							{
 								"name": "source",
 								"type": "string",
-								"description": "The original source string."
+								"description": "the original source string"
 							}
 						]
 					},
@@ -7467,27 +7480,27 @@
 							{
 								"name": "s",
 								"type": "{ overwrite: (start: number, end: number, content: string) => unknown; }",
-								"description": "The MagicString instance to modify."
+								"description": "the MagicString instance to modify"
 							},
 							{
 								"name": "node",
 								"type": "ImportDeclaration & { start: number; end: number; }",
-								"description": "The positioned `ImportDeclaration` AST node."
+								"description": "the positioned `ImportDeclaration` AST node"
 							},
 							{
 								"name": "specifier_to_remove",
 								"type": "ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier",
-								"description": "The specifier to remove from the import."
+								"description": "the specifier to remove from the import"
 							},
 							{
 								"name": "source",
 								"type": "string",
-								"description": "The original source string."
+								"description": "the original source string"
 							},
 							{
 								"name": "additional_lines",
 								"type": "string",
-								"description": "Extra content appended after the reconstructed import\n(used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).",
+								"description": "extra content appended after the reconstructed import\n(used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).",
 								"default_value": "''"
 							}
 						]
@@ -7503,22 +7516,22 @@
 							{
 								"name": "error",
 								"type": "unknown",
-								"description": "The caught error."
+								"description": "the caught error"
 							},
 							{
 								"name": "prefix",
 								"type": "string",
-								"description": "Log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`)."
+								"description": "log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`)"
 							},
 							{
 								"name": "filename",
 								"type": "string | undefined",
-								"description": "The file being processed."
+								"description": "the file being processed"
 							},
 							{
 								"name": "on_error",
 								"type": "\"log\" | \"throw\"",
-								"description": "`'throw'` to re-throw as a new Error, `'log'` to console.error."
+								"description": "`'throw'` to re-throw as a new Error, `'log'` to console.error"
 							}
 						]
 					}
@@ -7692,12 +7705,12 @@
 						"source_line": 126,
 						"type_signature": "(values_ns: number[]): TimeUnit",
 						"return_type": "TimeUnit",
-						"return_description": "Best unit to use for all values",
+						"return_description": "best unit to use for all values",
 						"parameters": [
 							{
 								"name": "values_ns",
 								"type": "number[]",
-								"description": "Array of times in nanoseconds"
+								"description": "array of times in nanoseconds"
 							}
 						]
 					},
@@ -7708,22 +7721,22 @@
 						"source_line": 156,
 						"type_signature": "(ns: number, unit: TimeUnit, decimals?: number): string",
 						"return_type": "string",
-						"return_description": "Formatted string like \"3.87μs\"",
+						"return_description": "formatted string like \"3.87μs\"",
 						"parameters": [
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "time in nanoseconds"
 							},
 							{
 								"name": "unit",
 								"type": "TimeUnit",
-								"description": "Unit to use ('ns', 'us', 'ms', 's')"
+								"description": "unit to use ('ns', 'us', 'ms', 's')"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -7738,17 +7751,17 @@
 						"source_line": 185,
 						"type_signature": "(ns: number, decimals?: number): string",
 						"return_type": "string",
-						"return_description": "Formatted string like \"3.87μs\" or \"1.23ms\"",
+						"return_description": "formatted string like \"3.87μs\" or \"1.23ms\"",
 						"parameters": [
 							{
 								"name": "ns",
 								"type": "number",
-								"description": "Time in nanoseconds"
+								"description": "time in nanoseconds"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "Number of decimal places (default: 2)",
+								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -7802,17 +7815,17 @@
 						"source_line": 232,
 						"type_signature": "<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>",
 						"return_type": "Promise<{ result: T; timing: TimeResult; }>",
-						"return_description": "Object containing the function result and timing information",
+						"return_description": "object containing the function result and timing information",
 						"parameters": [
 							{
 								"name": "fn",
 								"type": "() => Promise<T>",
-								"description": "Async function to time"
+								"description": "async function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
@@ -7827,17 +7840,17 @@
 						"source_line": 267,
 						"type_signature": "<T>(fn: () => T, timer?: Timer): { result: T; timing: TimeResult; }",
 						"return_type": "{ result: T; timing: TimeResult; }",
-						"return_description": "Object containing the function result and timing information",
+						"return_description": "object containing the function result and timing information",
 						"parameters": [
 							{
 								"name": "fn",
 								"type": "() => T",
-								"description": "Sync function to time"
+								"description": "sync function to time"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
@@ -7852,22 +7865,22 @@
 						"source_line": 306,
 						"type_signature": "(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>",
 						"return_type": "Promise<number[]>",
-						"return_description": "Array of elapsed times in nanoseconds",
+						"return_description": "array of elapsed times in nanoseconds",
 						"parameters": [
 							{
 								"name": "fn",
 								"type": "() => unknown",
-								"description": "Function to measure (sync or async)"
+								"description": "function to measure (sync or async)"
 							},
 							{
 								"name": "iterations",
 								"type": "number",
-								"description": "Number of times to execute"
+								"description": "number of times to execute"
 							},
 							{
 								"name": "timer",
 								"type": "Timer",
-								"description": "Timer to use (defaults to timer_default)",
+								"description": "timer to use (defaults to `timer_default`)",
 								"default_value": "timer_default"
 							}
 						]
@@ -8241,12 +8254,12 @@
 						"source_line": 22,
 						"type_signature": "(def: $ZodTypeDef): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
-						"return_description": "Inner schema if wrapped, undefined otherwise.",
+						"return_description": "inner schema if wrapped, undefined otherwise",
 						"parameters": [
 							{
 								"name": "def",
 								"type": "$ZodTypeDef",
-								"description": "Zod type definition to unwrap."
+								"description": "Zod type definition to unwrap"
 							}
 						]
 					},
@@ -8407,12 +8420,12 @@
 						"source_line": 164,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string | null",
 						"return_type": "string | null",
-						"return_description": "Description string or null if not found.",
+						"return_description": "description string or null if not found",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract description from."
+								"description": "Zod schema to extract description from"
 							}
 						]
 					},
@@ -8423,12 +8436,12 @@
 						"source_line": 182,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): unknown",
 						"return_type": "unknown",
-						"return_description": "Default value or undefined.",
+						"return_description": "default value or undefined",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract default from."
+								"description": "Zod schema to extract default from"
 							}
 						]
 					},
@@ -8439,12 +8452,12 @@
 						"source_line": 200,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string[]",
 						"return_type": "string[]",
-						"return_description": "Array of alias strings.",
+						"return_description": "array of alias strings",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract aliases from."
+								"description": "Zod schema to extract aliases from"
 							}
 						]
 					},
@@ -8455,12 +8468,12 @@
 						"source_line": 218,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string",
 						"return_type": "string",
-						"return_description": "Human-readable type string.",
+						"return_description": "human-readable type string",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to get type string for."
+								"description": "Zod schema to get type string for"
 							}
 						]
 					},
@@ -8471,12 +8484,12 @@
 						"source_line": 270,
 						"type_signature": "(value: unknown): string",
 						"return_type": "string",
-						"return_description": "Formatted string representation.",
+						"return_description": "formatted string representation",
 						"parameters": [
 							{
 								"name": "value",
 								"type": "unknown",
-								"description": "Value to format."
+								"description": "value to format"
 							}
 						]
 					},
@@ -8521,12 +8534,12 @@
 						"source_line": 301,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodSchemaProperty[]",
 						"return_type": "ZodSchemaProperty[]",
-						"return_description": "Array of property definitions.",
+						"return_description": "array of property definitions",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema to extract from."
+								"description": "Zod object schema to extract from"
 							}
 						]
 					},
@@ -8537,12 +8550,12 @@
 						"source_line": 332,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): Set<string>",
 						"return_type": "Set<string>",
-						"return_description": "Set of all names and aliases.",
+						"return_description": "set of all names and aliases",
 						"parameters": [
 							{
 								"name": "schema",
 								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema."
+								"description": "Zod object schema"
 							}
 						]
 					}

@@ -25,7 +25,7 @@ export type ArgValue = string | number | boolean | undefined | Array<string | nu
 
 /**
  * Schema description for help text generation.
- * Not used by args_parse/args_serialize directly - provided for consumers
+ * Not used by `args_parse`/`args_serialize` directly - provided for consumers
  * building CLI help output.
  */
 export interface ArgSchema {
@@ -184,8 +184,8 @@ const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
  *
  * Results are cached per schema (WeakMap). Safe to call multiple times.
  *
- * @param schema Zod object schema with optional alias metadata
- * @returns Validation result with success flag and optional error
+ * @param schema - zod object schema with optional alias metadata
+ * @returns validation result with success flag and optional error
  */
 export const args_validate_schema = (
 	schema: z.ZodType,
@@ -209,8 +209,8 @@ export const args_validate_schema = (
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
- * @param unparsed_args Args object from CLI parser (mri, minimist, etc.)
- * @param schema Zod object schema with optional alias metadata
+ * @param unparsed_args - args object from CLI parser (mri, minimist, etc.)
+ * @param schema - zod object schema with optional alias metadata
  * @returns Zod SafeParseResult with expanded/synced data on success
  */
 export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
@@ -276,9 +276,9 @@ export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
- * @param args Args object to serialize
- * @param schema Optional zod schema to extract aliases for short form preference
- * @returns Array of CLI argument strings
+ * @param args - args object to serialize
+ * @param schema - optional zod schema to extract aliases for short form preference
+ * @returns array of CLI argument strings
  */
 export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> => {
 	const result: Array<string> = [];
@@ -349,8 +349,8 @@ export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> =>
  *
  * Note: Returns copies of the cached data to prevent mutation of internal cache.
  *
- * @param schema Zod object schema with optional `.meta({aliases})` on fields
- * @returns Object with aliases map and canonical_keys set
+ * @param schema - zod object schema with optional `.meta({aliases})` on fields
+ * @returns object with aliases map and canonical_keys set
  */
 export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
 	const cache = get_schema_cache(schema);
@@ -419,8 +419,8 @@ const set_arg = (args: Args, key: string, value: string | number | boolean): voi
  * The returned object uses `Object.create(null)` to prevent prototype pollution
  * and allow any key name including `__proto__` and `constructor`.
  *
- * @param argv Raw argument array (typically process.argv.slice(2))
- * @returns Parsed Args object with guaranteed `_` array (null prototype)
+ * @param argv - raw argument array (typically process.argv.slice(2))
+ * @returns parsed `Args` object with guaranteed `_` array (null prototype)
  */
 export const argv_parse = (argv: Array<string>): ParsedArgs => {
 	// Use Object.create(null) to allow __proto__ as a normal key

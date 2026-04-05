@@ -250,10 +250,10 @@ export class ProcessRegistry {
 	 * Spawns a process and tracks it in this registry.
 	 * The process is automatically unregistered when it exits.
 	 *
-	 * @param command - The command to run
-	 * @param args - Arguments to pass to the command
-	 * @param options - Spawn options including `signal` and `timeout_ms`
-	 * @returns Handle with `child` process and `closed` promise
+	 * @param command - the command to run
+	 * @param args - arguments to pass to the command
+	 * @param options - spawn options including `signal` and `timeout_ms`
+	 * @returns handle with `child` process and `closed` promise
 	 */
 	spawn(
 		command: string,
@@ -295,10 +295,10 @@ export class ProcessRegistry {
 	 * Spawns a process and captures stdout/stderr as strings.
 	 * Sets `stdio: 'pipe'` automatically.
 	 *
-	 * @param command - The command to run
-	 * @param args - Arguments to pass to the command
-	 * @param options - Spawn options
-	 * @returns Result with captured `stdout` and `stderr`.
+	 * @param command - the command to run
+	 * @param args - arguments to pass to the command
+	 * @param options - spawn options
+	 * @returns result with captured `stdout` and `stderr`
 	 *   - `null` means spawn failed (ENOENT, etc.) or stream was unavailable
 	 *   - `''` (empty string) means process ran but produced no output
 	 *   - non-empty string contains the captured output
@@ -337,9 +337,9 @@ export class ProcessRegistry {
 	/**
 	 * Kills a child process and waits for it to exit.
 	 *
-	 * @param child - The child process to kill
-	 * @param options - Kill options including signal and timeout
-	 * @returns The spawn result after the process exits
+	 * @param child - the child process to kill
+	 * @param options - kill options including signal and timeout
+	 * @returns the spawn result after the process exits
 	 */
 	async despawn(child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> {
 		const {signal = 'SIGTERM', timeout_ms} = options ?? {};
@@ -382,8 +382,8 @@ export class ProcessRegistry {
 	/**
 	 * Kills all processes in this registry.
 	 *
-	 * @param options - Kill options applied to all processes
-	 * @returns Array of spawn results
+	 * @param options - kill options applied to all processes
+	 * @returns array of spawn results
 	 */
 	async despawn_all(options?: DespawnOptions): Promise<Array<SpawnResult>> {
 		return Promise.all([...this.processes].map((child) => this.despawn(child, options)));
@@ -401,14 +401,14 @@ export class ProcessRegistry {
 	 * graceful shutdown uses a blocking busy-wait. This may not be sufficient
 	 * for processes that need significant cleanup time.
 	 *
-	 * @param options - Configuration options
+	 * @param options - configuration options
 	 * @param options.to_error_label - Customize error label, return `null` for default
 	 * @param options.map_error_text - Customize error text, return `''` to silence
 	 * @param options.handle_error - Called after cleanup, defaults to `process.exit(1)`
 	 * @param options.graceful_timeout_ms - If set, sends SIGTERM first and waits this
 	 *   many ms before SIGKILL. Recommended: 100-500ms. If null/undefined, uses
 	 *   immediate SIGKILL (default).
-	 * @returns Cleanup function to remove the handler
+	 * @returns cleanup function to remove the handler
 	 */
 	attach_error_handler(options?: {
 		to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null;
@@ -552,7 +552,7 @@ export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult
 /**
  * Attaches an `uncaughtException` handler to the default registry.
  *
- * @see ProcessRegistry.attach_error_handler
+ * @see `ProcessRegistry.attach_error_handler`
  */
 export const attach_process_error_handler = (
 	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
@@ -561,13 +561,13 @@ export const attach_process_error_handler = (
 /**
  * Spawns a detached process that continues after parent exits.
  *
- * Unlike other spawn functions, this is NOT tracked in any ProcessRegistry.
+ * Unlike other spawn functions, this is NOT tracked in any `ProcessRegistry`.
  * The spawned process is meant to outlive the parent (e.g., daemon processes).
  *
- * @param command - The command to run
- * @param args - Arguments to pass to the command
- * @param options - Spawn options (use `stdio` to redirect output to file descriptors)
- * @returns Result with pid on success, or error message on failure
+ * @param command - the command to run
+ * @param args - arguments to pass to the command
+ * @param options - spawn options (use `stdio` to redirect output to file descriptors)
+ * @returns result with pid on success, or error message on failure
  *
  * @example
  * ```ts
@@ -820,7 +820,7 @@ export const spawn_restartable_process = (
  * Checks if a process with the given PID is running.
  * Uses signal 0 which checks existence without sending a signal.
  *
- * @param pid - The process ID to check (must be a positive integer)
+ * @param pid - the process ID to check (must be a positive integer)
  * @returns `true` if the process exists (even without permission to signal it),
  *   `false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)
  */

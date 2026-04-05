@@ -6,7 +6,7 @@ fuz_util (`@fuzdev/fuz_util`) provides core TypeScript utilities used across the
 `@fuzdev` ecosystem. It has no UI framework dependencies (no Svelte) and
 focuses on pure TypeScript helpers.
 
-For coding conventions, see Skill(fuz-stack).
+For coding conventions, see the [fuz-stack skill](https://github.com/fuzdev/fuz_docs).
 
 ## Gro commands
 
