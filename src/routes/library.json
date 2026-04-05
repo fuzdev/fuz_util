@@ -7800,7 +7800,7 @@
 						"kind": "function",
 						"doc_comment": "Time an asynchronous function execution.",
 						"examples": [
-							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
+							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.fuz.dev/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
 						],
 						"source_line": 232,
 						"type_signature": "<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>",
