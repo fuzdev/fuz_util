@@ -81,11 +81,11 @@
 		},
 		"devDependencies": {
 			"@changesets/changelog-git": "^0.2.1",
-			"@fuzdev/blake3_wasm": "^0.1.0",
+			"@fuzdev/blake3_wasm": "^0.1.1",
 			"@fuzdev/fuz_code": "^0.45.1",
 			"@fuzdev/fuz_css": "^0.58.0",
 			"@fuzdev/fuz_ui": "^0.191.3",
-			"@fuzdev/gro": "^0.197.2",
+			"@fuzdev/gro": "^0.197.3",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.10.1",
 			"@sveltejs/acorn-typescript": "^1.0.9",
