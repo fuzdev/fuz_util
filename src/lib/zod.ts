@@ -48,7 +48,7 @@ export const ZOD_WRAPPER_TYPES = new Set([
  * @returns the innermost non-wrapper type definition
  */
 export const zod_unwrap_def = (schema: z.ZodType): z.core.$ZodTypeDef => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
 		if (sub) return zod_unwrap_def(sub);
@@ -69,7 +69,7 @@ export const zod_get_base_type = (schema: z.ZodType): string => zod_unwrap_def(s
  *
  * @param schema - Zod schema to check
  */
-export const zod_is_optional = (schema: z.ZodType): boolean => schema._zod.def.type === 'optional';
+export const zod_is_optional = (schema: z.ZodType): boolean => schema.def.type === 'optional';
 
 /**
  * Check if a schema accepts null at any wrapping level.
@@ -77,7 +77,7 @@ export const zod_is_optional = (schema: z.ZodType): boolean => schema._zod.def.t
  * @param schema - Zod schema to check
  */
 export const zod_is_nullable = (schema: z.ZodType): boolean => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if (def.type === 'nullable') return true;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
@@ -95,7 +95,7 @@ export const zod_is_nullable = (schema: z.ZodType): boolean => {
  * @param schema - Zod schema to check
  */
 export const zod_has_default = (schema: z.ZodType): boolean => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if ('defaultValue' in def) return true;
 	const sub = zod_to_subschema(def);
 	if (sub) return zod_has_default(sub);
@@ -113,8 +113,8 @@ export const zod_unwrap_to_object = (schema: z.ZodType): z.ZodObject | null => {
 	const def = zod_unwrap_def(schema);
 	if (def.type !== 'object') return null;
 	let s: z.ZodType = schema;
-	while (s._zod.def.type !== 'object') {
-		const sub = zod_to_subschema(s._zod.def);
+	while (s.def.type !== 'object') {
+		const sub = zod_to_subschema(s.def);
 		if (!sub) return null;
 		s = sub;
 	}
@@ -180,7 +180,7 @@ export const zod_to_schema_description = (schema: z.ZodType): string | null => {
  * @returns default value or undefined
  */
 export const zod_to_schema_default = (schema: z.ZodType): unknown => {
-	const {def} = schema._zod;
+	const {def} = schema;
 	if ('defaultValue' in def) {
 		return def.defaultValue;
 	}
@@ -216,7 +216,7 @@ export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
  * @returns human-readable type string
  */
 export const zod_to_schema_type_string = (schema: z.ZodType): string => {
-	const {def} = schema._zod;
+	const {def} = schema;
 	switch (def.type) {
 		case 'string':
 			return 'string';
