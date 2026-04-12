@@ -2390,7 +2390,7 @@
 					{
 						"name": "deep_equal",
 						"kind": "function",
-						"doc_comment": "Deep equality comparison that checks both structure and type.\n\nKey behaviors:\n\n- Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)\n- Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`\n- Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)\n- Special handling for: Date (timestamp), Number/Boolean (boxed primitives), Error (message/name)\n- Promises always return false (cannot be meaningfully compared)\n- Maps/Sets compare by reference for object keys/values",
+						"doc_comment": "Deep equality comparison that checks both structure and type.\n\nKey behaviors:\n\n- Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)\n- Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`\n- Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)\n- Special handling for: Date (timestamp), Number/Boolean (boxed primitives)\n- Promises always return false (cannot be meaningfully compared)\n- Maps/Sets compare by reference for object keys/values",
 						"source_line": 17,
 						"type_signature": "(a: unknown, b: unknown): boolean",
 						"return_type": "boolean",
@@ -6354,8 +6354,8 @@
 					{
 						"name": "stats_median",
 						"kind": "function",
-						"doc_comment": "Calculate the median of an array of numbers.",
-						"source_line": 30,
+						"doc_comment": "Calculate the median of an array of numbers.\nNaN values are filtered out before computing.",
+						"source_line": 31,
 						"type_signature": "(values: number[]): number",
 						"return_type": "number",
 						"parameters": [
@@ -6369,7 +6369,7 @@
 						"name": "stats_std_dev",
 						"kind": "function",
 						"doc_comment": "Calculate the standard deviation of an array of numbers.\nUses population standard deviation (divides by n, not n-1).\nFor benchmarks with many samples, this is typically appropriate.",
-						"source_line": 42,
+						"source_line": 44,
 						"type_signature": "(values: number[], mean?: number | undefined): number",
 						"return_type": "number",
 						"parameters": [
@@ -6388,7 +6388,7 @@
 						"name": "stats_variance",
 						"kind": "function",
 						"doc_comment": "Calculate the variance of an array of numbers.",
-						"source_line": 52,
+						"source_line": 54,
 						"type_signature": "(values: number[], mean?: number | undefined): number",
 						"return_type": "number",
 						"parameters": [
@@ -6407,7 +6407,7 @@
 						"name": "stats_percentile",
 						"kind": "function",
 						"doc_comment": "Calculate a percentile of an array of numbers using linear interpolation.\nUses the \"R-7\" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.",
-						"source_line": 65,
+						"source_line": 67,
 						"type_signature": "(values: number[], p: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6427,7 +6427,7 @@
 						"name": "stats_cv",
 						"kind": "function",
 						"doc_comment": "Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.",
-						"source_line": 91,
+						"source_line": 93,
 						"type_signature": "(mean: number, std_dev: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6444,8 +6444,8 @@
 					{
 						"name": "stats_min_max",
 						"kind": "function",
-						"doc_comment": "Calculate min and max values.",
-						"source_line": 99,
+						"doc_comment": "Calculate min and max values.\nNaN values are ignored.",
+						"source_line": 102,
 						"type_signature": "(values: number[]): { min: number; max: number; }",
 						"return_type": "{ min: number; max: number; }",
 						"parameters": [
@@ -6459,7 +6459,7 @@
 						"name": "StatsOutlierResult",
 						"kind": "type",
 						"doc_comment": "Result from outlier detection.",
-						"source_line": 114,
+						"source_line": 119,
 						"type_signature": "StatsOutlierResult",
 						"properties": [
 							{
@@ -6480,7 +6480,7 @@
 						"name": "StatsOutliersIqrOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for IQR outlier detection.",
-						"source_line": 124,
+						"source_line": 129,
 						"type_signature": "StatsOutliersIqrOptions",
 						"properties": [
 							{
@@ -6501,7 +6501,7 @@
 						"name": "stats_outliers_iqr",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - multiplier*IQR, Q3 + multiplier*IQR] are considered outliers.",
-						"source_line": 135,
+						"source_line": 140,
 						"type_signature": "(values: number[], options?: StatsOutliersIqrOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -6520,7 +6520,7 @@
 						"name": "StatsOutliersMadOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for MAD outlier detection.",
-						"source_line": 175,
+						"source_line": 180,
 						"type_signature": "StatsOutliersMadOptions",
 						"properties": [
 							{
@@ -6577,7 +6577,7 @@
 						"name": "stats_outliers_mad",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > threshold are considered outliers.",
-						"source_line": 200,
+						"source_line": 205,
 						"type_signature": "(values: number[], options?: StatsOutliersMadOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -6596,7 +6596,7 @@
 						"name": "STATS_CONFIDENCE_Z_SCORES",
 						"kind": "variable",
 						"doc_comment": "Common z-scores for confidence intervals.",
-						"source_line": 277,
+						"source_line": 282,
 						"type_signature": "Record<number, number>"
 					},
 					{
@@ -6606,7 +6606,7 @@
 						"examples": [
 							"```ts\nstats_confidence_level_to_z_score(0.95); // 1.96\nstats_confidence_level_to_z_score(0.99); // 2.576\n```"
 						],
-						"source_line": 295,
+						"source_line": 300,
 						"type_signature": "(level: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6620,7 +6620,7 @@
 						"name": "StatsConfidenceIntervalOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for confidence interval calculation.",
-						"source_line": 323,
+						"source_line": 328,
 						"type_signature": "StatsConfidenceIntervalOptions",
 						"properties": [
 							{
@@ -6641,7 +6641,7 @@
 						"name": "stats_confidence_interval",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval for the mean.",
-						"source_line": 336,
+						"source_line": 341,
 						"type_signature": "(values: number[], options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
 						"return_description": "[lower_bound, upper_bound]",
@@ -6663,7 +6663,7 @@
 						"name": "stats_confidence_interval_from_summary",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval from summary statistics (mean, std_dev, sample_size).\nUseful when raw data is not available.",
-						"source_line": 357,
+						"source_line": 362,
 						"type_signature": "(mean: number, std_dev: number, sample_size: number, options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
 						"return_description": "[lower_bound, upper_bound]",
@@ -6695,7 +6695,7 @@
 						"name": "StatsWelchTTestResult",
 						"kind": "type",
 						"doc_comment": "Result from Welch's t-test calculation.",
-						"source_line": 385,
+						"source_line": 390,
 						"type_signature": "StatsWelchTTestResult",
 						"properties": [
 							{
@@ -6716,7 +6716,7 @@
 						"name": "stats_welch_t_test",
 						"kind": "function",
 						"doc_comment": "Calculate Welch's t-test statistic and degrees of freedom.\nWelch's t-test is more robust than Student's t-test when variances are unequal.",
-						"source_line": 403,
+						"source_line": 408,
 						"type_signature": "(mean1: number, std1: number, n1: number, mean2: number, std2: number, n2: number): StatsWelchTTestResult",
 						"return_type": "StatsWelchTTestResult",
 						"parameters": [
@@ -6756,7 +6756,7 @@
 						"name": "stats_normal_cdf",
 						"kind": "function",
 						"doc_comment": "Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).",
-						"source_line": 430,
+						"source_line": 435,
 						"type_signature": "(x: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6770,7 +6770,7 @@
 						"name": "stats_ln_gamma",
 						"kind": "function",
 						"doc_comment": "Log gamma function approximation (Lanczos approximation).",
-						"source_line": 441,
+						"source_line": 446,
 						"type_signature": "(z: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6784,7 +6784,7 @@
 						"name": "stats_incomplete_beta",
 						"kind": "function",
 						"doc_comment": "Approximate regularized incomplete beta function for p-value calculation.\nUses continued fraction expansion for reasonable accuracy.",
-						"source_line": 466,
+						"source_line": 471,
 						"type_signature": "(x: number, a: number, b: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6806,7 +6806,7 @@
 						"name": "stats_t_distribution_p_value",
 						"kind": "function",
 						"doc_comment": "Approximate two-tailed p-value from t-distribution.\nFor large df (>100), uses normal approximation.\nFor smaller df, uses incomplete beta function.",
-						"source_line": 523,
+						"source_line": 528,
 						"type_signature": "(t: number, df: number): number",
 						"return_type": "number",
 						"return_description": "two-tailed p-value",

@@ -6,7 +6,7 @@
  * - Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)
  * - Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`
  * - Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)
- * - Special handling for: Date (timestamp), Number/Boolean (boxed primitives), Error (message/name)
+ * - Special handling for: Date (timestamp), Number/Boolean (boxed primitives)
  * - Promises always return false (cannot be meaningfully compared)
  * - Maps/Sets compare by reference for object keys/values
  *
@@ -131,9 +131,13 @@ export const deep_equal = (a: unknown, b: unknown): boolean => {
 		return a!.valueOf() === (b as boolean).valueOf();
 	}
 
-	// Error objects: compare by message and name
-	if (a_ctor === Error) {
-		return (a as Error).message === (b as Error).message && (a as Error).name === (b as Error).name;
+	// Error objects: compare message + name (non-enumerable) then fall through
+	// to check enumerable own properties (e.g., .code, .cause).
+	// Uses instanceof to handle subclasses (TypeError, RangeError, etc.) consistently.
+	if (a instanceof Error) {
+		if (a.message !== (b as Error).message) return false;
+		if (a.name !== (b as Error).name) return false;
+		// Fall through to compare enumerable own properties below
 	}
 
 	// Promise objects: cannot be meaningfully compared for deep equality

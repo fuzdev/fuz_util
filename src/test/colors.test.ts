@@ -13,6 +13,8 @@ import {
 	hsl_to_string,
 	rgb_to_hsl,
 	hex_string_to_hsl,
+	to_hex_component,
+	hue_to_rgb_component,
 	type Rgb,
 } from '$lib/colors.ts';
 
@@ -45,6 +47,66 @@ test('parse_hsl_string', () => {
 	assert.deepEqual(parse_hsl_string('210 55% 62%'), parsed);
 	assert.deepEqual(parse_hsl_string('   210    55%  62%'), parsed);
 	assert.deepEqual(parse_hsl_string('210 55% 62% / 0.5'), parsed);
+});
+
+test('to_hex_component', () => {
+	assert.strictEqual(to_hex_component(0), '00');
+	assert.strictEqual(to_hex_component(15), '0f');
+	assert.strictEqual(to_hex_component(16), '10');
+	assert.strictEqual(to_hex_component(255), 'ff');
+	assert.strictEqual(to_hex_component(128), '80');
+});
+
+test('hue_to_rgb_component', () => {
+	// t < 1/6 branch
+	assert.strictEqual(hue_to_rgb_component(0, 1, 0.1), 0 + (1 - 0) * 6 * 0.1);
+	// t < 1/2 branch (returns q)
+	assert.strictEqual(hue_to_rgb_component(0, 1, 0.3), 1);
+	// t < 2/3 branch
+	const t = 0.6;
+	assert.strictEqual(hue_to_rgb_component(0, 1, t), 0 + (1 - 0) * (2 / 3 - t) * 6);
+	// t >= 2/3 branch (returns p)
+	assert.strictEqual(hue_to_rgb_component(0.2, 1, 0.8), 0.2);
+	// t < 0 normalization (t2 = t+1, both land in t >= 2/3 returning p)
+	assert.strictEqual(hue_to_rgb_component(0.2, 1, -0.1), 0.2); // same as t=0.9
+	// t > 1 normalization (t2 = t-1)
+	assert.ok(Math.abs(hue_to_rgb_component(0, 1, 1.1) - hue_to_rgb_component(0, 1, 0.1)) < 1e-10);
+});
+
+test('hex_string_to_rgb error on invalid hex', () => {
+	assert.throws(() => hex_string_to_rgb('abc'), /invalid hex string/);
+	assert.throws(() => hex_string_to_rgb('#abc'), /invalid hex string/);
+	assert.throws(() => hex_string_to_rgb('abcde'), /invalid hex string/);
+	assert.throws(() => hex_string_to_rgb(''), /invalid hex string/);
+});
+
+test('hex_string_to_rgb with 8-character hex (alpha ignored)', () => {
+	// 8-char hex should not throw, alpha channel is ignored
+	const rgb = hex_string_to_rgb('#9d6432ff');
+	assert.deepEqual(rgb, [157, 100, 50]);
+});
+
+test('parse_hsl_string error on invalid string', () => {
+	assert.throws(() => parse_hsl_string('not a color'), /invalid HSL string/);
+	assert.throws(() => parse_hsl_string(''), /invalid HSL string/);
+	assert.throws(() => parse_hsl_string('rgb(255, 0, 0)'), /invalid HSL string/);
+});
+
+test('achromatic colors (r=g=b)', () => {
+	// Pure gray: rgb_to_hsl should return s=0
+	const hsl = rgb_to_hsl(128, 128, 128);
+	assert.strictEqual(hsl[1], 0); // saturation = 0
+	// And back
+	const rgb = hsl_to_rgb(0, 0, 0.5);
+	assert.strictEqual(rgb[0] as number, rgb[1] as number);
+	assert.strictEqual(rgb[1] as number, rgb[2] as number);
+});
+
+test('boundary colors', () => {
+	// Pure black
+	assert.deepEqual(rgb_to_hsl(0, 0, 0), [0, 0, 0]);
+	// Pure white
+	assert.deepEqual(rgb_to_hsl(255, 255, 255), [0, 0, 1]);
 });
 
 test('conversions between hsl, rgb, and hex', () => {

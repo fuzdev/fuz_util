@@ -1,4 +1,4 @@
-import {test, assert, describe, expect} from 'vitest';
+import {test, assert, describe} from 'vitest';
 
 import {
 	wait,
@@ -193,13 +193,17 @@ describe('each_concurrent', () => {
 
 	test('fails fast on error', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			each_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
+		try {
+			await each_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
 				await new Promise((r) => setTimeout(r, 10));
 				if (x === 3) throw new Error('test error');
 				processed.push(x);
-			}),
-		).rejects.toThrow('test error');
+			});
+			assert.fail('Expected each_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'test error');
+		}
 		assert.notInclude(processed, 3); // item 3 threw before pushing
 		assert.isBelow(processed.length, 5);
 	});
@@ -208,17 +212,38 @@ describe('each_concurrent', () => {
 		const noop = async () => {
 			/* noop */
 		};
-		await expect(each_concurrent([1], 0, noop)).rejects.toThrow('concurrency must be at least 1');
-		await expect(each_concurrent([1], -1, noop)).rejects.toThrow('concurrency must be at least 1');
-		await expect(each_concurrent([1], NaN, noop)).rejects.toThrow('concurrency must be at least 1');
+		try {
+			await each_concurrent([1], 0, noop);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await each_concurrent([1], -1, noop);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await each_concurrent([1], NaN, noop);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
 	});
 
 	test('rejects with abort reason even when items is empty', async () => {
 		const controller = new AbortController();
 		controller.abort('no work needed');
-		await expect(each_concurrent([], 3, async () => {}, controller.signal)).rejects.toBe(
-			'no work needed',
-		);
+		try {
+			await each_concurrent([], 3, async () => {}, controller.signal);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'no work needed');
+		}
 	});
 
 	test('concurrency 1 is sequential', async () => {
@@ -272,33 +297,45 @@ describe('each_concurrent', () => {
 
 	test('error on first item', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			each_concurrent([1, 2, 3], 1, async (x) => {
+		try {
+			await each_concurrent([1, 2, 3], 1, async (x) => {
 				if (x === 1) throw new Error('first item error');
 				processed.push(x);
-			}),
-		).rejects.toThrow('first item error');
+			});
+			assert.fail('Expected each_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'first item error');
+		}
 		// With concurrency 1, should not process any items after the first fails
 		assert.deepEqual(processed, []);
 	});
 
 	test('error on last item', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			each_concurrent([1, 2, 3], 1, async (x) => {
+		try {
+			await each_concurrent([1, 2, 3], 1, async (x) => {
 				if (x === 3) throw new Error('last item error');
 				processed.push(x);
-			}),
-		).rejects.toThrow('last item error');
+			});
+			assert.fail('Expected each_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'last item error');
+		}
 		assert.deepEqual(processed, [1, 2]);
 	});
 
 	test('handles synchronous throw in async function', async () => {
-		await expect(
-			each_concurrent([1, 2, 3], 3, async (x) => {
+		try {
+			await each_concurrent([1, 2, 3], 3, async (x) => {
 				if (x === 2) throw new Error('sync throw');
-			}),
-		).rejects.toThrow('sync throw');
+			});
+			assert.fail('Expected each_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'sync throw');
+		}
 	});
 
 	test('accepts a Set', async () => {
@@ -363,35 +400,42 @@ describe('each_concurrent', () => {
 	});
 
 	test('catches sync throw in sync callback', async () => {
-		await expect(
-			each_concurrent([1, 2, 3], 3, (x) => {
+		try {
+			await each_concurrent([1, 2, 3], 3, (x) => {
 				if (x === 2) throw new Error('sync cb throw');
-			}),
-		).rejects.toThrow('sync cb throw');
+			});
+			assert.fail('Expected each_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'sync cb throw');
+		}
 	});
 
 	test('rejects immediately with already-aborted signal', async () => {
 		const controller = new AbortController();
 		controller.abort('already aborted');
 		const processed: Array<number> = [];
-		await expect(
-			each_concurrent(
+		try {
+			await each_concurrent(
 				[1, 2, 3],
 				3,
 				async (x) => {
 					processed.push(x);
 				},
 				controller.signal,
-			),
-		).rejects.toBe('already aborted');
+			);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'already aborted');
+		}
 		assert.deepEqual(processed, []);
 	});
 
 	test('aborts mid-flight', async () => {
 		const controller = new AbortController();
 		const processed: Array<number> = [];
-		await expect(
-			each_concurrent(
+		try {
+			await each_concurrent(
 				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 				1,
 				async (x) => {
@@ -400,8 +444,11 @@ describe('each_concurrent', () => {
 					if (x === 3) controller.abort('stop now');
 				},
 				controller.signal,
-			),
-		).rejects.toBe('stop now');
+			);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'stop now');
+		}
 		// With concurrency 1, items are sequential: 1, 2, 3 processed, then abort fires
 		assert.deepEqual(processed, [1, 2, 3]);
 	});
@@ -448,36 +495,55 @@ describe('map_concurrent', () => {
 
 	test('fails fast on error', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			map_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
+		try {
+			await map_concurrent([1, 2, 3, 4, 5], 2, async (x) => {
 				await new Promise((r) => setTimeout(r, 10));
 				if (x === 3) throw new Error('test error');
 				processed.push(x);
 				return x;
-			}),
-		).rejects.toThrow('test error');
+			});
+			assert.fail('Expected map_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'test error');
+		}
 		assert.notInclude(processed, 3); // item 3 threw before pushing
 		assert.isBelow(processed.length, 5);
 	});
 
 	test('throws on invalid concurrency', async () => {
-		await expect(map_concurrent([1], 0, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
-		await expect(map_concurrent([1], -1, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
-		await expect(map_concurrent([1], NaN, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
+		try {
+			await map_concurrent([1], 0, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await map_concurrent([1], -1, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await map_concurrent([1], NaN, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
 	});
 
 	test('rejects with abort reason even when items is empty', async () => {
 		const controller = new AbortController();
 		controller.abort('no work needed');
-		await expect(map_concurrent([], 3, async (x: number) => x, controller.signal)).rejects.toBe(
-			'no work needed',
-		);
+		try {
+			await map_concurrent([], 3, async (x: number) => x, controller.signal);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'no work needed');
+		}
 	});
 
 	test('concurrency 1 is sequential', async () => {
@@ -526,26 +592,34 @@ describe('map_concurrent', () => {
 
 	test('error on first item', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			map_concurrent([1, 2, 3], 1, async (x) => {
+		try {
+			await map_concurrent([1, 2, 3], 1, async (x) => {
 				if (x === 1) throw new Error('first item error');
 				processed.push(x);
 				return x;
-			}),
-		).rejects.toThrow('first item error');
+			});
+			assert.fail('Expected map_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'first item error');
+		}
 		// With concurrency 1, should not process any items after the first fails
 		assert.deepEqual(processed, []);
 	});
 
 	test('error on last item', async () => {
 		const processed: Array<number> = [];
-		await expect(
-			map_concurrent([1, 2, 3], 1, async (x) => {
+		try {
+			await map_concurrent([1, 2, 3], 1, async (x) => {
 				if (x === 3) throw new Error('last item error');
 				processed.push(x);
 				return x;
-			}),
-		).rejects.toThrow('last item error');
+			});
+			assert.fail('Expected map_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'last item error');
+		}
 		assert.deepEqual(processed, [1, 2]);
 	});
 
@@ -563,15 +637,19 @@ describe('map_concurrent', () => {
 	});
 
 	test('handles synchronous throw in async function', async () => {
-		await expect(
-			map_concurrent([1, 2, 3], 3, async (x) => {
+		try {
+			await map_concurrent([1, 2, 3], 3, async (x) => {
 				if (x === 2) {
 					// throw rather than returning a rejected promise
 					throw new Error('sync throw');
 				}
 				return x;
-			}),
-		).rejects.toThrow('sync throw');
+			});
+			assert.fail('Expected map_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'sync throw');
+		}
 	});
 
 	test('nested calls', async () => {
@@ -619,27 +697,34 @@ describe('map_concurrent', () => {
 	});
 
 	test('catches sync throw in sync callback', async () => {
-		await expect(
-			map_concurrent([1, 2, 3], 3, (x) => {
+		try {
+			await map_concurrent([1, 2, 3], 3, (x) => {
 				if (x === 2) throw new Error('sync cb throw');
 				return x;
-			}),
-		).rejects.toThrow('sync cb throw');
+			});
+			assert.fail('Expected map_concurrent to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'sync cb throw');
+		}
 	});
 
 	test('rejects immediately with already-aborted signal', async () => {
 		const controller = new AbortController();
 		controller.abort('already aborted');
-		await expect(map_concurrent([1, 2, 3], 3, async (x) => x, controller.signal)).rejects.toBe(
-			'already aborted',
-		);
+		try {
+			await map_concurrent([1, 2, 3], 3, async (x) => x, controller.signal);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'already aborted');
+		}
 	});
 
 	test('aborts mid-flight', async () => {
 		const controller = new AbortController();
 		const processed: Array<number> = [];
-		await expect(
-			map_concurrent(
+		try {
+			await map_concurrent(
 				[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 				1,
 				async (x) => {
@@ -649,8 +734,11 @@ describe('map_concurrent', () => {
 					return x;
 				},
 				controller.signal,
-			),
-		).rejects.toBe('stop now');
+			);
+			assert.fail('Expected to reject');
+		} catch (e) {
+			assert.strictEqual(e, 'stop now');
+		}
 		// With concurrency 1, items are sequential: 1, 2, 3 processed, then abort fires
 		assert.deepEqual(processed, [1, 2, 3]);
 	});
@@ -708,15 +796,27 @@ describe('map_concurrent_settled', () => {
 	});
 
 	test('throws on invalid concurrency', async () => {
-		await expect(map_concurrent_settled([1], 0, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
-		await expect(map_concurrent_settled([1], -1, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
-		await expect(map_concurrent_settled([1], NaN, async (x) => x)).rejects.toThrow(
-			'concurrency must be at least 1',
-		);
+		try {
+			await map_concurrent_settled([1], 0, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await map_concurrent_settled([1], -1, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
+		try {
+			await map_concurrent_settled([1], NaN, async (x) => x);
+			assert.fail('Expected to throw');
+		} catch (e) {
+			assert.instanceOf(e, Error);
+			assert.include(e.message, 'concurrency must be at least 1');
+		}
 	});
 
 	test('all items fail', async () => {

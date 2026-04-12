@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {Logger} from '$lib/log.ts';
+import {Logger, log_level_to_number, log_level_parse} from '$lib/log.ts';
 import {create_test_context} from './log_test_helpers.ts';
 
 describe('Logger > Core Functionality', () => {
@@ -202,5 +202,43 @@ describe('Logger > Multiple Arguments', () => {
 			),
 		);
 		assert.ok(ctx.logged_args.some((arg) => Array.isArray(arg)));
+	});
+});
+
+describe('log_level_to_number', () => {
+	test('returns correct numeric values in order', () => {
+		assert.strictEqual(log_level_to_number('off'), 0);
+		assert.strictEqual(log_level_to_number('error'), 1);
+		assert.strictEqual(log_level_to_number('warn'), 2);
+		assert.strictEqual(log_level_to_number('info'), 3);
+		assert.strictEqual(log_level_to_number('debug'), 4);
+	});
+
+	test('ordering is monotonically increasing', () => {
+		assert.isBelow(log_level_to_number('off'), log_level_to_number('error'));
+		assert.isBelow(log_level_to_number('error'), log_level_to_number('warn'));
+		assert.isBelow(log_level_to_number('warn'), log_level_to_number('info'));
+		assert.isBelow(log_level_to_number('info'), log_level_to_number('debug'));
+	});
+});
+
+describe('log_level_parse', () => {
+	test('returns valid log levels', () => {
+		assert.strictEqual(log_level_parse('off'), 'off');
+		assert.strictEqual(log_level_parse('error'), 'error');
+		assert.strictEqual(log_level_parse('warn'), 'warn');
+		assert.strictEqual(log_level_parse('info'), 'info');
+		assert.strictEqual(log_level_parse('debug'), 'debug');
+	});
+
+	test('returns undefined for undefined and empty string', () => {
+		assert.strictEqual(log_level_parse(undefined), undefined);
+		assert.strictEqual(log_level_parse(''), undefined);
+	});
+
+	test('throws for invalid values', () => {
+		assert.throws(() => log_level_parse('verbose'), /Invalid log level/);
+		assert.throws(() => log_level_parse('INFO'), /Invalid log level/);
+		assert.throws(() => log_level_parse('1'), /Invalid log level/);
 	});
 });

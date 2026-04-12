@@ -1,4 +1,4 @@
-import {describe, test, expect} from 'vitest';
+import {describe, test, assert} from 'vitest';
 import {z} from 'zod';
 
 import {
@@ -16,8 +16,8 @@ describe('args_validate_schema', () => {
 			watch: z.boolean().default(false),
 		});
 		const result = args_validate_schema(schema);
-		expect(result.success).toBe(true);
-		expect('error' in result).toBe(false);
+		assert.strictEqual(result.success, true);
+		assert.strictEqual('error' in result, false);
 	});
 
 	test('valid schema with aliases', () => {
@@ -32,7 +32,7 @@ describe('args_validate_schema', () => {
 				.meta({aliases: ['o', 'out']}),
 		});
 		const result = args_validate_schema(schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 	});
 
 	test('detects alias-canonical conflict', () => {
@@ -44,10 +44,10 @@ describe('args_validate_schema', () => {
 			o: z.boolean().default(false),
 		});
 		const result = args_validate_schema(schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
-			expect(result.error).toBeDefined();
-			expect(result.error.issues[0]?.message).toContain('conflicts with canonical key');
+			assert.isDefined(result.error);
+			assert.include(result.error.issues[0]?.message, 'conflicts with canonical key');
 		}
 	});
 
@@ -63,10 +63,10 @@ describe('args_validate_schema', () => {
 				.meta({aliases: ['v']}),
 		});
 		const result = args_validate_schema(schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
-			expect(result.error).toBeDefined();
-			expect(result.error.issues[0]?.message).toContain('is used by both');
+			assert.isDefined(result.error);
+			assert.include(result.error.issues[0]?.message, 'is used by both');
 		}
 	});
 
@@ -77,8 +77,8 @@ describe('args_validate_schema', () => {
 		const result1 = args_validate_schema(schema);
 		const result2 = args_validate_schema(schema);
 		// Both calls should succeed and use cached analysis
-		expect(result1.success).toBe(true);
-		expect(result2.success).toBe(true);
+		assert.strictEqual(result1.success, true);
+		assert.strictEqual(result2.success, true);
 		// The cached error object should be the same reference when there are conflicts
 		const bad_schema = z.strictObject({
 			output: z
@@ -90,56 +90,56 @@ describe('args_validate_schema', () => {
 		const bad1 = args_validate_schema(bad_schema);
 		const bad2 = args_validate_schema(bad_schema);
 		if (!bad1.success && !bad2.success) {
-			expect(bad1.error).toBe(bad2.error); // Same cached error object
+			assert.strictEqual(bad1.error, bad2.error); // Same cached error object
 		}
 	});
 
 	test('handles non-object schema gracefully', () => {
 		const schema = z.string();
 		const result = args_validate_schema(schema);
-		expect(result.success).toBe(true); // No conflicts possible
+		assert.strictEqual(result.success, true); // No conflicts possible
 	});
 });
 
 describe('args_serialize', () => {
 	test('empty object', () => {
-		expect(args_serialize({})).toEqual([]);
+		assert.deepEqual(args_serialize({}), []);
 	});
 
 	test('positionals first', () => {
-		expect(args_serialize({_: ['a', 'b'], watch: true})).toEqual(['a', 'b', '--watch']);
+		assert.deepEqual(args_serialize({_: ['a', 'b'], watch: true}), ['a', 'b', '--watch']);
 	});
 
 	test('single char uses single dash', () => {
-		expect(args_serialize({v: true, w: 'foo'})).toEqual(['-v', '-w', 'foo']);
+		assert.deepEqual(args_serialize({v: true, w: 'foo'}), ['-v', '-w', 'foo']);
 	});
 
 	test('boolean true becomes bare flag', () => {
-		expect(args_serialize({watch: true})).toEqual(['--watch']);
+		assert.deepEqual(args_serialize({watch: true}), ['--watch']);
 	});
 
 	test('boolean false is skipped', () => {
-		expect(args_serialize({watch: false})).toEqual([]);
+		assert.deepEqual(args_serialize({watch: false}), []);
 	});
 
 	test('undefined is skipped', () => {
-		expect(args_serialize({watch: undefined, verbose: true})).toEqual(['--verbose']);
+		assert.deepEqual(args_serialize({watch: undefined, verbose: true}), ['--verbose']);
 	});
 
 	test('arrays repeat the flag', () => {
-		expect(args_serialize({file: ['a', 'b']})).toEqual(['--file', 'a', '--file', 'b']);
+		assert.deepEqual(args_serialize({file: ['a', 'b']}), ['--file', 'a', '--file', 'b']);
 	});
 
 	test('no- prefix skipped when base is truthy', () => {
-		expect(args_serialize({watch: true, 'no-watch': false})).toEqual(['--watch']);
+		assert.deepEqual(args_serialize({watch: true, 'no-watch': false}), ['--watch']);
 	});
 
 	test('no- prefix serialized when base is falsy', () => {
-		expect(args_serialize({watch: false, 'no-watch': true})).toEqual(['--no-watch']);
+		assert.deepEqual(args_serialize({watch: false, 'no-watch': true}), ['--no-watch']);
 	});
 
 	test('no- prefix alone', () => {
-		expect(args_serialize({'no-watch': true})).toEqual(['--no-watch']);
+		assert.deepEqual(args_serialize({'no-watch': true}), ['--no-watch']);
 	});
 
 	test('prefers shortest alias when schema provided', () => {
@@ -149,7 +149,7 @@ describe('args_serialize', () => {
 				.default(false)
 				.meta({aliases: ['v', 'verb']}),
 		});
-		expect(args_serialize({verbose: true}, schema)).toEqual(['-v']);
+		assert.deepEqual(args_serialize({verbose: true}, schema), ['-v']);
 	});
 
 	test('prefers shortest alias for values', () => {
@@ -159,15 +159,15 @@ describe('args_serialize', () => {
 				.default('')
 				.meta({aliases: ['o', 'out']}),
 		});
-		expect(args_serialize({output: 'dist'}, schema)).toEqual(['-o', 'dist']);
+		assert.deepEqual(args_serialize({output: 'dist'}, schema), ['-o', 'dist']);
 	});
 
 	test('numbers as values', () => {
-		expect(args_serialize({count: 5})).toEqual(['--count', '5']);
+		assert.deepEqual(args_serialize({count: 5}), ['--count', '5']);
 	});
 
 	test('empty positionals array', () => {
-		expect(args_serialize({_: []})).toEqual([]);
+		assert.deepEqual(args_serialize({_: []}), []);
 	});
 });
 
@@ -175,18 +175,18 @@ describe('args_parse', () => {
 	test('validates with zod schema', () => {
 		const schema = z.strictObject({watch: z.boolean().default(false)});
 		const result = args_parse({watch: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: true});
+			assert.deepEqual(result.data, {watch: true});
 		}
 	});
 
 	test('applies defaults', () => {
 		const schema = z.strictObject({watch: z.boolean().default(false)});
 		const result = args_parse({}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: false});
+			assert.deepEqual(result.data, {watch: false});
 		}
 	});
 
@@ -198,9 +198,9 @@ describe('args_parse', () => {
 				.meta({aliases: ['v']}),
 		});
 		const result = args_parse({v: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data.verbose).toBe(true);
+			assert.strictEqual(result.data.verbose, true);
 		}
 	});
 
@@ -212,10 +212,10 @@ describe('args_parse', () => {
 				.meta({aliases: ['v']}),
 		});
 		const result = args_parse({v: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({verbose: true});
-			expect('v' in result.data).toBe(false);
+			assert.deepEqual(result.data, {verbose: true});
+			assert.strictEqual('v' in result.data, false);
 		}
 	});
 
@@ -228,10 +228,10 @@ describe('args_parse', () => {
 		});
 		const result1 = args_parse({o: 'dist'}, schema);
 		const result2 = args_parse({out: 'dist'}, schema);
-		expect(result1.success).toBe(true);
-		expect(result2.success).toBe(true);
-		if (result1.success) expect(result1.data.output).toBe('dist');
-		if (result2.success) expect(result2.data.output).toBe('dist');
+		assert.strictEqual(result1.success, true);
+		assert.strictEqual(result2.success, true);
+		if (result1.success) assert.strictEqual(result1.data.output, 'dist');
+		if (result2.success) assert.strictEqual(result2.data.output, 'dist');
 	});
 
 	test('canonical takes precedence over alias', () => {
@@ -242,9 +242,9 @@ describe('args_parse', () => {
 				.meta({aliases: ['v']}),
 		});
 		const result = args_parse({v: true, verbose: false}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data.verbose).toBe(false);
+			assert.strictEqual(result.data.verbose, false);
 		}
 	});
 
@@ -254,9 +254,9 @@ describe('args_parse', () => {
 			'no-watch': z.boolean().default(false),
 		});
 		const result = args_parse({watch: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: true, 'no-watch': false});
+			assert.deepEqual(result.data, {watch: true, 'no-watch': false});
 		}
 	});
 
@@ -266,9 +266,9 @@ describe('args_parse', () => {
 			'no-watch': z.boolean().default(false),
 		});
 		const result = args_parse({'no-watch': true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: false, 'no-watch': true});
+			assert.deepEqual(result.data, {watch: false, 'no-watch': true});
 		}
 	});
 
@@ -278,9 +278,9 @@ describe('args_parse', () => {
 			'no-watch': z.boolean().default(false),
 		});
 		const result = args_parse({watch: false, 'no-watch': true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: false, 'no-watch': true});
+			assert.deepEqual(result.data, {watch: false, 'no-watch': true});
 		}
 	});
 
@@ -290,10 +290,10 @@ describe('args_parse', () => {
 			'no-count': z.number().default(0), // weird but valid
 		});
 		const result = args_parse({count: 5}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
 			// Should NOT sync because no-count is not boolean
-			expect(result.data).toEqual({count: 5, 'no-count': 0});
+			assert.deepEqual(result.data, {count: 5, 'no-count': 0});
 		}
 	});
 
@@ -303,10 +303,10 @@ describe('args_parse', () => {
 			// no 'no-watch' in schema
 		});
 		const result = args_parse({watch: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
 			// Should NOT add 'no-watch' since it's not in schema
-			expect(result.data).toEqual({watch: true});
+			assert.deepEqual(result.data, {watch: true});
 		}
 	});
 
@@ -316,9 +316,9 @@ describe('args_parse', () => {
 			watch: z.boolean().default(false),
 		});
 		const result = args_parse({_: ['foo', 'bar'], watch: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({_: ['foo', 'bar'], watch: true});
+			assert.deepEqual(result.data, {_: ['foo', 'bar'], watch: true});
 		}
 	});
 
@@ -331,9 +331,9 @@ describe('args_parse', () => {
 			o: z.boolean().default(false), // conflicts with alias
 		});
 		const result = args_parse({}, schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain('conflicts with canonical key');
+			assert.include(result.error.issues[0]?.message, 'conflicts with canonical key');
 		}
 	});
 
@@ -349,9 +349,9 @@ describe('args_parse', () => {
 				.meta({aliases: ['v']}),
 		});
 		const result = args_parse({}, schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain('is used by both');
+			assert.include(result.error.issues[0]?.message, 'is used by both');
 		}
 	});
 
@@ -365,8 +365,8 @@ describe('args_parse', () => {
 		// Multiple parses with same schema should use cached analysis
 		const result1 = args_parse({v: true}, schema);
 		const result2 = args_parse({verbose: true}, schema);
-		expect(result1.success).toBe(true);
-		expect(result2.success).toBe(true);
+		assert.strictEqual(result1.success, true);
+		assert.strictEqual(result2.success, true);
 	});
 
 	test('handles optional fields', () => {
@@ -374,9 +374,9 @@ describe('args_parse', () => {
 			name: z.string().optional(),
 		});
 		const result = args_parse({}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({});
+			assert.deepEqual(result.data, {});
 		}
 	});
 
@@ -385,11 +385,11 @@ describe('args_parse', () => {
 			count: z.number().min(0),
 		});
 		const result = args_parse({count: -5}, schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
 			// This is a zod validation error, not a schema conflict
-			expect(result.error.issues[0]?.message).not.toContain('conflicts');
-			expect(result.error.issues[0]?.message).not.toContain('is used by both');
+			assert.notInclude(result.error.issues[0]?.message, 'conflicts');
+			assert.notInclude(result.error.issues[0]?.message, 'is used by both');
 		}
 	});
 
@@ -403,10 +403,10 @@ describe('args_parse', () => {
 		// When both aliases are in input, first one processed wins
 		// (object iteration order is insertion order in modern JS)
 		const result = args_parse({o: 'first', out: 'second'}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
 			// 'o' is processed first, so 'first' is used
-			expect(result.data.output).toBe('first');
+			assert.strictEqual(result.data.output, 'first');
 		}
 	});
 
@@ -420,9 +420,9 @@ describe('args_parse', () => {
 			})
 			.default({verbose: false});
 		const result = args_parse({v: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data.verbose).toBe(true);
+			assert.strictEqual(result.data.verbose, true);
 		}
 	});
 
@@ -436,9 +436,9 @@ describe('args_parse', () => {
 		});
 		// Use alias 'w' to set watch=true, no-watch should sync
 		const result = args_parse({w: true}, schema);
-		expect(result.success).toBe(true);
+		assert.strictEqual(result.success, true);
 		if (result.success) {
-			expect(result.data).toEqual({watch: true, 'no-watch': false});
+			assert.deepEqual(result.data, {watch: true, 'no-watch': false});
 		}
 	});
 
@@ -447,9 +447,9 @@ describe('args_parse', () => {
 			watch: z.boolean().default(false),
 		});
 		const result = args_parse({watch: true, unknown: 'key'}, schema);
-		expect(result.success).toBe(false);
+		assert.strictEqual(result.success, false);
 		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain('Unrecognized key');
+			assert.include(result.error.issues[0]?.message, 'Unrecognized key');
 		}
 	});
 });
@@ -463,10 +463,10 @@ describe('args_extract_aliases', () => {
 				.meta({aliases: ['v']}),
 		});
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.get('v')).toBe('verbose');
-		expect(aliases.size).toBe(1);
-		expect(canonical_keys.has('verbose')).toBe(true);
-		expect(canonical_keys.size).toBe(1);
+		assert.strictEqual(aliases.get('v'), 'verbose');
+		assert.strictEqual(aliases.size, 1);
+		assert.strictEqual(canonical_keys.has('verbose'), true);
+		assert.strictEqual(canonical_keys.size, 1);
 	});
 
 	test('extracts multiple aliases for same key', () => {
@@ -477,10 +477,10 @@ describe('args_extract_aliases', () => {
 				.meta({aliases: ['o', 'out']}),
 		});
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.get('o')).toBe('output');
-		expect(aliases.get('out')).toBe('output');
-		expect(aliases.size).toBe(2);
-		expect(canonical_keys.has('output')).toBe(true);
+		assert.strictEqual(aliases.get('o'), 'output');
+		assert.strictEqual(aliases.get('out'), 'output');
+		assert.strictEqual(aliases.size, 2);
+		assert.strictEqual(canonical_keys.has('output'), true);
 	});
 
 	test('extracts aliases from multiple keys', () => {
@@ -495,10 +495,10 @@ describe('args_extract_aliases', () => {
 				.meta({aliases: ['o']}),
 		});
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.get('v')).toBe('verbose');
-		expect(aliases.get('o')).toBe('output');
-		expect(aliases.size).toBe(2);
-		expect(canonical_keys.size).toBe(2);
+		assert.strictEqual(aliases.get('v'), 'verbose');
+		assert.strictEqual(aliases.get('o'), 'output');
+		assert.strictEqual(aliases.size, 2);
+		assert.strictEqual(canonical_keys.size, 2);
 	});
 
 	test('returns empty map when no aliases', () => {
@@ -507,8 +507,8 @@ describe('args_extract_aliases', () => {
 			output: z.string().default(''),
 		});
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.size).toBe(0);
-		expect(canonical_keys.size).toBe(2); // Still has canonical keys
+		assert.strictEqual(aliases.size, 0);
+		assert.strictEqual(canonical_keys.size, 2); // Still has canonical keys
 	});
 
 	test('handles wrapped schemas (optional, default)', () => {
@@ -523,15 +523,15 @@ describe('args_extract_aliases', () => {
 				.meta({aliases: ['o']}),
 		});
 		const {aliases} = args_extract_aliases(schema);
-		expect(aliases.get('v')).toBe('verbose');
-		expect(aliases.get('o')).toBe('output');
+		assert.strictEqual(aliases.get('v'), 'verbose');
+		assert.strictEqual(aliases.get('o'), 'output');
 	});
 
 	test('handles non-object schema gracefully', () => {
 		const schema = z.string();
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.size).toBe(0);
-		expect(canonical_keys.size).toBe(0);
+		assert.strictEqual(aliases.size, 0);
+		assert.strictEqual(canonical_keys.size, 0);
 	});
 
 	test('canonical_keys includes keys without aliases', () => {
@@ -544,11 +544,11 @@ describe('args_extract_aliases', () => {
 			output: z.string().default(''), // no alias
 		});
 		const {aliases, canonical_keys} = args_extract_aliases(schema);
-		expect(aliases.size).toBe(1);
-		expect(canonical_keys.size).toBe(3);
-		expect(canonical_keys.has('verbose')).toBe(true);
-		expect(canonical_keys.has('watch')).toBe(true);
-		expect(canonical_keys.has('output')).toBe(true);
+		assert.strictEqual(aliases.size, 1);
+		assert.strictEqual(canonical_keys.size, 3);
+		assert.strictEqual(canonical_keys.has('verbose'), true);
+		assert.strictEqual(canonical_keys.has('watch'), true);
+		assert.strictEqual(canonical_keys.has('output'), true);
 	});
 
 	test('returns copies that are safe to mutate', () => {
@@ -565,10 +565,10 @@ describe('args_extract_aliases', () => {
 
 		// Get fresh extraction - should not be affected
 		const result2 = args_extract_aliases(schema);
-		expect(result2.aliases.has('x')).toBe(false);
-		expect(result2.canonical_keys.has('mutated')).toBe(false);
-		expect(result2.aliases.size).toBe(1);
-		expect(result2.canonical_keys.size).toBe(1);
+		assert.strictEqual(result2.aliases.has('x'), false);
+		assert.strictEqual(result2.canonical_keys.has('mutated'), false);
+		assert.strictEqual(result2.aliases.size, 1);
+		assert.strictEqual(result2.canonical_keys.size, 1);
 	});
 });
 
@@ -707,7 +707,7 @@ describe('argv_parse', () => {
 	];
 
 	test.each(basic_cases)('%s', (_description, input, expected) => {
-		expect(argv_parse(input)).toEqual(expected);
+		assert.deepEqual(argv_parse(input), expected);
 	});
 
 	// Special JS property names - tested separately because object literal syntax
@@ -716,20 +716,20 @@ describe('argv_parse', () => {
 	describe('special property names (Object.create(null))', () => {
 		test('__proto__ as flag name', () => {
 			const result = argv_parse(['--__proto__', 'value']);
-			expect(result._).toEqual([]);
-			expect(result['__proto__']).toBe('value');
-			expect(Object.keys(result)).toContain('__proto__');
+			assert.deepEqual(result._, []);
+			assert.strictEqual(result['__proto__'], 'value');
+			assert.include(Object.keys(result), '__proto__');
 		});
 
 		test('constructor as flag name', () => {
 			const result = argv_parse(['--constructor', 'test']);
-			expect(result._).toEqual([]);
-			expect(result['constructor']).toBe('test');
+			assert.deepEqual(result._, []);
+			assert.strictEqual(result['constructor'] as unknown, 'test');
 		});
 
 		test('no prototype pollution', () => {
 			argv_parse(['--__proto__', 'polluted']);
-			expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+			assert.isUndefined(({} as Record<string, unknown>).polluted);
 		});
 	});
 	/* eslint-enable no-proto, @typescript-eslint/dot-notation */
@@ -770,7 +770,7 @@ describe('argv_parse', () => {
 
 	describe('empty equals (differs from mri)', () => {
 		test.each(empty_equals_cases)('%s', (_description, input, expected) => {
-			expect(argv_parse(input)).toEqual(expected);
+			assert.deepEqual(argv_parse(input), expected);
 		});
 	});
 
@@ -801,7 +801,7 @@ describe('argv_parse', () => {
 
 	describe('mri differences (intentional)', () => {
 		test.each(mri_diff_cases)('%s', (_description, input, expected, _mri_behavior) => {
-			expect(argv_parse(input)).toEqual(expected);
+			assert.deepEqual(argv_parse(input), expected);
 		});
 	});
 
@@ -819,14 +819,14 @@ describe('argv_parse', () => {
 
 	describe('dash handling', () => {
 		test.each(dash_cases)('%s', (_description, input, expected) => {
-			expect(argv_parse(input)).toEqual(expected);
+			assert.deepEqual(argv_parse(input), expected);
 		});
 	});
 
 	// Complex real-world examples (keep as individual tests for clarity)
 	describe('real-world patterns', () => {
 		test('gro-like task invocation', () => {
-			expect(argv_parse(['test', '--watch', '-v', 'src/*.test.ts'])).toEqual({
+			assert.deepEqual(argv_parse(['test', '--watch', '-v', 'src/*.test.ts']), {
 				_: ['test'],
 				watch: true,
 				v: 'src/*.test.ts',
@@ -834,16 +834,19 @@ describe('argv_parse', () => {
 		});
 
 		test('build command with multiple flags', () => {
-			expect(argv_parse(['build', '--no-minify', '--output', 'dist', '--format', 'esm'])).toEqual({
-				_: ['build'],
-				minify: false,
-				output: 'dist',
-				format: 'esm',
-			});
+			assert.deepEqual(
+				argv_parse(['build', '--no-minify', '--output', 'dist', '--format', 'esm']),
+				{
+					_: ['build'],
+					minify: false,
+					output: 'dist',
+					format: 'esm',
+				},
+			);
 		});
 
 		test('forwarded args pattern', () => {
-			expect(argv_parse(['eslint', '--fix', '--ext', '.ts'])).toEqual({
+			assert.deepEqual(argv_parse(['eslint', '--fix', '--ext', '.ts']), {
 				_: ['eslint'],
 				fix: true,
 				ext: '.ts',
@@ -851,7 +854,7 @@ describe('argv_parse', () => {
 		});
 
 		test('mixed positionals and flags (flag takes next non-flag as value)', () => {
-			expect(argv_parse(['foo', '--watch', 'bar', '-v'])).toEqual({
+			assert.deepEqual(argv_parse(['foo', '--watch', 'bar', '-v']), {
 				_: ['foo'],
 				watch: 'bar',
 				v: true,
@@ -874,25 +877,25 @@ describe('argv_parse', () => {
 			const reparsed = argv_parse(serialized);
 			// Empty args get _ array added by argv_parse
 			const expected = '_' in original ? original : {_: [], ...original};
-			expect(reparsed).toEqual(expected);
+			assert.deepEqual(reparsed, expected);
 		});
 
 		test('no- prefix round-trip (becomes negated base flag)', () => {
 			// --no-watch becomes {watch: false}, not {no-watch: true}
 			const original = {_: [] as Array<string>, 'no-watch': true};
 			const serialized = args_serialize(original);
-			expect(serialized).toEqual(['--no-watch']);
+			assert.deepEqual(serialized, ['--no-watch']);
 			const reparsed = argv_parse(serialized);
-			expect(reparsed.watch).toBe(false);
-			expect(reparsed['no-watch']).toBeUndefined();
+			assert.strictEqual(reparsed.watch, false);
+			assert.isUndefined(reparsed['no-watch']);
 		});
 
 		test('string values with spaces round-trip correctly', () => {
 			const original = {_: [] as Array<string>, message: 'hello world'};
 			const serialized = args_serialize(original);
-			expect(serialized).toEqual(['--message', 'hello world']);
+			assert.deepEqual(serialized, ['--message', 'hello world']);
 			const reparsed = argv_parse(serialized);
-			expect(reparsed.message).toBe('hello world');
+			assert.strictEqual(reparsed.message, 'hello world');
 		});
 	});
 });

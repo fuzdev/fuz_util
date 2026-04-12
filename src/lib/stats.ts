@@ -26,10 +26,12 @@ export const stats_mean = (values: Array<number>): number => {
 
 /**
  * Calculate the median of an array of numbers.
+ * NaN values are filtered out before computing.
  */
 export const stats_median = (values: Array<number>): number => {
-	if (values.length === 0) return NaN;
-	const sorted = [...values].sort((a, b) => a - b);
+	const valid = values.filter((v) => !Number.isNaN(v));
+	if (valid.length === 0) return NaN;
+	const sorted = valid.sort((a, b) => a - b);
 	const mid = Math.floor(sorted.length / 2);
 	return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
 };
@@ -95,16 +97,19 @@ export const stats_cv = (mean: number, std_dev: number): number => {
 
 /**
  * Calculate min and max values.
+ * NaN values are ignored.
  */
 export const stats_min_max = (values: Array<number>): {min: number; max: number} => {
 	if (values.length === 0) return {min: NaN, max: NaN};
-	let min = values[0]!;
-	let max = values[0]!;
-	for (let i = 1; i < values.length; i++) {
+	let min = Infinity;
+	let max = -Infinity;
+	for (let i = 0; i < values.length; i++) {
 		const val = values[i]!;
+		if (Number.isNaN(val)) continue;
 		if (val < min) min = val;
 		if (val > max) max = val;
 	}
+	if (min === Infinity) return {min: NaN, max: NaN};
 	return {min, max};
 };
 

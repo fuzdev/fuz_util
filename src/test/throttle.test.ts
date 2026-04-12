@@ -121,6 +121,36 @@ test("throttles calls to a function with when='trailing'", async () => {
 	assert.deepEqual(results, ['d_run', 'd_done', 'e_run', 'e_done', 'g_run', 'g_done']);
 });
 
+test('throttles with non-zero delay', async () => {
+	const results: Array<string> = [];
+	const fn = throttle(
+		async (name: string) => {
+			results.push(name + '_run');
+			await wait();
+			results.push(name + '_done');
+		},
+		{delay: 10},
+	);
+
+	const promise_a = fn('a'); // called immediately
+	assert.deepEqual(results, ['a_run']);
+
+	// While 'a' is pending, queue 'b' then 'c' — 'c' replaces 'b'
+	const promise_b = fn('b');
+	void fn('c');
+
+	await promise_a;
+	assert.deepEqual(results, ['a_run', 'a_done']);
+
+	// Wait for the delay timer to fire and the flush to execute
+	await wait(20);
+	await promise_b;
+
+	// 'c' should have been called (trailing), not 'b'
+	assert.isTrue(results.includes('c_run'));
+	assert.isFalse(results.includes('b_run'));
+});
+
 test("throttles calls to a function with when='leading'", async () => {
 	const results: Array<string> = [];
 	const fn = throttle(
