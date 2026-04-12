@@ -1,13 +1,6 @@
 import {test, assert, describe, vi} from 'vitest';
 
-import {
-	assert_rejects,
-	assert_result_ok,
-	assert_result_error,
-	create_mock_logger,
-	type MockLogger,
-} from '$lib/testing.ts';
-import type {Result} from '$lib/result.ts';
+import {assert_rejects, create_mock_logger, type MockLogger} from '$lib/testing.ts';
 
 describe('assert_rejects', () => {
 	test('catches and returns the error', async () => {
@@ -72,92 +65,6 @@ describe('assert_rejects', () => {
 			throw new Error('sync throw');
 		});
 		assert.strictEqual(err.message, 'sync throw');
-	});
-});
-
-describe('assert_result_ok', () => {
-	test('narrows result to ok type', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: true, value: 42};
-		assert_result_ok(result);
-		// result is now narrowed — access properties directly
-		assert.strictEqual(result.ok, true);
-		assert.strictEqual(result.value, 42);
-	});
-
-	test('fails on error result', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: false, message: 'bad'};
-		assert.throws(() => assert_result_ok(result));
-	});
-
-	test('fails on error result with default message', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: false, message: 'bad'};
-		try {
-			assert_result_ok(result);
-			assert.fail('Expected to throw');
-		} catch (err) {
-			assert(err instanceof Error);
-			assert.ok(err.message.includes('Expected result.ok to be true'));
-		}
-	});
-
-	test('uses custom message on failure', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: false, message: 'bad'};
-		try {
-			assert_result_ok(result, 'custom failure');
-			assert.fail('Expected to throw');
-		} catch (err) {
-			assert(err instanceof Error);
-			assert.ok(err.message.includes('custom failure'));
-		}
-	});
-
-	test('works with minimal Result shape', () => {
-		const result: Result = {ok: true};
-		assert_result_ok(result);
-		assert.strictEqual(result.ok, true);
-	});
-});
-
-describe('assert_result_error', () => {
-	test('narrows result to error type', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: false, message: 'bad'};
-		assert_result_error(result);
-		// result is now narrowed — access properties directly
-		assert.strictEqual(result.ok, false);
-		assert.strictEqual(result.message, 'bad');
-	});
-
-	test('fails on ok result', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: true, value: 42};
-		assert.throws(() => assert_result_error(result));
-	});
-
-	test('fails on ok result with default message', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: true, value: 42};
-		try {
-			assert_result_error(result);
-			assert.fail('Expected to throw');
-		} catch (err) {
-			assert(err instanceof Error);
-			assert.ok(err.message.includes('Expected result.ok to be false'));
-		}
-	});
-
-	test('uses custom message on failure', () => {
-		const result: Result<{value: number}, {message: string}> = {ok: true, value: 42};
-		try {
-			assert_result_error(result, 'custom failure');
-			assert.fail('Expected to throw');
-		} catch (err) {
-			assert(err instanceof Error);
-			assert.ok(err.message.includes('custom failure'));
-		}
-	});
-
-	test('works with minimal Result shape', () => {
-		const result: Result = {ok: false};
-		assert_result_error(result);
-		assert.strictEqual(result.ok, false);
 	});
 });
 

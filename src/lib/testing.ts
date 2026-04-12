@@ -11,7 +11,6 @@
 import {assert, vi} from 'vitest';
 
 import type {Logger} from './log.js';
-import type {Result} from './result.js';
 
 /**
  * Asserts that `fn` rejects with an `Error`.
@@ -39,32 +38,6 @@ export const assert_rejects = async (
 		return err;
 	}
 	assert.fail('Expected to throw');
-};
-
-/**
- * Asserts a `Result` is ok and narrows `result` to the success type in the calling scope.
- *
- * @param result - a `Result` to assert
- * @param msg - optional custom failure message
- */
-export const assert_result_ok: <TValue, TError>(
-	result: Result<TValue, TError>,
-	msg?: string,
-) => asserts result is {ok: true} & TValue = (result, msg) => {
-	assert.ok(result.ok, msg ?? 'Expected result.ok to be true');
-};
-
-/**
- * Asserts a `Result` is an error and narrows `result` to the error type in the calling scope.
- *
- * @param result - a `Result` to assert
- * @param msg - optional custom failure message
- */
-export const assert_result_error: <TValue, TError>(
-	result: Result<TValue, TError>,
-	msg?: string,
-) => asserts result is {ok: false} & TError = (result, msg) => {
-	assert.ok(!result.ok, msg ?? 'Expected result.ok to be false');
 };
 
 /**
