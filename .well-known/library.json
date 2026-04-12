@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.55.0",
+		"version": "0.56.0",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -160,7 +160,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.55.0",
+		"version": "0.56.0",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -7731,6 +7731,51 @@
 					}
 				],
 				"module_comment": "Shared helper functions for Svelte preprocessors.\n\nProvides AST utilities for detecting static content, resolving imports,\nmanaging import statements, and escaping strings for Svelte templates.\nUsed by `svelte_preprocess_mdz` in fuz_ui, `svelte_preprocess_fuz_code`\nin fuz_code, and potentially other Svelte preprocessors.\n\nUses `import type` from `svelte/compiler` for AST types only — no runtime\nSvelte dependency. Consumers must have `svelte` installed for type resolution."
+			},
+			{
+				"path": "testing.ts",
+				"declarations": [
+					{
+						"name": "assert_rejects",
+						"kind": "function",
+						"doc_comment": "Asserts that `fn` rejects with an `Error`.\nOptionally matches the error message against `pattern`.\nReturns the caught `Error` for further assertions by the caller.\n\n`assert.fail` is placed after the catch block so that assertion failures\nfrom the test itself are not swallowed by the catch.",
+						"source_line": 27,
+						"type_signature": "(fn: () => Promise<unknown>, pattern?: RegExp | undefined): Promise<Error>",
+						"return_type": "Promise<Error>",
+						"return_description": "the caught `Error`",
+						"parameters": [
+							{
+								"name": "fn",
+								"type": "() => Promise<unknown>",
+								"description": "async function expected to reject"
+							},
+							{
+								"name": "pattern",
+								"type": "RegExp | undefined",
+								"optional": true,
+								"description": "optional regex to match against the error message"
+							}
+						]
+					},
+					{
+						"name": "MockLogger",
+						"kind": "type",
+						"doc_comment": "A mock `Logger` with `vi.fn()` methods and call tracking arrays.\nAssignable to `Logger` for use in code under test.\nEach tracking array captures the first argument of each call.\nFor full call details, use `vi.fn()` introspection on the methods directly.",
+						"source_line": 49,
+						"type_signature": "MockLogger"
+					},
+					{
+						"name": "create_mock_logger",
+						"kind": "function",
+						"doc_comment": "Creates a mock `Logger` with `vi.fn()` on each logging method\nand tracking arrays for inspecting logged messages.\nFollows the fuz-stack convention of plain object mocks over mocking libraries.",
+						"source_line": 63,
+						"type_signature": "(): MockLogger",
+						"return_type": "MockLogger",
+						"return_description": "a `MockLogger` assignable to `Logger`",
+						"parameters": []
+					}
+				],
+				"module_comment": "Shared test assertions for the `@fuzdev` ecosystem.\n\nExtends the fuz-stack testing conventions (`assert` from vitest, tests in `src/test/`,\nplain object mocks) with reusable helpers for patterns that appear across multiple repos.\nOnly depends on vitest — safe for fuz_util's zero-runtime-deps constraint."
 			},
 			{
 				"path": "throttle.ts",
