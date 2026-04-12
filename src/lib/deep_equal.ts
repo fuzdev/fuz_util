@@ -6,7 +6,7 @@
  * - Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)
  * - Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`
  * - Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)
- * - Special handling for: Date (timestamp), Number/Boolean (boxed primitives)
+ * - Special handling for: Date (timestamp), Number/Boolean (boxed primitives), Error (message/name + enumerable own properties)
  * - Promises always return false (cannot be meaningfully compared)
  * - Maps/Sets compare by reference for object keys/values
  *

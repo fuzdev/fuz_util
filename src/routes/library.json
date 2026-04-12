@@ -2390,7 +2390,7 @@
 					{
 						"name": "deep_equal",
 						"kind": "function",
-						"doc_comment": "Deep equality comparison that checks both structure and type.\n\nKey behaviors:\n\n- Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)\n- Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`\n- Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)\n- Special handling for: Date (timestamp), Number/Boolean (boxed primitives)\n- Promises always return false (cannot be meaningfully compared)\n- Maps/Sets compare by reference for object keys/values",
+						"doc_comment": "Deep equality comparison that checks both structure and type.\n\nKey behaviors:\n\n- Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)\n- Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`\n- Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)\n- Special handling for: Date (timestamp), Number/Boolean (boxed primitives), Error (message/name + enumerable own properties)\n- Promises always return false (cannot be meaningfully compared)\n- Maps/Sets compare by reference for object keys/values",
 						"source_line": 17,
 						"type_signature": "(a: unknown, b: unknown): boolean",
 						"return_type": "boolean",
