@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.56.0
+
+### Minor Changes
+
+- fix: change `PackageJson` `version` to be optional ([47cb39d](https://github.com/fuzdev/fuz_util/commit/47cb39d))
+
+### Patch Changes
+
+- feat: add `testing.ts` ([#75](https://github.com/fuzdev/fuz_util/pull/75))
+
 ## 0.55.0
 
 ### Minor Changes
