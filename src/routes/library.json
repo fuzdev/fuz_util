@@ -7528,6 +7528,93 @@
 				"module_comment": "Shared helper functions for Svelte preprocessors.\n\nProvides AST utilities for detecting static content, resolving imports,\nmanaging import statements, and escaping strings for Svelte templates.\nUsed by `svelte_preprocess_mdz` in fuz_ui, `svelte_preprocess_fuz_code`\nin fuz_code, and potentially other Svelte preprocessors.\n\nUses `import type` from `svelte/compiler` for AST types only — no runtime\nSvelte dependency. Consumers must have `svelte` installed for type resolution."
 			},
 			{
+				"path": "testing.ts",
+				"declarations": [
+					{
+						"name": "assert_rejects",
+						"kind": "function",
+						"doc_comment": "Asserts that `fn` rejects with an `Error`.\nOptionally matches the error message against `pattern`.\nReturns the caught `Error` for further assertions by the caller.\n\n`assert.fail` is placed after the catch block so that assertion failures\nfrom the test itself are not swallowed by the catch.",
+						"source_line": 28,
+						"type_signature": "(fn: () => Promise<unknown>, pattern?: RegExp | undefined): Promise<Error>",
+						"return_type": "Promise<Error>",
+						"return_description": "the caught `Error`",
+						"parameters": [
+							{
+								"name": "fn",
+								"type": "() => Promise<unknown>",
+								"description": "async function expected to reject"
+							},
+							{
+								"name": "pattern",
+								"type": "RegExp | undefined",
+								"optional": true,
+								"description": "optional regex to match against the error message"
+							}
+						]
+					},
+					{
+						"name": "assert_result_ok",
+						"kind": "function",
+						"doc_comment": "Asserts a `Result` is ok and narrows `result` to the success type in the calling scope.",
+						"source_line": 50,
+						"type_signature": "<TValue, TError>(result: Result<TValue, TError>, msg?: string | undefined): asserts result is { ok: true; } & TValue",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "Result<TValue, TError>",
+								"description": "a `Result` to assert"
+							},
+							{
+								"name": "msg",
+								"type": "string | undefined",
+								"optional": true,
+								"description": "optional custom failure message"
+							}
+						]
+					},
+					{
+						"name": "assert_result_error",
+						"kind": "function",
+						"doc_comment": "Asserts a `Result` is an error and narrows `result` to the error type in the calling scope.",
+						"source_line": 63,
+						"type_signature": "<TValue, TError>(result: Result<TValue, TError>, msg?: string | undefined): asserts result is { ok: false; } & TError",
+						"return_type": "void",
+						"parameters": [
+							{
+								"name": "result",
+								"type": "Result<TValue, TError>",
+								"description": "a `Result` to assert"
+							},
+							{
+								"name": "msg",
+								"type": "string | undefined",
+								"optional": true,
+								"description": "optional custom failure message"
+							}
+						]
+					},
+					{
+						"name": "MockLogger",
+						"kind": "type",
+						"doc_comment": "A mock `Logger` with `vi.fn()` methods and call tracking arrays.\nAssignable to `Logger` for use in code under test.\nEach tracking array captures the first argument of each call.\nFor full call details, use `vi.fn()` introspection on the methods directly.",
+						"source_line": 76,
+						"type_signature": "MockLogger"
+					},
+					{
+						"name": "create_mock_logger",
+						"kind": "function",
+						"doc_comment": "Creates a mock `Logger` with `vi.fn()` on each logging method\nand tracking arrays for inspecting logged messages.\nFollows the fuz-stack convention of plain object mocks over mocking libraries.",
+						"source_line": 90,
+						"type_signature": "(): MockLogger",
+						"return_type": "MockLogger",
+						"return_description": "a `MockLogger` assignable to `Logger`",
+						"parameters": []
+					}
+				],
+				"module_comment": "Shared test assertions for the `@fuzdev` ecosystem.\n\nExtends the fuz-stack testing conventions (`assert` from vitest, tests in `src/test/`,\nplain object mocks) with reusable helpers for patterns that appear across multiple repos.\nOnly depends on vitest — safe for fuz_util's zero-runtime-deps constraint."
+			},
+			{
 				"path": "throttle.ts",
 				"declarations": [
 					{
