@@ -8,6 +8,50 @@ import {ensure_end} from './string.js';
 import type {FileFilter, ResolvedPath, PathFilter} from './path.js';
 
 /**
+ * Discriminated filesystem error kinds.
+ *
+ * The shared error shape for `Result<{value: T}, FsError>`-returning filesystem
+ * deps across the ecosystem. Callers branch on `kind` instead of regex-matching
+ * `message`. The set is deliberately small — add kinds only when a caller
+ * needs to distinguish them.
+ */
+export type FsError =
+	| {kind: 'not_found'; message: string}
+	| {kind: 'permission_denied'; message: string}
+	| {kind: 'already_exists'; message: string}
+	| {kind: 'io_error'; message: string};
+
+/**
+ * Extends `FsError` with `invalid_json` for `read_json`-style ops where the
+ * file exists but parse fails. Callers can distinguish missing from corrupt
+ * (e.g. self-healing config loads) without regex-matching `message`.
+ */
+export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
+
+/**
+ * Classifies a thrown filesystem error into a discriminated `FsError`.
+ *
+ * Reads the Node `code` property (`ENOENT`/`EACCES`/`EPERM`/`EEXIST`) — Deno
+ * surfaces the same codes when throwing from `node:fs/promises`. Unknown codes
+ * fall through to `io_error`.
+ */
+export const fs_classify_error = (error: unknown): FsError => {
+	const message = error instanceof Error ? error.message : String(error);
+	if (error && typeof error === 'object' && 'code' in error) {
+		switch ((error as {code: string}).code) {
+			case 'ENOENT':
+				return {kind: 'not_found', message};
+			case 'EACCES':
+			case 'EPERM':
+				return {kind: 'permission_denied', message};
+			case 'EEXIST':
+				return {kind: 'already_exists', message};
+		}
+	}
+	return {kind: 'io_error', message};
+};
+
+/**
  * Checks if a file or directory exists.
  */
 export const fs_exists = async (path: string): Promise<boolean> => {

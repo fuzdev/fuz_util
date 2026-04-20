@@ -2882,10 +2882,38 @@
 				"path": "fs.ts",
 				"declarations": [
 					{
+						"name": "FsError",
+						"kind": "type",
+						"doc_comment": "Discriminated filesystem error kinds.\n\nThe shared error shape for `Result<{value: T}, FsError>`-returning filesystem\ndeps across the ecosystem. Callers branch on `kind` instead of regex-matching\n`message`. The set is deliberately small — add kinds only when a caller\nneeds to distinguish them.",
+						"source_line": 18,
+						"type_signature": "FsError"
+					},
+					{
+						"name": "FsJsonError",
+						"kind": "type",
+						"doc_comment": "Extends `FsError` with `invalid_json` for `read_json`-style ops where the\nfile exists but parse fails. Callers can distinguish missing from corrupt\n(e.g. self-healing config loads) without regex-matching `message`.",
+						"source_line": 29,
+						"type_signature": "FsJsonError"
+					},
+					{
+						"name": "fs_classify_error",
+						"kind": "function",
+						"doc_comment": "Classifies a thrown filesystem error into a discriminated `FsError`.\n\nReads the Node `code` property (`ENOENT`/`EACCES`/`EPERM`/`EEXIST`) — Deno\nsurfaces the same codes when throwing from `node:fs/promises`. Unknown codes\nfall through to `io_error`.",
+						"source_line": 38,
+						"type_signature": "(error: unknown): FsError",
+						"return_type": "FsError",
+						"parameters": [
+							{
+								"name": "error",
+								"type": "unknown"
+							}
+						]
+					},
+					{
 						"name": "fs_exists",
 						"kind": "function",
 						"doc_comment": "Checks if a file or directory exists.",
-						"source_line": 13,
+						"source_line": 57,
 						"type_signature": "(path: string): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -2899,7 +2927,7 @@
 						"name": "fs_empty_dir",
 						"kind": "function",
 						"doc_comment": "Empties a directory, recursively by default. If `should_remove` is provided, only entries where it returns `true` are removed.",
-						"source_line": 25,
+						"source_line": 69,
 						"type_signature": "(dir: string, should_remove?: ((name: string) => boolean) | undefined, options?: RmOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2922,7 +2950,7 @@
 					{
 						"name": "FsSearchOptions",
 						"kind": "type",
-						"source_line": 35,
+						"source_line": 79,
 						"type_signature": "FsSearchOptions",
 						"properties": [
 							{
@@ -2960,7 +2988,7 @@
 					{
 						"name": "fs_search",
 						"kind": "function",
-						"source_line": 58,
+						"source_line": 102,
 						"type_signature": "(dir: string, options?: FsSearchOptions): Promise<ResolvedPath[]>",
 						"return_type": "Promise<ResolvedPath[]>",
 						"parameters": [
@@ -5119,9 +5147,9 @@
 					{
 						"name": "SpawnResultError",
 						"kind": "type",
-						"doc_comment": "Spawn failed before the process could run.",
+						"doc_comment": "Spawn failed before the process could run.\n\nNote: `child` is still present because `node:child_process.spawn` returns a\n`ChildProcess` synchronously and then emits `'error'` asynchronously — the\nhandle exists but the OS process never started.",
 						"examples": ["ENOENT when command not found"],
-						"source_line": 23,
+						"source_line": 27,
 						"type_signature": "SpawnResultError",
 						"properties": [
 							{
@@ -5155,7 +5183,7 @@
 						"name": "SpawnResultExited",
 						"kind": "type",
 						"doc_comment": "Process ran and exited with a code.\n`ok` is true when `code` is 0.",
-						"source_line": 35,
+						"source_line": 39,
 						"type_signature": "SpawnResultExited",
 						"properties": [
 							{
@@ -5189,7 +5217,7 @@
 						"name": "SpawnResultSignaled",
 						"kind": "type",
 						"doc_comment": "Process was terminated by a signal (e.g., SIGTERM, SIGKILL).",
-						"source_line": 46,
+						"source_line": 50,
 						"type_signature": "SpawnResultSignaled",
 						"properties": [
 							{
@@ -5223,14 +5251,14 @@
 						"name": "SpawnResult",
 						"kind": "type",
 						"doc_comment": "Discriminated union representing all possible spawn outcomes.\nUse type guards `spawn_result_is_error`, `spawn_result_is_signaled`,\nand `spawn_result_is_exited` to narrow the type.",
-						"source_line": 59,
+						"source_line": 63,
 						"type_signature": "SpawnResult"
 					},
 					{
 						"name": "spawn_result_is_error",
 						"kind": "function",
 						"doc_comment": "Type guard for spawn errors (process failed to start).",
-						"source_line": 68,
+						"source_line": 72,
 						"type_signature": "(result: SpawnResult): result is SpawnResultError",
 						"return_type": "boolean",
 						"parameters": [
@@ -5244,7 +5272,7 @@
 						"name": "spawn_result_is_signaled",
 						"kind": "function",
 						"doc_comment": "Type guard for signal termination.",
-						"source_line": 74,
+						"source_line": 78,
 						"type_signature": "(result: SpawnResult): result is SpawnResultSignaled",
 						"return_type": "boolean",
 						"parameters": [
@@ -5258,7 +5286,7 @@
 						"name": "spawn_result_is_exited",
 						"kind": "function",
 						"doc_comment": "Type guard for normal exit with code.",
-						"source_line": 80,
+						"source_line": 84,
 						"type_signature": "(result: SpawnResult): result is SpawnResultExited",
 						"return_type": "boolean",
 						"parameters": [
@@ -5272,7 +5300,7 @@
 						"name": "SpawnProcessOptions",
 						"kind": "type",
 						"doc_comment": "Options for spawning processes, extending Node's `SpawnOptions`.",
-						"source_line": 90,
+						"source_line": 94,
 						"type_signature": "SpawnProcessOptions",
 						"extends": ["SpawnOptions"],
 						"properties": [
@@ -5300,7 +5328,7 @@
 						"name": "DespawnOptions",
 						"kind": "type",
 						"doc_comment": "Options for killing processes.",
-						"source_line": 110,
+						"source_line": 114,
 						"type_signature": "DespawnOptions",
 						"properties": [
 							{
@@ -5321,14 +5349,14 @@
 						"name": "SpawnDetachedResult",
 						"kind": "type",
 						"doc_comment": "Result of spawning a detached process.",
-						"source_line": 126,
+						"source_line": 130,
 						"type_signature": "SpawnDetachedResult"
 					},
 					{
 						"name": "SpawnedProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a spawned process with access to the child and completion promise.",
-						"source_line": 135,
+						"source_line": 139,
 						"type_signature": "SpawnedProcess",
 						"properties": [
 							{
@@ -5349,7 +5377,7 @@
 						"name": "SpawnedOut",
 						"kind": "type",
 						"doc_comment": "Result of `spawn_out` with captured output streams.",
-						"source_line": 145,
+						"source_line": 149,
 						"type_signature": "SpawnedOut",
 						"properties": [
 							{
@@ -5378,7 +5406,7 @@
 						"examples": [
 							"```ts\n// Use default registry via module functions\nconst result = await spawn('echo', ['hello']);\n\n// Or create isolated registry for testing\nconst registry = new ProcessRegistry();\nconst {child, closed} = registry.spawn('node', ['server.js']);\nawait registry.despawn_all();\n```"
 						],
-						"source_line": 243,
+						"source_line": 247,
 						"members": [
 							{
 								"name": "processes",
@@ -5500,7 +5528,7 @@
 						"name": "process_registry_default",
 						"kind": "variable",
 						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
-						"source_line": 479,
+						"source_line": 483,
 						"type_signature": "ProcessRegistry"
 					},
 					{
@@ -5510,7 +5538,7 @@
 						"examples": [
 							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
 						],
-						"source_line": 497,
+						"source_line": 501,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -5537,7 +5565,7 @@
 						"examples": [
 							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
 						],
-						"source_line": 513,
+						"source_line": 517,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -5564,7 +5592,7 @@
 						"examples": [
 							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
 						],
-						"source_line": 528,
+						"source_line": 532,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -5591,7 +5619,7 @@
 						"examples": [
 							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
 						],
-						"source_line": 543,
+						"source_line": 547,
 						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -5610,7 +5638,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all processes in the default registry.",
-						"source_line": 549,
+						"source_line": 553,
 						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": [
@@ -5626,7 +5654,7 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": ["`ProcessRegistry.attach_error_handler`"],
-						"source_line": 557,
+						"source_line": 561,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
 						"parameters": [
@@ -5644,7 +5672,7 @@
 						"examples": [
 							"```ts\n// Simple detached process\nconst result = spawn_detached('node', ['daemon.js'], {cwd: '/app'});\n\n// With log file (caller handles file opening)\nimport {openSync, closeSync} from 'node:fs';\nconst log_fd = openSync('/var/log/daemon.log', 'a');\nconst result = spawn_detached('node', ['daemon.js'], {\n  cwd: '/app',\n  stdio: ['ignore', log_fd, log_fd],\n});\ncloseSync(log_fd);\n```"
 						],
-						"source_line": 587,
+						"source_line": 591,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnDetachedResult",
 						"return_type": "SpawnDetachedResult",
 						"return_description": "result with pid on success, or error message on failure",
@@ -5673,7 +5701,7 @@
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
 						"examples": ["```ts\n`pid(1234) <- node server.js`\n```"],
-						"source_line": 624,
+						"source_line": 628,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -5687,7 +5715,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 631,
+						"source_line": 635,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5701,7 +5729,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 641,
+						"source_line": 645,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5715,7 +5743,7 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 655,
+						"source_line": 659,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -5768,7 +5796,7 @@
 							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
 							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 724,
+						"source_line": 728,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -5792,7 +5820,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 827,
+						"source_line": 831,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",
