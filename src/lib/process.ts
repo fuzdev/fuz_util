@@ -18,6 +18,10 @@ const log = new Logger('process');
 /**
  * Spawn failed before the process could run.
  *
+ * Note: `child` is still present because `node:child_process.spawn` returns a
+ * `ChildProcess` synchronously and then emits `'error'` asynchronously — the
+ * handle exists but the OS process never started.
+ *
  * @example ENOENT when command not found
  */
 export interface SpawnResultError {

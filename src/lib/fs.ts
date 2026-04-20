@@ -35,7 +35,7 @@ export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
  * surfaces the same codes when throwing from `node:fs/promises`. Unknown codes
  * fall through to `io_error`.
  */
-export const classify_fs_error = (error: unknown): FsError => {
+export const fs_classify_error = (error: unknown): FsError => {
 	const message = error instanceof Error ? error.message : String(error);
 	if (error && typeof error === 'object' && 'code' in error) {
 		switch ((error as {code: string}).code) {
