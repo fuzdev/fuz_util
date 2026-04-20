@@ -111,7 +111,7 @@ export const benchmark_warmup = async (
 		for (let i = 0; i < iterations; i++) {
 			const result = fn();
 			if (async_hint && is_promise(result)) {
-				await result; // eslint-disable-line no-await-in-loop
+				await result;
 			}
 		}
 		return async_hint;
@@ -125,7 +125,7 @@ export const benchmark_warmup = async (
 			detected_async = is_promise(result);
 		}
 		if (detected_async && is_promise(result)) {
-			await result; // eslint-disable-line no-await-in-loop
+			await result;
 		}
 	}
 	return detected_async;
@@ -279,7 +279,7 @@ export class Benchmark {
 
 		for (let i = 0; i < tasks_to_run.length; i++) {
 			const task = tasks_to_run[i]!;
-			const result = await this.#run_task(task); // eslint-disable-line no-await-in-loop
+			const result = await this.#run_task(task);
 			this.#results.push(result);
 
 			// Call on_task_complete callback
@@ -287,7 +287,7 @@ export class Benchmark {
 
 			// Cooldown between tasks (skip after last task)
 			if (this.#config.cooldown_ms > 0 && i < tasks_to_run.length - 1) {
-				await wait(this.#config.cooldown_ms); // eslint-disable-line no-await-in-loop
+				await wait(this.#config.cooldown_ms);
 			}
 		}
 
@@ -332,7 +332,7 @@ export class Benchmark {
 				// eslint-disable-next-line no-unmodified-loop-condition
 				while (timing_count < max_iterations && !aborted) {
 					const iter_start_ns = this.#config.timer.now();
-					await task.fn(); // eslint-disable-line no-await-in-loop
+					await task.fn();
 					const iter_end_ns = this.#config.timer.now();
 					timings_ns[timing_count++] = iter_end_ns - iter_start_ns;
 					this.#config.on_iteration?.(task.name, timing_count, abort);

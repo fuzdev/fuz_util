@@ -312,7 +312,7 @@ export const time_measure = async (
 
 	for (let i = 0; i < iterations; i++) {
 		const started_at_ns = timer.now();
-		await fn(); // eslint-disable-line no-await-in-loop
+		await fn();
 		const ended_at_ns = timer.now();
 		timings.push(ended_at_ns - started_at_ns);
 	}
