@@ -2,4 +2,4 @@
 '@fuzdev/fuz_util': minor
 ---
 
-add `assert_property` test helper
+feat: add `assert_property` test helper
