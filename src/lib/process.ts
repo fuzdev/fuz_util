@@ -25,11 +25,10 @@ const log = new Logger('process');
  * @example ENOENT when command not found
  */
 export interface SpawnResultError {
+	kind: 'error';
 	ok: false;
 	child: ChildProcess;
 	error: Error;
-	code: null;
-	signal: null;
 }
 
 /**
@@ -37,52 +36,27 @@ export interface SpawnResultError {
  * `ok` is true when `code` is 0.
  */
 export interface SpawnResultExited {
+	kind: 'exited';
 	ok: boolean;
 	child: ChildProcess;
-	error: null;
 	code: number;
-	signal: null;
 }
 
 /**
  * Process was terminated by a signal (e.g., SIGTERM, SIGKILL).
  */
 export interface SpawnResultSignaled {
+	kind: 'signaled';
 	ok: false;
 	child: ChildProcess;
-	error: null;
-	code: null;
 	signal: NodeJS.Signals;
 }
 
 /**
  * Discriminated union representing all possible spawn outcomes.
- * Use type guards `spawn_result_is_error`, `spawn_result_is_signaled`,
- * and `spawn_result_is_exited` to narrow the type.
+ * Narrow via `result.kind === 'error' | 'exited' | 'signaled'`.
  */
 export type SpawnResult = SpawnResultError | SpawnResultExited | SpawnResultSignaled;
-
-//
-// Type Guards
-//
-
-/**
- * Type guard for spawn errors (process failed to start).
- */
-export const spawn_result_is_error = (result: SpawnResult): result is SpawnResultError =>
-	result.error !== null;
-
-/**
- * Type guard for signal termination.
- */
-export const spawn_result_is_signaled = (result: SpawnResult): result is SpawnResultSignaled =>
-	result.signal !== null;
-
-/**
- * Type guard for normal exit with code.
- */
-export const spawn_result_is_exited = (result: SpawnResult): result is SpawnResultExited =>
-	result.code !== null;
 
 //
 // Spawn Options
@@ -127,7 +101,9 @@ export interface DespawnOptions {
 /**
  * Result of spawning a detached process.
  */
-export type SpawnDetachedResult = {ok: true; child: ChildProcess} | {ok: false; message: string};
+export type SpawnDetachedResult =
+	| {kind: 'spawned'; child: ChildProcess}
+	| {kind: 'error'; message: string};
 
 //
 // Process Handle Types
@@ -173,16 +149,16 @@ const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 	child.once('error', (err) => {
 		if (resolved) return;
 		resolved = true;
-		resolve({ok: false, child, error: err, code: null, signal: null});
+		resolve({kind: 'error', ok: false, child, error: err});
 	});
 
 	child.once('close', (code, signal) => {
 		if (resolved) return;
 		resolved = true;
 		if (signal !== null) {
-			resolve({ok: false, child, error: null, code: null, signal});
+			resolve({kind: 'signaled', ok: false, child, signal});
 		} else {
-			resolve({ok: code === 0, child, error: null, code: code ?? 0, signal: null});
+			resolve({kind: 'exited', ok: code === 0, child, code: code ?? 0});
 		}
 	});
 
@@ -332,7 +308,7 @@ export class ProcessRegistry {
 		child.stderr?.off('data', on_stderr);
 		// If spawn failed (error result), streams are meaningless - return null
 		// Otherwise: '' = available but empty, string = has content
-		const spawn_failed = spawn_result_is_error(result);
+		const spawn_failed = result.kind === 'error';
 		const stdout = spawn_failed || !stdout_available ? null : stdout_chunks.join('');
 		const stderr = spawn_failed || !stderr_available ? null : stderr_chunks.join('');
 		return {result, stdout, stderr};
@@ -352,20 +328,18 @@ export class ProcessRegistry {
 		// Already exited with code
 		if (child.exitCode !== null) {
 			return {
+				kind: 'exited',
 				ok: child.exitCode === 0,
 				child,
-				error: null,
 				code: child.exitCode,
-				signal: null,
 			};
 		}
 		// Already terminated by signal
 		if (child.signalCode !== null) {
 			return {
+				kind: 'signaled',
 				ok: false,
 				child,
-				error: null,
-				code: null,
 				signal: child.signalCode,
 			};
 		}
@@ -604,12 +578,15 @@ export const spawn_detached = (
 		child.unref();
 
 		if (child.pid === undefined) {
-			return {ok: false, message: 'Failed to get child PID'};
+			return {kind: 'error', message: 'Failed to get child PID'};
 		}
 
-		return {ok: true, child};
+		return {kind: 'spawned', child};
 	} catch (error) {
-		return {ok: false, message: error instanceof Error ? error.message : String(error)};
+		return {
+			kind: 'error',
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 };
 
@@ -634,18 +611,28 @@ export const print_child_process = (child: ChildProcess): string =>
  */
 export const print_spawn_result = (result: SpawnResult): string => {
 	if (result.ok) return 'ok';
-	if (spawn_result_is_error(result)) return result.error.message;
-	if (spawn_result_is_signaled(result)) return print_key_value('signal', result.signal);
-	return print_key_value('code', result.code);
+	switch (result.kind) {
+		case 'error':
+			return result.error.message;
+		case 'signaled':
+			return print_key_value('signal', result.signal);
+		case 'exited':
+			return print_key_value('code', result.code);
+	}
 };
 
 /**
  * Formats a spawn result for use in error messages.
  */
 export const spawn_result_to_message = (result: SpawnResult): string => {
-	if (spawn_result_is_error(result)) return `error: ${result.error.message}`;
-	if (spawn_result_is_signaled(result)) return `signal ${result.signal}`;
-	return `code ${result.code}`;
+	switch (result.kind) {
+		case 'error':
+			return `error: ${result.error.message}`;
+		case 'signaled':
+			return `signal ${result.signal}`;
+		case 'exited':
+			return `code ${result.code}`;
+	}
 };
 
 //
