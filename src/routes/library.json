@@ -2882,10 +2882,31 @@
 				"path": "fs.ts",
 				"declarations": [
 					{
+						"name": "FsError",
+						"kind": "type",
+						"doc_comment": "Discriminated filesystem error kinds.\n\nThe shared error shape for `Result<{value: T}, FsError>`-returning filesystem\ndeps across the ecosystem. Callers branch on `kind` instead of regex-matching\n`message`. The set is deliberately small — add kinds only when a caller\nneeds to distinguish them.",
+						"source_line": 18,
+						"type_signature": "FsError"
+					},
+					{
+						"name": "classify_fs_error",
+						"kind": "function",
+						"doc_comment": "Classifies a thrown filesystem error into a discriminated `FsError`.\n\nReads the Node `code` property (`ENOENT`/`EACCES`/`EPERM`/`EEXIST`) — Deno\nsurfaces the same codes when throwing from `node:fs/promises`. Unknown codes\nfall through to `io_error`.",
+						"source_line": 31,
+						"type_signature": "(error: unknown): FsError",
+						"return_type": "FsError",
+						"parameters": [
+							{
+								"name": "error",
+								"type": "unknown"
+							}
+						]
+					},
+					{
 						"name": "fs_exists",
 						"kind": "function",
 						"doc_comment": "Checks if a file or directory exists.",
-						"source_line": 13,
+						"source_line": 50,
 						"type_signature": "(path: string): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -2899,7 +2920,7 @@
 						"name": "fs_empty_dir",
 						"kind": "function",
 						"doc_comment": "Empties a directory, recursively by default. If `should_remove` is provided, only entries where it returns `true` are removed.",
-						"source_line": 25,
+						"source_line": 62,
 						"type_signature": "(dir: string, should_remove?: ((name: string) => boolean) | undefined, options?: RmOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2922,7 +2943,7 @@
 					{
 						"name": "FsSearchOptions",
 						"kind": "type",
-						"source_line": 35,
+						"source_line": 72,
 						"type_signature": "FsSearchOptions",
 						"properties": [
 							{
@@ -2960,7 +2981,7 @@
 					{
 						"name": "fs_search",
 						"kind": "function",
-						"source_line": 58,
+						"source_line": 95,
 						"type_signature": "(dir: string, options?: FsSearchOptions): Promise<ResolvedPath[]>",
 						"return_type": "Promise<ResolvedPath[]>",
 						"parameters": [
