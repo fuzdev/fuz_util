@@ -13,6 +13,34 @@ import {assert, vi} from 'vitest';
 import type {Logger} from './log.js';
 
 /**
+ * Narrows a discriminated union by a literal property value, failing the test
+ * if the value doesn't match. The assertion signature propagates the narrowed
+ * type so callers can access variant-specific fields directly.
+ *
+ * Works with any discriminator key (`kind`, `ok`, `type`, `_tag`, etc.).
+ *
+ * @example
+ * ```ts
+ * type Shape =
+ *   | {kind: 'circle'; radius: number}
+ *   | {kind: 'square'; side: number};
+ * const shape: Shape = get_shape();
+ * assert_property(shape, 'kind', 'circle');
+ * assert.strictEqual(shape.radius, 5); // `radius` now typed as `number`
+ * ```
+ */
+// `const V` is load-bearing: without it TS widens V to the full key type
+// (e.g. `'a' | 'b' | 'c'`) and `Extract<R, Record<P, V>>` reduces to `R`,
+// silently skipping the narrowing.
+export function assert_property<R extends object, P extends keyof R, const V extends R[P]>(
+	obj: R,
+	property: P,
+	value: V,
+): asserts obj is Extract<R, Record<P, V>> {
+	assert.strictEqual(obj[property], value);
+}
+
+/**
  * Asserts that `fn` rejects with an `Error`.
  * Optionally matches the error message against `pattern`.
  * Returns the caught `Error` for further assertions by the caller.
