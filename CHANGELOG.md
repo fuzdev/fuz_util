@@ -1,5 +1,17 @@
 # @fuzdev/fuz_util
 
+## 0.57.0
+
+### Minor Changes
+
+- feat: rework deps interfaces ([#76](https://github.com/fuzdev/fuz_util/pull/76))
+- feat: add `assert_property` test helper ([#78](https://github.com/fuzdev/fuz_util/pull/78))
+- feat: kind-based discriminators on `SpawnResult` and `SpawnDetachedResult` (breaking: replaces sentinel-null fields; removes `spawn_result_is_*` type guards) ([#77](https://github.com/fuzdev/fuz_util/pull/77))
+
+### Patch Changes
+
+- fix: `deep_equal` for `Error` ([cede27a](https://github.com/fuzdev/fuz_util/commit/cede27a))
+
 ## 0.56.0
 
 ### Minor Changes
