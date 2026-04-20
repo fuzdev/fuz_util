@@ -22,6 +22,13 @@ export type FsError =
 	| {kind: 'io_error'; message: string};
 
 /**
+ * Extends `FsError` with `invalid_json` for `read_json`-style ops where the
+ * file exists but parse fails. Callers can distinguish missing from corrupt
+ * (e.g. self-healing config loads) without regex-matching `message`.
+ */
+export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
+
+/**
  * Classifies a thrown filesystem error into a discriminated `FsError`.
  *
  * Reads the Node `code` property (`ENOENT`/`EACCES`/`EPERM`/`EEXIST`) — Deno

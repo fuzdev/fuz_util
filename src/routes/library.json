@@ -2889,10 +2889,17 @@
 						"type_signature": "FsError"
 					},
 					{
+						"name": "FsJsonError",
+						"kind": "type",
+						"doc_comment": "Extends `FsError` with `invalid_json` for `read_json`-style ops where the\nfile exists but parse fails. Callers can distinguish missing from corrupt\n(e.g. self-healing config loads) without regex-matching `message`.",
+						"source_line": 29,
+						"type_signature": "FsJsonError"
+					},
+					{
 						"name": "classify_fs_error",
 						"kind": "function",
 						"doc_comment": "Classifies a thrown filesystem error into a discriminated `FsError`.\n\nReads the Node `code` property (`ENOENT`/`EACCES`/`EPERM`/`EEXIST`) — Deno\nsurfaces the same codes when throwing from `node:fs/promises`. Unknown codes\nfall through to `io_error`.",
-						"source_line": 31,
+						"source_line": 38,
 						"type_signature": "(error: unknown): FsError",
 						"return_type": "FsError",
 						"parameters": [
@@ -2906,7 +2913,7 @@
 						"name": "fs_exists",
 						"kind": "function",
 						"doc_comment": "Checks if a file or directory exists.",
-						"source_line": 50,
+						"source_line": 57,
 						"type_signature": "(path: string): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -2920,7 +2927,7 @@
 						"name": "fs_empty_dir",
 						"kind": "function",
 						"doc_comment": "Empties a directory, recursively by default. If `should_remove` is provided, only entries where it returns `true` are removed.",
-						"source_line": 62,
+						"source_line": 69,
 						"type_signature": "(dir: string, should_remove?: ((name: string) => boolean) | undefined, options?: RmOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -2943,7 +2950,7 @@
 					{
 						"name": "FsSearchOptions",
 						"kind": "type",
-						"source_line": 72,
+						"source_line": 79,
 						"type_signature": "FsSearchOptions",
 						"properties": [
 							{
@@ -2981,7 +2988,7 @@
 					{
 						"name": "fs_search",
 						"kind": "function",
-						"source_line": 95,
+						"source_line": 102,
 						"type_signature": "(dir: string, options?: FsSearchOptions): Promise<ResolvedPath[]>",
 						"return_type": "Promise<ResolvedPath[]>",
 						"parameters": [
