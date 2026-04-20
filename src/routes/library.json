@@ -7508,7 +7508,7 @@
 						"examples": [
 							"```ts\ntype Shape =\n  | {kind: 'circle'; radius: number}\n  | {kind: 'square'; side: number};\nconst shape: Shape = get_shape();\nassert_property(shape, 'kind', 'circle');\nassert.strictEqual(shape.radius, 5); // `radius` now typed as `number`\n```"
 						],
-						"source_line": 32,
+						"source_line": 35,
 						"type_signature": "<R extends object, P extends keyof R, const V extends R[P]>(obj: R, property: P, value: V): asserts obj is Extract<R, Record<P, V>>",
 						"return_type": "void",
 						"parameters": [
@@ -7544,7 +7544,7 @@
 						"name": "assert_rejects",
 						"kind": "function",
 						"doc_comment": "Asserts that `fn` rejects with an `Error`.\nOptionally matches the error message against `pattern`.\nReturns the caught `Error` for further assertions by the caller.\n\n`assert.fail` is placed after the catch block so that assertion failures\nfrom the test itself are not swallowed by the catch.",
-						"source_line": 52,
+						"source_line": 55,
 						"type_signature": "(fn: () => Promise<unknown>, pattern?: RegExp | undefined): Promise<Error>",
 						"return_type": "Promise<Error>",
 						"return_description": "the caught `Error`",
@@ -7566,14 +7566,14 @@
 						"name": "MockLogger",
 						"kind": "type",
 						"doc_comment": "A mock `Logger` with `vi.fn()` methods and call tracking arrays.\nAssignable to `Logger` for use in code under test.\nEach tracking array captures the first argument of each call.\nFor full call details, use `vi.fn()` introspection on the methods directly.",
-						"source_line": 74,
+						"source_line": 77,
 						"type_signature": "MockLogger"
 					},
 					{
 						"name": "create_mock_logger",
 						"kind": "function",
 						"doc_comment": "Creates a mock `Logger` with `vi.fn()` on each logging method\nand tracking arrays for inspecting logged messages.\nFollows the fuz-stack convention of plain object mocks over mocking libraries.",
-						"source_line": 88,
+						"source_line": 91,
 						"type_signature": "(): MockLogger",
 						"return_type": "MockLogger",
 						"return_description": "a `MockLogger` assignable to `Logger`",

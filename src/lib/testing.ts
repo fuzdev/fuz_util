@@ -29,6 +29,9 @@ import type {Logger} from './log.js';
  * assert.strictEqual(shape.radius, 5); // `radius` now typed as `number`
  * ```
  */
+// `const V` is load-bearing: without it TS widens V to the full key type
+// (e.g. `'a' | 'b' | 'c'`) and `Extract<R, Record<P, V>>` reduces to `R`,
+// silently skipping the narrowing.
 export function assert_property<R extends object, P extends keyof R, const V extends R[P]>(
 	obj: R,
 	property: P,

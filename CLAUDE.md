@@ -110,8 +110,8 @@ See `docs/benchmark.md` for full documentation.
 - `git.ts` - git operations
 - `log.ts` - hierarchical logging system
 
-- `process.ts` - `spawn()` with typed results (`SpawnResultExited`,
-  `SpawnResultSignaled`, `SpawnResultError`) and type guards
+- `process.ts` - `spawn()` with `kind`-discriminated results (`SpawnResultExited`,
+  `SpawnResultSignaled`, `SpawnResultError`); narrow with `result.kind === ...`
 - `log.ts` - `Logger` class with hierarchical children, auto-detects level from
   `PUBLIC_LOG_LEVEL` env var
 
@@ -119,6 +119,13 @@ See `docs/benchmark.md` for full documentation.
 
 - `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
   detection)
+
+### Testing helpers
+
+- `testing.ts` - shared vitest assertions (`assert_property` for narrowing
+  discriminated unions by a literal property value, `assert_rejects` for async
+  rejection matching, `create_mock_logger` for a `Logger`-compatible `vi.fn()`
+  mock with per-level call tracking). Only depends on vitest.
 
 ### Svelte preprocessor utilities
 
