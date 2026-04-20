@@ -7502,33 +7502,41 @@
 				"path": "testing.ts",
 				"declarations": [
 					{
-						"name": "assert_kind",
+						"name": "assert_property",
 						"kind": "function",
-						"doc_comment": "Narrows a discriminated union by its `kind` tag, failing the test if the tag\ndoesn't match. The assertion signature propagates the narrowed type to\nsubsequent code so callers can access kind-specific fields directly.",
+						"doc_comment": "Narrows a discriminated union by a literal property value, failing the test\nif the value doesn't match. The assertion signature propagates the narrowed\ntype so callers can access variant-specific fields directly.\n\nWorks with any discriminator key (`kind`, `ok`, `type`, `_tag`, etc.).",
 						"examples": [
-							"```ts\nconst result = await spawn('echo');\nassert_kind(result, 'exited');\nassert.strictEqual(result.code, 0); // `code` now typed as `number`\n```"
+							"```ts\ntype Shape =\n  | {kind: 'circle'; radius: number}\n  | {kind: 'square'; side: number};\nconst shape: Shape = get_shape();\nassert_property(shape, 'kind', 'circle');\nassert.strictEqual(shape.radius, 5); // `radius` now typed as `number`\n```"
 						],
-						"source_line": 27,
-						"type_signature": "<R extends { kind: string; }, K extends R[\"kind\"]>(result: R, kind: K): asserts result is Extract<R, { kind: K; }>",
+						"source_line": 32,
+						"type_signature": "<R extends object, P extends keyof R, const V extends R[P]>(obj: R, property: P, value: V): asserts obj is Extract<R, Record<P, V>>",
 						"return_type": "void",
 						"parameters": [
 							{
-								"name": "result",
+								"name": "obj",
 								"type": "R"
 							},
 							{
-								"name": "kind",
-								"type": "K"
+								"name": "property",
+								"type": "P"
+							},
+							{
+								"name": "value",
+								"type": "V"
 							}
 						],
 						"generic_params": [
 							{
 								"name": "R",
-								"constraint": "{kind: string}"
+								"constraint": "object"
 							},
 							{
-								"name": "K",
-								"constraint": "R['kind']"
+								"name": "P",
+								"constraint": "keyof R"
+							},
+							{
+								"name": "V",
+								"constraint": "R[P]"
 							}
 						]
 					},
@@ -7536,7 +7544,7 @@
 						"name": "assert_rejects",
 						"kind": "function",
 						"doc_comment": "Asserts that `fn` rejects with an `Error`.\nOptionally matches the error message against `pattern`.\nReturns the caught `Error` for further assertions by the caller.\n\n`assert.fail` is placed after the catch block so that assertion failures\nfrom the test itself are not swallowed by the catch.",
-						"source_line": 46,
+						"source_line": 52,
 						"type_signature": "(fn: () => Promise<unknown>, pattern?: RegExp | undefined): Promise<Error>",
 						"return_type": "Promise<Error>",
 						"return_description": "the caught `Error`",
@@ -7558,14 +7566,14 @@
 						"name": "MockLogger",
 						"kind": "type",
 						"doc_comment": "A mock `Logger` with `vi.fn()` methods and call tracking arrays.\nAssignable to `Logger` for use in code under test.\nEach tracking array captures the first argument of each call.\nFor full call details, use `vi.fn()` introspection on the methods directly.",
-						"source_line": 68,
+						"source_line": 74,
 						"type_signature": "MockLogger"
 					},
 					{
 						"name": "create_mock_logger",
 						"kind": "function",
 						"doc_comment": "Creates a mock `Logger` with `vi.fn()` on each logging method\nand tracking arrays for inspecting logged messages.\nFollows the fuz-stack convention of plain object mocks over mocking libraries.",
-						"source_line": 82,
+						"source_line": 88,
 						"type_signature": "(): MockLogger",
 						"return_type": "MockLogger",
 						"return_description": "a `MockLogger` assignable to `Logger`",
