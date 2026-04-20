@@ -13,6 +13,25 @@ import {assert, vi} from 'vitest';
 import type {Logger} from './log.js';
 
 /**
+ * Narrows a discriminated union by its `kind` tag, failing the test if the tag
+ * doesn't match. The assertion signature propagates the narrowed type to
+ * subsequent code so callers can access kind-specific fields directly.
+ *
+ * @example
+ * ```ts
+ * const result = await spawn('echo');
+ * assert_kind(result, 'exited');
+ * assert.strictEqual(result.code, 0); // `code` now typed as `number`
+ * ```
+ */
+export function assert_kind<R extends {kind: string}, K extends R['kind']>(
+	result: R,
+	kind: K,
+): asserts result is Extract<R, {kind: K}> {
+	assert.strictEqual(result.kind, kind);
+}
+
+/**
  * Asserts that `fn` rejects with an `Error`.
  * Optionally matches the error message against `pattern`.
  * Returns the caught `Error` for further assertions by the caller.

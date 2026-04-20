@@ -17,13 +17,7 @@ import {
 	attach_process_error_handler,
 	type SpawnResult,
 } from '$lib/process.js';
-
-function assert_kind<R extends {kind: string}, K extends R['kind']>(
-	result: R,
-	kind: K,
-): asserts result is Extract<R, {kind: K}> {
-	assert.strictEqual(result.kind, kind);
-}
+import {assert_kind} from '$lib/testing.js';
 
 describe('spawn', () => {
 	test('returns ok for successful command', async () => {
