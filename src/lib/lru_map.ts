@@ -8,6 +8,9 @@
  */
 export type LruMapOnEvict<K, V> = (key: K, value: V) => void;
 
+/**
+ * Options for `LruMap`.
+ */
 export interface LruMapOptions<K, V> {
 	/**
 	 * Called with the evicted `(key, value)` when a `set()` exceeds `capacity`.
@@ -38,6 +41,16 @@ export interface LruMapOptions<K, V> {
  * `set(existing_key, …)` during iteration moves that entry to the MRU end and causes it to be
  * re-visited later in the same iteration. If you need a stable view while mutating, copy first
  * (e.g. `[...lru.entries()]`).
+ *
+ * @example
+ * ```ts
+ * const cache = new LruMap<string, Buffer>(100, {
+ *   on_evict: (key, value) => value.release(),
+ * });
+ * cache.set('a.png', buf_a);
+ * cache.set('b.png', buf_b);
+ * cache.get('a.png'); // refreshes 'a.png' as most-recently-used
+ * ```
  */
 export class LruMap<K, V> {
 	readonly capacity: number;
@@ -45,6 +58,11 @@ export class LruMap<K, V> {
 	readonly #map: Map<K, V> = new Map();
 	readonly #on_evict: LruMapOnEvict<K, V> | undefined;
 
+	/**
+	 * @param capacity - maximum number of entries; must be a positive integer
+	 * @param options - optional `on_evict` hook
+	 * @throws Error if `capacity` is not a positive integer
+	 */
 	constructor(capacity: number, options?: LruMapOptions<K, V>) {
 		if (!(capacity >= 1) || !Number.isInteger(capacity)) {
 			throw new Error(`LruMap capacity must be a positive integer, got ${capacity}`);

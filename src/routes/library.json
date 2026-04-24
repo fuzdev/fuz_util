@@ -4333,7 +4333,8 @@
 					{
 						"name": "LruMapOptions",
 						"kind": "type",
-						"source_line": 11,
+						"doc_comment": "Options for `LruMap`.",
+						"source_line": 14,
 						"type_signature": "LruMapOptions<K, V>",
 						"generic_params": [
 							{
@@ -4356,7 +4357,10 @@
 						"name": "LruMap",
 						"kind": "class",
 						"doc_comment": "Bounded LRU (least-recently-used) map with a hard `capacity`.\n\nBehaves like `Map` for `get`/`set`/`has`/`delete`/`size`/iteration, with these differences:\n\n- Inserting a new key when `size === capacity` evicts the least-recently-used entry.\n- `get(key)` marks the entry as most-recently-used.\n- `set(key, value)` marks the entry as most-recently-used (including when overwriting).\n- `has(key)` does NOT mark as used (matches `Map` parity).\n- `peek(key)` reads without marking as used.\n\nIteration order is LRU → MRU, matching `Map`'s insertion-order guarantee where \"insertion\"\nis redefined as \"last use\".\n\nImplementation uses a single backing `Map` and relies on its insertion-order iteration —\non use, the entry is deleted and re-inserted to move it to the MRU end.\n\nIterators (`keys()`, `values()`, `entries()`, `[Symbol.iterator]`) are live views over the\nbacking `Map`, not snapshots. Per the ECMAScript `Map` iteration spec, calling `get(key)` or\n`set(existing_key, …)` during iteration moves that entry to the MRU end and causes it to be\nre-visited later in the same iteration. If you need a stable view while mutating, copy first\n(e.g. `[...lru.entries()]`).",
-						"source_line": 42,
+						"examples": [
+							"```ts\nconst cache = new LruMap<string, Buffer>(100, {\n  on_evict: (key, value) => value.release(),\n});\ncache.set('a.png', buf_a);\ncache.set('b.png', buf_b);\ncache.get('a.png'); // refreshes 'a.png' as most-recently-used\n```"
+						],
+						"source_line": 55,
 						"generic_params": [
 							{
 								"name": "K"
@@ -4375,16 +4379,25 @@
 							{
 								"name": "constructor",
 								"kind": "constructor",
+								"doc_comment": "",
 								"type_signature": "<K, V>(capacity: number, options?: LruMapOptions<K, V> | undefined): LruMap<K, V>",
 								"parameters": [
 									{
 										"name": "capacity",
-										"type": "number"
+										"type": "number",
+										"description": "maximum number of entries; must be a positive integer"
 									},
 									{
 										"name": "options",
 										"type": "LruMapOptions<K, V> | undefined",
-										"optional": true
+										"optional": true,
+										"description": "optional `on_evict` hook"
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if `capacity` is not a positive integer"
 									}
 								]
 							},
