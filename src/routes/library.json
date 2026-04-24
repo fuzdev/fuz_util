@@ -48,7 +48,7 @@
 		},
 		"type": "module",
 		"engines": {
-			"node": ">=22.15"
+			"node": ">=24.14"
 		},
 		"keywords": ["js", "typescript", "utilities", "web"],
 		"peerDependencies": {
