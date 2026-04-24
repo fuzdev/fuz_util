@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.58.0
+
+### Minor Changes
+
+- bump node@24.14 ([fbefe82](https://github.com/fuzdev/fuz_util/commit/fbefe82))
+
+### Patch Changes
+
+- feat: add `lru_map.ts` with `LruMap` ([3671f15](https://github.com/fuzdev/fuz_util/commit/3671f15))
+
 ## 0.57.0
 
 ### Minor Changes
