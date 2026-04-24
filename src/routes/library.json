@@ -4313,6 +4313,189 @@
 				"dependents": ["process.ts"]
 			},
 			{
+				"path": "lru_map.ts",
+				"declarations": [
+					{
+						"name": "LruMapOnEvict",
+						"kind": "type",
+						"doc_comment": "Optional hook invoked when an entry is evicted due to capacity overflow.\nNot called on `delete()` or `clear()`.\n\nCalled AFTER the new entry is inserted, so the map is already in its post-`set` state\nwhen the callback runs. A throwing callback does not leave the map inconsistent —\nthe eviction and insertion are already committed.",
+						"source_line": 9,
+						"type_signature": "LruMapOnEvict<K, V>",
+						"generic_params": [
+							{
+								"name": "K"
+							},
+							{
+								"name": "V"
+							}
+						]
+					},
+					{
+						"name": "LruMapOptions",
+						"kind": "type",
+						"source_line": 11,
+						"type_signature": "LruMapOptions<K, V>",
+						"generic_params": [
+							{
+								"name": "K"
+							},
+							{
+								"name": "V"
+							}
+						],
+						"properties": [
+							{
+								"name": "on_evict",
+								"kind": "variable",
+								"type_signature": "LruMapOnEvict<K, V>",
+								"doc_comment": "Called with the evicted `(key, value)` when a `set()` exceeds `capacity`.\nFires after the new entry is inserted. Not called on `delete()` or `clear()`."
+							}
+						]
+					},
+					{
+						"name": "LruMap",
+						"kind": "class",
+						"doc_comment": "Bounded LRU (least-recently-used) map with a hard `capacity`.\n\nBehaves like `Map` for `get`/`set`/`has`/`delete`/`size`/iteration, with these differences:\n\n- Inserting a new key when `size === capacity` evicts the least-recently-used entry.\n- `get(key)` marks the entry as most-recently-used.\n- `set(key, value)` marks the entry as most-recently-used (including when overwriting).\n- `has(key)` does NOT mark as used (matches `Map` parity).\n- `peek(key)` reads without marking as used.\n\nIteration order is LRU → MRU, matching `Map`'s insertion-order guarantee where \"insertion\"\nis redefined as \"last use\".\n\nImplementation uses a single backing `Map` and relies on its insertion-order iteration —\non use, the entry is deleted and re-inserted to move it to the MRU end.\n\nIterators (`keys()`, `values()`, `entries()`, `[Symbol.iterator]`) are live views over the\nbacking `Map`, not snapshots. Per the ECMAScript `Map` iteration spec, calling `get(key)` or\n`set(existing_key, …)` during iteration moves that entry to the MRU end and causes it to be\nre-visited later in the same iteration. If you need a stable view while mutating, copy first\n(e.g. `[...lru.entries()]`).",
+						"source_line": 42,
+						"generic_params": [
+							{
+								"name": "K"
+							},
+							{
+								"name": "V"
+							}
+						],
+						"members": [
+							{
+								"name": "capacity",
+								"kind": "variable",
+								"modifiers": ["readonly"],
+								"type_signature": "number"
+							},
+							{
+								"name": "constructor",
+								"kind": "constructor",
+								"type_signature": "<K, V>(capacity: number, options?: LruMapOptions<K, V> | undefined): LruMap<K, V>",
+								"parameters": [
+									{
+										"name": "capacity",
+										"type": "number"
+									},
+									{
+										"name": "options",
+										"type": "LruMapOptions<K, V> | undefined",
+										"optional": true
+									}
+								]
+							},
+							{
+								"name": "get",
+								"kind": "function",
+								"doc_comment": "Returns the value for `key` and marks it as most-recently-used.",
+								"type_signature": "(key: K): V | undefined",
+								"return_type": "V | undefined",
+								"parameters": [
+									{
+										"name": "key",
+										"type": "K"
+									}
+								]
+							},
+							{
+								"name": "peek",
+								"kind": "function",
+								"doc_comment": "Returns the value for `key` without affecting eviction order.",
+								"type_signature": "(key: K): V | undefined",
+								"return_type": "V | undefined",
+								"parameters": [
+									{
+										"name": "key",
+										"type": "K"
+									}
+								]
+							},
+							{
+								"name": "has",
+								"kind": "function",
+								"doc_comment": "Returns `true` if `key` is present. Does NOT mark as used (matches `Map`).",
+								"type_signature": "(key: K): boolean",
+								"return_type": "boolean",
+								"parameters": [
+									{
+										"name": "key",
+										"type": "K"
+									}
+								]
+							},
+							{
+								"name": "set",
+								"kind": "function",
+								"doc_comment": "Sets `value` for `key` and marks it as most-recently-used.\nEvicts the least-recently-used entry when inserting a new key at capacity.\nThe `on_evict` hook (if any) fires AFTER the new entry is inserted.",
+								"type_signature": "(key: K, value: V): this",
+								"return_type": "this",
+								"parameters": [
+									{
+										"name": "key",
+										"type": "K"
+									},
+									{
+										"name": "value",
+										"type": "V"
+									}
+								]
+							},
+							{
+								"name": "delete",
+								"kind": "function",
+								"type_signature": "(key: K): boolean",
+								"return_type": "boolean",
+								"parameters": [
+									{
+										"name": "key",
+										"type": "K"
+									}
+								]
+							},
+							{
+								"name": "clear",
+								"kind": "function",
+								"type_signature": "(): void",
+								"return_type": "void",
+								"parameters": []
+							},
+							{
+								"name": "[Symbol.iterator]",
+								"kind": "function",
+								"type_signature": "(): IterableIterator<[K, V]>",
+								"return_type": "IterableIterator<[K, V]>",
+								"parameters": []
+							},
+							{
+								"name": "keys",
+								"kind": "function",
+								"type_signature": "(): IterableIterator<K>",
+								"return_type": "IterableIterator<K>",
+								"parameters": []
+							},
+							{
+								"name": "values",
+								"kind": "function",
+								"type_signature": "(): IterableIterator<V>",
+								"return_type": "IterableIterator<V>",
+								"parameters": []
+							},
+							{
+								"name": "entries",
+								"kind": "function",
+								"type_signature": "(): IterableIterator<[K, V]>",
+								"return_type": "IterableIterator<[K, V]>",
+								"parameters": []
+							}
+						]
+					}
+				]
+			},
+			{
 				"path": "map.ts",
 				"declarations": [
 					{
