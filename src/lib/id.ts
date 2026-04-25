@@ -1,12 +1,18 @@
-import type {Flavored} from './types.js';
+import {z} from 'zod';
+
 import {create_counter} from './counter.js';
 
-export type Uuid = Flavored<string, 'Uuid'>;
+export const create_uuid = (): Uuid => crypto.randomUUID() as Uuid;
+
+export const Uuid = z.uuid().brand('Uuid');
+export type Uuid = z.infer<typeof Uuid>;
+export const UuidWithDefault = Uuid.default(create_uuid);
+export type UuidWithDefault = z.infer<typeof UuidWithDefault>;
 
 /**
  * Loosely validates a UUID string.
  */
-export const is_uuid = (str: string): str is Uuid => UUID_MATCHER.test(str);
+export const is_uuid = (str: string): boolean => UUID_MATCHER.test(str);
 
 /**
  * Postgres doesn't support the namespace prefix, so neither does Felt.

@@ -103,6 +103,62 @@ export const zod_has_default = (schema: z.ZodType): boolean => {
 };
 
 /**
+ * Unwrap a schema through every wrapper type (optional, nullable, default,
+ * transform, pipe, prefault) to reach the innermost schema. Like `zod_unwrap_def`
+ * but returns the schema (so callers can `.shape`, `instanceof`-check, etc.)
+ * instead of the def.
+ *
+ * @param schema - Zod schema to unwrap
+ * @returns the innermost non-wrapper schema
+ */
+export const zod_get_innermost_type = (schema: z.ZodType): z.ZodType => {
+	if (ZOD_WRAPPER_TYPES.has(schema.def.type)) {
+		const sub = zod_to_subschema(schema.def);
+		if (sub) return zod_get_innermost_type(sub);
+	}
+	return schema;
+};
+
+/**
+ * Get all property keys from an object schema, unwrapping wrappers.
+ * Returns an empty array if the innermost type is not an object.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ * @returns array of property names
+ */
+export const zod_get_schema_keys = <T extends z.ZodType>(
+	schema: T,
+): Array<keyof z.infer<T> & string> => {
+	const obj = zod_unwrap_to_object(schema);
+	return obj ? (Object.keys(obj.shape) as Array<keyof z.infer<T> & string>) : [];
+};
+
+/**
+ * Get the field schema for a key in an object schema, returning `undefined` if
+ * the schema is not an object or the key is missing.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ * @param key - the property name
+ * @returns the field's schema, or `undefined`
+ */
+export const zod_maybe_get_field_schema = (schema: z.ZodType, key: string): z.ZodType | undefined =>
+	zod_unwrap_to_object(schema)?.shape[key];
+
+/**
+ * Get the field schema for a key in an object schema, throwing if the schema
+ * is not an object or the key is missing.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ * @param key - the property name
+ * @returns the field's schema
+ */
+export const zod_get_field_schema = (schema: z.ZodType, key: string): z.ZodType => {
+	const field = zod_maybe_get_field_schema(schema, key);
+	if (!field) throw new Error(`Field "${key}" not found in schema`);
+	return field;
+};
+
+/**
  * Unwrap a schema to find the inner `ZodObject`, or `null` if not an object schema.
  * Handles wrappers like `z.strictObject({...}).default({...})`.
  *
