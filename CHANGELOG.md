@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.59.0
+
+### Minor Changes
+
+- feat: add `datetime.ts` and schema for `Uuid` ([d73e2f8](https://github.com/fuzdev/fuz_util/commit/d73e2f8))
+- feat: add some zod helpers ([d73e2f8](https://github.com/fuzdev/fuz_util/commit/d73e2f8))
+
 ## 0.58.0
 
 ### Minor Changes
