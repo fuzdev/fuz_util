@@ -235,13 +235,17 @@ describe('despawn', () => {
 	});
 
 	test('escalates to SIGKILL after timeout', async () => {
-		// Process that ignores SIGTERM - needs time to set up handler
-		const {child} = spawn_process('node', [
-			'-e',
-			'process.on("SIGTERM", () => console.log("ignored")); setInterval(() => {}, 1000);',
-		]);
-		// Wait for process to start and set up handler
-		await new Promise((r) => setTimeout(r, 50));
+		// Process that ignores SIGTERM, prints "ready" once handler is installed
+		const {child} = spawn_process(
+			'node',
+			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
+			{stdio: 'pipe'},
+		);
+		await new Promise<void>((resolve) => {
+			child.stdout!.on('data', (d) => {
+				if (d.toString().includes('ready')) resolve();
+			});
+		});
 		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 100});
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
@@ -249,12 +253,17 @@ describe('despawn', () => {
 	});
 
 	test('timeout_ms of 0 escalates to SIGKILL immediately', async () => {
-		// Process that ignores SIGTERM
-		const {child} = spawn_process('node', [
-			'-e',
-			'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);',
-		]);
-		await new Promise((r) => setTimeout(r, 50));
+		// Process that ignores SIGTERM, prints "ready" once handler is installed
+		const {child} = spawn_process(
+			'node',
+			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
+			{stdio: 'pipe'},
+		);
+		await new Promise<void>((resolve) => {
+			child.stdout!.on('data', (d) => {
+				if (d.toString().includes('ready')) resolve();
+			});
+		});
 		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 0});
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
