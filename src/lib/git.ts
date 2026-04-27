@@ -37,7 +37,8 @@ export const GitBranch = z.string();
 export type GitBranch = Flavored<string, 'GitBranch'>;
 
 /**
- * Returns the current git branch name or throws if something goes wrong.
+ * Returns the current git branch name.
+ * @throws Error if the underlying git command fails
  */
 export const git_current_branch_name = async (options?: SpawnOptions): Promise<GitBranch> => {
 	const {stdout} = await spawn_out('git', ['rev-parse', '--abbrev-ref', 'HEAD'], options);
@@ -47,7 +48,8 @@ export const git_current_branch_name = async (options?: SpawnOptions): Promise<G
 };
 
 /**
- * @returns a boolean indicating if the remote git branch exists
+ * Checks if a remote git branch exists.
+ * @throws Error if the `git ls-remote` command fails for a reason other than the branch not existing
  */
 export const git_remote_branch_exists = async (
 	origin: GitOrigin = 'origin' as GitOrigin,
@@ -75,7 +77,7 @@ export const git_remote_branch_exists = async (
 };
 
 /**
- * @returns a boolean indicating if the local git branch exists
+ * Checks if a local git branch exists.
  */
 export const git_local_branch_exists = async (
 	branch: GitBranch,
@@ -123,7 +125,6 @@ export interface GitWorkspaceStatus {
  * Submodule-specific status codes (lowercase m, ?) are interpreted as changes.
  *
  * @param stdout - the raw output from `git status --porcelain -z`
- * @returns status object with flags for unstaged changes, staged changes, and untracked files
  */
 export const git_parse_workspace_status = (stdout: string | null): GitWorkspaceStatus => {
 	// Split on NUL character (\0) for -z format
@@ -173,7 +174,6 @@ export const git_parse_workspace_status = (stdout: string | null): GitWorkspaceS
 /**
  * Checks the git workspace status using a single `git status --porcelain -z` call.
  * The -z format provides more reliable parsing by using NUL separators and avoiding escaping.
- * @returns status object with flags for unstaged changes, staged changes, and untracked files
  */
 export const git_check_workspace = async (options?: SpawnOptions): Promise<GitWorkspaceStatus> => {
 	const {stdout} = await spawn_out('git', ['status', '--porcelain', '-z'], options);
@@ -223,7 +223,8 @@ export const git_check_fully_staged_workspace = async (
 };
 
 /**
- * Calls `git fetch` and throws if anything goes wrong.
+ * Calls `git fetch`.
+ * @throws Error if the underlying git command fails
  */
 export const git_fetch = async (
 	origin: GitOrigin = 'origin' as GitOrigin,
@@ -241,8 +242,9 @@ export const git_fetch = async (
 };
 
 /**
- * Calls `git checkout` and throws if anything goes wrong.
+ * Calls `git checkout`.
  * @returns the previous branch name, if it changed
+ * @throws Error if the underlying git command fails
  */
 export const git_checkout = async (
 	branch: GitBranch,
@@ -262,7 +264,8 @@ export const git_checkout = async (
 };
 
 /**
- * Calls `git pull` and throws if anything goes wrong.
+ * Calls `git pull`.
+ * @throws Error if the underlying git command fails
  */
 export const git_pull = async (
 	origin: GitOrigin = 'origin' as GitOrigin,
@@ -278,7 +281,8 @@ export const git_pull = async (
 };
 
 /**
- * Calls `git push` and throws if anything goes wrong.
+ * Calls `git push`.
+ * @throws Error if the underlying git command fails
  */
 export const git_push = async (
 	origin: GitOrigin,
@@ -298,7 +302,8 @@ export const git_push = async (
 };
 
 /**
- * Calls `git push` and throws if anything goes wrong.
+ * Calls `git push`, setting upstream if the remote branch does not yet exist.
+ * @throws Error if the underlying git command fails
  */
 export const git_push_to_create = async (
 	origin: GitOrigin = 'origin' as GitOrigin,
@@ -322,7 +327,8 @@ export const git_push_to_create = async (
 };
 
 /**
- * Deletes a branch locally and throws if anything goes wrong.
+ * Deletes a branch locally.
+ * @throws Error if the underlying git command fails
  */
 export const git_delete_local_branch = async (
 	branch: GitBranch,
@@ -337,7 +343,8 @@ export const git_delete_local_branch = async (
 };
 
 /**
- * Deletes a branch remotely and throws if anything goes wrong.
+ * Deletes a branch remotely.
+ * @throws Error if the underlying git command fails
  */
 export const git_delete_remote_branch = async (
 	origin: GitOrigin,
@@ -370,7 +377,8 @@ export const git_reset_branch_to_first_commit = async (
 };
 
 /**
- * Returns the branch's latest commit hash or throws if something goes wrong.
+ * Returns the branch's latest commit hash.
+ * @throws Error if the underlying git command fails
  */
 export const git_current_commit_hash = async (
 	branch?: string,
@@ -383,7 +391,8 @@ export const git_current_commit_hash = async (
 };
 
 /**
- * Returns the hash of the current branch's first commit or throws if something goes wrong.
+ * Returns the hash of the current branch's first commit.
+ * @throws Error if the underlying git command fails
  */
 export const git_current_branch_first_commit_hash = async (
 	options?: SpawnOptions,

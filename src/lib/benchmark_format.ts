@@ -6,9 +6,8 @@ import {format_number} from './maths.js';
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
  * All times use the same unit for easy comparison.
- * @param results - array of benchmark results
  * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
- * @returns formatted table string with enhanced metrics
+ * @throws Error if `baseline` is provided but no result has that name
  *
  * @example
  * ```ts
@@ -126,9 +125,8 @@ export const benchmark_format_table = (
 /**
  * Format results as a Markdown table with key metrics.
  * All times use the same unit for easy comparison.
- * @param results - array of benchmark results
  * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
- * @returns formatted markdown table string
+ * @throws Error if `baseline` is provided but no result has that name
  *
  * @example
  * ```ts
@@ -238,9 +236,6 @@ export const benchmark_format_markdown = (
 
 /**
  * Format results as grouped Markdown tables with headers between groups.
- * @param results - array of benchmark results
- * @param groups - array of group definitions
- * @returns formatted markdown string with group headers and tables
  *
  * @example
  * ```ts
@@ -301,9 +296,6 @@ export interface BenchmarkFormatJsonOptions {
 
 /**
  * Format results as JSON.
- * @param results - array of benchmark results
- * @param options - formatting options
- * @returns JSON string
  *
  * @example
  * ```ts
@@ -348,9 +340,6 @@ export const benchmark_format_json = (
 
 /**
  * Format results as a grouped table with visual separators between groups.
- * @param results - array of benchmark results
- * @param groups - array of group definitions
- * @returns formatted table string with group separators
  *
  * @example
  * ```ts

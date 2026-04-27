@@ -49,7 +49,7 @@ const DEFAULT_ITERATIONS_MAX = 100_000;
 
 /**
  * Validate and normalize benchmark configuration.
- * Throws if configuration is invalid.
+ * @throws Error if configuration values are out of range or `min_iterations` exceeds `max_iterations`
  */
 const validate_config = (config: BenchmarkConfig): void => {
 	if (config.duration_ms !== undefined && config.duration_ms <= 0) {
@@ -91,7 +91,6 @@ interface BenchmarkTaskInternal extends BenchmarkTask {
  * Detects whether the function is async based on return value.
  *
  * @param fn - function to warmup (sync or async)
- * @param iterations - number of warmup iterations
  * @param async_hint - if provided, use this instead of detecting
  * @returns whether the function is async
  *
@@ -159,6 +158,7 @@ export class Benchmark {
 	 * @param name - task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
 	 * @returns this `Benchmark` instance for chaining
+	 * @throws Error if a task with the same name already exists, or if `fn` is missing when `name` is a string
 	 *
 	 * @example
 	 * ```ts
@@ -194,7 +194,6 @@ export class Benchmark {
 
 	/**
 	 * Remove a benchmark task by name.
-	 * @param name - name of the task to remove
 	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -217,7 +216,6 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to be skipped during benchmark runs.
-	 * @param name - name of the task to skip
 	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -240,7 +238,6 @@ export class Benchmark {
 
 	/**
 	 * Mark a task to run exclusively (along with other `only` tasks).
-	 * @param name - name of the task to run exclusively
 	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -264,7 +261,6 @@ export class Benchmark {
 
 	/**
 	 * Run all benchmark tasks.
-	 * @returns array of benchmark results
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this.#results = [];
@@ -296,7 +292,7 @@ export class Benchmark {
 
 	/**
 	 * Run a single benchmark task.
-	 * Throws if the task fails during setup, warmup, or measurement.
+	 * @throws Error if the task fails during setup, warmup, or measurement
 	 */
 	async #run_task(task: BenchmarkTaskInternal): Promise<BenchmarkResult> {
 		const suite_start_ns = this.#config.timer.now();
@@ -385,8 +381,6 @@ export class Benchmark {
 
 	/**
 	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
-	 * @param options - formatting options
-	 * @returns formatted table string
 	 *
 	 * @example
 	 * ```ts
@@ -444,8 +438,7 @@ export class Benchmark {
 
 	/**
 	 * Get the benchmark results.
-	 * Returns a shallow copy to prevent external mutation.
-	 * @returns array of benchmark results
+	 * @returns shallow copy of the results array (prevents external mutation)
 	 */
 	results(): Array<BenchmarkResult> {
 		return [...this.#results];
@@ -468,8 +461,7 @@ export class Benchmark {
 
 	/**
 	 * Get results as a map for convenient lookup by task name.
-	 * Returns a new Map each call to prevent external mutation.
-	 * @returns map of task name to benchmark result
+	 * @returns fresh `Map` of task name to benchmark result (prevents external mutation)
 	 *
 	 * @example
 	 * ```ts
@@ -496,7 +488,6 @@ export class Benchmark {
 
 	/**
 	 * Clear everything (results and tasks).
-	 * Use this to start fresh with a new set of benchmarks.
 	 * @returns this `Benchmark` instance for chaining
 	 */
 	clear(): this {

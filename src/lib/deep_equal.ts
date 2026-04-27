@@ -10,8 +10,6 @@
  * - Promises always return false (cannot be meaningfully compared)
  * - Maps/Sets compare by reference for object keys/values
  *
- * @param a - first value to compare
- * @param b - second value to compare
  * @returns true if deeply equal, false otherwise
  */
 export const deep_equal = (a: unknown, b: unknown): boolean => {

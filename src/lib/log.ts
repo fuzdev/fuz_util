@@ -42,16 +42,14 @@ const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
 /**
  * Converts a log level to its numeric value for comparison.
  * Higher numbers indicate more verbose logging.
- * @param level - the log level to convert
  * @returns numeric value (0-4)
  */
 export const log_level_to_number = (level: LogLevel): number => LOG_LEVEL_VALUES[level];
 
 /**
  * Parses and validates a log level string.
- * @param value - the value to parse as a log level
- * @returns the validated log level, or undefined if value is undefined
- * @throws Error if value is provided but invalid
+ * @returns the validated log level, or `undefined` if `value` is `undefined`
+ * @throws Error if `value` is provided but invalid
  */
 export const log_level_parse = (value: string | undefined): LogLevel | undefined => {
 	if (!value) return undefined;
@@ -219,6 +217,7 @@ export class Logger {
 	 * Clears the level override for this logger, restoring inheritance from parent.
 	 * After calling this, the logger will dynamically inherit the level from its parent
 	 * (or use the default level if it has no parent).
+	 * @mutates this - clears `#level_override` and the cached `#cached_level_string` / `#cached_level` so subsequent calls walk the parent chain
 	 */
 	clear_level_override(): void {
 		this.#level_override = undefined;
@@ -230,6 +229,7 @@ export class Logger {
 	 * Clears the colors override for this logger, restoring inheritance from parent.
 	 * After calling this, the logger will dynamically inherit colors from its parent
 	 * (or use the default colors behavior if it has no parent).
+	 * @mutates this - clears `#colors_override` and invalidates the cached prefix strings (`#cached_colors`, `#cached_error`, `#cached_warn`, `#cached_info`, `#cached_debug`) so prefixes recompute on next log call
 	 */
 	clear_colors_override(): void {
 		this.#colors_override = undefined;
@@ -435,12 +435,9 @@ export class Logger {
 	/**
 	 * Logs raw output without any prefix, formatting, or level filtering.
 	 * Bypasses the logger's level checking, prefix formatting, and color application entirely.
-	 * Useful for outputting structured data or when you need full control over formatting.
 	 *
 	 * Note: This method ignores the configured log level - it always outputs regardless of
-	 * whether the logger is set to 'off' or any other level.
-	 *
-	 * @param args - values to log directly to console
+	 * whether the logger is set to `'off'` or any other level.
 	 */
 	raw(...args: Array<unknown>): void {
 		this.console.log(...args);

@@ -253,7 +253,7 @@
 						"source_line": 216,
 						"type_signature": "<TOutput extends Record<string, ArgValue> = Args>(unparsed_args: Args, schema: ZodType<TOutput, unknown, $ZodTypeInternals<TOutput, unknown>>): ZodSafeParseResult<...>",
 						"return_type": "ZodSafeParseResult<TOutput>",
-						"return_description": "Zod SafeParseResult with expanded/synced data on success",
+						"return_description": "`z.ZodSafeParseResult` with expanded/synced data on success",
 						"parameters": [
 							{
 								"name": "unparsed_args",
@@ -271,15 +271,13 @@
 						"name": "args_serialize",
 						"kind": "function",
 						"doc_comment": "Serializes Args to CLI string array for subprocess forwarding.\n\nHandles CLI conventions:\n- Positionals first, then flags\n- Single-char keys get single dash, multi-char get double dash\n- Boolean `true` becomes bare flag, `false` is skipped\n- `undefined` values are skipped\n- `no-` prefixed keys skipped when base key is truthy (avoid contradiction)\n- When schema provided, extracts aliases and prefers shortest form\n\nSchema analysis is cached per schema (WeakMap) for performance.",
-						"source_line": 283,
+						"source_line": 281,
 						"type_signature": "(args: Args, schema?: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined): string[]",
 						"return_type": "string[]",
-						"return_description": "array of CLI argument strings",
 						"parameters": [
 							{
 								"name": "args",
-								"type": "Args",
-								"description": "args object to serialize"
+								"type": "Args"
 							},
 							{
 								"name": "schema",
@@ -293,10 +291,9 @@
 						"name": "args_extract_aliases",
 						"kind": "function",
 						"doc_comment": "Extracts alias mappings and canonical keys from a zod schema's metadata.\n\nUseful for consumers building custom tooling (help generators, conflict detection, etc.).\nResults are cached per schema (WeakMap).\n\nNote: Returns copies of the cached data to prevent mutation of internal cache.",
-						"source_line": 355,
+						"source_line": 352,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ArgsAliasesResult",
 						"return_type": "ArgsAliasesResult",
-						"return_description": "object with aliases map and canonical_keys set",
 						"parameters": [
 							{
 								"name": "schema",
@@ -309,7 +306,7 @@
 						"name": "argv_parse",
 						"kind": "function",
 						"doc_comment": "Parses raw CLI argv array into an Args object.\n\nA lightweight, dependency-free alternative to mri/minimist with compatible behavior.\n\nFeatures:\n- `--flag` → `{flag: true}`\n- `--flag value` → `{flag: 'value'}` or `{flag: 123}` (numeric coercion)\n- `--flag=value` → equals syntax\n- `--flag=` → `{flag: ''}` (empty string, differs from mri which returns true)\n- `-f` → `{f: true}` (short flag)\n- `-f value` → `{f: 'value'}`\n- `-abc` → `{a: true, b: true, c: true}` (combined short flags)\n- `-abc value` → `{a: true, b: true, c: 'value'}` (last flag gets value)\n- `--no-flag` → `{flag: false}` (negation prefix)\n- `--` → stops flag parsing, rest become positionals\n- Positionals collected in `_` array\n- Repeated flags become arrays\n\nIntentional differences from mri:\n- `--flag=` returns `''` (mri returns `true`)\n- `--flag= next` returns `{flag: '', _: ['next']}` (mri takes `next` as the value)\n- `---flag` returns `{'-flag': true}` (mri strips all dashes)\n- `['--flag', '']` preserves `''` (mri coerces to `0`)\n- `--__proto__` works as a normal key (mri silently fails)\n\nThe returned object uses `Object.create(null)` to prevent prototype pollution\nand allow any key name including `__proto__` and `constructor`.",
-						"source_line": 425,
+						"source_line": 422,
 						"type_signature": "(argv: string[]): ParsedArgs",
 						"return_type": "ParsedArgs",
 						"return_description": "parsed `Args` object with guaranteed `_` array (null prototype)",
@@ -464,14 +461,19 @@
 						"examples": [
 							"```ts\nawait each_concurrent(\n  file_paths,\n  5, // max 5 concurrent deletions\n  async (path) => { await unlink(path); },\n);\n```"
 						],
-						"source_line": 55,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `concurrency < 1`"
+							}
+						],
+						"source_line": 54,
 						"type_signature": "<T>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => void | Promise<void>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<void>",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "Iterable<T>",
-								"description": "items to process"
+								"type": "Iterable<T>"
 							},
 							{
 								"name": "concurrency",
@@ -480,8 +482,7 @@
 							},
 							{
 								"name": "fn",
-								"type": "(item: T, index: number) => void | Promise<void>",
-								"description": "function to apply to each item"
+								"type": "(item: T, index: number) => void | Promise<void>"
 							},
 							{
 								"name": "signal",
@@ -498,15 +499,20 @@
 						"examples": [
 							"```ts\nconst results = await map_concurrent(\n  file_paths,\n  5, // max 5 concurrent reads\n  async (path) => readFile(path, 'utf8'),\n);\n```"
 						],
-						"source_line": 141,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `concurrency < 1`"
+							}
+						],
+						"source_line": 139,
 						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<R[]>",
-						"return_description": "promise resolving to array of results in same order as input",
+						"return_description": "array of results in same order as input",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "Iterable<T>",
-								"description": "items to process"
+								"type": "Iterable<T>"
 							},
 							{
 								"name": "concurrency",
@@ -515,8 +521,7 @@
 							},
 							{
 								"name": "fn",
-								"type": "(item: T, index: number) => R | Promise<R>",
-								"description": "function to apply to each item"
+								"type": "(item: T, index: number) => R | Promise<R>"
 							},
 							{
 								"name": "signal",
@@ -533,15 +538,20 @@
 						"examples": [
 							"```ts\nconst results = await map_concurrent_settled(urls, 5, fetch);\nfor (const [i, result] of results.entries()) {\n  if (result.status === 'fulfilled') {\n    console.log(`${urls[i]}: ${result.value.status}`);\n  } else {\n    console.error(`${urls[i]}: ${result.reason}`);\n  }\n}\n```"
 						],
-						"source_line": 236,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `concurrency < 1`"
+							}
+						],
+						"source_line": 233,
 						"type_signature": "<T, R>(items: Iterable<T>, concurrency: number, fn: (item: T, index: number) => R | Promise<R>, signal?: AbortSignal | undefined): Promise<...>",
 						"return_type": "Promise<PromiseSettledResult<R>[]>",
-						"return_description": "promise resolving to array of `PromiseSettledResult` objects in input order",
+						"return_description": "array of `PromiseSettledResult` objects in input order",
 						"parameters": [
 							{
 								"name": "items",
-								"type": "Iterable<T>",
-								"description": "items to process"
+								"type": "Iterable<T>"
 							},
 							{
 								"name": "concurrency",
@@ -550,8 +560,7 @@
 							},
 							{
 								"name": "fn",
-								"type": "(item: T, index: number) => R | Promise<R>",
-								"description": "function to apply to each item"
+								"type": "(item: T, index: number) => R | Promise<R>"
 							},
 							{
 								"name": "signal",
@@ -565,16 +574,23 @@
 						"name": "AsyncSemaphore",
 						"kind": "class",
 						"doc_comment": "Async semaphore for concurrency limiting.\n\nWith `Infinity` permits, `acquire()` always resolves immediately.",
-						"source_line": 318,
+						"source_line": 315,
 						"members": [
 							{
 								"name": "constructor",
 								"kind": "constructor",
+								"doc_comment": "",
 								"type_signature": "(permits: number): AsyncSemaphore",
 								"parameters": [
 									{
 										"name": "permits",
 										"type": "number"
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if `permits < 0`"
 									}
 								]
 							},
@@ -795,19 +811,23 @@
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```"
 						],
-						"source_line": 175,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if creating the baseline directory or writing the file fails"
+							}
+						],
+						"source_line": 174,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "benchmark results to save"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineSaveOptions",
-								"description": "save options",
 								"default_value": "{}"
 							}
 						]
@@ -819,7 +839,7 @@
 						"examples": [
 							"```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```"
 						],
-						"source_line": 218,
+						"source_line": 216,
 						"type_signature": "(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>",
 						"return_type": "Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>",
 						"return_description": "the baseline, or null if not found or invalid",
@@ -827,7 +847,6 @@
 							{
 								"name": "options",
 								"type": "BenchmarkBaselineLoadOptions",
-								"description": "load options",
 								"default_value": "{}"
 							}
 						]
@@ -839,15 +858,14 @@
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```"
 						],
-						"source_line": 281,
+						"source_line": 278,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>",
 						"return_type": "Promise<BenchmarkBaselineComparisonResult>",
 						"return_description": "comparison result with regressions, improvements, and unchanged tasks",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "current benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "options",
@@ -861,10 +879,9 @@
 						"name": "benchmark_baseline_format",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as a human-readable string.",
-						"source_line": 426,
+						"source_line": 422,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult): string",
 						"return_type": "string",
-						"return_description": "formatted string summary",
 						"parameters": [
 							{
 								"name": "result",
@@ -877,10 +894,9 @@
 						"name": "benchmark_baseline_format_json",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as JSON for programmatic consumption.",
-						"source_line": 513,
+						"source_line": 507,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string",
 						"return_type": "string",
-						"return_description": "JSON string",
 						"parameters": [
 							{
 								"name": "result",
@@ -890,7 +906,6 @@
 							{
 								"name": "options",
 								"type": "{ pretty?: boolean | undefined; }",
-								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -909,15 +924,19 @@
 						"examples": [
 							"```ts\nconsole.log(benchmark_format_table(results));\n// ┌─────────────┬────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐\n// │ Task Name   │  ops/sec   │ p50 (μs) │ p75 (μs) │ p90 (μs) │ p95 (μs) │ p99 (μs) │ min (μs) │ max (μs) │ vs Best  │\n// ├─────────────┼────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤\n// │ slugify v2  │ 1,237,144  │   0.81   │   0.85   │   0.89   │   0.95   │   1.20   │   0.72   │   2.45   │ baseline │\n// │ slugify     │   261,619  │   3.82   │   3.95   │   4.12   │   4.35   │   5.10   │   3.21   │  12.45   │   4.73x  │\n// └─────────────┴────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘\n```"
 						],
-						"source_line": 24,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `baseline` is provided but no result has that name"
+							}
+						],
+						"source_line": 23,
 						"type_signature": "(results: BenchmarkResult[], baseline?: string | undefined): string",
 						"return_type": "string",
-						"return_description": "formatted table string with enhanced metrics",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "array of benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "baseline",
@@ -934,15 +953,19 @@
 						"examples": [
 							"```ts\nconsole.log(benchmark_format_markdown(results));\n// | Task Name  | ops/sec    | p50 (μs) | p75 (μs) | p90 (μs) | p95 (μs) | p99 (μs) | min (μs) | max (μs) | vs Best  |\n// |------------|------------|----------|----------|----------|----------|----------|----------|----------|----------|\n// | slugify v2 | 1,237,144  | 0.81     | 0.85     | 0.89     | 0.95     | 1.20     | 0.72     | 2.45     | baseline |\n// | slugify    |   261,619  | 3.82     | 3.95     | 4.12     | 4.35     | 5.10     | 3.21     | 12.45    | 4.73x    |\n```"
 						],
-						"source_line": 142,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `baseline` is provided but no result has that name"
+							}
+						],
+						"source_line": 140,
 						"type_signature": "(results: BenchmarkResult[], baseline?: string | undefined): string",
 						"return_type": "string",
-						"return_description": "formatted markdown table string",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "array of benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "baseline",
@@ -959,27 +982,24 @@
 						"examples": [
 							"```ts\nconst groups = [\n  { name: 'Fast Paths', filter: (r) => r.name.includes('fast'), baseline: 'fast/reference' },\n  { name: 'Slow Paths', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_markdown_grouped(results, groups));\n// ### Fast Paths\n// | Task Name | ops/sec | ... | vs fast/reference |\n// |-----------|---------|-----|-------------------|\n// | ...       | ...     | ... | ...               |\n//\n// ### Slow Paths\n// | Task Name | ops/sec | ... | vs Best |\n// |-----------|---------|-----|---------|\n// | ...       | ...     | ... | ...     |\n```"
 						],
-						"source_line": 263,
+						"source_line": 258,
 						"type_signature": "(results: BenchmarkResult[], groups: BenchmarkGroup[]): string",
 						"return_type": "string",
-						"return_description": "formatted markdown string with group headers and tables",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "array of benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "groups",
-								"type": "BenchmarkGroup[]",
-								"description": "array of group definitions"
+								"type": "BenchmarkGroup[]"
 							}
 						]
 					},
 					{
 						"name": "BenchmarkFormatJsonOptions",
 						"kind": "type",
-						"source_line": 295,
+						"source_line": 290,
 						"type_signature": "BenchmarkFormatJsonOptions",
 						"properties": [
 							{
@@ -1003,21 +1023,18 @@
 						"examples": [
 							"```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```"
 						],
-						"source_line": 315,
+						"source_line": 307,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string",
 						"return_type": "string",
-						"return_description": "JSON string",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "array of benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "options",
 								"type": "BenchmarkFormatJsonOptions | undefined",
-								"optional": true,
-								"description": "formatting options"
+								"optional": true
 							}
 						]
 					},
@@ -1028,20 +1045,17 @@
 						"examples": [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```"
 						],
-						"source_line": 374,
+						"source_line": 363,
 						"type_signature": "(results: BenchmarkResult[], groups: BenchmarkGroup[]): string",
 						"return_type": "string",
-						"return_description": "formatted table string with group separators",
 						"parameters": [
 							{
 								"name": "results",
-								"type": "BenchmarkResult[]",
-								"description": "array of benchmark results"
+								"type": "BenchmarkResult[]"
 							},
 							{
 								"name": "groups",
-								"type": "BenchmarkGroup[]",
-								"description": "array of group definitions"
+								"type": "BenchmarkGroup[]"
 							}
 						]
 					},
@@ -1050,7 +1064,7 @@
 						"kind": "variable",
 						"doc_comment": "Format a number with fixed decimal places and thousands separators.",
 						"see_also": ["`format_number` in `maths.ts` for the underlying implementation."],
-						"source_line": 410,
+						"source_line": 399,
 						"type_signature": "(n: number, decimals?: number) => string"
 					}
 				],
@@ -1333,7 +1347,7 @@
 						"examples": [
 							"```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```"
 						],
-						"source_line": 220,
+						"source_line": 219,
 						"type_signature": "(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison",
 						"return_type": "BenchmarkComparison",
 						"return_description": "comparison result with significance, effect size, and recommendation",
@@ -1351,8 +1365,7 @@
 							{
 								"name": "options",
 								"type": "BenchmarkCompareOptions | undefined",
-								"optional": true,
-								"description": "comparison options"
+								"optional": true
 							}
 						]
 					}
@@ -1571,7 +1584,7 @@
 						"examples": [
 							"```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```"
 						],
-						"source_line": 103,
+						"source_line": 102,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "whether the function is async",
@@ -1583,8 +1596,7 @@
 							},
 							{
 								"name": "iterations",
-								"type": "number",
-								"description": "number of warmup iterations"
+								"type": "number"
 							},
 							{
 								"name": "async_hint",
@@ -1598,7 +1610,7 @@
 						"name": "Benchmark",
 						"kind": "class",
 						"doc_comment": "Benchmark class for measuring and comparing function performance.",
-						"source_line": 137,
+						"source_line": 136,
 						"members": [
 							{
 								"name": "constructor",
@@ -1629,6 +1641,12 @@
 										"name": "fn",
 										"type": "() => unknown",
 										"description": "Function to benchmark (if name is string). Return values are ignored."
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if a task with the same name already exists, or if `fn` is missing when `name` is a string"
 									}
 								]
 							},
@@ -1674,8 +1692,7 @@
 								"parameters": [
 									{
 										"name": "name",
-										"type": "string",
-										"description": "name of the task to remove"
+										"type": "string"
 									}
 								],
 								"throws": [
@@ -1695,8 +1712,7 @@
 								"parameters": [
 									{
 										"name": "name",
-										"type": "string",
-										"description": "name of the task to skip"
+										"type": "string"
 									}
 								],
 								"throws": [
@@ -1716,8 +1732,7 @@
 								"parameters": [
 									{
 										"name": "name",
-										"type": "string",
-										"description": "name of the task to run exclusively"
+										"type": "string"
 									}
 								],
 								"throws": [
@@ -1733,7 +1748,6 @@
 								"doc_comment": "Run all benchmark tasks.",
 								"type_signature": "(): Promise<BenchmarkResult[]>",
 								"return_type": "Promise<BenchmarkResult[]>",
-								"return_description": "array of benchmark results",
 								"parameters": []
 							},
 							{
@@ -1742,13 +1756,11 @@
 								"doc_comment": "Format results as an ASCII table with percentiles, min/max, and relative performance.",
 								"type_signature": "(options?: BenchmarkFormatTableOptions | undefined): string",
 								"return_type": "string",
-								"return_description": "formatted table string",
 								"parameters": [
 									{
 										"name": "options",
 										"type": "BenchmarkFormatTableOptions | undefined",
-										"optional": true,
-										"description": "formatting options"
+										"optional": true
 									}
 								]
 							},
@@ -1787,19 +1799,19 @@
 							{
 								"name": "results",
 								"kind": "function",
-								"doc_comment": "Get the benchmark results.\nReturns a shallow copy to prevent external mutation.",
+								"doc_comment": "Get the benchmark results.",
 								"type_signature": "(): BenchmarkResult[]",
 								"return_type": "BenchmarkResult[]",
-								"return_description": "array of benchmark results",
+								"return_description": "shallow copy of the results array (prevents external mutation)",
 								"parameters": []
 							},
 							{
 								"name": "results_by_name",
 								"kind": "function",
-								"doc_comment": "Get results as a map for convenient lookup by task name.\nReturns a new Map each call to prevent external mutation.",
+								"doc_comment": "Get results as a map for convenient lookup by task name.",
 								"type_signature": "(): Map<string, BenchmarkResult>",
 								"return_type": "Map<string, BenchmarkResult>",
-								"return_description": "map of task name to benchmark result",
+								"return_description": "fresh `Map` of task name to benchmark result (prevents external mutation)",
 								"parameters": []
 							},
 							{
@@ -1814,7 +1826,7 @@
 							{
 								"name": "clear",
 								"kind": "function",
-								"doc_comment": "Clear everything (results and tasks).\nUse this to start fresh with a new set of benchmarks.",
+								"doc_comment": "Clear everything (results and tasks).",
 								"type_signature": "(): this",
 								"return_type": "this",
 								"return_description": "this `Benchmark` instance for chaining",
@@ -1842,15 +1854,14 @@
 						"name": "to_bytes",
 						"kind": "function",
 						"doc_comment": "Converts string or binary data to a `Uint8Array`.\nStrings are UTF-8 encoded. `Uint8Array` inputs are returned as-is.",
-						"source_line": 16,
+						"source_line": 15,
 						"type_signature": "(data: string | BufferSource): Uint8Array<ArrayBufferLike>",
 						"return_type": "Uint8Array<ArrayBufferLike>",
 						"return_description": "`Uint8Array` view of the data",
 						"parameters": [
 							{
 								"name": "data",
-								"type": "string | BufferSource",
-								"description": "string or `BufferSource` to convert"
+								"type": "string | BufferSource"
 							}
 						]
 					},
@@ -1858,15 +1869,14 @@
 						"name": "format_bytes",
 						"kind": "function",
 						"doc_comment": "Formats a byte count as a human-readable string.",
-						"source_line": 29,
+						"source_line": 27,
 						"type_signature": "(n: number): string",
 						"return_type": "string",
 						"return_description": "formatted string like `'1.2 KB'` or `'3.4 MB'`",
 						"parameters": [
 							{
 								"name": "n",
-								"type": "number",
-								"description": "byte count"
+								"type": "number"
 							}
 						]
 					}
@@ -2418,20 +2428,18 @@
 						"name": "deep_equal",
 						"kind": "function",
 						"doc_comment": "Deep equality comparison that checks both structure and type.\n\nKey behaviors:\n\n- Compares by constructor to prevent type confusion (security: `{}` ≠ `[]`, `{}` ≠ `new Map()`, `new ClassA()` ≠ `new ClassB()`)\n- Prevents asymmetry bugs: `deep_equal(a, b)` always equals `deep_equal(b, a)`\n- Compares only enumerable own properties (ignores prototypes, symbols, non-enumerable)\n- Special handling for: Date (timestamp), Number/Boolean (boxed primitives), Error (message/name + enumerable own properties)\n- Promises always return false (cannot be meaningfully compared)\n- Maps/Sets compare by reference for object keys/values",
-						"source_line": 17,
+						"source_line": 15,
 						"type_signature": "(a: unknown, b: unknown): boolean",
 						"return_type": "boolean",
 						"return_description": "true if deeply equal, false otherwise",
 						"parameters": [
 							{
 								"name": "a",
-								"type": "unknown",
-								"description": "first value to compare"
+								"type": "unknown"
 							},
 							{
 								"name": "b",
-								"type": "unknown",
-								"description": "second value to compare"
+								"type": "unknown"
 							}
 						]
 					}
@@ -2463,10 +2471,9 @@
 						"name": "diff_lines",
 						"kind": "function",
 						"doc_comment": "Generate a line-based diff between two strings using LCS algorithm.",
-						"source_line": 22,
+						"source_line": 21,
 						"type_signature": "(a: string, b: string): DiffLine[]",
 						"return_type": "DiffLine[]",
-						"return_description": "array of diff lines with type annotations",
 						"parameters": [
 							{
 								"name": "a",
@@ -2484,15 +2491,14 @@
 						"name": "filter_diff_context",
 						"kind": "function",
 						"doc_comment": "Filter diff to only include lines within N lines of context around changes.",
-						"source_line": 101,
+						"source_line": 99,
 						"type_signature": "(diff: DiffLine[], context_lines?: number): DiffLine[]",
 						"return_type": "DiffLine[]",
 						"return_description": "filtered diff with ellipsis markers for skipped regions",
 						"parameters": [
 							{
 								"name": "diff",
-								"type": "DiffLine[]",
-								"description": "the full diff lines"
+								"type": "DiffLine[]"
 							},
 							{
 								"name": "context_lines",
@@ -2506,7 +2512,7 @@
 						"name": "FormatDiffOptions",
 						"kind": "type",
 						"doc_comment": "Format options for diff output.",
-						"source_line": 154,
+						"source_line": 152,
 						"type_signature": "FormatDiffOptions",
 						"properties": [
 							{
@@ -2533,15 +2539,13 @@
 						"name": "format_diff",
 						"kind": "function",
 						"doc_comment": "Format a diff for display.",
-						"source_line": 172,
+						"source_line": 167,
 						"type_signature": "(diff: DiffLine[], current_path: string, desired_path: string, options?: FormatDiffOptions): string",
 						"return_type": "string",
-						"return_description": "formatted diff string",
 						"parameters": [
 							{
 								"name": "diff",
-								"type": "DiffLine[]",
-								"description": "the diff lines to format"
+								"type": "DiffLine[]"
 							},
 							{
 								"name": "current_path",
@@ -2556,7 +2560,6 @@
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2565,20 +2568,17 @@
 						"name": "generate_diff",
 						"kind": "function",
 						"doc_comment": "Generate a formatted diff between two strings.\n\nCombines `diff_lines`, `filter_diff_context`, and `format_diff` for convenience.\nReturns null if content is binary.",
-						"source_line": 220,
+						"source_line": 211,
 						"type_signature": "(current: string, desired: string, path: string, options?: FormatDiffOptions): string | null",
 						"return_type": "string | null",
-						"return_description": "formatted diff string, or null if binary",
 						"parameters": [
 							{
 								"name": "current",
-								"type": "string",
-								"description": "current content"
+								"type": "string"
 							},
 							{
 								"name": "desired",
-								"type": "string",
-								"description": "desired content"
+								"type": "string"
 							},
 							{
 								"name": "path",
@@ -2588,7 +2588,6 @@
 							{
 								"name": "options",
 								"type": "FormatDiffOptions",
-								"description": "formatting options",
 								"default_value": "{}"
 							}
 						]
@@ -2646,15 +2645,13 @@
 						"name": "swallow",
 						"kind": "function",
 						"doc_comment": "Stops an event from bubbling and doing default behavior.",
-						"source_line": 69,
+						"source_line": 67,
 						"type_signature": "<T extends Pick<Event, \"preventDefault\" | \"stopPropagation\" | \"stopImmediatePropagation\">>(event: T, immediate?: boolean, preventDefault?: boolean): T",
 						"return_type": "T",
-						"return_description": "the swallowed event",
 						"parameters": [
 							{
 								"name": "event",
-								"type": "T",
-								"description": "the event to swallow"
+								"type": "T"
 							},
 							{
 								"name": "immediate",
@@ -2674,7 +2671,7 @@
 						"name": "handle_target_value",
 						"kind": "function",
 						"doc_comment": "Handles the value of an event's target and invokes a callback.\nDefaults to swallowing the event to prevent default actions and propagation.",
-						"source_line": 91,
+						"source_line": 89,
 						"type_signature": "(cb: (value: any, event: any) => void, swallow_event?: boolean): (e: any) => void",
 						"return_type": "(e: any) => void",
 						"parameters": [
@@ -2693,7 +2690,7 @@
 						"name": "is_iframed",
 						"kind": "function",
 						"doc_comment": "Returns a boolean indicating if the current browser window, if any, is iframed inside of another.",
-						"source_line": 101,
+						"source_line": 99,
 						"type_signature": "(): boolean",
 						"return_type": "boolean",
 						"parameters": []
@@ -3167,8 +3164,14 @@
 					{
 						"name": "git_current_branch_name",
 						"kind": "function",
-						"doc_comment": "Returns the current git branch name or throws if something goes wrong.",
-						"source_line": 42,
+						"doc_comment": "Returns the current git branch name.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 43,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<GitBranch>",
 						"return_type": "Promise<GitBranch>",
 						"parameters": [
@@ -3182,11 +3185,16 @@
 					{
 						"name": "git_remote_branch_exists",
 						"kind": "function",
-						"doc_comment": "",
-						"source_line": 52,
+						"doc_comment": "Checks if a remote git branch exists.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the `git ls-remote` command fails for a reason other than the branch not existing"
+							}
+						],
+						"source_line": 54,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
-						"return_description": "a boolean indicating if the remote git branch exists",
 						"parameters": [
 							{
 								"name": "origin",
@@ -3208,11 +3216,10 @@
 					{
 						"name": "git_local_branch_exists",
 						"kind": "function",
-						"doc_comment": "",
-						"source_line": 80,
+						"doc_comment": "Checks if a local git branch exists.",
+						"source_line": 82,
 						"type_signature": "(branch: GitBranch, options?: SpawnOptions | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
-						"return_description": "a boolean indicating if the local git branch exists",
 						"parameters": [
 							{
 								"name": "branch",
@@ -3229,7 +3236,7 @@
 						"name": "GitWorkspaceStatus",
 						"kind": "type",
 						"doc_comment": "Git workspace status flags indicating which types of changes are present.",
-						"source_line": 94,
+						"source_line": 96,
 						"type_signature": "GitWorkspaceStatus",
 						"properties": [
 							{
@@ -3253,10 +3260,9 @@
 						"name": "git_parse_workspace_status",
 						"kind": "function",
 						"doc_comment": "Parses the output of `git status --porcelain -z` (v1 format) into a status object.\nThis is a pure function that can be tested independently.\n\nFormat: XY path\\0 where:\n- X = staged status (index)\n- Y = unstaged status (work tree)\n- path = file path (unescaped with -z)\n\nSupported status codes:\n- M = modified\n- A = added\n- D = deleted\n- R = renamed\n- C = copied\n- T = type changed (regular file, symbolic link or submodule)\n- U = unmerged\n- ? = untracked\n- ! = ignored\n\nFor renames/copies: XY new\\0old\\0 (two NUL-separated paths)\n\nNote: This implementation treats submodules the same as regular files.\nSubmodule-specific status codes (lowercase m, ?) are interpreted as changes.",
-						"source_line": 128,
+						"source_line": 129,
 						"type_signature": "(stdout: string | null): GitWorkspaceStatus",
 						"return_type": "GitWorkspaceStatus",
-						"return_description": "status object with flags for unstaged changes, staged changes, and untracked files",
 						"parameters": [
 							{
 								"name": "stdout",
@@ -3272,7 +3278,6 @@
 						"source_line": 178,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<GitWorkspaceStatus>",
 						"return_type": "Promise<GitWorkspaceStatus>",
-						"return_description": "status object with flags for unstaged changes, staged changes, and untracked files",
 						"parameters": [
 							{
 								"name": "options",
@@ -3360,8 +3365,14 @@
 					{
 						"name": "git_fetch",
 						"kind": "function",
-						"doc_comment": "Calls `git fetch` and throws if anything goes wrong.",
-						"source_line": 228,
+						"doc_comment": "Calls `git fetch`.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 229,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3385,8 +3396,14 @@
 					{
 						"name": "git_checkout",
 						"kind": "function",
-						"doc_comment": "Calls `git checkout` and throws if anything goes wrong.",
-						"source_line": 247,
+						"doc_comment": "Calls `git checkout`.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 249,
 						"type_signature": "(branch: GitBranch, options?: SpawnOptions | undefined): Promise<GitBranch | null>",
 						"return_type": "Promise<GitBranch | null>",
 						"return_description": "the previous branch name, if it changed",
@@ -3405,8 +3422,14 @@
 					{
 						"name": "git_pull",
 						"kind": "function",
-						"doc_comment": "Calls `git pull` and throws if anything goes wrong.",
-						"source_line": 267,
+						"doc_comment": "Calls `git pull`.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 270,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3430,8 +3453,14 @@
 					{
 						"name": "git_push",
 						"kind": "function",
-						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 283,
+						"doc_comment": "Calls `git push`.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 287,
 						"type_signature": "(origin: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined, set_upstream?: boolean): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3459,8 +3488,14 @@
 					{
 						"name": "git_push_to_create",
 						"kind": "function",
-						"doc_comment": "Calls `git push` and throws if anything goes wrong.",
-						"source_line": 303,
+						"doc_comment": "Calls `git push`, setting upstream if the remote branch does not yet exist.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 308,
 						"type_signature": "(origin?: GitOrigin, branch?: GitBranch | undefined, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3484,8 +3519,14 @@
 					{
 						"name": "git_delete_local_branch",
 						"kind": "function",
-						"doc_comment": "Deletes a branch locally and throws if anything goes wrong.",
-						"source_line": 327,
+						"doc_comment": "Deletes a branch locally.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 333,
 						"type_signature": "(branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3503,8 +3544,14 @@
 					{
 						"name": "git_delete_remote_branch",
 						"kind": "function",
-						"doc_comment": "Deletes a branch remotely and throws if anything goes wrong.",
-						"source_line": 342,
+						"doc_comment": "Deletes a branch remotely.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 349,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3527,7 +3574,7 @@
 						"name": "git_reset_branch_to_first_commit",
 						"kind": "function",
 						"doc_comment": "Resets the `target` branch back to its first commit both locally and remotely.",
-						"source_line": 358,
+						"source_line": 365,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3549,8 +3596,14 @@
 					{
 						"name": "git_current_commit_hash",
 						"kind": "function",
-						"doc_comment": "Returns the branch's latest commit hash or throws if something goes wrong.",
-						"source_line": 375,
+						"doc_comment": "Returns the branch's latest commit hash.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 383,
 						"type_signature": "(branch?: string | undefined, options?: SpawnOptions | undefined): Promise<string | null>",
 						"return_type": "Promise<string | null>",
 						"parameters": [
@@ -3569,8 +3622,14 @@
 					{
 						"name": "git_current_branch_first_commit_hash",
 						"kind": "function",
-						"doc_comment": "Returns the hash of the current branch's first commit or throws if something goes wrong.",
-						"source_line": 388,
+						"doc_comment": "Returns the hash of the current branch's first commit.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the underlying git command fails"
+							}
+						],
+						"source_line": 397,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<string>",
 						"return_type": "Promise<string>",
 						"parameters": [
@@ -3585,7 +3644,7 @@
 						"name": "git_check_setting_pull_rebase",
 						"kind": "function",
 						"doc_comment": "Returns the global git config setting for `pull.rebase`.",
-						"source_line": 403,
+						"source_line": 412,
 						"type_signature": "(options?: SpawnOptions | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"parameters": [
@@ -3600,7 +3659,7 @@
 						"name": "git_clone_locally",
 						"kind": "function",
 						"doc_comment": "Clones a branch locally to another directory and updates the origin to match the source.",
-						"source_line": 411,
+						"source_line": 420,
 						"type_signature": "(origin: GitOrigin, branch: GitBranch, source_dir: string, target_dir: string, options?: SpawnOptions | undefined): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -3762,15 +3821,14 @@
 						"name": "to_hex",
 						"kind": "function",
 						"doc_comment": "Converts a `Uint8Array` to a lowercase hex string.",
-						"source_line": 13,
+						"source_line": 12,
 						"type_signature": "(bytes: Uint8Array<ArrayBufferLike>): string",
 						"return_type": "string",
 						"return_description": "hex string with two characters per byte",
 						"parameters": [
 							{
 								"name": "bytes",
-								"type": "Uint8Array<ArrayBufferLike>",
-								"description": "binary data to encode"
+								"type": "Uint8Array<ArrayBufferLike>"
 							}
 						]
 					},
@@ -3778,7 +3836,7 @@
 						"name": "from_hex",
 						"kind": "function",
 						"doc_comment": "Decodes a hex string to a `Uint8Array`.\nWhitespace is stripped before parsing. Returns `null` for invalid hex.",
-						"source_line": 29,
+						"source_line": 28,
 						"type_signature": "(hex: string): Uint8Array<ArrayBufferLike> | null",
 						"return_type": "Uint8Array<ArrayBufferLike> | null",
 						"return_description": "decoded bytes, or `null` if the input is not valid hex",
@@ -3965,16 +4023,15 @@
 					{
 						"name": "json_stringify_deterministic",
 						"kind": "function",
-						"doc_comment": "Serializes a value to JSON with deterministic key ordering.\nRecursively sorts object keys alphabetically for consistent hashing.\nArrays and primitives are serialized as-is.",
-						"source_line": 50,
+						"doc_comment": "Serializes a value to JSON with deterministic key ordering.\nRecursively sorts object keys alphabetically for consistent hashing.",
+						"source_line": 48,
 						"type_signature": "(value: unknown): string",
 						"return_type": "string",
 						"return_description": "deterministic JSON string representation",
 						"parameters": [
 							{
 								"name": "value",
-								"type": "unknown",
-								"description": "any JSON-serializable value"
+								"type": "unknown"
 							}
 						]
 					}
@@ -4130,15 +4187,14 @@
 						"name": "log_level_to_number",
 						"kind": "function",
 						"doc_comment": "Converts a log level to its numeric value for comparison.\nHigher numbers indicate more verbose logging.",
-						"source_line": 48,
+						"source_line": 47,
 						"type_signature": "(level: LogLevel): number",
 						"return_type": "number",
 						"return_description": "numeric value (0-4)",
 						"parameters": [
 							{
 								"name": "level",
-								"type": "LogLevel",
-								"description": "the log level to convert"
+								"type": "LogLevel"
 							}
 						]
 					},
@@ -4149,18 +4205,17 @@
 						"throws": [
 							{
 								"type": "Error",
-								"description": "if value is provided but invalid"
+								"description": "if `value` is provided but invalid"
 							}
 						],
-						"source_line": 56,
+						"source_line": 54,
 						"type_signature": "(value: string | undefined): LogLevel | undefined",
 						"return_type": "LogLevel | undefined",
-						"return_description": "the validated log level, or undefined if value is undefined",
+						"return_description": "the validated log level, or `undefined` if `value` is `undefined`",
 						"parameters": [
 							{
 								"name": "value",
-								"type": "string | undefined",
-								"description": "the value to parse as a log level"
+								"type": "string | undefined"
 							}
 						]
 					},
@@ -4171,7 +4226,7 @@
 						"examples": [
 							"```ts\n// Basic logger\nconst log = new Logger('app');\nlog.info('starting'); // [app] ➤ starting\n\n// Child logger\nconst db_log = log.child('db');\ndb_log.info('connected'); // [app:db] ➤ connected\n\n// Custom configuration\nconst verbose_log = new Logger('debug', { level: 'debug', colors: true });\n```"
 						],
-						"source_line": 92,
+						"source_line": 90,
 						"members": [
 							{
 								"name": "label",
@@ -4311,14 +4366,13 @@
 							{
 								"name": "raw",
 								"kind": "function",
-								"doc_comment": "Logs raw output without any prefix, formatting, or level filtering.\nBypasses the logger's level checking, prefix formatting, and color application entirely.\nUseful for outputting structured data or when you need full control over formatting.\n\nNote: This method ignores the configured log level - it always outputs regardless of\nwhether the logger is set to 'off' or any other level.",
+								"doc_comment": "Logs raw output without any prefix, formatting, or level filtering.\nBypasses the logger's level checking, prefix formatting, and color application entirely.\n\nNote: This method ignores the configured log level - it always outputs regardless of\nwhether the logger is set to `'off'` or any other level.",
 								"type_signature": "(...args: unknown[]): void",
 								"return_type": "void",
 								"parameters": [
 									{
 										"name": "args",
-										"type": "unknown[]",
-										"description": "values to log directly to console"
+										"type": "unknown[]"
 									}
 								]
 							}
@@ -4327,7 +4381,7 @@
 					{
 						"name": "LoggerOptions",
 						"kind": "type",
-						"source_line": 450,
+						"source_line": 447,
 						"type_signature": "LoggerOptions",
 						"properties": [
 							{
@@ -4878,7 +4932,8 @@
 					{
 						"name": "omit_undefined",
 						"kind": "function",
-						"doc_comment": "`omit_undefined` is a commonly used form of `pick_by`.\nSee this issue for why it's used so much:\nhttps://github.com/Microsoft/TypeScript/issues/13195",
+						"doc_comment": "A commonly used form of `pick_by`.",
+						"see_also": ["{@link https://github.com/Microsoft/TypeScript/issues/13195}"],
 						"source_line": 67,
 						"type_signature": "<T extends Record<string | number, any>>(obj: T): T",
 						"return_type": "T",
@@ -4886,8 +4941,7 @@
 						"parameters": [
 							{
 								"name": "obj",
-								"type": "T",
-								"description": "the object to filter"
+								"type": "T"
 							}
 						]
 					},
@@ -4920,14 +4974,13 @@
 						"name": "traverse",
 						"kind": "function",
 						"doc_comment": "Performs a depth-first traversal of an object's enumerable properties,\ncalling `cb` for every key and value with the current `obj` context.",
-						"source_line": 96,
+						"source_line": 95,
 						"type_signature": "(obj: any, cb: (key: string, value: any, obj: any) => void): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "obj",
-								"type": "any",
-								"description": "any object with enumerable properties"
+								"type": "any"
 							},
 							{
 								"name": "cb",
@@ -4939,7 +4992,7 @@
 					{
 						"name": "transform_empty_object_to_undefined",
 						"kind": "function",
-						"source_line": 105,
+						"source_line": 104,
 						"type_signature": "<T>(obj: T): T | undefined",
 						"return_type": "T | undefined",
 						"parameters": [
@@ -5149,14 +5202,13 @@
 						"name": "slugify",
 						"kind": "function",
 						"doc_comment": "Converts a string into a URL-compatible slug.",
-						"source_line": 129,
+						"source_line": 127,
 						"type_signature": "(str: string, map_special_characters?: boolean): string",
 						"return_type": "string",
 						"parameters": [
 							{
 								"name": "str",
-								"type": "string",
-								"description": "the string to convert"
+								"type": "string"
 							},
 							{
 								"name": "map_special_characters",
@@ -5198,7 +5250,7 @@
 						"name": "configure_print_colors",
 						"kind": "function",
 						"doc_comment": "Configures the module-level styling function for colored output.",
-						"source_line": 12,
+						"source_line": 11,
 						"type_signature": "(s: ((format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string) | null | undefined): (format: ForegroundColors | ... 2 more ... | (ForegroundColors | ... 1 more ... | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
 						"return_type": "(format: ForegroundColors | BackgroundColors | Modifiers | (ForegroundColors | BackgroundColors | Modifiers)[], text: string, options?: StyleTextOptions | undefined) => string",
 						"parameters": [
@@ -5212,7 +5264,7 @@
 						"name": "print_key_value",
 						"kind": "function",
 						"doc_comment": "Formats a key-value pair for printing.",
-						"source_line": 22,
+						"source_line": 21,
 						"type_signature": "(key: string, value: string | number): string",
 						"return_type": "string",
 						"parameters": [
@@ -5230,7 +5282,7 @@
 						"name": "print_ms",
 						"kind": "function",
 						"doc_comment": "Formats a `number` of milliseconds for printing.",
-						"source_line": 28,
+						"source_line": 27,
 						"type_signature": "(ms: number, decimals?: number | undefined, separator?: string | undefined): string",
 						"return_type": "string",
 						"parameters": [
@@ -5254,7 +5306,7 @@
 						"name": "print_number_with_separators",
 						"kind": "function",
 						"doc_comment": "Formats a `number` with separators for improved readability.",
-						"source_line": 37,
+						"source_line": 36,
 						"type_signature": "(v: string, separator?: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -5273,7 +5325,7 @@
 						"name": "print_string",
 						"kind": "function",
 						"doc_comment": "Formats a `string` for printing.",
-						"source_line": 54,
+						"source_line": 53,
 						"type_signature": "(value: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -5287,7 +5339,7 @@
 						"name": "print_number",
 						"kind": "function",
 						"doc_comment": "Formats a `number` for printing.",
-						"source_line": 59,
+						"source_line": 58,
 						"type_signature": "(value: number): string",
 						"return_type": "string",
 						"parameters": [
@@ -5301,7 +5353,7 @@
 						"name": "print_boolean",
 						"kind": "function",
 						"doc_comment": "Formats a `boolean` for printing.",
-						"source_line": 64,
+						"source_line": 63,
 						"type_signature": "(value: boolean): string",
 						"return_type": "string",
 						"parameters": [
@@ -5315,7 +5367,7 @@
 						"name": "print_value",
 						"kind": "function",
 						"doc_comment": "Formats any value for printing.",
-						"source_line": 69,
+						"source_line": 68,
 						"type_signature": "(value: unknown): string",
 						"return_type": "string",
 						"parameters": [
@@ -5329,7 +5381,7 @@
 						"name": "print_error",
 						"kind": "function",
 						"doc_comment": "Formats an error for printing.\nBecause throwing errors and rejecting promises isn't typesafe,\ndon't assume the arg is an `Error` and try to return something useful.",
-						"source_line": 92,
+						"source_line": 91,
 						"type_signature": "(err: Error): string",
 						"return_type": "string",
 						"parameters": [
@@ -5343,7 +5395,7 @@
 						"name": "print_timing",
 						"kind": "function",
 						"doc_comment": "Formats a timing entry with `key` for printing.",
-						"source_line": 101,
+						"source_line": 100,
 						"type_signature": "(key: string | number, timing: number | undefined): string",
 						"return_type": "string",
 						"parameters": [
@@ -5361,7 +5413,7 @@
 						"name": "print_timings",
 						"kind": "function",
 						"doc_comment": "Prints all timings in a `Timings` object.",
-						"source_line": 107,
+						"source_line": 106,
 						"type_signature": "(timings: Timings, log: Logger): void",
 						"return_type": "void",
 						"parameters": [
@@ -5601,17 +5653,14 @@
 								"doc_comment": "Spawns a process and tracks it in this registry.\nThe process is automatically unregistered when it exits.",
 								"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 								"return_type": "SpawnedProcess",
-								"return_description": "handle with `child` process and `closed` promise",
 								"parameters": [
 									{
 										"name": "command",
-										"type": "string",
-										"description": "the command to run"
+										"type": "string"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
@@ -5619,6 +5668,12 @@
 										"type": "SpawnProcessOptions | undefined",
 										"optional": true,
 										"description": "spawn options including `signal` and `timeout_ms`"
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if `timeout_ms` is negative"
 									}
 								]
 							},
@@ -5632,20 +5687,23 @@
 								"parameters": [
 									{
 										"name": "command",
-										"type": "string",
-										"description": "the command to run"
+										"type": "string"
 									},
 									{
 										"name": "args",
 										"type": "readonly string[]",
-										"description": "arguments to pass to the command",
 										"default_value": "[]"
 									},
 									{
 										"name": "options",
 										"type": "SpawnProcessOptions | undefined",
-										"optional": true,
-										"description": "spawn options"
+										"optional": true
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if `timeout_ms` is negative"
 									}
 								]
 							},
@@ -5655,18 +5713,22 @@
 								"doc_comment": "Kills a child process and waits for it to exit.",
 								"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 								"return_type": "Promise<SpawnResult>",
-								"return_description": "the spawn result after the process exits",
 								"parameters": [
 									{
 										"name": "child",
-										"type": "ChildProcess",
-										"description": "the child process to kill"
+										"type": "ChildProcess"
 									},
 									{
 										"name": "options",
 										"type": "DespawnOptions | undefined",
 										"optional": true,
 										"description": "kill options including signal and timeout"
+									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if `timeout_ms` is negative"
 									}
 								]
 							},
@@ -5676,7 +5738,6 @@
 								"doc_comment": "Kills all processes in this registry.",
 								"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 								"return_type": "Promise<SpawnResult[]>",
-								"return_description": "array of spawn results",
 								"parameters": [
 									{
 										"name": "options",
@@ -5700,6 +5761,12 @@
 										"optional": true,
 										"description": "configuration options"
 									}
+								],
+								"throws": [
+									{
+										"type": "Error",
+										"description": "if a handler is already attached to this registry"
+									}
 								]
 							}
 						]
@@ -5708,7 +5775,7 @@
 						"name": "process_registry_default",
 						"kind": "variable",
 						"doc_comment": "Default process registry used by module-level spawn functions.\nFor testing or isolated process groups, create a new `ProcessRegistry` instance.",
-						"source_line": 457,
+						"source_line": 454,
 						"type_signature": "ProcessRegistry"
 					},
 					{
@@ -5718,7 +5785,7 @@
 						"examples": [
 							"```ts\nconst {child, closed} = spawn_process('node', ['server.js']);\n// Later...\nchild.kill();\nconst result = await closed;\n```"
 						],
-						"source_line": 475,
+						"source_line": 472,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): SpawnedProcess",
 						"return_type": "SpawnedProcess",
 						"parameters": [
@@ -5745,7 +5812,7 @@
 						"examples": [
 							"```ts\nconst result = await spawn('npm', ['install']);\nif (!result.ok) console.error('Install failed');\n```"
 						],
-						"source_line": 491,
+						"source_line": 488,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -5772,7 +5839,7 @@
 						"examples": [
 							"```ts\nconst {result, stdout} = await spawn_out('git', ['status', '--porcelain']);\nif (result.ok && stdout) console.log(stdout);\n```"
 						],
-						"source_line": 506,
+						"source_line": 503,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): Promise<SpawnedOut>",
 						"return_type": "Promise<SpawnedOut>",
 						"parameters": [
@@ -5799,7 +5866,7 @@
 						"examples": [
 							"```ts\nconst result = await despawn(child, {timeout_ms: 5000});\n// If process ignores SIGTERM, SIGKILL sent after 5s\n```"
 						],
-						"source_line": 521,
+						"source_line": 518,
 						"type_signature": "(child: ChildProcess, options?: DespawnOptions | undefined): Promise<SpawnResult>",
 						"return_type": "Promise<SpawnResult>",
 						"parameters": [
@@ -5818,7 +5885,7 @@
 						"name": "despawn_all",
 						"kind": "function",
 						"doc_comment": "Kills all processes in the default registry.",
-						"source_line": 527,
+						"source_line": 524,
 						"type_signature": "(options?: DespawnOptions | undefined): Promise<SpawnResult[]>",
 						"return_type": "Promise<SpawnResult[]>",
 						"parameters": [
@@ -5834,7 +5901,7 @@
 						"kind": "function",
 						"doc_comment": "Attaches an `uncaughtException` handler to the default registry.",
 						"see_also": ["`ProcessRegistry.attach_error_handler`"],
-						"source_line": 535,
+						"source_line": 532,
 						"type_signature": "(options?: { to_error_label?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; map_error_text?: ((err: Error, origin: UncaughtExceptionOrigin) => string | null) | undefined; handle_error?: ((err: Error, origin: UncaughtExceptionOrigin) => void) | undefined; graceful_timeout_ms?: number | ... 1 more ... | undefined; } | undefined): () => void",
 						"return_type": "() => void",
 						"parameters": [
@@ -5852,20 +5919,18 @@
 						"examples": [
 							"```ts\n// Simple detached process\nconst result = spawn_detached('node', ['daemon.js'], {cwd: '/app'});\n\n// With log file (caller handles file opening)\nimport {openSync, closeSync} from 'node:fs';\nconst log_fd = openSync('/var/log/daemon.log', 'a');\nconst result = spawn_detached('node', ['daemon.js'], {\n  cwd: '/app',\n  stdio: ['ignore', log_fd, log_fd],\n});\ncloseSync(log_fd);\n```"
 						],
-						"source_line": 565,
+						"source_line": 560,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnOptions | undefined): SpawnDetachedResult",
 						"return_type": "SpawnDetachedResult",
 						"return_description": "result with pid on success, or error message on failure",
 						"parameters": [
 							{
 								"name": "command",
-								"type": "string",
-								"description": "the command to run"
+								"type": "string"
 							},
 							{
 								"name": "args",
 								"type": "readonly string[]",
-								"description": "arguments to pass to the command",
 								"default_value": "[]"
 							},
 							{
@@ -5881,7 +5946,7 @@
 						"kind": "function",
 						"doc_comment": "Formats a child process for display.",
 						"examples": ["```ts\n`pid(1234) <- node server.js`\n```"],
-						"source_line": 605,
+						"source_line": 600,
 						"type_signature": "(child: ChildProcess): string",
 						"return_type": "string",
 						"parameters": [
@@ -5895,7 +5960,7 @@
 						"name": "print_spawn_result",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for display.\nReturns `'ok'` for success, or the error/signal/code for failures.",
-						"source_line": 612,
+						"source_line": 607,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5909,7 +5974,7 @@
 						"name": "spawn_result_to_message",
 						"kind": "function",
 						"doc_comment": "Formats a spawn result for use in error messages.",
-						"source_line": 627,
+						"source_line": 622,
 						"type_signature": "(result: SpawnResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -5923,7 +5988,7 @@
 						"name": "RestartableProcess",
 						"kind": "type",
 						"doc_comment": "Handle for a process that can be restarted.\nExposes `closed` promise for observing exits and implementing restart policies.",
-						"source_line": 646,
+						"source_line": 641,
 						"type_signature": "RestartableProcess",
 						"properties": [
 							{
@@ -5976,7 +6041,7 @@
 							"Simple restart on crash\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok) break; // Clean exit\nawait rp.restart();\n}\n```",
 							"Restart with backoff\n```ts\nconst rp = spawn_restartable_process('node', ['server.js']);\nlet failures = 0;\n\nwhile (rp.active) {\nconst result = await rp.closed;\nif (result.ok || ++failures > 5) break;\nawait new Promise((r) => setTimeout(r, 1000 * failures));\nawait rp.restart();\n}\n```"
 						],
-						"source_line": 715,
+						"source_line": 710,
 						"type_signature": "(command: string, args?: readonly string[], options?: SpawnProcessOptions | undefined): RestartableProcess",
 						"return_type": "RestartableProcess",
 						"parameters": [
@@ -6000,7 +6065,7 @@
 						"name": "process_is_pid_running",
 						"kind": "function",
 						"doc_comment": "Checks if a process with the given PID is running.\nUses signal 0 which checks existence without sending a signal.",
-						"source_line": 818,
+						"source_line": 813,
 						"type_signature": "(pid: number): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if the process exists (even without permission to signal it),\n`false` if the process doesn't exist or if pid is invalid (non-positive, non-integer, NaN, Infinity)",
@@ -6298,21 +6363,24 @@
 						"name": "unwrap",
 						"kind": "function",
 						"doc_comment": "A helper that says,\n\"hey I know this is wrapped in a `Result`, but I expect it to be `ok`,\nso if it's not, I understand it will throw an error that wraps the result\".",
-						"source_line": 28,
+						"throws": [
+							{
+								"type": "ResultError",
+								"description": "if `result.ok` is false"
+							}
+						],
+						"source_line": 27,
 						"type_signature": "<TValue extends { value?: unknown; }, TError extends { message?: string; }>(result: Result<TValue, TError>, message?: string | undefined): TValue[\"value\"]",
 						"return_type": "TValue[\"value\"]",
-						"return_description": "the wrapped value",
 						"parameters": [
 							{
 								"name": "result",
-								"type": "Result<TValue, TError>",
-								"description": "some `Result` object"
+								"type": "Result<TValue, TError>"
 							},
 							{
 								"name": "message",
 								"type": "string | undefined",
-								"optional": true,
-								"description": "optional custom error message"
+								"optional": true
 							}
 						]
 					},
@@ -6320,7 +6388,7 @@
 						"name": "ResultError",
 						"kind": "class",
 						"doc_comment": "A custom error class that's thrown by `unwrap`.\nWraps a failed `Result` with an optional message,\nand also accepts an optional message that overrides the result's.\nUseful for generic handling of unwrapped results\nto forward custom messages and other failed result data.",
-						"source_line": 43,
+						"source_line": 42,
 						"extends": ["Error"],
 						"implements": [],
 						"members": [
@@ -6362,20 +6430,23 @@
 						"name": "unwrap_error",
 						"kind": "function",
 						"doc_comment": "A helper that does the opposite of `unwrap`, throwing if the `Result` is ok.\nNote that while `unwrap` returns the wrapped `value`, `unwrap_error` returns the entire result.",
-						"source_line": 61,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `result.ok` is true"
+							}
+						],
+						"source_line": 59,
 						"type_signature": "<TError extends object>(result: Result<object, TError>, message?: string): { ok: false; } & TError",
 						"return_type": "{ ok: false; } & TError",
-						"return_description": "the type-narrowed result",
 						"parameters": [
 							{
 								"name": "result",
-								"type": "Result<object, TError>",
-								"description": "some `Result` object"
+								"type": "Result<object, TError>"
 							},
 							{
 								"name": "message",
 								"type": "string",
-								"description": "optional custom error message",
 								"default_value": "'Failed to unwrap result error'"
 							}
 						]
@@ -6615,14 +6686,13 @@
 						"name": "stats_percentile",
 						"kind": "function",
 						"doc_comment": "Calculate a percentile of an array of numbers using linear interpolation.\nUses the \"R-7\" method (default in R, NumPy, Excel) which interpolates between\ndata points for more accurate percentile estimates, especially with smaller samples.",
-						"source_line": 67,
+						"source_line": 66,
 						"type_signature": "(values: number[], p: number): number",
 						"return_type": "number",
 						"parameters": [
 							{
 								"name": "values",
-								"type": "number[]",
-								"description": "array of numbers"
+								"type": "number[]"
 							},
 							{
 								"name": "p",
@@ -6635,7 +6705,7 @@
 						"name": "stats_cv",
 						"kind": "function",
 						"doc_comment": "Calculate the coefficient of variation (CV).\nCV = standard deviation / mean, expressed as a ratio.\nUseful for comparing relative variability between datasets.",
-						"source_line": 93,
+						"source_line": 92,
 						"type_signature": "(mean: number, std_dev: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6653,7 +6723,7 @@
 						"name": "stats_min_max",
 						"kind": "function",
 						"doc_comment": "Calculate min and max values.\nNaN values are ignored.",
-						"source_line": 102,
+						"source_line": 101,
 						"type_signature": "(values: number[]): { min: number; max: number; }",
 						"return_type": "{ min: number; max: number; }",
 						"parameters": [
@@ -6667,7 +6737,7 @@
 						"name": "StatsOutlierResult",
 						"kind": "type",
 						"doc_comment": "Result from outlier detection.",
-						"source_line": 119,
+						"source_line": 118,
 						"type_signature": "StatsOutlierResult",
 						"properties": [
 							{
@@ -6688,7 +6758,7 @@
 						"name": "StatsOutliersIqrOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for IQR outlier detection.",
-						"source_line": 129,
+						"source_line": 128,
 						"type_signature": "StatsOutliersIqrOptions",
 						"properties": [
 							{
@@ -6709,7 +6779,7 @@
 						"name": "stats_outliers_iqr",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the IQR (Interquartile Range) method.\nValues outside [Q1 - multiplier*IQR, Q3 + multiplier*IQR] are considered outliers.",
-						"source_line": 140,
+						"source_line": 139,
 						"type_signature": "(values: number[], options?: StatsOutliersIqrOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -6728,7 +6798,7 @@
 						"name": "StatsOutliersMadOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for MAD outlier detection.",
-						"source_line": 180,
+						"source_line": 179,
 						"type_signature": "StatsOutliersMadOptions",
 						"properties": [
 							{
@@ -6785,7 +6855,7 @@
 						"name": "stats_outliers_mad",
 						"kind": "function",
 						"doc_comment": "Detect outliers using the MAD (Median Absolute Deviation) method.\nMore robust than IQR for skewed distributions.\nUses modified Z-score: |0.6745 * (x - median) / MAD|\nValues with modified Z-score > threshold are considered outliers.",
-						"source_line": 205,
+						"source_line": 204,
 						"type_signature": "(values: number[], options?: StatsOutliersMadOptions | undefined): StatsOutlierResult",
 						"return_type": "StatsOutlierResult",
 						"parameters": [
@@ -6804,7 +6874,7 @@
 						"name": "STATS_CONFIDENCE_Z_SCORES",
 						"kind": "variable",
 						"doc_comment": "Common z-scores for confidence intervals.",
-						"source_line": 282,
+						"source_line": 281,
 						"type_signature": "Record<number, number>"
 					},
 					{
@@ -6814,7 +6884,13 @@
 						"examples": [
 							"```ts\nstats_confidence_level_to_z_score(0.95); // 1.96\nstats_confidence_level_to_z_score(0.99); // 2.576\n```"
 						],
-						"source_line": 300,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `level` is not in the open interval (0, 1)"
+							}
+						],
+						"source_line": 301,
 						"type_signature": "(level: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6828,7 +6904,7 @@
 						"name": "StatsConfidenceIntervalOptions",
 						"kind": "type",
 						"doc_comment": "Configuration options for confidence interval calculation.",
-						"source_line": 328,
+						"source_line": 329,
 						"type_signature": "StatsConfidenceIntervalOptions",
 						"properties": [
 							{
@@ -6849,21 +6925,19 @@
 						"name": "stats_confidence_interval",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval for the mean.",
-						"source_line": 341,
+						"source_line": 340,
 						"type_signature": "(values: number[], options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
-						"return_description": "[lower_bound, upper_bound]",
+						"return_description": "`[lower_bound, upper_bound]`",
 						"parameters": [
 							{
 								"name": "values",
-								"type": "number[]",
-								"description": "array of numbers"
+								"type": "number[]"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
-								"optional": true,
-								"description": "configuration options"
+								"optional": true
 							}
 						]
 					},
@@ -6871,31 +6945,27 @@
 						"name": "stats_confidence_interval_from_summary",
 						"kind": "function",
 						"doc_comment": "Calculate confidence interval from summary statistics (mean, std_dev, sample_size).\nUseful when raw data is not available.",
-						"source_line": 362,
+						"source_line": 357,
 						"type_signature": "(mean: number, std_dev: number, sample_size: number, options?: StatsConfidenceIntervalOptions | undefined): [number, number]",
 						"return_type": "[number, number]",
-						"return_description": "[lower_bound, upper_bound]",
+						"return_description": "`[lower_bound, upper_bound]`",
 						"parameters": [
 							{
 								"name": "mean",
-								"type": "number",
-								"description": "mean of the data"
+								"type": "number"
 							},
 							{
 								"name": "std_dev",
-								"type": "number",
-								"description": "standard deviation of the data"
+								"type": "number"
 							},
 							{
 								"name": "sample_size",
-								"type": "number",
-								"description": "number of samples"
+								"type": "number"
 							},
 							{
 								"name": "options",
 								"type": "StatsConfidenceIntervalOptions | undefined",
-								"optional": true,
-								"description": "configuration options"
+								"optional": true
 							}
 						]
 					},
@@ -6903,7 +6973,7 @@
 						"name": "StatsWelchTTestResult",
 						"kind": "type",
 						"doc_comment": "Result from Welch's t-test calculation.",
-						"source_line": 390,
+						"source_line": 385,
 						"type_signature": "StatsWelchTTestResult",
 						"properties": [
 							{
@@ -6923,40 +6993,34 @@
 					{
 						"name": "stats_welch_t_test",
 						"kind": "function",
-						"doc_comment": "Calculate Welch's t-test statistic and degrees of freedom.\nWelch's t-test is more robust than Student's t-test when variances are unequal.",
-						"source_line": 408,
+						"doc_comment": "Calculate Welch's t-test statistic and degrees of freedom.\nWelch's t-test is more robust than Student's t-test when variances are unequal.\n\nParams suffixed `1` describe the first sample, `2` the second.",
+						"source_line": 398,
 						"type_signature": "(mean1: number, std1: number, n1: number, mean2: number, std2: number, n2: number): StatsWelchTTestResult",
 						"return_type": "StatsWelchTTestResult",
 						"parameters": [
 							{
 								"name": "mean1",
-								"type": "number",
-								"description": "mean of first sample"
+								"type": "number"
 							},
 							{
 								"name": "std1",
-								"type": "number",
-								"description": "standard deviation of first sample"
+								"type": "number"
 							},
 							{
 								"name": "n1",
-								"type": "number",
-								"description": "size of first sample"
+								"type": "number"
 							},
 							{
 								"name": "mean2",
-								"type": "number",
-								"description": "mean of second sample"
+								"type": "number"
 							},
 							{
 								"name": "std2",
-								"type": "number",
-								"description": "standard deviation of second sample"
+								"type": "number"
 							},
 							{
 								"name": "n2",
-								"type": "number",
-								"description": "size of second sample"
+								"type": "number"
 							}
 						]
 					},
@@ -6964,7 +7028,7 @@
 						"name": "stats_normal_cdf",
 						"kind": "function",
 						"doc_comment": "Standard normal CDF approximation (Abramowitz and Stegun formula 7.1.26).",
-						"source_line": 435,
+						"source_line": 425,
 						"type_signature": "(x: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6978,7 +7042,7 @@
 						"name": "stats_ln_gamma",
 						"kind": "function",
 						"doc_comment": "Log gamma function approximation (Lanczos approximation).",
-						"source_line": 446,
+						"source_line": 436,
 						"type_signature": "(z: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -6992,7 +7056,7 @@
 						"name": "stats_incomplete_beta",
 						"kind": "function",
 						"doc_comment": "Approximate regularized incomplete beta function for p-value calculation.\nUses continued fraction expansion for reasonable accuracy.",
-						"source_line": 471,
+						"source_line": 461,
 						"type_signature": "(x: number, a: number, b: number): number",
 						"return_type": "number",
 						"parameters": [
@@ -7014,7 +7078,7 @@
 						"name": "stats_t_distribution_p_value",
 						"kind": "function",
 						"doc_comment": "Approximate two-tailed p-value from t-distribution.\nFor large df (>100), uses normal approximation.\nFor smaller df, uses incomplete beta function.",
-						"source_line": 528,
+						"source_line": 518,
 						"type_signature": "(t: number, df: number): number",
 						"return_type": "number",
 						"return_description": "two-tailed p-value",
@@ -7285,20 +7349,18 @@
 						"name": "levenshtein_distance",
 						"kind": "function",
 						"doc_comment": "Calculates the Levenshtein distance between two strings.\nUseful for typo detection and fuzzy matching.",
-						"source_line": 175,
+						"source_line": 173,
 						"type_signature": "(a: string, b: string): number",
 						"return_type": "number",
 						"return_description": "the edit distance between the strings",
 						"parameters": [
 							{
 								"name": "a",
-								"type": "string",
-								"description": "first string"
+								"type": "string"
 							},
 							{
 								"name": "b",
-								"type": "string",
-								"description": "second string"
+								"type": "string"
 							}
 						]
 					},
@@ -7306,7 +7368,7 @@
 						"name": "escape_js_string",
 						"kind": "function",
 						"doc_comment": "Escapes a string for use inside a single-quoted JS string literal.\n\nUses a single-pass regex replacement to escape backslashes, single quotes,\nnewlines, carriage returns, and Unicode line/paragraph separators.",
-						"source_line": 218,
+						"source_line": 216,
 						"type_signature": "(value: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -7320,15 +7382,13 @@
 						"name": "string_is_binary",
 						"kind": "function",
 						"doc_comment": "Check if content appears to be binary.\n\nChecks for null bytes in the first 8KB of content.",
-						"source_line": 246,
+						"source_line": 241,
 						"type_signature": "(content: string): boolean",
 						"return_type": "boolean",
-						"return_description": "true if content appears to be binary",
 						"parameters": [
 							{
 								"name": "content",
-								"type": "string",
-								"description": "content to check"
+								"type": "string"
 							}
 						]
 					}
@@ -7392,20 +7452,18 @@
 						"name": "find_attribute",
 						"kind": "function",
 						"doc_comment": "Finds an attribute by name on a component AST node.\n\nIterates the node's `attributes` array and returns the first `Attribute`\nnode whose `name` matches. Skips `SpreadAttribute`, directive, and other node types.",
-						"source_line": 51,
+						"source_line": 49,
 						"type_signature": "(node: Component, name: string): Attribute | undefined",
 						"return_type": "Attribute | undefined",
 						"return_description": "the matching `Attribute` node, or `undefined` if not found",
 						"parameters": [
 							{
 								"name": "node",
-								"type": "Component",
-								"description": "the component AST node to search"
+								"type": "Component"
 							},
 							{
 								"name": "name",
-								"type": "string",
-								"description": "the attribute name to find"
+								"type": "string"
 							}
 						]
 					},
@@ -7413,7 +7471,7 @@
 						"name": "evaluate_static_expr",
 						"kind": "function",
 						"doc_comment": "Recursively evaluates an expression AST node to a static string value.\n\nHandles string `Literal`, `TemplateLiteral` (including interpolations when all\nexpressions resolve), `BinaryExpression` with `+`, and `Identifier` lookup\nvia an optional bindings map built by `build_static_bindings`.\nReturns `null` for dynamic expressions, non-string literals, or unsupported node types.",
-						"source_line": 72,
+						"source_line": 70,
 						"type_signature": "(expr: Expression, bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
 						"return_description": "the resolved static string, or `null` if the expression is dynamic",
@@ -7435,7 +7493,7 @@
 						"name": "extract_static_string",
 						"kind": "function",
 						"doc_comment": "Extracts a static string value from a Svelte attribute value AST node.\n\nHandles three forms:\n- Boolean `true` (bare attribute like `inline`) -- returns `null`.\n- Array with a single `Text` node (quoted attribute like `content=\"text\"`) --\n  returns the text data.\n- `ExpressionTag` (expression like `content={'text'}`) -- delegates to `evaluate_static_expr`.\n\nReturns `null` for null literals, mixed arrays, dynamic expressions, and non-string values.",
-						"source_line": 123,
+						"source_line": 121,
 						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], bindings?: ReadonlyMap<string, string> | undefined): string | null",
 						"return_type": "string | null",
 						"return_description": "the resolved static string, or `null` if the value is dynamic",
@@ -7457,7 +7515,7 @@
 						"name": "ConditionalChainBranch",
 						"kind": "type",
 						"doc_comment": "A single branch in a conditional chain extracted from nested ternary expressions.",
-						"source_line": 147,
+						"source_line": 145,
 						"type_signature": "ConditionalChainBranch",
 						"properties": [
 							{
@@ -7478,7 +7536,7 @@
 						"name": "try_extract_conditional_chain",
 						"kind": "function",
 						"doc_comment": "Extracts a chain of conditional expressions where all leaf values are static strings.\n\nHandles nested ternaries like `a ? 'x' : b ? 'y' : 'z'` by iteratively walking\nthe right-recursive `ConditionalExpression` chain. At each level, evaluates the\nconsequent via `evaluate_static_expr` and continues into the alternate if it is\nanother `ConditionalExpression`. The final alternate is the else branch.\n\nReturns `null` if the attribute value is not an `ExpressionTag` containing a\n`ConditionalExpression`, if any leaf fails to resolve to a static string, or\nif the chain exceeds 10 branches (safety limit).\n\nA 2-branch result covers the simple ternary case (`a ? 'x' : 'y'`).",
-						"source_line": 173,
+						"source_line": 171,
 						"type_signature": "(value: true | ExpressionTag | (ExpressionTag | Text)[], source: string, bindings: ReadonlyMap<string, string>): ConditionalChainBranch[] | null",
 						"return_type": "ConditionalChainBranch[] | null",
 						"return_description": "array of conditional chain branches, or `null` if not extractable",
@@ -7504,7 +7562,7 @@
 						"name": "build_static_bindings",
 						"kind": "function",
 						"doc_comment": "Builds a map of statically resolvable `const` bindings from a Svelte AST.\n\nScans top-level `const` variable declarations in both instance and module scripts.\nFor each declarator with a plain `Identifier` pattern and a statically evaluable\ninitializer, adds the binding to the map. Processes declarations in source order\nso that chained references resolve: `const a = 'x'; const b = a;` maps `b` to `'x'`.\n\nSkips destructuring patterns, `let`/`var` declarations, and declarations\nwhose initializers reference dynamic values.",
-						"source_line": 229,
+						"source_line": 227,
 						"type_signature": "(ast: Root): Map<string, string>",
 						"return_type": "Map<string, string>",
 						"return_description": "map of variable names to their resolved static string values",
@@ -7520,7 +7578,7 @@
 						"name": "resolve_component_names",
 						"kind": "function",
 						"doc_comment": "Resolves local names that import from specified source paths.\n\nScans `ImportDeclaration` nodes in both the instance and module scripts.\nHandles default, named, and aliased imports. Skips namespace imports\nand `import type` declarations (both whole-declaration and per-specifier).\nReturns import node references alongside names to support import removal.",
-						"source_line": 260,
+						"source_line": 258,
 						"type_signature": "(ast: Root, component_imports: string[]): Map<string, ResolvedComponentImport>",
 						"return_type": "Map<string, ResolvedComponentImport>",
 						"return_description": "map of local names to their resolved import info",
@@ -7541,15 +7599,13 @@
 						"name": "find_import_insert_position",
 						"kind": "function",
 						"doc_comment": "Finds the position to insert new import statements within a script block.\n\nReturns the end position of the last `ImportDeclaration`, or the start\nof the script body content if no imports exist.",
-						"source_line": 293,
+						"source_line": 288,
 						"type_signature": "(script: Script): number",
 						"return_type": "number",
-						"return_description": "the character position where new imports should be inserted",
 						"parameters": [
 							{
 								"name": "script",
-								"type": "Script",
-								"description": "the parsed `AST.Script` node"
+								"type": "Script"
 							}
 						]
 					},
@@ -7557,7 +7613,7 @@
 						"name": "generate_import_lines",
 						"kind": "function",
 						"doc_comment": "Generates indented import statement lines from an import map.\n\nDefault imports produce `import Name from 'path';` lines.\nNamed imports are grouped by path into `import {a, b} from 'path';` lines.",
-						"source_line": 317,
+						"source_line": 312,
 						"type_signature": "(imports: Map<string, PreprocessImportInfo>, indent?: string): string",
 						"return_type": "string",
 						"return_description": "a string of newline-separated import statements",
@@ -7579,7 +7635,7 @@
 						"name": "has_identifier_in_tree",
 						"kind": "function",
 						"doc_comment": "Checks if an identifier with the given name appears anywhere in an AST subtree.\n\nRecursively walks all object and array properties of the tree, matching\nESTree `Identifier` nodes (`{type: 'Identifier', name}`). Nodes in the\n`skip` set are excluded from traversal — used to skip `ImportDeclaration`\nnodes so the import's own specifier identifier doesn't false-positive.\n\nSkips `Identifier` nodes in non-reference positions defined by\n`NON_REFERENCE_FIELDS` — for example, `obj.Mdz` (non-computed member property),\n`{ Mdz: value }` (non-computed object key), and statement labels.\n\nSafe for Svelte template ASTs: `Component.name` is a plain string property\n(not an `Identifier` node), so `<Mdz>` tags do not produce false matches.",
-						"source_line": 391,
+						"source_line": 386,
 						"type_signature": "(node: unknown, name: string, skip?: Set<unknown> | undefined): boolean",
 						"return_type": "boolean",
 						"return_description": "`true` if a matching `Identifier` node is found",
@@ -7606,7 +7662,7 @@
 						"name": "escape_svelte_text",
 						"kind": "function",
 						"doc_comment": "Escapes text for safe embedding in Svelte template markup.\n\nUses a single-pass regex replacement to avoid corruption that occurs with sequential\n`.replace()` calls (where the second replace matches characters introduced by the first).\n\nEscapes four characters:\n- `{` → `{'{'}` and `}` → `{'}'}` — prevents Svelte expression interpretation\n- `<` → `&lt;` — prevents HTML/Svelte tag interpretation\n- `&` → `&amp;` — prevents HTML entity interpretation\n\nThe `&` escaping is necessary because runtime `MdzNodeView.svelte` renders text\nwith `{node.content}` (a Svelte expression), which auto-escapes `&` to `&amp;`.\nThe preprocessor emits raw template text where `&` is NOT auto-escaped, so\nmanual escaping is required to match the runtime behavior.",
-						"source_line": 429,
+						"source_line": 424,
 						"type_signature": "(text: string): string",
 						"return_type": "string",
 						"parameters": [
@@ -7620,14 +7676,13 @@
 						"name": "remove_variable_declaration",
 						"kind": "function",
 						"doc_comment": "Removes a single-declarator `VariableDeclaration` from source using MagicString.\n\nConsumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving\nblank lines. Only safe for single-declarator statements (`const x = 'val';`);\ncallers must verify `node.declarations.length === 1` before calling.",
-						"source_line": 456,
+						"source_line": 450,
 						"type_signature": "(s: { remove: (start: number, end: number) => unknown; }, declaration_node: VariableDeclaration & { start: number; end: number; }, source: string): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "s",
-								"type": "{ remove: (start: number, end: number) => unknown; }",
-								"description": "the MagicString instance to modify"
+								"type": "{ remove: (start: number, end: number) => unknown; }"
 							},
 							{
 								"name": "declaration_node",
@@ -7636,8 +7691,7 @@
 							},
 							{
 								"name": "source",
-								"type": "string",
-								"description": "the original source string"
+								"type": "string"
 							}
 						]
 					},
@@ -7645,14 +7699,13 @@
 						"name": "remove_import_declaration",
 						"kind": "function",
 						"doc_comment": "Removes an `ImportDeclaration` from source using MagicString.\n\nConsumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving\nblank lines.",
-						"source_line": 474,
+						"source_line": 467,
 						"type_signature": "(s: { remove: (start: number, end: number) => unknown; }, import_node: ImportDeclaration & { start: number; end: number; }, source: string): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "s",
-								"type": "{ remove: (start: number, end: number) => unknown; }",
-								"description": "the MagicString instance to modify"
+								"type": "{ remove: (start: number, end: number) => unknown; }"
 							},
 							{
 								"name": "import_node",
@@ -7661,8 +7714,7 @@
 							},
 							{
 								"name": "source",
-								"type": "string",
-								"description": "the original source string"
+								"type": "string"
 							}
 						]
 					},
@@ -7670,29 +7722,25 @@
 						"name": "remove_import_specifier",
 						"kind": "function",
 						"doc_comment": "Removes a specifier from a multi-specifier import declaration by\nreconstructing the statement without the removed specifier.\n\nOverwrites the entire declaration range to avoid character-level comma surgery.\n\nHandles:\n- `import Mdz, {other} from '...'` → `import {other} from '...'`\n- `import {default as Mdz, other} from '...'` → `import {other} from '...'`\n- `import {Mdz, other} from '...'` → `import {other} from '...'`",
-						"source_line": 530,
+						"source_line": 520,
 						"type_signature": "(s: { overwrite: (start: number, end: number, content: string) => unknown; }, node: ImportDeclaration & { start: number; end: number; }, specifier_to_remove: ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier, source: string, additional_lines?: string): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "s",
-								"type": "{ overwrite: (start: number, end: number, content: string) => unknown; }",
-								"description": "the MagicString instance to modify"
+								"type": "{ overwrite: (start: number, end: number, content: string) => unknown; }"
 							},
 							{
 								"name": "node",
-								"type": "ImportDeclaration & { start: number; end: number; }",
-								"description": "the positioned `ImportDeclaration` AST node"
+								"type": "ImportDeclaration & { start: number; end: number; }"
 							},
 							{
 								"name": "specifier_to_remove",
-								"type": "ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier",
-								"description": "the specifier to remove from the import"
+								"type": "ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier"
 							},
 							{
 								"name": "source",
-								"type": "string",
-								"description": "the original source string"
+								"type": "string"
 							},
 							{
 								"name": "additional_lines",
@@ -7706,14 +7754,19 @@
 						"name": "handle_preprocess_error",
 						"kind": "function",
 						"doc_comment": "Handles errors during Svelte preprocessing with configurable behavior.",
-						"source_line": 593,
+						"throws": [
+							{
+								"type": "Error",
+								"description": "wrapping `error` (with original as `cause`) when `on_error` is `'throw'`"
+							}
+						],
+						"source_line": 582,
 						"type_signature": "(error: unknown, prefix: string, filename: string | undefined, on_error: \"log\" | \"throw\"): void",
 						"return_type": "void",
 						"parameters": [
 							{
 								"name": "error",
-								"type": "unknown",
-								"description": "the caught error"
+								"type": "unknown"
 							},
 							{
 								"name": "prefix",
@@ -7722,8 +7775,7 @@
 							},
 							{
 								"name": "filename",
-								"type": "string | undefined",
-								"description": "the file being processed"
+								"type": "string | undefined"
 							},
 							{
 								"name": "on_error",
@@ -7810,10 +7862,9 @@
 						"name": "create_mock_logger",
 						"kind": "function",
 						"doc_comment": "Creates a mock `Logger` with `vi.fn()` on each logging method\nand tracking arrays for inspecting logged messages.\nFollows the fuz-stack convention of plain object mocks over mocking libraries.",
-						"source_line": 91,
+						"source_line": 89,
 						"type_signature": "(): MockLogger",
 						"return_type": "MockLogger",
-						"return_description": "a `MockLogger` assignable to `Logger`",
 						"parameters": []
 					}
 				],
@@ -7845,7 +7896,7 @@
 					{
 						"name": "throttle",
 						"kind": "function",
-						"doc_comment": "Throttles calls to a callback that returns a void promise.\nImmediately invokes the callback on the first call unless `leading=false`.\nIf the throttled function is called while the promise is already pending,\nthe call is queued to run after the pending promise completes plus `delay`,\nand only the last call is invoked.\nIn other words, all calls and their args are discarded\nduring the pending window except for the most recent.\nUnlike debouncing, this calls the throttled callback\nboth on the leading and trailing edges of the delay window by default,\nand this can be customized by setting `leading` or `trailing.\nIt also differs from a queue where every call to the throttled callback eventually runs.",
+						"doc_comment": "Throttles calls to a callback that returns a void promise.\nImmediately invokes the callback on the first call unless `leading=false`.\nIf the throttled function is called while the promise is already pending,\nthe call is queued to run after the pending promise completes plus `delay`,\nand only the last call is invoked.\nIn other words, all calls and their args are discarded\nduring the pending window except for the most recent.\nUnlike debouncing, this calls the throttled callback\nboth on the leading and trailing edges of the delay window by default,\nand this can be customized by setting `when` to `'leading'` or `'trailing'`.\nIt also differs from a queue where every call to the throttled callback eventually runs.",
 						"source_line": 29,
 						"type_signature": "<T extends (...args: Array<any>) => Promise<void>>(cb: T, { delay, when }?: ThrottleOptions): T",
 						"return_type": "T",
@@ -7983,15 +8034,13 @@
 						"name": "time_unit_detect_best",
 						"kind": "function",
 						"doc_comment": "Detect the best time unit for a set of nanosecond values.\nChooses the unit where most values fall in the range 1-9999.",
-						"source_line": 126,
+						"source_line": 124,
 						"type_signature": "(values_ns: number[]): TimeUnit",
 						"return_type": "TimeUnit",
-						"return_description": "best unit to use for all values",
 						"parameters": [
 							{
 								"name": "values_ns",
-								"type": "number[]",
-								"description": "array of times in nanoseconds"
+								"type": "number[]"
 							}
 						]
 					},
@@ -7999,25 +8048,22 @@
 						"name": "time_format",
 						"kind": "function",
 						"doc_comment": "Format time with a specific unit.",
-						"source_line": 156,
+						"source_line": 151,
 						"type_signature": "(ns: number, unit: TimeUnit, decimals?: number): string",
 						"return_type": "string",
 						"return_description": "formatted string like \"3.87μs\"",
 						"parameters": [
 							{
 								"name": "ns",
-								"type": "number",
-								"description": "time in nanoseconds"
+								"type": "number"
 							},
 							{
 								"name": "unit",
-								"type": "TimeUnit",
-								"description": "unit to use ('ns', 'us', 'ms', 's')"
+								"type": "TimeUnit"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -8029,20 +8075,18 @@
 						"examples": [
 							"```ts\ntime_format_adaptive(1500) // \"1.50μs\"\ntime_format_adaptive(3870) // \"3.87μs\"\ntime_format_adaptive(1500000) // \"1.50ms\"\ntime_format_adaptive(1500000000) // \"1.50s\"\n```"
 						],
-						"source_line": 185,
+						"source_line": 178,
 						"type_signature": "(ns: number, decimals?: number): string",
 						"return_type": "string",
 						"return_description": "formatted string like \"3.87μs\" or \"1.23ms\"",
 						"parameters": [
 							{
 								"name": "ns",
-								"type": "number",
-								"description": "time in nanoseconds"
+								"type": "number"
 							},
 							{
 								"name": "decimals",
 								"type": "number",
-								"description": "number of decimal places (default: 2)",
 								"default_value": "2"
 							}
 						]
@@ -8051,7 +8095,7 @@
 						"name": "TimeResult",
 						"kind": "type",
 						"doc_comment": "Result from timing a function execution.\nAll times in nanoseconds for maximum precision.",
-						"source_line": 204,
+						"source_line": 197,
 						"type_signature": "TimeResult",
 						"properties": [
 							{
@@ -8093,15 +8137,13 @@
 						"examples": [
 							"```ts\nconst {result, timing} = await time_async(async () => {\n  await fetch('https://api.example.com/data');\n  return 42;\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
 						],
-						"source_line": 232,
+						"source_line": 223,
 						"type_signature": "<T>(fn: () => Promise<T>, timer?: Timer): Promise<{ result: T; timing: TimeResult; }>",
 						"return_type": "Promise<{ result: T; timing: TimeResult; }>",
-						"return_description": "object containing the function result and timing information",
 						"parameters": [
 							{
 								"name": "fn",
-								"type": "() => Promise<T>",
-								"description": "async function to time"
+								"type": "() => Promise<T>"
 							},
 							{
 								"name": "timer",
@@ -8118,15 +8160,13 @@
 						"examples": [
 							"```ts\nconst {result, timing} = time_sync(() => {\n  return expensive_computation();\n});\nconsole.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);\n```"
 						],
-						"source_line": 267,
+						"source_line": 256,
 						"type_signature": "<T>(fn: () => T, timer?: Timer): { result: T; timing: TimeResult; }",
 						"return_type": "{ result: T; timing: TimeResult; }",
-						"return_description": "object containing the function result and timing information",
 						"parameters": [
 							{
 								"name": "fn",
-								"type": "() => T",
-								"description": "sync function to time"
+								"type": "() => T"
 							},
 							{
 								"name": "timer",
@@ -8143,20 +8183,18 @@
 						"examples": [
 							"```ts\nconst timings_ns = await time_measure(async () => {\n  await process_data();\n}, 100);\n\nimport {BenchmarkStats} from './benchmark_stats.js';\nconst stats = new BenchmarkStats(timings_ns);\nconsole.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);\n```"
 						],
-						"source_line": 306,
+						"source_line": 293,
 						"type_signature": "(fn: () => unknown, iterations: number, timer?: Timer): Promise<number[]>",
 						"return_type": "Promise<number[]>",
 						"return_description": "array of elapsed times in nanoseconds",
 						"parameters": [
 							{
 								"name": "fn",
-								"type": "() => unknown",
-								"description": "function to measure (sync or async)"
+								"type": "() => unknown"
 							},
 							{
 								"name": "iterations",
-								"type": "number",
-								"description": "number of times to execute"
+								"type": "number"
 							},
 							{
 								"name": "timer",
@@ -8532,15 +8570,14 @@
 						"name": "zod_to_subschema",
 						"kind": "function",
 						"doc_comment": "Unwrap nested schema types (optional, default, nullable, etc).",
-						"source_line": 22,
+						"source_line": 21,
 						"type_signature": "(def: $ZodTypeDef): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 						"return_description": "inner schema if wrapped, undefined otherwise",
 						"parameters": [
 							{
 								"name": "def",
-								"type": "$ZodTypeDef",
-								"description": "Zod type definition to unwrap"
+								"type": "$ZodTypeDef"
 							}
 						]
 					},
@@ -8548,22 +8585,21 @@
 						"name": "ZOD_WRAPPER_TYPES",
 						"kind": "variable",
 						"doc_comment": "Zod wrapper type names that `zod_unwrap_def` traverses through.",
-						"source_line": 34,
+						"source_line": 33,
 						"type_signature": "Set<string>"
 					},
 					{
 						"name": "zod_unwrap_def",
 						"kind": "function",
 						"doc_comment": "Unwrap Zod wrappers (optional, default, nullable, pipe, transform)\nto get the base type definition.",
-						"source_line": 50,
+						"source_line": 48,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): $ZodTypeDef",
 						"return_type": "$ZodTypeDef",
 						"return_description": "the innermost non-wrapper type definition",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to unwrap"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8571,15 +8607,14 @@
 						"name": "zod_get_base_type",
 						"kind": "function",
 						"doc_comment": "Get the base type name for a Zod schema, unwrapping all wrappers.",
-						"source_line": 65,
+						"source_line": 62,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string",
 						"return_type": "string",
 						"return_description": "base type name (e.g. `'string'`, `'object'`, `'uuid'`)",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to inspect"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8587,14 +8622,13 @@
 						"name": "zod_is_optional",
 						"kind": "function",
 						"doc_comment": "Check if a schema is optional at the outermost level.",
-						"source_line": 72,
+						"source_line": 67,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): boolean",
 						"return_type": "boolean",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to check"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8602,14 +8636,13 @@
 						"name": "zod_is_nullable",
 						"kind": "function",
 						"doc_comment": "Check if a schema accepts null at any wrapping level.",
-						"source_line": 79,
+						"source_line": 72,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): boolean",
 						"return_type": "boolean",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to check"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8617,14 +8650,13 @@
 						"name": "zod_has_default",
 						"kind": "function",
 						"doc_comment": "Check if a schema has a default value at any wrapping level.\n\nUnlike `zod_to_schema_default` (which returns the value), this returns a boolean.\nDistinguishes \"no default\" from \"default is undefined\".",
-						"source_line": 97,
+						"source_line": 88,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): boolean",
 						"return_type": "boolean",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to check"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8632,15 +8664,14 @@
 						"name": "zod_get_innermost_type",
 						"kind": "function",
 						"doc_comment": "Unwrap a schema through every wrapper type (optional, nullable, default,\ntransform, pipe, prefault) to reach the innermost schema. Like `zod_unwrap_def`\nbut returns the schema (so callers can `.shape`, `instanceof`-check, etc.)\ninstead of the def.",
-						"source_line": 114,
+						"source_line": 104,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
 						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
 						"return_description": "the innermost non-wrapper schema",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to unwrap"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8648,10 +8679,9 @@
 						"name": "zod_get_schema_keys",
 						"kind": "function",
 						"doc_comment": "Get all property keys from an object schema, unwrapping wrappers.\nReturns an empty array if the innermost type is not an object.",
-						"source_line": 129,
+						"source_line": 118,
 						"type_signature": "<T extends z.ZodType>(schema: T): (keyof output<T> & string)[]",
 						"return_type": "(keyof output<T> & string)[]",
-						"return_description": "array of property names",
 						"parameters": [
 							{
 								"name": "schema",
@@ -8664,7 +8694,7 @@
 						"name": "zod_maybe_get_field_schema",
 						"kind": "function",
 						"doc_comment": "Get the field schema for a key in an object schema, returning `undefined` if\nthe schema is not an object or the key is missing.",
-						"source_line": 144,
+						"source_line": 133,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>, key: string): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>> | undefined",
 						"return_description": "the field's schema, or `undefined`",
@@ -8684,11 +8714,16 @@
 					{
 						"name": "zod_get_field_schema",
 						"kind": "function",
-						"doc_comment": "Get the field schema for a key in an object schema, throwing if the schema\nis not an object or the key is missing.",
-						"source_line": 155,
+						"doc_comment": "Get the field schema for a key in an object schema.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the schema is not an object or the key is missing"
+							}
+						],
+						"source_line": 142,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>, key: string): ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
 						"return_type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-						"return_description": "the field's schema",
 						"parameters": [
 							{
 								"name": "schema",
@@ -8697,8 +8732,7 @@
 							},
 							{
 								"name": "key",
-								"type": "string",
-								"description": "the property name"
+								"type": "string"
 							}
 						]
 					},
@@ -8706,15 +8740,13 @@
 						"name": "zod_unwrap_to_object",
 						"kind": "function",
 						"doc_comment": "Unwrap a schema to find the inner `ZodObject`, or `null` if not an object schema.\nHandles wrappers like `z.strictObject({...}).default({...})`.",
-						"source_line": 168,
+						"source_line": 152,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodObject<$ZodLooseShape, $strip> | null",
 						"return_type": "ZodObject<$ZodLooseShape, $strip> | null",
-						"return_description": "the inner ZodObject or null",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to unwrap"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8722,7 +8754,7 @@
 						"name": "ZodFieldInfo",
 						"kind": "type",
 						"doc_comment": "Metadata extracted from a single field of a Zod object schema.",
-						"source_line": 183,
+						"source_line": 167,
 						"type_signature": "ZodFieldInfo",
 						"properties": [
 							{
@@ -8756,15 +8788,13 @@
 						"name": "zod_extract_fields",
 						"kind": "function",
 						"doc_comment": "Extract field metadata from a Zod object schema.",
-						"source_line": 197,
+						"source_line": 178,
 						"type_signature": "(schema: ZodObject<$ZodLooseShape, $strip>): ZodFieldInfo[]",
 						"return_type": "ZodFieldInfo[]",
-						"return_description": "array of field info for each property",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodObject<$ZodLooseShape, $strip>",
-								"description": "Zod object schema to extract from"
+								"type": "ZodObject<$ZodLooseShape, $strip>"
 							}
 						]
 					},
@@ -8772,15 +8802,14 @@
 						"name": "zod_to_schema_description",
 						"kind": "function",
 						"doc_comment": "Get the description from a schema's metadata, unwrapping if needed.",
-						"source_line": 220,
+						"source_line": 200,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string | null",
 						"return_type": "string | null",
 						"return_description": "description string or null if not found",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract description from"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8788,15 +8817,14 @@
 						"name": "zod_to_schema_default",
 						"kind": "function",
 						"doc_comment": "Get the default value from a schema, unwrapping if needed.",
-						"source_line": 238,
+						"source_line": 217,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): unknown",
 						"return_type": "unknown",
 						"return_description": "default value or undefined",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract default from"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8804,15 +8832,13 @@
 						"name": "zod_to_schema_aliases",
 						"kind": "function",
 						"doc_comment": "Get aliases from a schema's metadata, unwrapping if needed.",
-						"source_line": 256,
+						"source_line": 232,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string[]",
 						"return_type": "string[]",
-						"return_description": "array of alias strings",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to extract aliases from"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8820,15 +8846,14 @@
 						"name": "zod_to_schema_type_string",
 						"kind": "function",
 						"doc_comment": "Get the type string for a schema, suitable for display.",
-						"source_line": 274,
+						"source_line": 249,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): string",
 						"return_type": "string",
 						"return_description": "human-readable type string",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod schema to get type string for"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8836,15 +8861,13 @@
 						"name": "zod_format_value",
 						"kind": "function",
 						"doc_comment": "Format a value for display in help text.",
-						"source_line": 326,
+						"source_line": 298,
 						"type_signature": "(value: unknown): string",
 						"return_type": "string",
-						"return_description": "formatted string representation",
 						"parameters": [
 							{
 								"name": "value",
-								"type": "unknown",
-								"description": "value to format"
+								"type": "unknown"
 							}
 						]
 					},
@@ -8852,7 +8875,7 @@
 						"name": "ZodSchemaProperty",
 						"kind": "type",
 						"doc_comment": "Property extracted from an object schema.",
-						"source_line": 343,
+						"source_line": 315,
 						"type_signature": "ZodSchemaProperty",
 						"properties": [
 							{
@@ -8886,15 +8909,13 @@
 						"name": "zod_to_schema_properties",
 						"kind": "function",
 						"doc_comment": "Extract properties from a Zod object schema.",
-						"source_line": 357,
+						"source_line": 326,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): ZodSchemaProperty[]",
 						"return_type": "ZodSchemaProperty[]",
-						"return_description": "array of property definitions",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema to extract from"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					},
@@ -8902,15 +8923,13 @@
 						"name": "zod_to_schema_names_with_aliases",
 						"kind": "function",
 						"doc_comment": "Get all property names and their aliases from an object schema.",
-						"source_line": 388,
+						"source_line": 354,
 						"type_signature": "(schema: ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>): Set<string>",
 						"return_type": "Set<string>",
-						"return_description": "set of all names and aliases",
 						"parameters": [
 							{
 								"name": "schema",
-								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>",
-								"description": "Zod object schema"
+								"type": "ZodType<unknown, unknown, $ZodTypeInternals<unknown, unknown>>"
 							}
 						]
 					}

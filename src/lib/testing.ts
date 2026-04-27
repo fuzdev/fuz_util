@@ -85,8 +85,6 @@ export type MockLogger = Logger & {
  * Creates a mock `Logger` with `vi.fn()` on each logging method
  * and tracking arrays for inspecting logged messages.
  * Follows the fuz-stack convention of plain object mocks over mocking libraries.
- *
- * @returns a `MockLogger` assignable to `Logger`
  */
 export const create_mock_logger = (): MockLogger => {
 	const error_calls: Array<unknown> = [];

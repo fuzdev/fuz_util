@@ -60,11 +60,9 @@ export const is_interactive = (el: any): boolean => {
 
 /**
  * Stops an event from bubbling and doing default behavior.
- * @param event - the event to swallow
  * @param immediate - defaults to `true` to use `stopImmediatePropagation` over `stopPropagation`
  * @param preventDefault - defaults to `true`
- * @returns the swallowed event
- * @mutates event - calls preventDefault(), stopPropagation(), or stopImmediatePropagation()
+ * @mutates event - calls `preventDefault()`, `stopPropagation()`, or `stopImmediatePropagation()`
  */
 export const swallow = <
 	T extends Pick<Event, 'preventDefault' | 'stopPropagation' | 'stopImmediatePropagation'>,

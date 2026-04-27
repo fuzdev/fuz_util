@@ -77,6 +77,7 @@ export class LruMap<K, V> {
 
 	/**
 	 * Returns the value for `key` and marks it as most-recently-used.
+	 * @mutates this - moves `key` to the MRU end of the recency order (a query-shaped name that isn't a pure read)
 	 */
 	get(key: K): V | undefined {
 		const map = this.#map;

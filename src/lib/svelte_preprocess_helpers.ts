@@ -44,8 +44,6 @@ export interface ResolvedComponentImport {
  * Iterates the node's `attributes` array and returns the first `Attribute`
  * node whose `name` matches. Skips `SpreadAttribute`, directive, and other node types.
  *
- * @param node - the component AST node to search
- * @param name - the attribute name to find
  * @returns the matching `Attribute` node, or `undefined` if not found
  */
 export const find_attribute = (node: AST.Component, name: string): AST.Attribute | undefined => {
@@ -286,9 +284,6 @@ export const resolve_component_names = (
  *
  * Returns the end position of the last `ImportDeclaration`, or the start
  * of the script body content if no imports exist.
- *
- * @param script - the parsed `AST.Script` node
- * @returns the character position where new imports should be inserted
  */
 export const find_import_insert_position = (script: AST.Script): number => {
 	let last_import_end = -1;
@@ -449,9 +444,8 @@ export const escape_svelte_text = (text: string): string =>
  * blank lines. Only safe for single-declarator statements (`const x = 'val';`);
  * callers must verify `node.declarations.length === 1` before calling.
  *
- * @param s - the MagicString instance to modify
  * @param declaration_node - the `VariableDeclaration` AST node with Svelte position data
- * @param source - the original source string
+ * @mutates s - removes the declaration's character range
  */
 export const remove_variable_declaration = (
 	s: {remove: (start: number, end: number) => unknown},
@@ -467,9 +461,8 @@ export const remove_variable_declaration = (
  * Consumes leading whitespace (tabs/spaces) and trailing newline to avoid leaving
  * blank lines.
  *
- * @param s - the MagicString instance to modify
  * @param import_node - the `ImportDeclaration` AST node with Svelte position data
- * @param source - the original source string
+ * @mutates s - removes the declaration's character range
  */
 export const remove_import_declaration = (
 	s: {remove: (start: number, end: number) => unknown},
@@ -520,12 +513,9 @@ const remove_positioned_node = (
  * - `import {default as Mdz, other} from '...'` → `import {other} from '...'`
  * - `import {Mdz, other} from '...'` → `import {other} from '...'`
  *
- * @param s - the MagicString instance to modify
- * @param node - the positioned `ImportDeclaration` AST node
- * @param specifier_to_remove - the specifier to remove from the import
- * @param source - the original source string
  * @param additional_lines - extra content appended after the reconstructed import
  *   (used to bundle new imports into the overwrite to avoid MagicString boundary conflicts).
+ * @mutates s - overwrites the import declaration's character range
  */
 export const remove_import_specifier = (
 	s: {overwrite: (start: number, end: number, content: string) => unknown},
@@ -585,10 +575,9 @@ const format_named_specifiers = (specs: Array<ImportDeclaration['specifiers'][nu
 /**
  * Handles errors during Svelte preprocessing with configurable behavior.
  *
- * @param error - the caught error
  * @param prefix - log prefix (e.g. `'[fuz-mdz]'`, `'[fuz-code]'`)
- * @param filename - the file being processed
  * @param on_error - `'throw'` to re-throw as a new Error, `'log'` to console.error
+ * @throws Error wrapping `error` (with original as `cause`) when `on_error` is `'throw'`
  */
 export const handle_preprocess_error = (
 	error: unknown,
