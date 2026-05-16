@@ -1937,13 +1937,13 @@
 						"kind": "function",
 						"doc_comment": "Converts string or binary data to a `Uint8Array`.\nStrings are UTF-8 encoded. `Uint8Array` inputs are returned as-is.",
 						"source_line": 15,
-						"type_signature": "(data: string | BufferSource): Uint8Array<ArrayBufferLike>",
+						"type_signature": "(data: string | Uint8Array<ArrayBufferLike> | BufferSource): Uint8Array<ArrayBufferLike>",
 						"return_type": "Uint8Array<ArrayBufferLike>",
 						"return_description": "`Uint8Array` view of the data",
 						"parameters": [
 							{
 								"name": "data",
-								"type": "string | BufferSource"
+								"type": "string | Uint8Array<ArrayBufferLike> | BufferSource"
 							}
 						]
 					},
@@ -3820,13 +3820,13 @@
 						"kind": "function",
 						"doc_comment": "Computes a BLAKE3 hash synchronously.",
 						"source_line": 30,
-						"type_signature": "(data: string | BufferSource): string",
+						"type_signature": "(data: string | Uint8Array<ArrayBufferLike> | BufferSource): string",
 						"return_type": "string",
 						"return_description": "64-character hexadecimal hash string (32 bytes)",
 						"parameters": [
 							{
 								"name": "data",
-								"type": "string | BufferSource",
+								"type": "string | Uint8Array<ArrayBufferLike> | BufferSource",
 								"description": "String or binary data to hash. Strings are UTF-8 encoded."
 							}
 						]
@@ -3835,7 +3835,7 @@
 						"name": "Blake3Hash",
 						"kind": "type",
 						"doc_comment": "Zod schema for a BLAKE3 hex hash — 64 lowercase hex characters (256-bit output).",
-						"source_line": 33,
+						"source_line": 34,
 						"type_signature": "ZodString"
 					}
 				],
