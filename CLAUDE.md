@@ -8,6 +8,11 @@ focuses on pure TypeScript helpers.
 
 For coding conventions, see the [fuz-stack skill](https://github.com/fuzdev/fuz_docs).
 
+## Committing
+
+`git add` and `git commit` are denied by `.claude/settings.local.json` in
+this repo — make the edits and stop, the user commits.
+
 ## Gro commands
 
 ```bash
