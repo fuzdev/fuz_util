@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.59.1
+
+### Patch Changes
+
+- fix: loosen type for `to_bytes` and `hash_blake3` to include `Uint8Array` ([e73e6a4](https://github.com/fuzdev/fuz_util/commit/e73e6a4))
+
 ## 0.59.0
 
 ### Minor Changes
