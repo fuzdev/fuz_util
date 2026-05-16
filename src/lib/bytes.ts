@@ -12,7 +12,7 @@ const encoder = new TextEncoder();
  *
  * @returns `Uint8Array` view of the data
  */
-export const to_bytes = (data: BufferSource | string): Uint8Array => {
+export const to_bytes = (data: Uint8Array | BufferSource | string): Uint8Array => {
 	if (typeof data === 'string') return encoder.encode(data);
 	if (data instanceof Uint8Array) return data;
 	if (data instanceof ArrayBuffer) return new Uint8Array(data);

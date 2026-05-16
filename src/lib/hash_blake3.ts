@@ -27,7 +27,8 @@ export const blake3_ready = init();
  * @param data - String or binary data to hash. Strings are UTF-8 encoded.
  * @returns 64-character hexadecimal hash string (32 bytes)
  */
-export const hash_blake3 = (data: BufferSource | string): string => to_hex(hash(to_bytes(data)));
+export const hash_blake3 = (data: Uint8Array | BufferSource | string): string =>
+	to_hex(hash(to_bytes(data)));
 
 /** Zod schema for a BLAKE3 hex hash — 64 lowercase hex characters (256-bit output). */
 export const Blake3Hash = z

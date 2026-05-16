@@ -93,6 +93,18 @@ describe('hash_blake3', () => {
 			assert.strictEqual(result.length, 64);
 			assert.match(result, /^[0-9a-f]+$/);
 		});
+
+		// Regression: TS 5.7+ made `Uint8Array` generic over its underlying buffer
+		// (default `Uint8Array<ArrayBufferLike>`). The previous `BufferSource`-only
+		// signature rejected the default shape since `BufferSource` resolves to
+		// `ArrayBufferView<ArrayBuffer>`. Lock in that the default typechecks.
+		test('default Uint8Array<ArrayBufferLike> typechecks', () => {
+			const make = (): Uint8Array => new Uint8Array([104, 101, 108, 108, 111]);
+			assert.strictEqual(
+				hash_blake3(make()),
+				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f',
+			);
+		});
 	});
 
 	describe('consistency', () => {
