@@ -287,6 +287,30 @@ describe('Benchmark', () => {
 			assert.strictEqual(iteration_count, 50);
 		});
 
+		test('on_iteration abort stops async task early', async () => {
+			let iteration_count = 0;
+
+			const bench = new Benchmark({
+				duration_ms: 10000,
+				min_iterations: 5,
+				max_iterations: 10000,
+				on_iteration: (_name, iteration, abort) => {
+					iteration_count = iteration;
+					if (iteration >= 10) abort();
+				},
+			});
+
+			bench.add('async test', async () => {
+				await Promise.resolve();
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.strictEqual(results[0].iterations, 10);
+			assert.strictEqual(iteration_count, 10);
+		});
+
 		test('on_task_complete callback', async () => {
 			const completed: Array<{name: string; index: number; total: number}> = [];
 
@@ -415,6 +439,43 @@ describe('Benchmark', () => {
 			assert.lengthOf(results, 1);
 			assert.isDefined(results[0]);
 			assert.isAtLeast(results[0].iterations, 5);
+		});
+
+		test('warmup_iterations=0 still detects async fn (no hint)', async () => {
+			// Without detection, async fns get dispatched on the sync path and the
+			// returned promise is never awaited — wrong timings + unhandled rejection.
+			// We observe `resolved_count` at on_iteration time: in the correct path
+			// fn() has fully awaited so the count matches; in the buggy sync path
+			// the post-await body hasn't run yet so the count lags.
+			let resolved_count = 0;
+			const observations: Array<{iter: number; resolved: number}> = [];
+
+			const bench = new Benchmark({
+				duration_ms: 50,
+				min_iterations: 5,
+				warmup_iterations: 0,
+				on_iteration: (_name, iteration) => {
+					observations.push({iter: iteration, resolved: resolved_count});
+				},
+			});
+
+			bench.add('async', async () => {
+				await Promise.resolve();
+				resolved_count++;
+			});
+
+			await bench.run();
+
+			assert.isAtLeast(observations.length, 5);
+			// In the correct path resolved_count advances by exactly 1 between
+			// consecutive on_iteration calls (each fn fully awaited). In the
+			// buggy sync path, the post-await body is queued as a microtask
+			// that hasn't run yet — adjacent observations would show no delta.
+			for (let i = 1; i < observations.length; i++) {
+				const prev = observations[i - 1]!;
+				const curr = observations[i]!;
+				assert.strictEqual(curr.resolved - prev.resolved, 1);
+			}
 		});
 	});
 

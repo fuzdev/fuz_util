@@ -15,7 +15,7 @@ export interface BenchmarkConfig {
 	/**
 	 * Number of warmup iterations before actual measurements.
 	 * Warmup helps stabilize JIT compilation and caches.
-	 * Default: 5
+	 * Default: 10
 	 */
 	warmup_iterations?: number;
 
@@ -161,7 +161,7 @@ export interface BenchmarkResult {
 	/** Number of iterations executed */
 	iterations: number;
 
-	/** Total time spent benchmarking (including warmup) in milliseconds */
+	/** Total wall-clock time for the task (setup + warmup + measurement + teardown) in milliseconds */
 	total_time_ms: number;
 
 	/**

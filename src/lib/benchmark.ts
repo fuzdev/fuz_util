@@ -79,16 +79,12 @@ const validate_config = (config: BenchmarkConfig): void => {
 };
 
 /**
- * Internal task representation with detected async status.
- */
-interface BenchmarkTaskInternal extends BenchmarkTask {
-	/** Whether the function returns a promise (detected during warmup or from hint) */
-	is_async?: boolean;
-}
-
-/**
  * Warmup function by running it multiple times.
  * Detects whether the function is async based on return value.
+ *
+ * When no `async_hint` is provided, at least one detection iteration runs even
+ * if `iterations` is 0 — otherwise async detection would be impossible and
+ * async functions would have their returned promises leaked as unhandled.
  *
  * @param fn - function to warmup (sync or async)
  * @param async_hint - if provided, use this instead of detecting
@@ -116,9 +112,13 @@ export const benchmark_warmup = async (
 		return async_hint;
 	}
 
-	// Detect on first iteration
+	// Detect on first iteration. Force at least one call even if iterations=0,
+	// otherwise async fns are silently misclassified as sync (timings would
+	// measure only the synchronous prelude, and the returned promise would
+	// leak as unhandled).
+	const total = iterations < 1 ? 1 : iterations;
 	let detected_async = false;
-	for (let i = 0; i < iterations; i++) {
+	for (let i = 0; i < total; i++) {
 		const result = fn();
 		if (i === 0) {
 			detected_async = is_promise(result);
@@ -136,7 +136,7 @@ export const benchmark_warmup = async (
 export class Benchmark {
 	readonly #config: Required<Omit<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>> &
 		Pick<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>;
-	readonly #tasks: Array<BenchmarkTaskInternal> = [];
+	readonly #tasks: Array<BenchmarkTask> = [];
 	#results: Array<BenchmarkResult> = [];
 
 	constructor(config: BenchmarkConfig = {}) {
@@ -294,7 +294,7 @@ export class Benchmark {
 	 * Run a single benchmark task.
 	 * @throws Error if the task fails during setup, warmup, or measurement
 	 */
-	async #run_task(task: BenchmarkTaskInternal): Promise<BenchmarkResult> {
+	async #run_task(task: BenchmarkTask): Promise<BenchmarkResult> {
 		const suite_start_ns = this.#config.timer.now();
 
 		// Pre-allocate array to avoid GC pressure during measurement
@@ -310,7 +310,6 @@ export class Benchmark {
 
 			// Warmup and detect async
 			const is_async = await benchmark_warmup(task.fn, this.#config.warmup_iterations, task.async);
-			task.is_async = is_async;
 
 			// Measurement phase
 			const target_time_ns = this.#config.duration_ms * 1_000_000; // Convert ms to ns

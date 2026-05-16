@@ -182,14 +182,30 @@ test('benchmark_warmup: runs async function multiple times', async () => {
 	assert.strictEqual(count, 3);
 });
 
-test('benchmark_warmup: handles zero iterations', async () => {
+test('benchmark_warmup: zero iterations still runs one detection call without a hint', async () => {
 	let count = 0;
 
 	await benchmark_warmup(() => {
 		count++;
 	}, 0);
 
-	// With 0 iterations, function is never called
+	// One detection call runs even with iterations=0, otherwise async fns
+	// would be silently misclassified as sync.
+	assert.strictEqual(count, 1);
+});
+
+test('benchmark_warmup: zero iterations with explicit hint skips the call', async () => {
+	let count = 0;
+
+	await benchmark_warmup(
+		() => {
+			count++;
+		},
+		0,
+		false,
+	);
+
+	// When the caller provides a hint, no detection call is needed.
 	assert.strictEqual(count, 0);
 });
 

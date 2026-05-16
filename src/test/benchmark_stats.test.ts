@@ -177,6 +177,26 @@ describe('benchmark_stats_compare', () => {
 		assert.strictEqual(comparison.effect_magnitude, 'negligible');
 	});
 
+	test('equal means with non-zero variance go through t-test', () => {
+		// Same mean (~1000) with realistic spread — exercises Welch's t-test path
+		// rather than the zero-variance special case.
+		const a_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 5) - 2) * 50);
+		const b_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 7) - 3) * 30);
+		const a = new BenchmarkStats(a_data);
+		const b = new BenchmarkStats(b_data);
+
+		assert.isAbove(a.std_dev_ns, 0);
+		assert.isAbove(b.std_dev_ns, 0);
+
+		const comparison = benchmark_stats_compare(a, b);
+
+		// High p-value because the underlying means are equal.
+		assert.isAbove(comparison.p_value, 0.5);
+		assert.strictEqual(comparison.effect_magnitude, 'negligible');
+		assert.strictEqual(comparison.faster, 'equal');
+		assert.isFalse(comparison.significant);
+	});
+
 	test('negligible difference', () => {
 		// Very small difference with realistic variance
 		const base_a = 1000;
@@ -212,19 +232,19 @@ describe('benchmark_stats_compare', () => {
 		assert.include(comparison.recommendation, 'Insufficient data');
 	});
 
-	test('custom alpha', () => {
-		// Create data with moderate difference
+	test('custom alpha can flip significant from true to false', () => {
 		const a = new BenchmarkStats([1000, 1100, 1200, 1050, 1150]);
 		const b = new BenchmarkStats([1500, 1600, 1700, 1550, 1650]);
 
-		// With default alpha (0.05), should be significant
-		const comparison_default = benchmark_stats_compare(a, b);
-		assert.isTrue(comparison_default.significant);
+		const default_comparison = benchmark_stats_compare(a, b);
+		assert.isTrue(default_comparison.significant);
+		assert.isBelow(default_comparison.p_value, 0.05);
 
-		// With very strict alpha (0.001), might not be significant
-		const comparison_strict = benchmark_stats_compare(a, b, {alpha: 0.001});
-		// p_value should be reported regardless
-		assert.isAbove(comparison_strict.p_value, 0);
+		// Tighten alpha below the observed p_value — significance must flip off.
+		const tight_alpha = default_comparison.p_value / 10;
+		const strict = benchmark_stats_compare(a, b, {alpha: tight_alpha});
+		assert.isFalse(strict.significant);
+		assert.strictEqual(strict.p_value, default_comparison.p_value);
 	});
 
 	test('confidence interval overlap with very close means', () => {

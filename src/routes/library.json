@@ -1394,7 +1394,7 @@
 								"name": "warmup_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Number of warmup iterations before actual measurements.\nWarmup helps stabilize JIT compilation and caches.\nDefault: 5"
+								"doc_comment": "Number of warmup iterations before actual measurements.\nWarmup helps stabilize JIT compilation and caches.\nDefault: 10"
 							},
 							{
 								"name": "cooldown_ms",
@@ -1514,7 +1514,7 @@
 								"name": "total_time_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Total time spent benchmarking (including warmup) in milliseconds"
+								"doc_comment": "Total wall-clock time for the task (setup + warmup + measurement + teardown) in milliseconds"
 							},
 							{
 								"name": "timings_ns",
@@ -1580,11 +1580,11 @@
 					{
 						"name": "benchmark_warmup",
 						"kind": "function",
-						"doc_comment": "Warmup function by running it multiple times.\nDetects whether the function is async based on return value.",
+						"doc_comment": "Warmup function by running it multiple times.\nDetects whether the function is async based on return value.\n\nWhen no `async_hint` is provided, at least one detection iteration runs even\nif `iterations` is 0 — otherwise async detection would be impossible and\nasync functions would have their returned promises leaked as unhandled.",
 						"examples": [
 							"```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```"
 						],
-						"source_line": 102,
+						"source_line": 98,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "whether the function is async",

@@ -11,6 +11,20 @@ import {
 	benchmark_baseline_format_json,
 } from '$lib/benchmark_baseline.js';
 import {Benchmark} from '$lib/benchmark.js';
+import {BenchmarkStats} from '$lib/benchmark_stats.js';
+import type {BenchmarkResult} from '$lib/benchmark_types.js';
+
+// Construct a synthetic BenchmarkResult with predictable stats.
+const create_synthetic_result = (name: string, mean_ns: number): BenchmarkResult => {
+	const timings = Array(100).fill(mean_ns);
+	return {
+		name,
+		stats: new BenchmarkStats(timings),
+		iterations: 100,
+		total_time_ms: (mean_ns * 100) / 1_000_000,
+		timings_ns: timings,
+	};
+};
 
 // Use a unique temp directory for each test run
 const test_dir = join(tmpdir(), `benchmark_baseline_test_${Date.now()}`);
@@ -140,6 +154,33 @@ describe('benchmark_baseline_load', () => {
 
 		// Should return null and remove invalid file
 		assert.isNull(loaded);
+	});
+
+	test('handles version mismatch', async () => {
+		const {writeFile} = await import('node:fs/promises');
+		const {fs_exists} = await import('$lib/fs.js');
+
+		// Write a schema-valid baseline but with a stale version number
+		await mkdir(test_dir, {recursive: true});
+		const filepath = join(test_dir, 'baseline.json');
+		await writeFile(
+			filepath,
+			JSON.stringify({
+				version: 999,
+				timestamp: new Date().toISOString(),
+				git_commit: null,
+				git_branch: null,
+				node_version: 'v22.0.0',
+				entries: [],
+			}),
+			'utf-8',
+		);
+
+		const loaded = await benchmark_baseline_load({path: test_dir});
+
+		// Should return null and remove the stale-version file
+		assert.isNull(loaded);
+		assert.isFalse(await fs_exists(filepath));
 	});
 });
 
@@ -288,6 +329,93 @@ describe('benchmark_baseline_compare', () => {
 		assert.isAtLeast(comparison.baseline_age_days, 0);
 		assert.isBelow(comparison.baseline_age_days, 1); // Should be very recent
 		assert.isFalse(comparison.baseline_stale);
+	});
+
+	test('regression_threshold downgrades small regressions to unchanged', async () => {
+		// Baseline at 1000ns; current at 1030ns (3% slower).
+		await benchmark_baseline_save([create_synthetic_result('test_task', 1000)], {
+			path: test_dir,
+		});
+
+		const comparison = await benchmark_baseline_compare(
+			[create_synthetic_result('test_task', 1030)],
+			{
+				path: test_dir,
+				// 3% is above the practical-significance floor but below the regression threshold.
+				min_percent_difference: 0.01,
+				regression_threshold: 1.05,
+			},
+		);
+
+		assert.lengthOf(comparison.regressions, 0);
+		assert.lengthOf(comparison.unchanged, 1);
+		assert.isDefined(comparison.unchanged[0]);
+		assert.strictEqual(comparison.unchanged[0].name, 'test_task');
+	});
+
+	test('regressions sorted by percent_difference descending', async () => {
+		await benchmark_baseline_save(
+			['a', 'b', 'c'].map((name) => create_synthetic_result(name, 1000)),
+			{path: test_dir},
+		);
+
+		const comparison = await benchmark_baseline_compare(
+			[
+				create_synthetic_result('a', 1500), // 50% slower
+				create_synthetic_result('b', 1200), // 20% slower
+				create_synthetic_result('c', 1300), // 30% slower
+			],
+			{path: test_dir},
+		);
+
+		assert.lengthOf(comparison.regressions, 3);
+		assert.deepEqual(
+			comparison.regressions.map((r) => r.name),
+			['a', 'c', 'b'],
+		);
+	});
+
+	test('improvements sorted by percent_difference descending', async () => {
+		await benchmark_baseline_save(
+			['a', 'b', 'c'].map((name) => create_synthetic_result(name, 2000)),
+			{path: test_dir},
+		);
+
+		const comparison = await benchmark_baseline_compare(
+			[
+				create_synthetic_result('a', 1000), // 100% faster (2x speedup)
+				create_synthetic_result('b', 1500), // 33% faster
+				create_synthetic_result('c', 1200), // 67% faster
+			],
+			{path: test_dir},
+		);
+
+		assert.lengthOf(comparison.improvements, 3);
+		assert.deepEqual(
+			comparison.improvements.map((r) => r.name),
+			['a', 'c', 'b'],
+		);
+	});
+
+	test('baseline_stale is true when older than staleness_warning_days', async () => {
+		const {readFile, writeFile} = await import('node:fs/promises');
+
+		// Save a fresh baseline, then rewrite its timestamp to 30 days ago.
+		await benchmark_baseline_save([create_synthetic_result('task', 1000)], {path: test_dir});
+		const filepath = join(test_dir, 'baseline.json');
+		const baseline = JSON.parse(await readFile(filepath, 'utf-8'));
+		baseline.timestamp = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+		await writeFile(filepath, JSON.stringify(baseline), 'utf-8');
+
+		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
+			path: test_dir,
+			staleness_warning_days: 7,
+		});
+
+		assert.isTrue(comparison.baseline_stale);
+		assert.isNotNull(comparison.baseline_age_days);
+		// `isNotNull` narrows the type so the value below is a `number`.
+		assert.isAbove(comparison.baseline_age_days, 7);
 	});
 
 	test('staleness_warning_days option', async () => {

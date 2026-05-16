@@ -702,16 +702,29 @@ still useful for relative comparisons but absolute timing values will be less pr
 
 ### Async Functions
 
-Async functions are fully supported. Each iteration checks if the return value is a
-promise and awaits it if so:
+Async functions are fully supported. During warmup, the first call's return value
+determines whether the measurement loop awaits each iteration:
 
 ```ts
 bench.add('async', async () => await fetch(url));
 bench.add('sync', () => compute(data));
-
-// Mixed sync/async also works - promises are awaited when returned
-bench.add('conditional', () => (cached ? cached : fetch(url)));
 ```
+
+**Conditional async** (a function that sometimes returns a Promise and sometimes
+doesn't) requires the explicit `async: true` hint — otherwise, if the first call
+happens to return synchronously, the sync code path is locked in and any later
+Promise returns will leak as unhandled rejections:
+
+```ts
+bench.add({
+	name: 'conditional',
+	fn: () => (cached ? cached : fetch(url)),
+	async: true, // required — first call may be sync
+});
+```
+
+If the first call returns a Promise, subsequent sync returns are safe: `await x`
+on a non-Promise resolves to `x`.
 
 ### Memory Considerations
 
