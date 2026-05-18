@@ -179,23 +179,83 @@ interface BenchmarkConfig {
 
 ### Skip and Only
 
-Focus on specific tasks during development:
+Focus on specific tasks during development by setting `skip` or `only` on
+the task object:
 
 ```ts
 // Skip a task
-bench.add('slow task', () => slow_operation());
-bench.skip('slow task'); // Won't run
+bench.add({name: 'slow task', fn: () => slow_operation(), skip: true});
 
-// Run only specific tasks
-bench.add('task1', () => fn1());
+// Run only specific tasks (other `only` tasks also run; non-`only` are excluded)
+bench.add({name: 'task1', fn: () => fn1(), only: true});
 bench.add('task2', () => fn2());
-bench.add('task3', () => fn3());
-bench.only('task2'); // Only task2 runs
-
-// Or via task object
-bench.add({name: 'focused', fn: () => test(), only: true});
-bench.add({name: 'skipped', fn: () => other(), skip: true});
+bench.add({name: 'task3', fn: () => fn3(), only: true});
+// task1 and task3 run; task2 is excluded
 ```
+
+`skip` wins over `only` — a task with both is skipped.
+
+### Per-Task Time-Budget Overrides
+
+The suite-level `duration_ms`, `warmup_iterations`, `min_iterations`, and
+`max_iterations` set a single budget for every task. That's fine when tasks
+have comparable per-call cost, but breaks when they span orders of magnitude —
+e.g. one implementation runs in microseconds and another in seconds. Under a
+shared budget the slow task floors out at `min_iterations` samples, which is
+not enough for meaningful percentile/CI math, while the fast task collects
+plenty.
+
+`BenchmarkTask` accepts the same four fields as per-task overrides. When set,
+they override the suite value for that task only; when omitted, the suite
+value applies. Validation runs at `add()` against effective values, so
+`task.min_iterations > suite.max_iterations` errors at the call site.
+
+```ts
+const bench = new Benchmark({
+	duration_ms: 5000,
+	min_iterations: 10,
+});
+
+// Fast task uses the suite budget — ~16 samples in 5s is enough.
+bench.add('parse/fast', () => parse_fast(corpus));
+
+// Slow task (~14s/op) would otherwise stop at the 10-sample floor —
+// too few for meaningful percentiles. Raise the floor for this task only.
+bench.add({
+	name: 'parse/slow',
+	fn: () => parse_slow(corpus),
+	min_iterations: 30,
+});
+```
+
+Use overrides when:
+
+- a slow task needs more samples than the suite-wide `duration_ms` can produce
+- a fast task should be capped (e.g. a fixed `max_iterations` for reproducibility)
+- one task is intentionally measured under a different budget than its peers
+
+Only `duration_ms`, `warmup_iterations`, `min_iterations`, and `max_iterations`
+are overridable. The `timer`, `cooldown_ms`, and callback fields stay
+suite-level so cross-task comparisons remain meaningful.
+
+**Fairness caveats** worth knowing before you reach for these:
+
+1. **Prefer raising `min_iterations` over `duration_ms`.** Per-iteration noise
+   (GC, scheduler, thermal) is a time-rate process: a task running 60s has ~12×
+   more chances to land in a tail bucket than one running 5s. Raising the
+   sample floor fixes the statistical-power problem without inflating exposure
+   to rare events. Reach for `duration_ms` only when raising `min_iterations`
+   alone can't get you enough samples in a reasonable window.
+2. **`min_iterations` always wins over `duration_ms`.** The suite-wide
+   `duration_ms` is a *target*, not a cap. A slow task with
+   `min_iterations: 30` on a 14s/op function will run for ~7 minutes no matter
+   what `duration_ms` says — the loop keeps going until both the iteration
+   floor and the time target are met. Plan wall-clock accordingly.
+3. **Cross-task percentile comparison stays unreliable** when sample sizes
+   differ by orders of magnitude across tasks in the same table. The overrides
+   fix per-task percentile validity; they don't make `p99` cells comparable
+   across rows with n=30 and n=50000. The `vs Best` column (mean-based) is
+   safe to read across rows; the percentile columns are not.
 
 ### Async Hint
 
@@ -462,8 +522,6 @@ class Benchmark {
 	add(name: string, fn: () => unknown): this;
 	add(task: BenchmarkTask): this;
 	remove(name: string): this;
-	skip(name: string): this; // Mark task to be skipped
-	only(name: string): this; // Run only marked tasks
 	run(): Promise<Array<BenchmarkResult>>;
 	table(options?: BenchmarkFormatTableOptions): string;
 	markdown(): string;
@@ -488,6 +546,11 @@ interface BenchmarkTask {
 	skip?: boolean; // Skip this task
 	only?: boolean; // Run only this task (and other `only` tasks)
 	async?: boolean; // Hint: skip promise detection if false
+	// Per-task overrides (shadow the suite config when set)
+	duration_ms?: number;
+	warmup_iterations?: number;
+	min_iterations?: number;
+	max_iterations?: number;
 }
 
 interface BenchmarkResult {

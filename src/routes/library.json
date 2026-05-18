@@ -1388,7 +1388,7 @@
 								"name": "duration_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Target duration to run each benchmark task in milliseconds.\nThe benchmark will run until this duration is reached or max_iterations is hit.\nDefault: 1000ms"
+								"doc_comment": "Target measurement duration per task in milliseconds. The loop runs\nat least `min_iterations` iterations *and* at least this long, with\n`max_iterations` and `on_iteration` `abort()` as hard ceilings.\nDefault: 1000ms"
 							},
 							{
 								"name": "warmup_iterations",
@@ -1400,19 +1400,19 @@
 								"name": "cooldown_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Cooldown time between tasks in milliseconds.\nHelps prevent interference between benchmarks.\nDefault: 100ms"
+								"doc_comment": "Cooldown time between tasks in milliseconds. Lets the runtime settle\nGC and (partially) thermal state between tasks. Fixed regardless of\nthe previous task's duration or allocation footprint — if a suite\nmixes heavy and light tasks, raise this so light tasks downstream\ndon't run in the prior task's GC shadow.\nDefault: 100ms"
 							},
 							{
 								"name": "min_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Minimum number of iterations to run.\nDefault: 10"
+								"doc_comment": "Minimum number of iterations to run. The loop continues past\n`duration_ms` if needed to reach this floor, so raising it in a slow\nsuite extends wall-clock past `duration_ms`.\nDefault: 10"
 							},
 							{
 								"name": "max_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Maximum number of iterations to run.\nPrevents infinite loops if function is extremely fast.\nDefault: 100000"
+								"doc_comment": "Maximum number of iterations to run. Prevents infinite loops on\nextremely fast functions, and also sizes the pre-allocated timings\narray — set this only as high as you expect to fill, since oversized\ncaps waste memory and add GC pressure during measurement.\nDefault: 100000"
 							},
 							{
 								"name": "timer",
@@ -1437,8 +1437,8 @@
 					{
 						"name": "BenchmarkTask",
 						"kind": "type",
-						"doc_comment": "A benchmark task to execute.",
-						"source_line": 112,
+						"doc_comment": "A benchmark task to execute.\n\nThe time-budget fields (`duration_ms`, `warmup_iterations`, `min_iterations`,\n`max_iterations`) override the suite-level `BenchmarkConfig` for this task\nonly. Use them when one task is much faster or slower than the others —\ne.g. raise `min_iterations` on a slow task so its percentile/CI math has\nenough samples without inflating the budget for the fast tasks.\n\n**Reading output across overrides:** when per-task overrides diverge\nacross rows in the same table, cross-row comparison weakens. Percentiles\n(`p50`, `p99`, …) become unreliable when sample counts differ — `p99` at\nn=30 and `p99` at n=50000 estimate different things. Means (and the\n`vs Best` column) stay reasonable only if `warmup_iterations` is held\ncomparable across tasks; asymmetric warmup biases the under-warmed task's\nmean upward. Per-task percentiles remain valid for that task alone.",
+						"source_line": 134,
 						"type_signature": "BenchmarkTask",
 						"properties": [
 							{
@@ -1457,7 +1457,7 @@
 								"name": "setup",
 								"kind": "variable",
 								"type_signature": "() => void | Promise<void>",
-								"doc_comment": "Optional setup function run before benchmarking this task.\nNot included in timing measurements."
+								"doc_comment": "Optional setup function run before benchmarking this task.\nNot included in timing measurements.\n\nMutations to `fn` and `name` made here are honored by the measurement\nloop — useful for dynamic configuration that depends on async state\nresolved during setup."
 							},
 							{
 								"name": "teardown",
@@ -1481,7 +1481,31 @@
 								"name": "async",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "Hint for whether the function is sync or async.\nIf not provided, automatically detected during warmup.\nSetting this explicitly skips per-iteration promise checking for sync functions."
+								"doc_comment": "Hint for whether the function is sync or async. Auto-detected during\nwarmup if not set; `async: false` skips per-iteration promise checking\nfor sync functions, while `async: true` forces an `await` on every\nmeasurement iteration.\n\nSetting `async: true` on a function that returns sync forces an\nunnecessary microtask per iteration — for sub-microsecond functions\nthis adds measurable bias. Prefer leaving `async` undefined (auto-\ndetected during warmup) unless the conditional-async hazard below\napplies.\n\n**Required for conditional-async fns** — without `async: true`, a\nfirst call that happens to return synchronously locks in the sync\ncode path and any later Promise returns leak as unhandled rejections."
+							},
+							{
+								"name": "duration_ms",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `duration_ms` for this task only.\nUseful when one task is much slower than others and needs a longer (or shorter)\nmeasurement window than the suite default."
+							},
+							{
+								"name": "warmup_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `warmup_iterations` for this task only.\nSlow tasks may want fewer warmup iterations to keep wall-clock reasonable;\ntight/complex functions may want more so TurboFan reaches steady state."
+							},
+							{
+								"name": "min_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `min_iterations` for this task only.\nRaise this on slow tasks so percentile and CI math have enough\nsamples. Wins over `duration_ms` (see the suite field) — a slow task\nwith a raised floor extends wall-clock until the count is reached.\n\nPrefer raising this over `duration_ms` when you need more samples:\nper-iteration noise (GC, scheduler, thermal) is a time-rate process,\nso a longer wall-clock window proportionally inflates exposure to\nrare tail events. Raising the sample floor fixes the statistical-power\nproblem without that inflation."
+							},
+							{
+								"name": "max_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `max_iterations` for this task only.\nCap a fast task to a fixed sample count, or raise the ceiling on a\nslow task that would otherwise be limited by the suite default. Also\nsizes the per-task pre-allocation — avoid extreme caps that won't\nactually be filled. When this differs sharply across tasks in the\nsame suite, the larger allocation can leak GC pressure into\nsubsequent tasks (`cooldown_ms` is fixed regardless of prior task\nfootprint)."
 							}
 						]
 					},
@@ -1489,7 +1513,7 @@
 						"name": "BenchmarkResult",
 						"kind": "type",
 						"doc_comment": "Result from running a single benchmark task.",
-						"source_line": 154,
+						"source_line": 231,
 						"type_signature": "BenchmarkResult",
 						"properties": [
 							{
@@ -1520,7 +1544,7 @@
 								"name": "timings_ns",
 								"kind": "variable",
 								"type_signature": "Array<number>",
-								"doc_comment": "Raw timing data for each iteration in nanoseconds.\nUseful for custom statistical analysis, histogram generation,\nor exporting to external tools."
+								"doc_comment": "Raw timing data for each iteration in nanoseconds.\nLength equals `iterations` (the array is right-sized after measurement).\nUseful for custom statistical analysis, histogram generation,\nor exporting to external tools."
 							}
 						]
 					},
@@ -1528,7 +1552,7 @@
 						"name": "BenchmarkFormatTableOptions",
 						"kind": "type",
 						"doc_comment": "Options for table formatting.",
-						"source_line": 178,
+						"source_line": 256,
 						"type_signature": "BenchmarkFormatTableOptions",
 						"properties": [
 							{
@@ -1543,7 +1567,7 @@
 						"name": "BenchmarkGroup",
 						"kind": "type",
 						"doc_comment": "A group definition for organizing benchmark results.",
-						"source_line": 188,
+						"source_line": 266,
 						"type_signature": "BenchmarkGroup",
 						"properties": [
 							{
@@ -1584,7 +1608,7 @@
 						"examples": [
 							"```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```"
 						],
-						"source_line": 98,
+						"source_line": 139,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "whether the function is async",
@@ -1610,7 +1634,7 @@
 						"name": "Benchmark",
 						"kind": "class",
 						"doc_comment": "Benchmark class for measuring and comparing function performance.",
-						"source_line": 136,
+						"source_line": 177,
 						"members": [
 							{
 								"name": "constructor",
@@ -1703,49 +1727,9 @@
 								]
 							},
 							{
-								"name": "skip",
-								"kind": "function",
-								"doc_comment": "Mark a task to be skipped during benchmark runs.",
-								"type_signature": "(name: string): this",
-								"return_type": "this",
-								"return_description": "this `Benchmark` instance for chaining",
-								"parameters": [
-									{
-										"name": "name",
-										"type": "string"
-									}
-								],
-								"throws": [
-									{
-										"type": "Error",
-										"description": "if task with given name doesn't exist"
-									}
-								]
-							},
-							{
-								"name": "only",
-								"kind": "function",
-								"doc_comment": "Mark a task to run exclusively (along with other `only` tasks).",
-								"type_signature": "(name: string): this",
-								"return_type": "this",
-								"return_description": "this `Benchmark` instance for chaining",
-								"parameters": [
-									{
-										"name": "name",
-										"type": "string"
-									}
-								],
-								"throws": [
-									{
-										"type": "Error",
-										"description": "if task with given name doesn't exist"
-									}
-								]
-							},
-							{
 								"name": "run",
 								"kind": "function",
-								"doc_comment": "Run all benchmark tasks.",
+								"doc_comment": "Run all benchmark tasks.\n\nTasks execute in `add()` order. The first task runs against a colder\nruntime than subsequent ones (uncompiled JS, cold caches) — a\nproperty of in-process benchmarking that matters more when an early\ntask has aggressive overrides like low `warmup_iterations` or\n`min_iterations`. If first-position bias is a concern, put a\nthrowaway warm-up task first, or call `run()` twice and use the\nsecond result set.",
 								"type_signature": "(): Promise<BenchmarkResult[]>",
 								"return_type": "Promise<BenchmarkResult[]>",
 								"parameters": []

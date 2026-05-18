@@ -237,6 +237,64 @@ describe('Benchmark', () => {
 			// Teardown should be called because of finally block
 			assert.isTrue(teardown_called);
 		});
+
+		test('setup can mutate task.fn and task.name before measurement', async () => {
+			// Regression guard: the measurement loop hoists `fn`/`name` into locals
+			// for perf, but that capture must happen AFTER setup runs so dynamic-
+			// configuration patterns keep working.
+			let real_count = 0;
+			const real_fn = (): void => {
+				real_count++;
+			};
+
+			const observed_names: Array<string> = [];
+
+			const bench = new Benchmark({
+				duration_ms: 1,
+				warmup_iterations: 0,
+				min_iterations: 3,
+				max_iterations: 3,
+				cooldown_ms: 0,
+				on_iteration: (name) => {
+					observed_names.push(name);
+				},
+			});
+
+			const task = {
+				name: 'placeholder',
+				fn: (): void => {
+					throw new Error('placeholder fn should have been replaced by setup');
+				},
+				async: false, // skip auto-detect so warmup doesn't run a probe iteration
+				setup: () => {
+					task.fn = real_fn;
+					task.name = 'real';
+				},
+			};
+
+			bench.add(task);
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.strictEqual(real_count, 3);
+			// on_iteration sees the mutated name, never the placeholder
+			assert.strictEqual(
+				observed_names.filter((n) => n === 'real').length,
+				3,
+				'on_iteration should receive the mutated name',
+			);
+			assert.strictEqual(
+				observed_names.filter((n) => n === 'placeholder').length,
+				0,
+				'on_iteration should not see the pre-setup name',
+			);
+			// The returned result also reflects the mutated name
+			assert.strictEqual(results[0].name, 'real');
+			// And the lookup map keys by the mutated name, not the original
+			const by_name = bench.results_by_name();
+			assert.isDefined(by_name.get('real'));
+			assert.isUndefined(by_name.get('placeholder'));
+		});
 	});
 
 	describe('callbacks', () => {
@@ -476,6 +534,306 @@ describe('Benchmark', () => {
 				const curr = observations[i]!;
 				assert.strictEqual(curr.resolved - prev.resolved, 1);
 			}
+		});
+	});
+
+	describe('task-level overrides', () => {
+		test('task min_iterations raises the floor above suite default', async () => {
+			const bench = new Benchmark({
+				duration_ms: 1, // tiny — suite tasks would stop at min
+				min_iterations: 5,
+				warmup_iterations: 0,
+			});
+
+			bench.add('uses suite', () => {});
+			bench.add({
+				name: 'higher floor',
+				fn: () => {},
+				min_iterations: 25,
+			});
+
+			const results = await bench.run();
+
+			assert.lengthOf(results, 2);
+			assert.isDefined(results[0]);
+			assert.isDefined(results[1]);
+			assert.isAtLeast(results[0].iterations, 5);
+			assert.isAtLeast(results[1].iterations, 25);
+		});
+
+		test('task max_iterations caps below suite default', async () => {
+			const bench = new Benchmark({
+				duration_ms: 10000,
+				min_iterations: 1,
+				max_iterations: 1000,
+				warmup_iterations: 0,
+			});
+
+			bench.add({
+				name: 'capped',
+				fn: () => {},
+				max_iterations: 7,
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.isAtMost(results[0].iterations, 7);
+		});
+
+		test('task warmup_iterations overrides suite warmup_iterations', async () => {
+			let call_count = 0;
+
+			const bench = new Benchmark({
+				duration_ms: 50,
+				warmup_iterations: 5, // suite default — overridden below
+			});
+
+			bench.add({
+				name: 'extra warmup',
+				fn: () => {
+					call_count++;
+				},
+				warmup_iterations: 20,
+				min_iterations: 3,
+				max_iterations: 3, // cap measurement so total is deterministic
+			});
+
+			await bench.run();
+
+			// 20 warmup + 3 measurement = 23 fn() calls total
+			assert.strictEqual(call_count, 23);
+		});
+
+		test('task duration_ms shortens measurement window below suite default', async () => {
+			// Custom timer to drive elapsed time deterministically.
+			let counter = 0;
+			const timer: Timer = {
+				now: () => {
+					counter += 5_000_000; // 5ms per call in ns
+					return counter;
+				},
+			};
+
+			const bench = new Benchmark({
+				timer,
+				duration_ms: 100_000, // suite default is enormous
+				min_iterations: 1,
+				max_iterations: 1000,
+				cooldown_ms: 0,
+				warmup_iterations: 0,
+			});
+
+			bench.add({
+				name: 'short window',
+				fn: () => {},
+				duration_ms: 20, // task override
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			// Each iter advances the timer by ~10ms (two now() calls), so the
+			// 20ms window should close after 2-3 iterations.
+			assert.isAtMost(results[0].iterations, 5);
+		});
+
+		test('task without overrides still uses suite config', async () => {
+			const bench = new Benchmark({
+				duration_ms: 1,
+				min_iterations: 12,
+				warmup_iterations: 0,
+			});
+
+			bench.add('plain', () => {});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.isAtLeast(results[0].iterations, 12);
+		});
+
+		test('mixed overrides on multiple tasks act independently', async () => {
+			const bench = new Benchmark({
+				duration_ms: 1,
+				min_iterations: 4,
+				warmup_iterations: 0,
+			});
+
+			bench.add('a', () => {});
+			bench.add({name: 'b', fn: () => {}, min_iterations: 30});
+			bench.add({name: 'c', fn: () => {}, min_iterations: 15});
+
+			const results = await bench.run();
+
+			assert.lengthOf(results, 3);
+			assert.isDefined(results[0]);
+			assert.isDefined(results[1]);
+			assert.isDefined(results[2]);
+			assert.isAtLeast(results[0].iterations, 4);
+			assert.isAtLeast(results[1].iterations, 30);
+			assert.isAtLeast(results[2].iterations, 15);
+		});
+
+		test('all four overrides applied to a single task act together without interference', async () => {
+			// Suite config is the opposite of the task overrides on every axis,
+			// so any leakage of suite values into the task run would change the
+			// observed call count or iteration count.
+			let call_count = 0;
+
+			const bench = new Benchmark({
+				duration_ms: 1,
+				warmup_iterations: 1,
+				min_iterations: 1,
+				max_iterations: 2,
+				cooldown_ms: 0,
+			});
+
+			bench.add({
+				name: 'all overrides',
+				fn: () => {
+					call_count++;
+				},
+				duration_ms: 100, // generous so min_iterations is the stopper
+				warmup_iterations: 4,
+				min_iterations: 6,
+				max_iterations: 6, // cap == floor → exactly 6 measurement iters
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			// 4 warmup + 6 measurement = 10 fn() calls. If the suite leaked
+			// (warmup=1, max=2) the count would be 1+2=3 instead.
+			assert.strictEqual(call_count, 10);
+			assert.strictEqual(results[0].iterations, 6);
+		});
+
+		test('all four overrides applied to a single async task act together without interference', async () => {
+			// Same shape as the sync kitchen-sink test, but routed through the
+			// async measurement path via `async: true` and an awaiting fn.
+			let call_count = 0;
+
+			const bench = new Benchmark({
+				duration_ms: 1,
+				warmup_iterations: 1,
+				min_iterations: 1,
+				max_iterations: 2,
+				cooldown_ms: 0,
+			});
+
+			bench.add({
+				name: 'async all overrides',
+				fn: async () => {
+					call_count++;
+					await Promise.resolve();
+				},
+				async: true, // force the async measurement path
+				duration_ms: 100,
+				warmup_iterations: 4,
+				min_iterations: 6,
+				max_iterations: 6,
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.strictEqual(call_count, 10);
+			assert.strictEqual(results[0].iterations, 6);
+		});
+
+		test('task max_iterations above suite default is honored', async () => {
+			// Suite cap is low (5); task raises it (40) and asks for enough samples
+			// that the loop only stops when the task cap is reached.
+			const bench = new Benchmark({
+				duration_ms: 1,
+				max_iterations: 5,
+				min_iterations: 1,
+				warmup_iterations: 0,
+			});
+
+			bench.add({
+				name: 'raised cap',
+				fn: () => {},
+				min_iterations: 40,
+				max_iterations: 40,
+			});
+
+			const results = await bench.run();
+
+			assert.isDefined(results[0]);
+			assert.strictEqual(results[0].iterations, 40);
+		});
+
+		test('throws on non-positive task duration_ms', () => {
+			const bench = new Benchmark();
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, duration_ms: 0}),
+				'task "bad" duration_ms must be positive',
+			);
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, duration_ms: -1}),
+				'task "bad" duration_ms must be positive',
+			);
+		});
+
+		test('throws on negative task warmup_iterations', () => {
+			const bench = new Benchmark();
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, warmup_iterations: -1}),
+				'task "bad" warmup_iterations must be non-negative',
+			);
+		});
+
+		test('task warmup_iterations of 0 is allowed', () => {
+			const bench = new Benchmark();
+			assert.doesNotThrow(() => bench.add({name: 'ok', fn: () => {}, warmup_iterations: 0}));
+		});
+
+		test('throws on task min_iterations below 1', () => {
+			const bench = new Benchmark();
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, min_iterations: 0}),
+				'task "bad" min_iterations must be at least 1',
+			);
+		});
+
+		test('throws on task max_iterations below 1', () => {
+			const bench = new Benchmark();
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, max_iterations: 0}),
+				'task "bad" max_iterations must be at least 1',
+			);
+		});
+
+		test('throws when task min exceeds task max', () => {
+			const bench = new Benchmark();
+			assert.throws(
+				() =>
+					bench.add({
+						name: 'bad',
+						fn: () => {},
+						min_iterations: 100,
+						max_iterations: 10,
+					}),
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (10)',
+			);
+		});
+
+		test('throws when task min exceeds suite max', () => {
+			const bench = new Benchmark({max_iterations: 50});
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, min_iterations: 100}),
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)',
+			);
+		});
+
+		test('throws when suite min exceeds task max', () => {
+			const bench = new Benchmark({min_iterations: 100});
+			assert.throws(
+				() => bench.add({name: 'bad', fn: () => {}, max_iterations: 50}),
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)',
+			);
 		});
 	});
 
@@ -854,44 +1212,6 @@ describe('Benchmark', () => {
 			assert.strictEqual(result, bench);
 		});
 
-		test('skip() skips tasks', async () => {
-			const bench = new Benchmark({
-				duration_ms: 50,
-				min_iterations: 3,
-			});
-
-			bench.add('task1', () => 1 + 1);
-			bench.add('task2', () => 2 + 2);
-			bench.add('task3', () => 3 + 3);
-
-			bench.skip('task2');
-
-			const results = await bench.run();
-
-			assert.lengthOf(results, 2);
-			assert.deepEqual(
-				results.map((r) => r.name),
-				['task1', 'task3'],
-			);
-		});
-
-		test('skip() returns this for chaining', () => {
-			const bench = new Benchmark();
-
-			bench.add('task1', () => {});
-			bench.add('task2', () => {});
-
-			const result = bench.skip('task1');
-			assert.strictEqual(result, bench);
-		});
-
-		test('skip() throws for non-existent task', () => {
-			const bench = new Benchmark();
-			bench.add('task1', () => {});
-
-			assert.throws(() => bench.skip('nonexistent'), 'Task "nonexistent" not found');
-		});
-
 		test('skip via task object', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
@@ -908,43 +1228,15 @@ describe('Benchmark', () => {
 			assert.strictEqual(results[0].name, 'task2');
 		});
 
-		test('only() runs only marked tasks', async () => {
+		test('multiple tasks with only run together', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 3,
 			});
 
-			bench.add('task1', () => 1 + 1);
+			bench.add({name: 'task1', fn: () => 1 + 1, only: true});
 			bench.add('task2', () => 2 + 2);
-			bench.add('task3', () => 3 + 3);
-
-			bench.only('task2');
-
-			const results = await bench.run();
-
-			assert.lengthOf(results, 1);
-			assert.isDefined(results[0]);
-			assert.strictEqual(results[0].name, 'task2');
-		});
-
-		test('only() throws for non-existent task', () => {
-			const bench = new Benchmark();
-			bench.add('task1', () => {});
-
-			assert.throws(() => bench.only('nonexistent'), 'Task "nonexistent" not found');
-		});
-
-		test('multiple only() tasks', async () => {
-			const bench = new Benchmark({
-				duration_ms: 50,
-				min_iterations: 3,
-			});
-
-			bench.add('task1', () => 1 + 1);
-			bench.add('task2', () => 2 + 2);
-			bench.add('task3', () => 3 + 3);
-
-			bench.only('task1').only('task3');
+			bench.add({name: 'task3', fn: () => 3 + 3, only: true});
 
 			const results = await bench.run();
 
