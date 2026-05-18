@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.60.1
+
+### Patch Changes
+
+- fix: benchmark md formatting ([05f34dc](https://github.com/fuzdev/fuz_util/commit/05f34dc))
+
 ## 0.60.0
 
 ### Minor Changes
