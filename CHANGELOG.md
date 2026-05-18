@@ -1,5 +1,16 @@
 # @fuzdev/fuz_util
 
+## 0.60.0
+
+### Minor Changes
+
+- feat: improve benchmark API ([1a71bad](https://github.com/fuzdev/fuz_util/commit/1a71bad))
+- feat: refine benchmark API ([f6dc2b0](https://github.com/fuzdev/fuz_util/commit/f6dc2b0))
+
+### Patch Changes
+
+- fix: warmup edge case in benchmarks ([889ad0b](https://github.com/fuzdev/fuz_util/commit/889ad0b))
+
 ## 0.59.1
 
 ### Patch Changes
