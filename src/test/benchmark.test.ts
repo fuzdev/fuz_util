@@ -709,6 +709,59 @@ describe('Benchmark', () => {
 			assert.strictEqual(results[0].iterations, 6);
 		});
 
+		test('result.budget reflects effective values (override wins over suite)', async () => {
+			// Verifies the persisted-budget invariant that the baseline schema
+			// relies on: result.budget must hold the effective resolved values
+			// the loop actually saw, with task overrides shadowing suite defaults
+			// per-field.
+			const bench = new Benchmark({
+				duration_ms: 50,
+				warmup_iterations: 1,
+				min_iterations: 1,
+				max_iterations: 1000,
+				cooldown_ms: 0,
+			});
+
+			bench.add('all suite', () => {});
+			bench.add({
+				name: 'all override',
+				fn: () => {},
+				duration_ms: 100,
+				warmup_iterations: 4,
+				min_iterations: 6,
+				max_iterations: 6,
+			});
+			bench.add({
+				name: 'partial override',
+				fn: () => {},
+				min_iterations: 3,
+			});
+
+			const results = await bench.run();
+
+			assert.deepEqual(results[0]?.budget, {
+				duration_ms: 50,
+				warmup_iterations: 1,
+				min_iterations: 1,
+				max_iterations: 1000,
+				async_resolved: false,
+			});
+			assert.deepEqual(results[1]?.budget, {
+				duration_ms: 100,
+				warmup_iterations: 4,
+				min_iterations: 6,
+				max_iterations: 6,
+				async_resolved: false,
+			});
+			assert.deepEqual(results[2]?.budget, {
+				duration_ms: 50,
+				warmup_iterations: 1,
+				min_iterations: 3, // overridden
+				max_iterations: 1000,
+				async_resolved: false,
+			});
+		});
+
 		test('all four overrides applied to a single async task act together without interference', async () => {
 			// Same shape as the sync kitchen-sink test, but routed through the
 			// async measurement path via `async: true` and an awaiting fn.

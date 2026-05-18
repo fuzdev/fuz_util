@@ -29,11 +29,12 @@
     "deploy": "gro deploy",
     "benchmark": "gro run src/benchmarks/run.ts",
     "benchmark:save": "gro run src/benchmarks/run.ts --save",
-    "benchmark_slugify": "gro run src/benchmarks/slugify.benchmark.ts",
-    "benchmark_deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
-    "benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
-    "benchmark_random": "gro run src/benchmarks/random.benchmark.ts",
-    "benchmark_random_quality": "gro run src/benchmarks/random_quality.ts"
+    "benchmark:clean": "rm -f src/benchmarks/baseline.json",
+    "benchmark:slugify": "gro run src/benchmarks/slugify.benchmark.ts",
+    "benchmark:deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
+    "benchmark:deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
+    "benchmark:random": "gro run src/benchmarks/random.benchmark.ts",
+    "benchmark:random_quality": "gro run src/benchmarks/random_quality.ts"
   },
   "type": "module",
   "engines": {

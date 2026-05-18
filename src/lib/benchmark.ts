@@ -44,7 +44,13 @@ import type {
 const DEFAULT_DURATION_MS = 1000;
 const DEFAULT_WARMUP_ITERATIONS = 10;
 const DEFAULT_COOLDOWN_MS = 100;
-const DEFAULT_MIN_ITERATIONS = 10;
+// 30 (not 10) so Welch's-t DOF approximation is stable on the floor case
+// — a slow function that hits `min_iterations` exactly on both baseline and
+// current sides. At n=10 the DOF is noisy and a single tail outlier can swing
+// the p-value across the significance threshold; the system would then report
+// "regression" with confidence the math doesn't support. 30 is the standard
+// "central limit theorem starts behaving" sample size for this kind of test.
+const DEFAULT_MIN_ITERATIONS = 30;
 const DEFAULT_MAX_ITERATIONS = 100_000;
 
 /**
@@ -322,6 +328,12 @@ export class Benchmark {
 		const timings_ns: Array<number> = new Array(max_iterations);
 		let timing_count = 0;
 
+		// Resolved during warmup inside the try block, surfaced into
+		// `result.budget` after the loop. Declared out here so it survives the
+		// `try/finally` scope — the value is part of the result, not just
+		// loop-local state.
+		let async_resolved = false;
+
 		try {
 			// Setup
 			if (task.setup) {
@@ -331,8 +343,11 @@ export class Benchmark {
 			// Capture after setup so setup can still mutate task.fn / task.name.
 			const {fn, name} = task;
 
-			// Warmup and detect async
-			const is_async = await benchmark_warmup(fn, warmup_iterations, task.async);
+			// Warmup and detect async. The resolved boolean (not `task.async`) is
+			// what the loop actually used; we persist it into `result.budget`
+			// below so baseline comparison can detect an async-classification
+			// flip between runs as methodology drift.
+			async_resolved = await benchmark_warmup(fn, warmup_iterations, task.async);
 
 			// Measurement phase
 			const target_time_ns = duration_ms * 1_000_000; // Convert ms to ns
@@ -344,7 +359,7 @@ export class Benchmark {
 			const measurement_start_ns = timer.now();
 
 			// Use separate code paths for sync vs async for better performance
-			if (is_async) {
+			if (async_resolved) {
 				// Async code path - await each iteration
 				// eslint-disable-next-line no-unmodified-loop-condition
 				while (timing_count < max_iterations && !aborted) {
@@ -398,6 +413,13 @@ export class Benchmark {
 			iterations: timing_count,
 			total_time_ms,
 			timings_ns: trimmed_timings,
+			budget: {
+				duration_ms,
+				warmup_iterations,
+				min_iterations,
+				max_iterations,
+				async_resolved,
+			},
 		};
 	}
 

@@ -75,11 +75,12 @@ multiple output formats (`table()`, `markdown()`, `summary()`, `json()`).
 ```bash
 npm run benchmark              # Run and compare against baseline
 npm run benchmark:save         # Save new baseline (after intentional changes)
-npm run benchmark_slugify      # Run individual benchmark
-npm run benchmark_deep_equal   # Run individual benchmark
+npm run benchmark:clean        # Remove the local baseline (forces next run to seed fresh)
+npm run benchmark:slugify      # Run individual benchmark
+npm run benchmark:deep_equal   # Run individual benchmark
 ```
 
-Baseline stored in `src/benchmarks/baseline.json` (committed to repo).
+Baseline stored in `src/benchmarks/baseline.json` (gitignored — local-only).
 
 See `docs/benchmark.md` for full documentation.
 

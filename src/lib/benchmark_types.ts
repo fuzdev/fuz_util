@@ -34,7 +34,14 @@ export interface BenchmarkConfig {
 	 * Minimum number of iterations to run. The loop continues past
 	 * `duration_ms` if needed to reach this floor, so raising it in a slow
 	 * suite extends wall-clock past `duration_ms`.
-	 * Default: 10
+	 *
+	 * The default (30) is sized so the Welch's-t DOF approximation used by
+	 * `benchmark_stats_compare` stays stable on the floor case. Lowering it
+	 * below ~15 produces statistically unreliable significance calls on slow
+	 * tasks that hit the floor exactly — the math still runs but
+	 * `comparison.significant` becomes a coin flip on noisy outliers.
+	 *
+	 * Default: 30
 	 */
 	min_iterations?: number;
 
@@ -226,6 +233,26 @@ export interface BenchmarkTask {
 }
 
 /**
+ * Effective time-budget config used to produce a benchmark sample set.
+ * Resolved from per-task overrides on top of suite defaults — what the
+ * measurement loop actually saw, not what was configured.
+ *
+ * `async_resolved` captures the boolean that `benchmark_warmup` actually
+ * returned for the measurement run — *not* the user's `task.async` hint.
+ * The two diverge when (a) the hint is `undefined` and the function is
+ * auto-detected sync vs. async, or (b) a conditional-async fn resolves
+ * differently between runs. Persisting the resolved value is what makes
+ * the budget describe "what the loop saw," not "what was configured."
+ */
+export interface BenchmarkBudget {
+	duration_ms: number;
+	warmup_iterations: number;
+	min_iterations: number;
+	max_iterations: number;
+	async_resolved: boolean;
+}
+
+/**
  * Result from running a single benchmark task.
  */
 export interface BenchmarkResult {
@@ -248,6 +275,15 @@ export interface BenchmarkResult {
 	 * or exporting to external tools.
 	 */
 	timings_ns: Array<number>;
+
+	/**
+	 * Effective per-task time budget after applying overrides to suite defaults.
+	 * Persisted into baselines so `benchmark_baseline_compare` can detect
+	 * methodology drift — a `min_iterations` bump between baseline and current
+	 * shifts Welch's DOF and produces "regressions" that are sample-size
+	 * artifacts, not real drift.
+	 */
+	budget: BenchmarkBudget;
 }
 
 /**

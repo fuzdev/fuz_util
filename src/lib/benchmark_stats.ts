@@ -54,7 +54,23 @@ export interface BenchmarkComparison {
 	effect_size: number;
 	/** Interpretation of practical significance based on percentage difference */
 	effect_magnitude: EffectMagnitude;
-	/** Whether the 95% confidence intervals overlap */
+	/**
+	 * Whether the 95% confidence intervals of the two means overlap.
+	 *
+	 * **Informational only — do not use this field to infer significance.**
+	 * Two means with overlapping 95% CIs can still differ significantly at
+	 * p<0.05 (overlap of up to ~25% of CI width is consistent with
+	 * significance); conversely, non-overlapping CIs are slightly *stronger*
+	 * than the standard p<0.05 bar but the relationship is not strict.
+	 * Use `significant` and `p_value` for classification. This field is
+	 * exposed for consumers who want to render CIs side-by-side and need
+	 * the visual overlap check.
+	 *
+	 * Note: the underlying CIs are computed with a z-score (1.96) rather
+	 * than the strict t-score, so at small n the CIs are slightly narrow
+	 * — overlap is reported less often than a t-based CI would. Effect is
+	 * ~2-3% at the n=30 floor after Bessel's correction on `std_dev_ns`.
+	 */
 	ci_overlap: boolean;
 	/** Human-readable interpretation of the comparison */
 	recommendation: string;
@@ -167,10 +183,19 @@ export class BenchmarkStats {
 		this.outlier_ratio = outliers.length / valid_timings.length;
 		this.sample_size = cleaned.length;
 
-		// Calculate statistics on cleaned data
+		// Calculate statistics on cleaned data. `stats_std_dev` returns the
+		// *population* std_dev (divides by n). For benchmark use we need the
+		// *sample* std_dev (Bessel's correction, divides by n-1): Welch's
+		// t-test in `benchmark_stats_compare` treats `std_dev_ns` as the
+		// sample-variance estimator of a hypothetical population of all
+		// possible runs. The general utility stays population-style so
+		// non-benchmark callers aren't surprised; we apply the correction
+		// once here and use the result for std_dev_ns, cv, and the CI margin.
 		this.mean_ns = stats_mean(cleaned);
 		this.p50_ns = stats_median(sorted_cleaned);
-		this.std_dev_ns = stats_std_dev(cleaned, this.mean_ns);
+		const std_dev_population = stats_std_dev(cleaned, this.mean_ns);
+		const bessel = cleaned.length >= 2 ? Math.sqrt(cleaned.length / (cleaned.length - 1)) : 1;
+		this.std_dev_ns = std_dev_population * bessel;
 
 		const {min, max} = stats_min_max(sorted_cleaned);
 		this.min_ns = min;
@@ -182,7 +207,17 @@ export class BenchmarkStats {
 		this.p99_ns = stats_percentile(sorted_cleaned, 0.99);
 
 		this.cv = stats_cv(this.mean_ns, this.std_dev_ns);
-		this.confidence_interval_ns = stats_confidence_interval(cleaned);
+		// `stats_confidence_interval` internally uses the same population
+		// std_dev, so scale the half-width by the Bessel factor to keep CI
+		// consistent with the sample-corrected std_dev_ns. (Note: z-score is
+		// still used here, not t-score — at the n=30 floor the residual
+		// narrowness vs. t is ~2-3% after this correction; documented in
+		// docs/benchmark.md.)
+		const ci_raw = stats_confidence_interval(cleaned);
+		this.confidence_interval_ns = [
+			this.mean_ns - (this.mean_ns - ci_raw[0]) * bessel,
+			this.mean_ns + (ci_raw[1] - this.mean_ns) * bessel,
+		];
 
 		// Calculate throughput (operations per second)
 		this.ops_per_second = this.mean_ns > 0 ? TIME_NS_PER_SEC / this.mean_ns : 0;
