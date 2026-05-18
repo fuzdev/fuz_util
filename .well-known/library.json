@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.59.0",
+		"version": "0.60.0",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -40,11 +40,12 @@
 			"deploy": "gro deploy",
 			"benchmark": "gro run src/benchmarks/run.ts",
 			"benchmark:save": "gro run src/benchmarks/run.ts --save",
-			"benchmark_slugify": "gro run src/benchmarks/slugify.benchmark.ts",
-			"benchmark_deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
-			"benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
-			"benchmark_random": "gro run src/benchmarks/random.benchmark.ts",
-			"benchmark_random_quality": "gro run src/benchmarks/random_quality.ts"
+			"benchmark:clean": "rm -f src/benchmarks/baseline.json",
+			"benchmark:slugify": "gro run src/benchmarks/slugify.benchmark.ts",
+			"benchmark:deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
+			"benchmark:deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
+			"benchmark:random": "gro run src/benchmarks/random.benchmark.ts",
+			"benchmark:random_quality": "gro run src/benchmarks/random_quality.ts"
 		},
 		"type": "module",
 		"engines": {
@@ -160,7 +161,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.59.0",
+		"version": "0.60.0",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -641,22 +642,22 @@
 					{
 						"name": "BenchmarkBaselineEntry",
 						"kind": "type",
-						"doc_comment": "Schema for a single benchmark entry in the baseline.",
-						"source_line": 28,
-						"type_signature": "ZodObject<{ name: ZodString; mean_ns: ZodNumber; p50_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 5 more ...; sample_size: ZodNumber; }, $strip>"
+						"doc_comment": "Schema for a single benchmark entry in the baseline.\n\n`outlier_ratio` is persisted as a noise signal independent of the\npost-cleaning `std_dev_ns`/cv: outlier removal *deflates* std_dev (the\ncleaned set is by construction less variable than the raw set), so cv\nalone misses runs where a third of the iterations were tail events.\n`benchmark_baseline_compare` OR-gates `noise_warning` on this field so\na noisy raw distribution gets flagged even when the cleaned cv looks tight.",
+						"source_line": 50,
+						"type_signature": "ZodObject<{ name: ZodString; mean_ns: ZodNumber; p50_ns: ZodNumber; std_dev_ns: ZodNumber; min_ns: ZodNumber; max_ns: ZodNumber; ... 7 more ...; budget: ZodObject<...>; }, $strip>"
 					},
 					{
 						"name": "BenchmarkBaseline",
 						"kind": "type",
-						"doc_comment": "Schema for the complete baseline file.",
-						"source_line": 47,
-						"type_signature": "ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; }, $strip>"
+						"doc_comment": "Schema for the complete baseline file.\n\n`metadata` is an opt-in passthrough bag for context that applies to the whole\nrun but isn't part of the comparison math — corpus identity (file counts,\ntotal bytes), dependency versions, binary sizes, hardware notes, build flags.\nPass it on save and read it back on load; it's not interpreted by\n`benchmark_baseline_compare`. The intended use is to let consumers attach\n\"did this run measure the same thing as the baseline?\" context (e.g. corpus\nshape) without forking the schema, then surface mismatches in their own\nreporting. fuz_util doesn't surface metadata in comparison output because it\nhas no shape — consumers know what their metadata means and how to display\nthe diff.",
+						"source_line": 82,
+						"type_signature": "ZodObject<{ version: ZodNumber; timestamp: ZodString; git_commit: ZodNullable<ZodString>; git_branch: ZodNullable<ZodString>; node_version: ZodString; entries: ZodArray<...>; metadata: ZodOptional<...>; }, $strip>"
 					},
 					{
 						"name": "BenchmarkBaselineSaveOptions",
 						"kind": "type",
 						"doc_comment": "Options for saving a baseline.",
-						"source_line": 60,
+						"source_line": 96,
 						"type_signature": "BenchmarkBaselineSaveOptions",
 						"properties": [
 							{
@@ -676,6 +677,12 @@
 								"kind": "variable",
 								"type_signature": "string | null",
 								"doc_comment": "Git branch name (auto-detected if not provided)"
+							},
+							{
+								"name": "metadata",
+								"kind": "variable",
+								"type_signature": "Record<string, unknown>",
+								"doc_comment": "Opt-in passthrough for run-level context (corpus identity, dependency\nversions, binary sizes, hardware notes). Round-trips on `_load` and is\naccessible via `BenchmarkBaselineComparisonResult.baseline_metadata`, but\nis *not* interpreted by `_compare` — consumers decide what to do with\nmismatches. Keep values JSON-serializable; this is written verbatim to\nthe baseline file."
 							}
 						]
 					},
@@ -683,7 +690,7 @@
 						"name": "BenchmarkBaselineLoadOptions",
 						"kind": "type",
 						"doc_comment": "Options for loading a baseline.",
-						"source_line": 72,
+						"source_line": 117,
 						"type_signature": "BenchmarkBaselineLoadOptions",
 						"properties": [
 							{
@@ -698,7 +705,7 @@
 						"name": "BenchmarkBaselineCompareOptions",
 						"kind": "type",
 						"doc_comment": "Options for comparing against a baseline.",
-						"source_line": 80,
+						"source_line": 125,
 						"type_signature": "BenchmarkBaselineCompareOptions",
 						"extends": [
 							"BenchmarkBaselineLoadOptions"
@@ -721,6 +728,18 @@
 								"kind": "variable",
 								"type_signature": "number",
 								"doc_comment": "Minimum percentage difference to consider meaningful, as a ratio.\nPassed through to `benchmark_stats_compare`. See `BenchmarkCompareOptions`.\nDefault: 0.10 (10%)"
+							},
+							{
+								"name": "noise_warning_cv_threshold",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Coefficient of variation (`std_dev / mean`) at or above which a\ncomparison is flagged with `noise_warning: true`. Doesn't affect\nbucketing — the task still routes to regressions / improvements /\nunchanged as the Welch math dictates — but tells the formatter (and\nany custom consumer) that the underlying measurement is noisy enough\nthat a \"significant\" call should be read with skepticism. The default\nis calibrated for system-noise/thermal/background-load contamination,\nnot microbenchmark floor effects; lower it (e.g. 0.15) for\nsub-microsecond functions where any cv signal matters, raise it for\ninherently noisy workloads where 0.3 fires on every run.\nDefault: 0.30"
+							},
+							{
+								"name": "noise_warning_outlier_ratio_threshold",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Outlier ratio (fraction of iterations rejected by MAD outlier removal)\nat or above which the comparison is flagged with `noise_warning: true`,\nOR-gated with the cv check. Catches the case where the post-cleaning\ncv looks tight because outlier removal already deflated the spread —\na third of the iterations being tail events is itself a noise signal,\neven if the surviving samples cluster cleanly. Set higher (e.g. 0.2)\nfor benchmarks where outliers are expected (allocator-bound, async\nI/O), lower (e.g. 0.05) for tight CPU loops.\nDefault: 0.10"
 							}
 						]
 					},
@@ -728,7 +747,7 @@
 						"name": "BenchmarkBaselineComparisonResult",
 						"kind": "type",
 						"doc_comment": "Result of comparing current results against a baseline.",
-						"source_line": 103,
+						"source_line": 174,
 						"type_signature": "BenchmarkBaselineComparisonResult",
 						"properties": [
 							{
@@ -762,10 +781,34 @@
 								"doc_comment": "Whether the baseline is considered stale based on staleness_warning_days option"
 							},
 							{
+								"name": "baseline_node_version",
+								"kind": "variable",
+								"type_signature": "string | null",
+								"doc_comment": "Node.js version recorded in the baseline (null if no baseline)."
+							},
+							{
+								"name": "current_node_version",
+								"kind": "variable",
+								"type_signature": "string",
+								"doc_comment": "Node.js version of the process that produced the current results."
+							},
+							{
+								"name": "node_version_changed",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "True if the baseline's node version differs from the current process.\nInformational only — surfaced in the comparison header so readers can\napply the caveat across all task comparisons; does not affect per-task\nclassification (Node bumps affect every task uniformly)."
+							},
+							{
+								"name": "baseline_metadata",
+								"kind": "variable",
+								"type_signature": "Record<string, unknown> | null",
+								"doc_comment": "The `metadata` bag persisted in the baseline file, or `null` if the\nbaseline didn't have one (or no baseline was found). Returned verbatim —\nfuz_util doesn't validate the shape or diff it against any \"current run\"\nmetadata. If the consumer needs a diff, they pass `options.metadata`\n(current-run context) and walk the two records themselves."
+							},
+							{
 								"name": "comparisons",
 								"kind": "variable",
 								"type_signature": "Array<BenchmarkBaselineTaskComparison>",
-								"doc_comment": "Individual task comparisons"
+								"doc_comment": "Individual task comparisons for tasks where Welch's math is meaningful —\ni.e., budget unchanged between baseline and current. Methodology-changed\ntasks are NOT in here; they live in `methodology_changed`. Excluding them\nhere keeps aggregate reads of `c.comparison.faster` /\n`c.comparison.speedup_ratio` / `c.comparison.recommendation` safe — those\nfields are still computed for methodology-changed rows but answer a\ncounterfactual question (the math is correct over mismatched sample\nsizes) and would mislead consumers iterating this array."
 							},
 							{
 								"name": "regressions",
@@ -786,6 +829,12 @@
 								"doc_comment": "Tasks with no significant change"
 							},
 							{
+								"name": "methodology_changed",
+								"kind": "variable",
+								"type_signature": "Array<BenchmarkBaselineTaskComparison>",
+								"doc_comment": "Tasks whose effective budget differs between baseline and current.\nExcluded from regressions/improvements/unchanged because the Welch\ncomparison is contaminated by sample-size or warmup differences — the\nmath is correct but answers a different question than the reader thinks.\nRe-save the baseline after intentional methodology changes to surface\nany genuine drift that was masked."
+							},
+							{
 								"name": "new_tasks",
 								"kind": "variable",
 								"type_signature": "Array<string>",
@@ -803,7 +852,7 @@
 						"name": "BenchmarkBaselineTaskComparison",
 						"kind": "type",
 						"doc_comment": "Comparison result for a single task.",
-						"source_line": 131,
+						"source_line": 239,
 						"type_signature": "BenchmarkBaselineTaskComparison",
 						"properties": [
 							{
@@ -824,14 +873,64 @@
 							{
 								"name": "comparison",
 								"kind": "variable",
-								"type_signature": "BenchmarkComparison"
+								"type_signature": "BenchmarkComparison",
+								"doc_comment": "Welch comparison of baseline vs. current means.\n\nWhen the row is in `methodology_changed`, **every field** of this object\nis contaminated by sample-size or warmup differences — not just\n`recommendation`. The Welch math runs end-to-end and populates `faster`,\n`speedup_ratio`, `significant`, `p_value`, `percent_difference`,\n`effect_size`, `effect_magnitude`, `ci_overlap`, and `recommendation`,\nbut it's comparing distributions produced under different methodologies.\nTreat the result as diagnostic (\"how dramatic is the contamination?\"),\nnot authoritative.\n\nThe built-in formatters (`benchmark_baseline_format`,\n`benchmark_baseline_format_json`) never render `comparison.*` for\nmethodology-changed rows for this reason — they show only the budget\ndiff. Custom consumers reading this field directly should check\n`methodology_changed` first."
+							},
+							{
+								"name": "methodology_changed",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "True if the effective time budget differs between baseline and current.\nWhen set, the task is routed to `methodology_changed` instead of\nregressions/improvements/unchanged, and the `comparison` field's contents\nbecome unreliable per the doc above."
+							},
+							{
+								"name": "noise_warning",
+								"kind": "variable",
+								"type_signature": "boolean",
+								"doc_comment": "True when measurement noise is high enough to undermine the\nsignificance call on this row. OR-gated across two signals:\n  - `max(baseline.cv, current.cv) >= noise_warning_cv_threshold`\n    where cv = `std_dev_ns / mean_ns` (post-outlier-removal).\n  - `max(baseline.outlier_ratio, current.outlier_ratio)\n    >= noise_warning_outlier_ratio_threshold`, since outlier removal\n    deflates cv — a high outlier ratio is itself a noise signal even\n    when the cleaned cv looks tight.\nIndependent of `methodology_changed`. The Welch math still ran; this\nflag tells the reader to take `comparison.significant` with skepticism\non this row. Cv is recomputed at comparison time from persisted\n`mean_ns`/`std_dev_ns`; `outlier_ratio` is persisted directly."
+							},
+							{
+								"name": "max_cv",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "The larger of the two coefficients of variation across baseline and\ncurrent, exposed so consumers can render the actual noise level.\nRecomputed at comparison time from persisted `mean_ns` and\n`std_dev_ns` — not a persisted field."
+							},
+							{
+								"name": "max_outlier_ratio",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "The larger of the two outlier ratios across baseline and current.\nRead directly from the persisted entries. Exposed so consumers can\nrender the actual outlier rate alongside `noise_warning`."
+							}
+						]
+					},
+					{
+						"name": "BenchmarkBudgetDiffEntry",
+						"kind": "type",
+						"doc_comment": "Per-field diff entry produced by `benchmark_budget_diff`. The `async_resolved`\nentry carries booleans; every other entry carries numbers. Consumers reading\n`baseline`/`current` should narrow on `field` before using the value\narithmetically.",
+						"source_line": 330,
+						"type_signature": "BenchmarkBudgetDiffEntry"
+					},
+					{
+						"name": "benchmark_budget_diff",
+						"kind": "function",
+						"doc_comment": "Compute the per-field diff between two effective budgets. Returns an empty\narray if budgets are identical — the formatters use the length as a quick\n\"methodology changed?\" check without re-deriving the boolean.",
+						"source_line": 343,
+						"type_signature": "(baseline: { duration_ms: number; warmup_iterations: number; min_iterations: number; max_iterations: number; async_resolved: boolean; }, current: { duration_ms: number; warmup_iterations: number; min_iterations: number; max_iterations: number; async_resolved: boolean; }): BenchmarkBudgetDiffEntry[]",
+						"return_type": "BenchmarkBudgetDiffEntry[]",
+						"parameters": [
+							{
+								"name": "baseline",
+								"type": "{ duration_ms: number; warmup_iterations: number; min_iterations: number; max_iterations: number; async_resolved: boolean; }"
+							},
+							{
+								"name": "current",
+								"type": "{ duration_ms: number; warmup_iterations: number; min_iterations: number; max_iterations: number; async_resolved: boolean; }"
 							}
 						]
 					},
 					{
 						"name": "benchmark_baseline_save",
 						"kind": "function",
-						"doc_comment": "Save benchmark results as the current baseline.",
+						"doc_comment": "Save benchmark results as the current baseline.\n\nEach entry's effective time-budget (`duration_ms`, `warmup_iterations`,\n`min_iterations`, `max_iterations`) is persisted alongside the stats so a\nlater `benchmark_baseline_compare` can detect methodology drift — a budget\nmismatch between baseline and current routes the task to the\n`methodology_changed` bucket instead of producing false regressions /\nimprovements. Suite-level config (`timer`, `cooldown_ms`) is *not*\npersisted; keep it stable across runs in the same baseline lineage.",
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\nawait benchmark_baseline_save(bench.results());\n```"
 						],
@@ -841,7 +940,7 @@
 								"description": "if creating the baseline directory or writing the file fails"
 							}
 						],
-						"source_line": 174,
+						"source_line": 403,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineSaveOptions): Promise<void>",
 						"return_type": "Promise<void>",
 						"parameters": [
@@ -863,9 +962,9 @@
 						"examples": [
 							"```ts\nconst baseline = await benchmark_baseline_load();\nif (baseline) {\n  console.log(`Baseline from ${baseline.timestamp}`);\n}\n```"
 						],
-						"source_line": 216,
-						"type_signature": "(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; } | null>",
-						"return_type": "Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 7 more ...; sample_size: number; }[]; } | null>",
+						"source_line": 449,
+						"type_signature": "(options?: BenchmarkBaselineLoadOptions): Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { ...; }[]; metadata?: Record<...> | undefined; } | null>",
+						"return_type": "Promise<{ version: number; timestamp: string; git_commit: string | null; git_branch: string | null; node_version: string; entries: { name: string; mean_ns: number; p50_ns: number; std_dev_ns: number; ... 9 more ...; budget: { ...; }; }[]; metadata?: Record<...> | undefined; } | null>",
 						"return_description": "the baseline, or null if not found or invalid",
 						"parameters": [
 							{
@@ -882,7 +981,7 @@
 						"examples": [
 							"```ts\nconst bench = new Benchmark();\nbench.add('test', () => fn());\nawait bench.run();\n\nconst comparison = await benchmark_baseline_compare(bench.results(), {\n  regression_threshold: 1.05, // Only flag regressions 5% or more slower\n  staleness_warning_days: 7,  // Warn if baseline is older than 7 days\n});\nif (comparison.regressions.length > 0) {\n  console.log('Performance regressions detected!');\n  for (const r of comparison.regressions) {\n    console.log(`  ${r.name}: ${r.comparison.speedup_ratio.toFixed(2)}x slower`);\n  }\n  process.exit(1);\n}\n```"
 						],
-						"source_line": 278,
+						"source_line": 515,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkBaselineCompareOptions): Promise<BenchmarkBaselineComparisonResult>",
 						"return_type": "Promise<BenchmarkBaselineComparisonResult>",
 						"return_description": "comparison result with regressions, improvements, and unchanged tasks",
@@ -903,7 +1002,7 @@
 						"name": "benchmark_baseline_format",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as a human-readable string.",
-						"source_line": 422,
+						"source_line": 723,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult): string",
 						"return_type": "string",
 						"parameters": [
@@ -918,7 +1017,7 @@
 						"name": "benchmark_baseline_format_json",
 						"kind": "function",
 						"doc_comment": "Format a baseline comparison result as JSON for programmatic consumption.",
-						"source_line": 507,
+						"source_line": 843,
 						"type_signature": "(result: BenchmarkBaselineComparisonResult, options?: { pretty?: boolean | undefined; }): string",
 						"return_type": "string",
 						"parameters": [
@@ -1200,7 +1299,7 @@
 								"name": "ci_overlap",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "Whether the 95% confidence intervals overlap"
+								"doc_comment": "Whether the 95% confidence intervals of the two means overlap.\n\n**Informational only — do not use this field to infer significance.**\nTwo means with overlapping 95% CIs can still differ significantly at\np<0.05 (overlap of up to ~25% of CI width is consistent with\nsignificance); conversely, non-overlapping CIs are slightly *stronger*\nthan the standard p<0.05 bar but the relationship is not strict.\nUse `significant` and `p_value` for classification. This field is\nexposed for consumers who want to render CIs side-by-side and need\nthe visual overlap check.\n\nNote: the underlying CIs are computed with a z-score (1.96) rather\nthan the strict t-score, so at small n the CIs are slightly narrow\n— overlap is reported less often than a t-based CI would. Effect is\n~2-3% at the n=30 floor after Bessel's correction on `std_dev_ns`."
 							},
 							{
 								"name": "recommendation",
@@ -1214,7 +1313,7 @@
 						"name": "BenchmarkCompareOptions",
 						"kind": "type",
 						"doc_comment": "Options for benchmark comparison.",
-						"source_line": 66,
+						"source_line": 82,
 						"type_signature": "BenchmarkCompareOptions",
 						"properties": [
 							{
@@ -1235,7 +1334,7 @@
 						"name": "BenchmarkStats",
 						"kind": "class",
 						"doc_comment": "Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.",
-						"source_line": 90,
+						"source_line": 106,
 						"members": [
 							{
 								"name": "mean_ns",
@@ -1418,7 +1517,7 @@
 						"examples": [
 							"```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```"
 						],
-						"source_line": 219,
+						"source_line": 254,
 						"type_signature": "(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison",
 						"return_type": "BenchmarkComparison",
 						"return_description": "comparison result with significance, effect size, and recommendation",
@@ -1465,31 +1564,31 @@
 								"name": "duration_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Target duration to run each benchmark task in milliseconds.\nThe benchmark will run until this duration is reached or max_iterations is hit.\nDefault: 1000ms"
+								"doc_comment": "Target measurement duration per task in milliseconds. The loop runs\nat least `min_iterations` iterations *and* at least this long, with\n`max_iterations` and `on_iteration` `abort()` as hard ceilings.\nDefault: 1000ms"
 							},
 							{
 								"name": "warmup_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Number of warmup iterations before actual measurements.\nWarmup helps stabilize JIT compilation and caches.\nDefault: 5"
+								"doc_comment": "Number of warmup iterations before actual measurements.\nWarmup helps stabilize JIT compilation and caches.\nDefault: 10"
 							},
 							{
 								"name": "cooldown_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Cooldown time between tasks in milliseconds.\nHelps prevent interference between benchmarks.\nDefault: 100ms"
+								"doc_comment": "Cooldown time between tasks in milliseconds. Lets the runtime settle\nGC and (partially) thermal state between tasks. Fixed regardless of\nthe previous task's duration or allocation footprint — if a suite\nmixes heavy and light tasks, raise this so light tasks downstream\ndon't run in the prior task's GC shadow.\nDefault: 100ms"
 							},
 							{
 								"name": "min_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Minimum number of iterations to run.\nDefault: 10"
+								"doc_comment": "Minimum number of iterations to run. The loop continues past\n`duration_ms` if needed to reach this floor, so raising it in a slow\nsuite extends wall-clock past `duration_ms`.\n\nThe default (30) is sized so the Welch's-t DOF approximation used by\n`benchmark_stats_compare` stays stable on the floor case. Lowering it\nbelow ~15 produces statistically unreliable significance calls on slow\ntasks that hit the floor exactly — the math still runs but\n`comparison.significant` becomes a coin flip on noisy outliers.\n\nDefault: 30"
 							},
 							{
 								"name": "max_iterations",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Maximum number of iterations to run.\nPrevents infinite loops if function is extremely fast.\nDefault: 100000"
+								"doc_comment": "Maximum number of iterations to run. Prevents infinite loops on\nextremely fast functions, and also sizes the pre-allocated timings\narray — set this only as high as you expect to fill, since oversized\ncaps waste memory and add GC pressure during measurement.\nDefault: 100000"
 							},
 							{
 								"name": "timer",
@@ -1514,8 +1613,8 @@
 					{
 						"name": "BenchmarkTask",
 						"kind": "type",
-						"doc_comment": "A benchmark task to execute.",
-						"source_line": 112,
+						"doc_comment": "A benchmark task to execute.\n\nThe time-budget fields (`duration_ms`, `warmup_iterations`, `min_iterations`,\n`max_iterations`) override the suite-level `BenchmarkConfig` for this task\nonly. Use them when one task is much faster or slower than the others —\ne.g. raise `min_iterations` on a slow task so its percentile/CI math has\nenough samples without inflating the budget for the fast tasks.\n\n**Reading output across overrides:** when per-task overrides diverge\nacross rows in the same table, cross-row comparison weakens. Percentiles\n(`p50`, `p99`, …) become unreliable when sample counts differ — `p99` at\nn=30 and `p99` at n=50000 estimate different things. Means (and the\n`vs Best` column) stay reasonable only if `warmup_iterations` is held\ncomparable across tasks; asymmetric warmup biases the under-warmed task's\nmean upward. Per-task percentiles remain valid for that task alone.",
+						"source_line": 141,
 						"type_signature": "BenchmarkTask",
 						"properties": [
 							{
@@ -1534,7 +1633,7 @@
 								"name": "setup",
 								"kind": "variable",
 								"type_signature": "() => void | Promise<void>",
-								"doc_comment": "Optional setup function run before benchmarking this task.\nNot included in timing measurements."
+								"doc_comment": "Optional setup function run before benchmarking this task.\nNot included in timing measurements.\n\nMutations to `fn` and `name` made here are honored by the measurement\nloop — useful for dynamic configuration that depends on async state\nresolved during setup."
 							},
 							{
 								"name": "teardown",
@@ -1558,7 +1657,65 @@
 								"name": "async",
 								"kind": "variable",
 								"type_signature": "boolean",
-								"doc_comment": "Hint for whether the function is sync or async.\nIf not provided, automatically detected during warmup.\nSetting this explicitly skips per-iteration promise checking for sync functions."
+								"doc_comment": "Hint for whether the function is sync or async. Auto-detected during\nwarmup if not set; `async: false` skips per-iteration promise checking\nfor sync functions, while `async: true` forces an `await` on every\nmeasurement iteration.\n\nSetting `async: true` on a function that returns sync forces an\nunnecessary microtask per iteration — for sub-microsecond functions\nthis adds measurable bias. Prefer leaving `async` undefined (auto-\ndetected during warmup) unless the conditional-async hazard below\napplies.\n\n**Required for conditional-async fns** — without `async: true`, a\nfirst call that happens to return synchronously locks in the sync\ncode path and any later Promise returns leak as unhandled rejections."
+							},
+							{
+								"name": "duration_ms",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `duration_ms` for this task only.\nUseful when one task is much slower than others and needs a longer (or shorter)\nmeasurement window than the suite default."
+							},
+							{
+								"name": "warmup_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `warmup_iterations` for this task only.\nSlow tasks may want fewer warmup iterations to keep wall-clock reasonable;\ntight/complex functions may want more so TurboFan reaches steady state."
+							},
+							{
+								"name": "min_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `min_iterations` for this task only.\nRaise this on slow tasks so percentile and CI math have enough\nsamples. Wins over `duration_ms` (see the suite field) — a slow task\nwith a raised floor extends wall-clock until the count is reached.\n\nPrefer raising this over `duration_ms` when you need more samples:\nper-iteration noise (GC, scheduler, thermal) is a time-rate process,\nso a longer wall-clock window proportionally inflates exposure to\nrare tail events. Raising the sample floor fixes the statistical-power\nproblem without that inflation."
+							},
+							{
+								"name": "max_iterations",
+								"kind": "variable",
+								"type_signature": "number",
+								"doc_comment": "Override the suite's `max_iterations` for this task only.\nCap a fast task to a fixed sample count, or raise the ceiling on a\nslow task that would otherwise be limited by the suite default. Also\nsizes the per-task pre-allocation — avoid extreme caps that won't\nactually be filled. When this differs sharply across tasks in the\nsame suite, the larger allocation can leak GC pressure into\nsubsequent tasks (`cooldown_ms` is fixed regardless of prior task\nfootprint)."
+							}
+						]
+					},
+					{
+						"name": "BenchmarkBudget",
+						"kind": "type",
+						"doc_comment": "Effective time-budget config used to produce a benchmark sample set.\nResolved from per-task overrides on top of suite defaults — what the\nmeasurement loop actually saw, not what was configured.\n\n`async_resolved` captures the boolean that `benchmark_warmup` actually\nreturned for the measurement run — *not* the user's `task.async` hint.\nThe two diverge when (a) the hint is `undefined` and the function is\nauto-detected sync vs. async, or (b) a conditional-async fn resolves\ndifferently between runs. Persisting the resolved value is what makes\nthe budget describe \"what the loop saw,\" not \"what was configured.\"",
+						"source_line": 247,
+						"type_signature": "BenchmarkBudget",
+						"properties": [
+							{
+								"name": "duration_ms",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "warmup_iterations",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "min_iterations",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "max_iterations",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "async_resolved",
+								"kind": "variable",
+								"type_signature": "boolean"
 							}
 						]
 					},
@@ -1566,7 +1723,7 @@
 						"name": "BenchmarkResult",
 						"kind": "type",
 						"doc_comment": "Result from running a single benchmark task.",
-						"source_line": 154,
+						"source_line": 258,
 						"type_signature": "BenchmarkResult",
 						"properties": [
 							{
@@ -1591,13 +1748,19 @@
 								"name": "total_time_ms",
 								"kind": "variable",
 								"type_signature": "number",
-								"doc_comment": "Total time spent benchmarking (including warmup) in milliseconds"
+								"doc_comment": "Total wall-clock time for the task (setup + warmup + measurement + teardown) in milliseconds"
 							},
 							{
 								"name": "timings_ns",
 								"kind": "variable",
 								"type_signature": "Array<number>",
-								"doc_comment": "Raw timing data for each iteration in nanoseconds.\nUseful for custom statistical analysis, histogram generation,\nor exporting to external tools."
+								"doc_comment": "Raw timing data for each iteration in nanoseconds.\nLength equals `iterations` (the array is right-sized after measurement).\nUseful for custom statistical analysis, histogram generation,\nor exporting to external tools."
+							},
+							{
+								"name": "budget",
+								"kind": "variable",
+								"type_signature": "BenchmarkBudget",
+								"doc_comment": "Effective per-task time budget after applying overrides to suite defaults.\nPersisted into baselines so `benchmark_baseline_compare` can detect\nmethodology drift — a `min_iterations` bump between baseline and current\nshifts Welch's DOF and produces \"regressions\" that are sample-size\nartifacts, not real drift."
 							}
 						]
 					},
@@ -1605,7 +1768,7 @@
 						"name": "BenchmarkFormatTableOptions",
 						"kind": "type",
 						"doc_comment": "Options for table formatting.",
-						"source_line": 178,
+						"source_line": 292,
 						"type_signature": "BenchmarkFormatTableOptions",
 						"properties": [
 							{
@@ -1620,7 +1783,7 @@
 						"name": "BenchmarkGroup",
 						"kind": "type",
 						"doc_comment": "A group definition for organizing benchmark results.",
-						"source_line": 188,
+						"source_line": 302,
 						"type_signature": "BenchmarkGroup",
 						"properties": [
 							{
@@ -1657,11 +1820,11 @@
 					{
 						"name": "benchmark_warmup",
 						"kind": "function",
-						"doc_comment": "Warmup function by running it multiple times.\nDetects whether the function is async based on return value.",
+						"doc_comment": "Warmup function by running it multiple times.\nDetects whether the function is async based on return value.\n\nWhen no `async_hint` is provided, at least one detection iteration runs even\nif `iterations` is 0 — otherwise async detection would be impossible and\nasync functions would have their returned promises leaked as unhandled.",
 						"examples": [
 							"```ts\nconst is_async = await benchmark_warmup(() => expensive_operation(), 10);\n```"
 						],
-						"source_line": 102,
+						"source_line": 145,
 						"type_signature": "(fn: () => unknown, iterations: number, async_hint?: boolean | undefined): Promise<boolean>",
 						"return_type": "Promise<boolean>",
 						"return_description": "whether the function is async",
@@ -1687,7 +1850,7 @@
 						"name": "Benchmark",
 						"kind": "class",
 						"doc_comment": "Benchmark class for measuring and comparing function performance.",
-						"source_line": 136,
+						"source_line": 183,
 						"members": [
 							{
 								"name": "constructor",
@@ -1780,49 +1943,9 @@
 								]
 							},
 							{
-								"name": "skip",
-								"kind": "function",
-								"doc_comment": "Mark a task to be skipped during benchmark runs.",
-								"type_signature": "(name: string): this",
-								"return_type": "this",
-								"return_description": "this `Benchmark` instance for chaining",
-								"parameters": [
-									{
-										"name": "name",
-										"type": "string"
-									}
-								],
-								"throws": [
-									{
-										"type": "Error",
-										"description": "if task with given name doesn't exist"
-									}
-								]
-							},
-							{
-								"name": "only",
-								"kind": "function",
-								"doc_comment": "Mark a task to run exclusively (along with other `only` tasks).",
-								"type_signature": "(name: string): this",
-								"return_type": "this",
-								"return_description": "this `Benchmark` instance for chaining",
-								"parameters": [
-									{
-										"name": "name",
-										"type": "string"
-									}
-								],
-								"throws": [
-									{
-										"type": "Error",
-										"description": "if task with given name doesn't exist"
-									}
-								]
-							},
-							{
 								"name": "run",
 								"kind": "function",
-								"doc_comment": "Run all benchmark tasks.",
+								"doc_comment": "Run all benchmark tasks.\n\nTasks execute in `add()` order. The first task runs against a colder\nruntime than subsequent ones (uncompiled JS, cold caches) — a\nproperty of in-process benchmarking that matters more when an early\ntask has aggressive overrides like low `warmup_iterations` or\n`min_iterations`. If first-position bias is a concern, put a\nthrowaway warm-up task first, or call `run()` twice and use the\nsecond result set.",
 								"type_signature": "(): Promise<BenchmarkResult[]>",
 								"return_type": "Promise<BenchmarkResult[]>",
 								"parameters": []
