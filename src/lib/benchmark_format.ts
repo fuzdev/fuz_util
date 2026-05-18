@@ -267,10 +267,16 @@ export const benchmark_format_markdown_grouped = (
 		const group_results = results.filter(group.filter);
 		if (group_results.length === 0) continue;
 
-		// Add group header and table
+		// Header and table are pushed without trailing newlines; the final
+		// `'\n\n'` join inserts exactly one blank line between every adjacent
+		// pair. Trailing newlines on the header would double up between the
+		// heading and its own table; missing blank lines after a table would
+		// squash the next heading directly onto the last row, which Prettier
+		// then treats as a malformed table block and reformats column padding
+		// as collateral damage.
 		const header = group.description
-			? `### ${group.name}\n\n${group.description}\n`
-			: `### ${group.name}\n`;
+			? `### ${group.name}\n\n${group.description}`
+			: `### ${group.name}`;
 		sections.push(header);
 		sections.push(benchmark_format_markdown(group_results, group.baseline));
 	}
@@ -280,11 +286,11 @@ export const benchmark_format_markdown_grouped = (
 	const ungrouped = results.filter((r) => !grouped_names.has(r.name));
 
 	if (ungrouped.length > 0) {
-		sections.push('### Other\n');
+		sections.push('### Other');
 		sections.push(benchmark_format_markdown(ungrouped));
 	}
 
-	return sections.join('\n');
+	return sections.join('\n\n');
 };
 
 export interface BenchmarkFormatJsonOptions {

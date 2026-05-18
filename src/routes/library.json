@@ -1098,7 +1098,7 @@
 					{
 						"name": "BenchmarkFormatJsonOptions",
 						"kind": "type",
-						"source_line": 290,
+						"source_line": 296,
 						"type_signature": "BenchmarkFormatJsonOptions",
 						"properties": [
 							{
@@ -1122,7 +1122,7 @@
 						"examples": [
 							"```ts\nconsole.log(format_json(results));\nconsole.log(format_json(results, {pretty: false}));\nconsole.log(format_json(results, {include_timings: true}));\n```"
 						],
-						"source_line": 307,
+						"source_line": 313,
 						"type_signature": "(results: BenchmarkResult[], options?: BenchmarkFormatJsonOptions | undefined): string",
 						"return_type": "string",
 						"parameters": [
@@ -1144,7 +1144,7 @@
 						"examples": [
 							"```ts\nconst groups = [\n  { name: 'FAST PATHS', filter: (r) => r.name.includes('fast') },\n  { name: 'SLOW PATHS', filter: (r) => r.name.includes('slow') },\n];\nconsole.log(benchmark_format_table_grouped(results, groups));\n// 📦 FAST PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐆 │ fast test 1 │ 1,237,144  │...│\n// │ 🐇 │ fast test 2 │   261,619  │...│\n// └────┴─────────────┴────────────┴...┘\n//\n// 📦 SLOW PATHS\n// ┌────┬─────────────┬────────────┬...┐\n// │ 🐢 │ slow test 1 │    10,123  │...│\n// └────┴─────────────┴────────────┴...┘\n```"
 						],
-						"source_line": 363,
+						"source_line": 369,
 						"type_signature": "(results: BenchmarkResult[], groups: BenchmarkGroup[]): string",
 						"return_type": "string",
 						"parameters": [
@@ -1163,7 +1163,7 @@
 						"kind": "variable",
 						"doc_comment": "Format a number with fixed decimal places and thousands separators.",
 						"see_also": ["`format_number` in `maths.ts` for the underlying implementation."],
-						"source_line": 399,
+						"source_line": 405,
 						"type_signature": "(n: number, decimals?: number) => string"
 					}
 				],
