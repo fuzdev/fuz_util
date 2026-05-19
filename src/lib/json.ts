@@ -2,9 +2,9 @@ export type Json = JsonPrimitive | JsonObject | JsonArray;
 
 export type JsonPrimitive = string | number | boolean | null;
 
-export interface JsonObject extends Record<string, Json> {} // eslint-disable-line @typescript-eslint/no-empty-object-type
+export interface JsonObject extends Record<string, Json> {}
 
-export interface JsonArray extends Array<Json> {} // eslint-disable-line @typescript-eslint/no-empty-object-type
+export interface JsonArray extends Array<Json> {}
 
 /**
  * Like `typeof json`, but includes arrays. Excludes `'undefined'` because it's not valid JSON.

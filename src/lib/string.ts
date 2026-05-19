@@ -96,7 +96,7 @@ export const strip_ansi = (str: string): string => str.replaceAll(/\x1B\[[0-9;]*
  * @source https://2ality.com/2025/04/stringification-javascript.html
  */
 export const stringify = (value: unknown): string =>
-	typeof value === 'bigint' ? value + 'n' : (JSON.stringify(value) ?? String(value)); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+	typeof value === 'bigint' ? value + 'n' : (JSON.stringify(value) ?? String(value));
 
 /**
  * Calculate the display width of a string in terminal columns.

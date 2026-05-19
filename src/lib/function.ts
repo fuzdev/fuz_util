@@ -1,7 +1,7 @@
 /**
  * Does nothing when called.
  */
-export const noop: (...args: Array<any>) => any = () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
+export const noop: (...args: Array<any>) => any = () => {};
 
 /**
  * Async function that returns a resolved promise.

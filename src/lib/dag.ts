@@ -173,7 +173,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 		await semaphore.acquire();
 
 		// Double-check stopping after acquiring slot
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
 		if (stopping) {
 			semaphore.release();
 			return skip_node(node, 'fail', 'stopped');

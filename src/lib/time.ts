@@ -49,7 +49,7 @@ export const timer_browser: Timer = {
  */
 const detect_timer_fn = (): (() => number) => {
 	// Check if we're in Node.js with hrtime.bigint support
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
 	if (typeof process !== 'undefined' && process.hrtime) {
 		try {
 			if (typeof process.hrtime.bigint !== 'undefined') {
