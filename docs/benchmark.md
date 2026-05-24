@@ -360,10 +360,10 @@ suite-level so cross-task comparisons remain meaningful.
    is absent from the file (not `{}`), and `baseline_metadata` is
    `null` on the comparison result.
 
-   TODO\_ for consumers: `~/dev/private_tsv/benches/deno/bench.ts`
-   maintains a parallel `Baseline` interface (with `corpus`, `versions`,
-   `binary_sizes` fields) and a static ±5% `compareBaseline` check. The
-   metadata field exists specifically to support that migration —
+   TODO\_ for consumers: a sibling benchmark suite maintains a parallel
+   `Baseline` interface (with `corpus`, `versions`, `binary_sizes`
+   fields) and a static ±5% `compareBaseline` check. The metadata field
+   exists specifically to support that migration —
    `benchmark_baseline_compare`'s Welch test + noise-warning gates are
    strictly better than the ratio threshold, and metadata round-trips
    the run-level context they need. Migration ordering: (a) replace
