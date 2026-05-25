@@ -537,6 +537,13 @@ Percentiles are calculated using the **R-7 linear interpolation method** (the de
 in R, NumPy, and Excel). This interpolates between adjacent data points for more
 accurate estimates, especially important with smaller sample sizes.
 
+The percentiles and `max` are computed over the **raw** valid timings, not the
+outlier-cleaned set — see [Outlier Detection](#outlier-detection). Tail
+percentiles are themselves robust order statistics; stripping the tail before
+measuring it would defeat the purpose, so `p99` reflects real tail events.
+(`min` is the exception — it uses the cleaned set, since a timing below the true
+cost is an invalid measurement, not a fast run.)
+
 **Why they matter:**
 
 - median shows typical performance
@@ -557,8 +564,9 @@ This could indicate GC pauses or cache misses.
 
 Shows the fastest and slowest single iteration:
 
-- **Min**: Best-case performance (hot path, cached)
-- **Max**: Worst-case performance (cold start, GC, cache miss)
+- **Min**: Best-case performance (hot path, cached) — over the outlier-cleaned
+  set, so a sub-cost measurement glitch can't masquerade as the best case
+- **Max**: Worst-case performance (cold start, GC, cache miss) — over raw timings
 - **Range (max/min ratio)**: Indicates consistency
 
 High variance suggests:
@@ -588,17 +596,34 @@ Expressed as ±percentage in the table.
 
 ### Outlier Detection
 
-Uses MAD (Median Absolute Deviation) to automatically remove outliers:
+Uses MAD (Median Absolute Deviation) to detect outliers:
 
 - More robust than IQR for skewed distributions
-- Prevents GC pauses from skewing results
+- Keeps GC pauses from skewing the central-tendency estimate
 - Reported in stats (count and ratio)
 
-**Important**: Outlier removal is automatic and always enabled. The `BenchmarkStats` class
-computes all statistics (mean, median, percentiles, etc.) on the cleaned data after
-outliers are removed. If you need raw statistics without outlier removal, access the
-`raw_sample_size` property to see how many samples were collected before filtering,
-and `outliers_ns` to see which values were removed.
+**Important**: outlier detection is automatic and always enabled. High and low
+outliers mean different things in timing data, so the `BenchmarkStats` class
+treats them asymmetrically:
+
+- **Central-tendency statistics** (`mean_ns`, `std_dev_ns`, `cv`,
+  `confidence_interval_ns`, `ops_per_second`) are computed on the
+  **MAD-cleaned** data, so a GC pause doesn't distort the mean — this keeps
+  the Welch's-t comparison stable.
+- **Upper-tail order statistics** (`max_ns`, `p75_ns`–`p99_ns`) are computed on
+  the **raw** valid timings. High outliers (GC pauses, slow paths) are real
+  latency events, so the tail stays honest.
+- **`min_ns`** is computed on the **MAD-cleaned** data. Nothing runs faster than
+  its true cost, so a low outlier is an invalid measurement (dead-code
+  elimination, a skipped iteration, timer quantization), not a fast run —
+  reporting it as the best case would mislead. (`p50_ns` uses raw timings to
+  stay paired with the percentile family; being robust, it's unaffected in
+  practice.)
+
+`outliers_ns` lists the detected outlier values and `outlier_ratio` reports how
+heavy the tail was; `raw_sample_size` (total input, including invalid values)
+vs `sample_size` (valid and cleaned) shows the pre/post-clean counts. Access
+`BenchmarkResult.timings_ns` for the full raw sample array.
 
 ## Standalone Statistics Module
 

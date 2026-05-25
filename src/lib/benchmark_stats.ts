@@ -102,25 +102,46 @@ export interface BenchmarkCompareOptions {
  * Complete statistical analysis of timing measurements.
  * Includes outlier detection, descriptive statistics, and performance metrics.
  * All timing values are in nanoseconds.
+ *
+ * **Outliers are treated asymmetrically**, because high and low outliers in
+ * timing data mean different things:
+ *
+ * - Upper-tail order statistics (`max_ns`, `p75_ns`–`p99_ns`) are computed over
+ *   the **raw** valid timings — high outliers (GC pauses, slow paths) are real
+ *   latency events, so the tail stays honest and p99 reflects real events
+ *   rather than a pre-stripped distribution.
+ * - `min_ns` is computed over the **MAD-cleaned** timings — nothing runs faster
+ *   than its true cost, so a low outlier is an invalid measurement, not a fast
+ *   run, and reporting it as the best case would mislead.
+ * - Central-tendency statistics (`mean_ns`, `std_dev_ns`, `cv`,
+ *   `confidence_interval_ns`, `ops_per_second`) are computed over the
+ *   **MAD-cleaned** timings so the Welch's-t comparison keeps a stable mean.
+ *
+ * `p50_ns` (median) uses raw timings to stay paired with the percentile family;
+ * being robust, it's unaffected in practice. `outlier_ratio` reports how heavy
+ * the tail was either way. `sample_size` is the cleaned count behind central
+ * tendency and `min_ns`; the upper-tail order statistics use all valid timings
+ * (`sample_size` + `outliers_ns.length`); `raw_sample_size` is the total input
+ * count including the `failed_iterations` invalid values that were filtered out.
  */
 export class BenchmarkStats {
-	/** Mean (average) time in nanoseconds */
+	/** Mean (average) time in nanoseconds (over MAD-cleaned samples) */
 	readonly mean_ns: number;
-	/** 50th percentile (median) time in nanoseconds */
+	/** 50th percentile (median) time in nanoseconds (over raw samples) */
 	readonly p50_ns: number;
-	/** Standard deviation in nanoseconds */
+	/** Standard deviation in nanoseconds (over MAD-cleaned samples) */
 	readonly std_dev_ns: number;
-	/** Minimum time in nanoseconds */
+	/** Minimum time in nanoseconds (over MAD-cleaned samples) */
 	readonly min_ns: number;
-	/** Maximum time in nanoseconds */
+	/** Maximum time in nanoseconds (over raw samples) */
 	readonly max_ns: number;
-	/** 75th percentile in nanoseconds */
+	/** 75th percentile in nanoseconds (over raw samples) */
 	readonly p75_ns: number;
-	/** 90th percentile in nanoseconds */
+	/** 90th percentile in nanoseconds (over raw samples) */
 	readonly p90_ns: number;
-	/** 95th percentile in nanoseconds */
+	/** 95th percentile in nanoseconds (over raw samples) */
 	readonly p95_ns: number;
-	/** 99th percentile in nanoseconds */
+	/** 99th percentile in nanoseconds (over raw samples) */
 	readonly p99_ns: number;
 	/** Coefficient of variation (std_dev / mean) */
 	readonly cv: number;
@@ -130,9 +151,9 @@ export class BenchmarkStats {
 	readonly outliers_ns: Array<number>;
 	/** Ratio of outliers to total samples */
 	readonly outlier_ratio: number;
-	/** Number of samples after outlier removal */
+	/** Number of valid samples after outlier removal (population for central tendency and `min_ns`) */
 	readonly sample_size: number;
-	/** Original number of samples (before outlier removal) */
+	/** Number of input samples before filtering invalid/outlier values */
 	readonly raw_sample_size: number;
 	/** Operations per second (NS_PER_SEC / mean_ns) */
 	readonly ops_per_second: number;
@@ -145,7 +166,7 @@ export class BenchmarkStats {
 		let failed_count = 0;
 
 		for (const t of timings_ns) {
-			if (!isNaN(t) && isFinite(t) && t > 0) {
+			if (isFinite(t) && t > 0) {
 				valid_timings.push(t);
 			} else {
 				failed_count++;
@@ -175,36 +196,57 @@ export class BenchmarkStats {
 			return;
 		}
 
-		// Detect and remove outliers
+		// Detect outliers once; how each statistic uses the result depends on
+		// what an outlier physically means at that tail.
 		const {cleaned, outliers} = stats_outliers_mad(valid_timings);
-		const sorted_cleaned = [...cleaned].sort((a, b) => a - b);
 
 		this.outliers_ns = outliers;
 		this.outlier_ratio = outliers.length / valid_timings.length;
 		this.sample_size = cleaned.length;
 
-		// Calculate statistics on cleaned data. `stats_std_dev` returns the
-		// *population* std_dev (divides by n). For benchmark use we need the
-		// *sample* std_dev (Bessel's correction, divides by n-1): Welch's
-		// t-test in `benchmark_stats_compare` treats `std_dev_ns` as the
-		// sample-variance estimator of a hypothetical population of all
-		// possible runs. The general utility stays population-style so
-		// non-benchmark callers aren't surprised; we apply the correction
-		// once here and use the result for std_dev_ns, cv, and the CI margin.
+		// High and low outliers in timing data come from different processes,
+		// so the three statistic families treat them differently:
+		//
+		// - Central tendency (mean, std_dev, cv, CI, ops/sec): MAD-cleaned set,
+		//   so a GC pause doesn't drag the mean around and Welch's-t in
+		//   `benchmark_stats_compare` keeps a stable mean/variance estimate.
+		// - Upper-tail order statistics (max, p75-p99): RAW valid timings. High
+		//   outliers are real latency events — a GC pause or slow path is part
+		//   of the true distribution, and pre-stripping the tail before
+		//   measuring a tail percentile defeats the purpose of p99 (a slow
+		//   server's tail *is* the signal, not noise to discard).
+		// - min: MAD-cleaned set. Nothing runs faster than its true cost, so a
+		//   low outlier is an invalid measurement (dead-code elimination, a
+		//   skipped iteration, timer quantization), not a fast run — reporting
+		//   it as the best case would be a lie. Low outliers can't reach
+		//   max/p75-p99, so those stay raw for free; only min and (negligibly,
+		//   since the median is robust) p50 ever see them.
+		//
+		// The `stats_*` helpers each sort/scan internally, so there is no
+		// pre-sort here; `outlier_ratio` reports how heavy the tail was either
+		// way.
+
+		// `stats_std_dev` returns the *population* std_dev (divides by n). For
+		// benchmark use we need the *sample* std_dev (Bessel's correction,
+		// divides by n-1): Welch's t-test in `benchmark_stats_compare` treats
+		// `std_dev_ns` as the sample-variance estimator of a hypothetical
+		// population of all possible runs. The general utility stays
+		// population-style so non-benchmark callers aren't surprised; we apply
+		// the correction once here and use the result for std_dev_ns, cv, and
+		// the CI margin.
 		this.mean_ns = stats_mean(cleaned);
-		this.p50_ns = stats_median(sorted_cleaned);
 		const std_dev_population = stats_std_dev(cleaned, this.mean_ns);
 		const bessel = cleaned.length >= 2 ? Math.sqrt(cleaned.length / (cleaned.length - 1)) : 1;
 		this.std_dev_ns = std_dev_population * bessel;
 
-		const {min, max} = stats_min_max(sorted_cleaned);
-		this.min_ns = min;
-		this.max_ns = max;
+		this.min_ns = stats_min_max(cleaned).min;
+		this.max_ns = stats_min_max(valid_timings).max;
 
-		this.p75_ns = stats_percentile(sorted_cleaned, 0.75);
-		this.p90_ns = stats_percentile(sorted_cleaned, 0.9);
-		this.p95_ns = stats_percentile(sorted_cleaned, 0.95);
-		this.p99_ns = stats_percentile(sorted_cleaned, 0.99);
+		this.p50_ns = stats_median(valid_timings);
+		this.p75_ns = stats_percentile(valid_timings, 0.75);
+		this.p90_ns = stats_percentile(valid_timings, 0.9);
+		this.p95_ns = stats_percentile(valid_timings, 0.95);
+		this.p99_ns = stats_percentile(valid_timings, 0.99);
 
 		this.cv = stats_cv(this.mean_ns, this.std_dev_ns);
 		// `stats_confidence_interval` internally uses the same population
