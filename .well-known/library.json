@@ -11,7 +11,7 @@
 	"published": true,
 	"package_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.60.1",
+		"version": "0.61.0",
 		"description": "utility belt for JS",
 		"glyph": "🦕",
 		"logo": "logo.svg",
@@ -93,7 +93,7 @@
 			"@fuzdev/fuz_ui": "^0.192.0",
 			"@fuzdev/gro": "^0.199.0",
 			"@jridgewell/trace-mapping": "^0.3.31",
-			"@ryanatkn/eslint-config": "^0.11.0",
+			"@ryanatkn/eslint-config": "^0.12.1",
 			"@sveltejs/acorn-typescript": "^1.0.9",
 			"@sveltejs/adapter-static": "^3.0.10",
 			"@sveltejs/kit": "^2.58.0",
@@ -161,7 +161,7 @@
 	},
 	"source_json": {
 		"name": "@fuzdev/fuz_util",
-		"version": "0.60.1",
+		"version": "0.61.0",
 		"modules": [
 			{
 				"path": "args.ts",
@@ -1333,8 +1333,8 @@
 					{
 						"name": "BenchmarkStats",
 						"kind": "class",
-						"doc_comment": "Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.",
-						"source_line": 106,
+						"doc_comment": "Complete statistical analysis of timing measurements.\nIncludes outlier detection, descriptive statistics, and performance metrics.\nAll timing values are in nanoseconds.\n\n**Outliers are treated asymmetrically**, because high and low outliers in\ntiming data mean different things:\n\n- Upper-tail order statistics (`max_ns`, `p75_ns`–`p99_ns`) are computed over\n  the **raw** valid timings — high outliers (GC pauses, slow paths) are real\n  latency events, so the tail stays honest and p99 reflects real events\n  rather than a pre-stripped distribution.\n- `min_ns` is computed over the **MAD-cleaned** timings — nothing runs faster\n  than its true cost, so a low outlier is an invalid measurement, not a fast\n  run, and reporting it as the best case would mislead.\n- Central-tendency statistics (`mean_ns`, `std_dev_ns`, `cv`,\n  `confidence_interval_ns`, `ops_per_second`) are computed over the\n  **MAD-cleaned** timings so the Welch's-t comparison keeps a stable mean.\n\n`p50_ns` (median) uses raw timings to stay paired with the percentile family;\nbeing robust, it's unaffected in practice. `outlier_ratio` reports how heavy\nthe tail was either way. `sample_size` is the cleaned count behind central\ntendency and `min_ns`; the upper-tail order statistics use all valid timings\n(`sample_size` + `outliers_ns.length`); `raw_sample_size` is the total input\ncount including the `failed_iterations` invalid values that were filtered out.",
+						"source_line": 127,
 						"members": [
 							{
 								"name": "mean_ns",
@@ -1342,7 +1342,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Mean (average) time in nanoseconds",
+								"doc_comment": "Mean (average) time in nanoseconds (over MAD-cleaned samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1351,7 +1351,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "50th percentile (median) time in nanoseconds",
+								"doc_comment": "50th percentile (median) time in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1360,7 +1360,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Standard deviation in nanoseconds",
+								"doc_comment": "Standard deviation in nanoseconds (over MAD-cleaned samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1369,7 +1369,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Minimum time in nanoseconds",
+								"doc_comment": "Minimum time in nanoseconds (over MAD-cleaned samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1378,7 +1378,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Maximum time in nanoseconds",
+								"doc_comment": "Maximum time in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1387,7 +1387,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "75th percentile in nanoseconds",
+								"doc_comment": "75th percentile in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1396,7 +1396,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "90th percentile in nanoseconds",
+								"doc_comment": "90th percentile in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1405,7 +1405,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "95th percentile in nanoseconds",
+								"doc_comment": "95th percentile in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1414,7 +1414,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "99th percentile in nanoseconds",
+								"doc_comment": "99th percentile in nanoseconds (over raw samples)",
 								"type_signature": "number"
 							},
 							{
@@ -1459,7 +1459,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Number of samples after outlier removal",
+								"doc_comment": "Number of valid samples after outlier removal (population for central tendency and `min_ns`)",
 								"type_signature": "number"
 							},
 							{
@@ -1468,7 +1468,7 @@
 								"modifiers": [
 									"readonly"
 								],
-								"doc_comment": "Original number of samples (before outlier removal)",
+								"doc_comment": "Number of input samples before filtering invalid/outlier values",
 								"type_signature": "number"
 							},
 							{
@@ -1517,7 +1517,7 @@
 						"examples": [
 							"```ts\nconst comparison = benchmark_stats_compare(result_a.stats, result_b.stats);\nif (comparison.significant) {\n  console.log(`${comparison.faster} is ${comparison.speedup_ratio.toFixed(2)}x faster`);\n}\n```"
 						],
-						"source_line": 254,
+						"source_line": 296,
 						"type_signature": "(a: BenchmarkStatsComparable, b: BenchmarkStatsComparable, options?: BenchmarkCompareOptions | undefined): BenchmarkComparison",
 						"return_type": "BenchmarkComparison",
 						"return_description": "comparison result with significance, effect size, and recommendation",
