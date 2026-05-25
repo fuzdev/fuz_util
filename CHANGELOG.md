@@ -1,5 +1,13 @@
 # @fuzdev/fuz_util
 
+## 0.61.0
+
+### Minor Changes
+
+- fix: treat benchmark timing outliers asymmetrically ([9596566](https://github.com/fuzdev/fuz_util/commit/9596566))
+  - `BenchmarkStats` now computes the upper-tail order statistics (`max_ns`, `p75_ns`–`p99_ns`) over the raw valid timings instead of the MAD-cleaned set
+  - `max_ns` and the `p75_ns`–`p99_ns` percentiles shift on distributions with detected high outliers
+
 ## 0.60.1
 
 ### Patch Changes
