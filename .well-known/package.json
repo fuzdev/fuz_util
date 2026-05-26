@@ -80,7 +80,7 @@
 		"@fuzdev/fuz_code": "^0.45.1",
 		"@fuzdev/fuz_css": "^0.58.0",
 		"@fuzdev/fuz_ui": "^0.192.0",
-		"@fuzdev/gro": "^0.199.0",
+		"@fuzdev/gro": "^0.199.1",
 		"@jridgewell/trace-mapping": "^0.3.31",
 		"@ryanatkn/eslint-config": "^0.12.1",
 		"@sveltejs/acorn-typescript": "^1.0.9",

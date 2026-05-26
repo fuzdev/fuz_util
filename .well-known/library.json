@@ -91,7 +91,7 @@
 			"@fuzdev/fuz_code": "^0.45.1",
 			"@fuzdev/fuz_css": "^0.58.0",
 			"@fuzdev/fuz_ui": "^0.192.0",
-			"@fuzdev/gro": "^0.199.0",
+			"@fuzdev/gro": "^0.199.1",
 			"@jridgewell/trace-mapping": "^0.3.31",
 			"@ryanatkn/eslint-config": "^0.12.1",
 			"@sveltejs/acorn-typescript": "^1.0.9",
@@ -2973,6 +2973,222 @@
 				]
 			},
 			{
+				"path": "fact_hash.ts",
+				"declarations": [
+					{
+						"name": "FACT_HASH_PREFIX",
+						"kind": "variable",
+						"doc_comment": "Algorithm prefix on every fact hash. The colon is the separator.",
+						"source_line": 30,
+						"type_signature": "\"blake3:\""
+					},
+					{
+						"name": "FACT_HASH_PATTERN",
+						"kind": "variable",
+						"doc_comment": "Pattern for detecting a fact hash anywhere in text.\n\nHas the global flag because the primary use is `String.matchAll` over\ncell data / fact bytes. Callers that only need to validate a single\nknown string should use `is_fact_hash` instead — `RegExp.test` mutates\n`lastIndex` on global patterns.\n\nThe trailing `(?=blake3:|[^0-9a-f]|$)` lookahead enforces a right\nboundary so a 64-hex digest is matched only when it actually *ends*:\nfollowed by a non-hex char, the end of string, or the start of another\n`blake3:` ref. This rejects malformed over-long runs (`blake3:` + 65+\nhex) rather than silently truncating them to a different valid-shaped\nhash, while still matching two refs concatenated with no separator\n(the `blake3:` alternative is needed because the prefix itself begins\nwith the hex char `b`). A bare `(?![0-9a-f])` would instead drop the\nfirst of two glued refs.",
+						"source_line": 50,
+						"type_signature": "RegExp"
+					},
+					{
+						"name": "FactHashSchema",
+						"kind": "variable",
+						"doc_comment": "Wire-form schema for a `blake3:`-prefixed fact hash. Branded so the\ntype system distinguishes a fact hash from any other `string`,\nmirroring `Uuid` (`id.ts`). Construct only via `fact_hash_bytes` /\n`fact_hash_stream` / `FactHashSchema.parse(s)` — direct string literals\ndon't satisfy the brand.\n\nBoth client-side (cell payloads) and server-side (DB-row hashes)\nconsumers reuse this same schema.",
+						"source_line": 65,
+						"type_signature": "$ZodBranded<ZodString, \"FactHash\", \"out\">"
+					},
+					{
+						"name": "FactHash",
+						"kind": "type",
+						"source_line": 66,
+						"type_signature": "string & $brand<\"FactHash\">"
+					},
+					{
+						"name": "fact_hash_bytes",
+						"kind": "function",
+						"doc_comment": "Synchronously hash bytes into a fact hash.\n\nDelegates to `hash_blake3` (the fuz_util wrapper around `@fuzdev/blake3_wasm`)\nand prefixes the result with `blake3:`. Strings are UTF-8 encoded.",
+						"source_line": 74,
+						"type_signature": "(data: string | Uint8Array<ArrayBufferLike>): string & $brand<\"FactHash\">",
+						"return_type": "string & $brand<\"FactHash\">",
+						"parameters": [
+							{
+								"name": "data",
+								"type": "string | Uint8Array<ArrayBufferLike>"
+							}
+						]
+					},
+					{
+						"name": "fact_hash_stream",
+						"kind": "function",
+						"doc_comment": "Hash a `ReadableStream<Uint8Array>` into a fact hash without buffering\nthe full content. Used by `FactStore.put_ref` for large external content.",
+						"source_line": 81,
+						"type_signature": "(stream: ReadableStream<Uint8Array<ArrayBufferLike>>): Promise<string & $brand<\"FactHash\">>",
+						"return_type": "Promise<string & $brand<\"FactHash\">>",
+						"parameters": [
+							{
+								"name": "stream",
+								"type": "ReadableStream<Uint8Array<ArrayBufferLike>>"
+							}
+						]
+					},
+					{
+						"name": "is_fact_hash",
+						"kind": "function",
+						"doc_comment": "Type guard. Useful when receiving a hash from an external boundary —\nnarrows `string` to `FactHash` without going through Zod.",
+						"source_line": 88,
+						"type_signature": "(s: string): s is string & $brand<\"FactHash\">",
+						"return_type": "boolean",
+						"parameters": [
+							{
+								"name": "s",
+								"type": "string"
+							}
+						]
+					},
+					{
+						"name": "fact_hash_verify",
+						"kind": "function",
+						"doc_comment": "Verify that `bytes` produce the claimed `hash`.\n\nReturns `false` on any mismatch, including a malformed hash. Callers\ndoing security-sensitive integrity checks should treat `false` as\nnot-found / corrupt and refuse to use the bytes.",
+						"source_line": 97,
+						"type_signature": "(hash_value: string & $brand<\"FactHash\">, bytes: Uint8Array<ArrayBufferLike>): boolean",
+						"return_type": "boolean",
+						"parameters": [
+							{
+								"name": "hash_value",
+								"type": "string & $brand<\"FactHash\">"
+							},
+							{
+								"name": "bytes",
+								"type": "Uint8Array<ArrayBufferLike>"
+							}
+						]
+					},
+					{
+						"name": "fact_hash_extract_refs",
+						"kind": "function",
+						"doc_comment": "Walk a JSON value collecting every `blake3:`-prefixed string match.\n\nStrings, object values, and array elements are scanned; object keys are\nintentionally skipped (a hash as an object key is exotic enough that\ncallers should declare it explicitly via `FactStore.put({refs})`). The\nsame hash appearing twice is deduplicated. Order follows depth-first\ntraversal of the input.\n\nUsed by application code on cell snapshot writes and JSON fact writes.",
+						"source_line": 111,
+						"type_signature": "(value: Json): (string & $brand<\"FactHash\">)[]",
+						"return_type": "(string & $brand<\"FactHash\">)[]",
+						"parameters": [
+							{
+								"name": "value",
+								"type": "Json"
+							}
+						]
+					}
+				],
+				"module_comment": "Fact hash utilities.\n\nA `FactHash` is a `blake3:`-prefixed hex64 blake3 digest. The prefix makes\nthe hash self-identifying — any text scanner can find it without prior\nknowledge of the source.\n\nBranded via Zod (`FactHashSchema`), mirroring `Uuid`. Runtime validation\nhappens at construction (`fact_hash_bytes` / `fact_hash_stream` cast at\nthe source; `FactHashSchema.parse` / `is_fact_hash` validate inputs from\nexternal boundaries).\n\nThe hash-producing helpers carry the `fact_hash_` prefix so they namespace\ncleanly alongside the branded `FactHash` type and the `FACT_HASH_*`\nconstants, and stay distinct from the raw-hex `hash_blake3` / `hash_sha256`\nfamily in `hash.ts` (those return bare digests; these return the branded,\n`blake3:`-prefixed wire form).",
+				"dependencies": [
+					"hash_blake3.ts",
+					"hex.ts"
+				]
+			},
+			{
+				"path": "fact_store.ts",
+				"declarations": [
+					{
+						"name": "FactPutOptions",
+						"kind": "type",
+						"doc_comment": "Optional metadata + ref declarations on a `put` / `put_ref` call.\n\n`content_type` is advisory and not part of the hash. Omitting it\n(`undefined`) reads back from `get_meta` as `null` — `undefined` means\n\"caller didn't specify,\" `null` means \"no type stored.\" `refs` lets\ncallers declare references for binary content where text scanning isn't\nsound; for JSON content, implementations may auto-extract refs from the\nbytes when no explicit `refs` is supplied.",
+						"source_line": 28,
+						"type_signature": "FactPutOptions",
+						"properties": [
+							{
+								"name": "content_type",
+								"kind": "variable",
+								"type_signature": "string"
+							},
+							{
+								"name": "refs",
+								"kind": "variable",
+								"type_signature": "Array<FactHash>"
+							}
+						]
+					},
+					{
+						"name": "FactMeta",
+						"kind": "type",
+						"doc_comment": "Per-fact metadata returned by `FactStore.get_meta`.\n\n`external` is `true` when the fact is stored as a URL reference rather\nthan embedded bytes — callers may use this to decide whether to stream\nvs load fully. The external URL itself is intentionally *not* exposed\nhere: reads go through `get`, which fetches and verifies hash↔bytes\ninternally, so handing out a live URL would bypass the verifiable-reads\ncontract. The URL surfaces only from `delete`, where the caller must\nunlink the external resource.",
+						"source_line": 44,
+						"type_signature": "FactMeta",
+						"properties": [
+							{
+								"name": "content_type",
+								"kind": "variable",
+								"type_signature": "string | null"
+							},
+							{
+								"name": "size",
+								"kind": "variable",
+								"type_signature": "number"
+							},
+							{
+								"name": "created_at",
+								"kind": "variable",
+								"type_signature": "Date"
+							},
+							{
+								"name": "external",
+								"kind": "variable",
+								"type_signature": "boolean"
+							}
+						]
+					},
+					{
+						"name": "FactStore",
+						"kind": "type",
+						"doc_comment": "Backend-agnostic content-addressed byte store.\n\n- **Idempotent writes.** `put(x)` and `put(x)` again — same hash, no\n  error, no duplication. Content type and refs from the first write win.\n- **Verifiable reads.** Implementations should verify hash↔bytes on\n  reads from external storage; embedded reads can skip verify because\n  the storage is the hash table.\n- **Backend-agnostic.** Composes — a frontline store can check local,\n  then remote, then peer (deferred).",
+						"source_line": 62,
+						"type_signature": "FactStore",
+						"properties": [
+							{
+								"name": "put",
+								"kind": "variable",
+								"type_signature": "(bytes: Uint8Array, options?: FactPutOptions) => Promise<FactHash>",
+								"doc_comment": "Store bytes, return their hash. Idempotent — storing the same bytes\ntwice is a no-op that returns the same hash."
+							},
+							{
+								"name": "put_ref",
+								"kind": "variable",
+								"type_signature": "(url: string, size: number, options?: FactPutOptions) => Promise<FactHash>",
+								"doc_comment": "Store a reference to external content (large files). Hashes the content\nat the URL (streaming) and records hash + URL + size.\n\n`size` is supplied by the caller (typically from the upload's\nContent-Length); implementations may verify by counting bytes during\nstreaming and rejecting on mismatch. Implementations decide how to\nfetch — production typically a signed URL into object storage, tests\ninject a stub."
+							},
+							{
+								"name": "get",
+								"kind": "variable",
+								"type_signature": "(hash: FactHash) => Promise<Uint8Array | null>",
+								"doc_comment": "Retrieve bytes by hash. Returns `null` when not found OR when fetching\nexternal content failed integrity verification — both are treated as\nunavailable from the caller's perspective."
+							},
+							{
+								"name": "has",
+								"kind": "variable",
+								"type_signature": "(hash: FactHash) => Promise<boolean>",
+								"doc_comment": "Existence check. Cheaper than `get` when bytes aren't needed."
+							},
+							{
+								"name": "get_meta",
+								"kind": "variable",
+								"type_signature": "(hash: FactHash) => Promise<FactMeta | null>",
+								"doc_comment": "Metadata about a stored fact. Returns `null` when not found."
+							},
+							{
+								"name": "get_refs",
+								"kind": "variable",
+								"type_signature": "(hash: FactHash) => Promise<Array<FactHash>>",
+								"doc_comment": "Declared references for a fact (target hashes only). Returns `[]` for an\nabsent hash as well as a present-but-ref-less fact — absence-as-no-refs\nis what a graph walker wants (a missing fact has no outgoing edges to\nfollow), and callers needing presence should use `has` / `get_meta`."
+							},
+							{
+								"name": "delete",
+								"kind": "variable",
+								"type_signature": "(hash: FactHash) => Promise<{size: number; external_url: string | null} | null>",
+								"doc_comment": "Drop a fact. Idempotent — deleting an absent hash returns `null`.\nReturns the deleted fact's `size` and `external_url` so callers can\ntally freed bytes and unlink any external resource (the store\ndoesn't know how to resolve `file:` / `s3:` / etc. URLs to a\ndeletable handle, mirroring the read-side fetcher split).\n\nImplementations do NOT verify the hash is unreferenced — that\npolicy lives one layer up (orphan-fact admin, GC walker)."
+							}
+						]
+					}
+				],
+				"module_comment": "`FactStore` interface.\n\nBackend-agnostic content-addressed byte store. Implementations vary by\ncontext (filesystem, PG, federated composition later) but all share this\ninterface so callers don't care which. The interface lives in fuz_util\n(zero backend deps) so build tools can use it; backend implementations\nlive downstream.\n\nIdempotent writes, verifiable reads, embedded vs referenced storage\nabstracted — see the per-method contracts below."
+			},
+			{
 				"path": "fetch.ts",
 				"declarations": [
 					{
@@ -3124,6 +3340,95 @@
 					"json.ts",
 					"object.ts"
 				]
+			},
+			{
+				"path": "fractional_index.ts",
+				"declarations": [
+					{
+						"name": "FRACTIONAL_INDEX_ALPHABET",
+						"kind": "variable",
+						"doc_comment": "Base62 alphabet, monotonic in lex order: digits, then upper, then lower.",
+						"source_line": 49,
+						"type_signature": "\"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\""
+					},
+					{
+						"name": "FRACTIONAL_INDEX_REGEX",
+						"kind": "variable",
+						"doc_comment": "Wire-grammar regex for `cell_item.position`: at least one base62 digit.\nThe stricter no-trailing-`'0'` rule is an invariant of *this* generator,\nnot the wire. See module docstring §\"Wire vs. emitted invariants\".",
+						"source_line": 64,
+						"type_signature": "RegExp"
+					},
+					{
+						"name": "FRACTIONAL_INDEX_LENGTH_MAX",
+						"kind": "variable",
+						"doc_comment": "Soft length cap on positions, mirrored at the wire. Primarily DOS\nprotection; the algorithm has no inherent length limit but realistic\nUX bounds keep emitted keys under 100 chars even after thousands of\nconsecutive front- or back-inserts. Inputs above this cap surface as\nan explicit throw rather than producing oversized output the wire\nwould later reject.",
+						"source_line": 74,
+						"type_signature": "200"
+					},
+					{
+						"name": "fractional_index_between",
+						"kind": "function",
+						"doc_comment": "Returns a key strictly between `a` and `b` in lex order.\n\nEither bound may be `null` (open). Throws when the bracket is invalid\n(`a >= b` lex-wise) or when the gap is structurally too tight to fit\na key under the no-trailing-`'0'` invariant (only happens with bounds\nshaped `(a, a + '0…0')`; the helper itself never produces those).\n\nEmits a deterministic mid-key, then appends a random jitter suffix.\nThe deterministic mid is what guarantees lex order; the jitter widens\nthe keyspace within the slot to defend against concurrent-insert\ncollisions on the same `(prev, next)` view.\n\nPass `random` to inject a deterministic source for tests; omit for\nproduction (uses `Math.random`). The callback must honor the standard\n`[0, 1)` contract; `jitter_suffix` clamps defensively for safety. The\njitter is best-effort collision avoidance, not a security primitive —\nthe server's `cell_item_position_taken` error is the load-bearing\nsafety net.",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if the bracket is invalid (`a >= b`), a bound breaks the"
+							}
+						],
+						"source_line": 161,
+						"type_signature": "(a: string | null, b: string | null, random?: () => number): string",
+						"return_type": "string",
+						"parameters": [
+							{
+								"name": "a",
+								"type": "string | null"
+							},
+							{
+								"name": "b",
+								"type": "string | null"
+							},
+							{
+								"name": "random",
+								"type": "() => number",
+								"default_value": "Math.random"
+							}
+						]
+					},
+					{
+						"name": "fractional_indices_between",
+						"kind": "function",
+						"doc_comment": "Generate `n` strictly-ordered keys between `a` and `b`.\n\nUsed for batch inserts (paste, bulk-import) so positions don't all\ncollapse onto a single deterministic mid-point. Output is monotonically\nincreasing; equal spacing is not guaranteed (clumping under the same\nmid is acceptable and rare in practice).\n\nImplemented by recursive bisection: pick the deterministic mid of\n`(a, b)`, generate `floor(n/2)` keys in `(a, mid)`, the mid itself,\nand the rest in `(mid, b)`. Each emitted key carries its own jitter.\n\nAtomic on failure: if the bracket is structurally too tight at any\nrecursion depth, the whole call throws and no partial array is\nreturned. (Sub-brackets generated by `mid_between` never have the\ntight shape, so this only fires when the *initial* bracket is tight.)",
+						"throws": [
+							{
+								"type": "Error",
+								"description": "if `n` is negative or non-integer, or if the initial bracket"
+							}
+						],
+						"source_line": 202,
+						"type_signature": "(a: string | null, b: string | null, n: number, random?: () => number): string[]",
+						"return_type": "string[]",
+						"parameters": [
+							{
+								"name": "a",
+								"type": "string | null"
+							},
+							{
+								"name": "b",
+								"type": "string | null"
+							},
+							{
+								"name": "n",
+								"type": "number"
+							},
+							{
+								"name": "random",
+								"type": "() => number",
+								"default_value": "Math.random"
+							}
+						]
+					}
+				],
+				"module_comment": "Fractional indexing — generate ordered keys that admit insertion between\nany two existing positions without rebalancing.\n\nUsed by `cell_item.position` to give parent → child membership a stable,\nlex-sortable order. Two clients editing the same parent each compute keys\nlocally; the server applies them with `(parent_id, position)` as the\nprimary key. Concurrent inserts that hit the same key surface as a\n`cell_item_position_taken` error; helper-side jitter (a small random\nsuffix on every generated key) keeps the collision probability negligible\nat realistic UX concurrency.\n\n**Alphabet**: base62 (`0`-`9`, `A`-`Z`, `a`-`z`). `'0'` is the least\ndigit; `'z'` the greatest. Keys are read as base62 fractions: lex order\nover keys equals numeric order over fractions.\n\n**Invariants emitted by this generator**:\n- No emitted key ends in `'0'`. Without this rule, `key + '0'` would\n  lex-equal `key` for ordering purposes, losing the room-to-insert that\n  the trailing-`'0'` extension would otherwise provide.\n- Every emitted key is non-empty and matches `FRACTIONAL_INDEX_REGEX`.\n- Every emitted key is `≤ FRACTIONAL_INDEX_LENGTH_MAX`. The cap is checked\n  on both inputs and output: bounds within a few digits of the cap can\n  push a generated key over it, and the generator throws in that case\n  rather than emitting an oversized key the wire would reject. In\n  realistic use keys stay far under 100 chars, so this never fires.\n\n**Wire vs. emitted invariants**: `FRACTIONAL_INDEX_REGEX` enforces the\nalphabet + non-empty contract for any client-supplied position. The\nno-trailing-`'0'` rule is stricter and lives only in this generator;\nthe wire admits the looser form so a future encoder can sit alongside\nthis one without a wire-schema bump.\n\n**MVP scope — unsupported bracket shapes**:\n- Unbounded prepend below `'0…'`: a long sequence of front-inserts\n  eventually requires a key lex-less than every `'0'`-only key.\n- Brackets shaped `(a, a + '0…0')` for any non-empty zero tail: the\n  no-trailing-`'0'` invariant means no valid key fits the gap.\n\nBoth surface as explicit throws. Realistic UX bounds keep emitted\nkeys well under 100 chars after thousands of consecutive front- or\nback-inserts; consumers that genuinely need the prepend extension\nshould request a negative-prefix scheme."
 			},
 			{
 				"path": "fs.ts",
@@ -3966,6 +4271,9 @@
 				"dependencies": [
 					"bytes.ts",
 					"hex.ts"
+				],
+				"dependents": [
+					"fact_hash.ts"
 				]
 			},
 			{
@@ -4094,6 +4402,7 @@
 				],
 				"module_comment": "Hex encoding and decoding helpers.",
 				"dependents": [
+					"fact_hash.ts",
 					"hash.ts",
 					"hash_blake3.ts"
 				]
