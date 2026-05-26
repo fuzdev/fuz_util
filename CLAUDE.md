@@ -52,6 +52,18 @@ fuz_util is a **foundational utility library**:
   `@fuzdev/blake3_wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
   for non-security uses)
+- `fact_hash.ts` - `FactHash` branded `blake3:`-prefixed digest
+  (`FactHashSchema`), `fact_hash_bytes`, `fact_hash_stream`, `is_fact_hash`,
+  `fact_hash_verify`, `fact_hash_extract_refs` (depth-first scan of a JSON
+  value for `blake3:` refs)
+- `fact_store.ts` - `FactStore` backend-agnostic content-addressed byte-store
+  interface (`put` / `get` / `put_ref` / `delete` / `has` / `get_meta` /
+  `get_refs`), `FactMeta`, `FactPutOptions`. Interface only — backend
+  implementations live downstream (zero backend deps here)
+- `fractional_index.ts` - lex-ordered key generation for ordered lists
+  without rebalancing (`fractional_index_between`,
+  `fractional_indices_between`; base62 alphabet, helper-side jitter,
+  `FRACTIONAL_INDEX_REGEX` / `_LENGTH_MAX`)
 
 ### Async and timing
 
