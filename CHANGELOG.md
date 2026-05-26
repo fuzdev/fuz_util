@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.61.1
+
+### Patch Changes
+
+- feat: add `fractional_index.ts`, `fact_hash.ts`, and `fact_store.ts` ([960cb44](https://github.com/fuzdev/fuz_util/commit/960cb44))
+
 ## 0.61.0
 
 ### Minor Changes
