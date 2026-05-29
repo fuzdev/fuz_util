@@ -83,7 +83,7 @@
     "@fuzdev/blake3_wasm": "^0.1.1",
     "@fuzdev/fuz_code": "^0.45.1",
     "@fuzdev/fuz_css": "^0.60.0",
-    "@fuzdev/fuz_ui": "^0.195.0",
+    "@fuzdev/fuz_ui": "^0.195.1",
     "@fuzdev/gro": "^0.199.1",
     "@jridgewell/trace-mapping": "^0.3.31",
     "@ryanatkn/eslint-config": "^0.12.1",
