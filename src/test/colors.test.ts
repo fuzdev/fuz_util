@@ -98,8 +98,8 @@ test('achromatic colors (r=g=b)', () => {
 	assert.strictEqual(hsl[1], 0); // saturation = 0
 	// And back
 	const rgb = hsl_to_rgb(0, 0, 0.5);
-	assert.strictEqual(rgb[0], rgb[1]);
-	assert.strictEqual(rgb[1], rgb[2]);
+	assert.strictEqual<number>(rgb[0], rgb[1]);
+	assert.strictEqual<number>(rgb[1], rgb[2]);
 });
 
 test('boundary colors', () => {

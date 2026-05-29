@@ -54,8 +54,9 @@ describe('Logger > Core Functionality', () => {
 		ctx.logged_args = undefined;
 
 		log.debug('debug message');
-		assert.ok(ctx.logged_args);
-		assert.ok(ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('debug')));
+		const debug_args = ctx.logged_args as Array<unknown> | undefined;
+		assert.ok(debug_args);
+		assert.ok(debug_args.some((arg) => typeof arg === 'string' && arg.includes('debug')));
 		ctx.logged_args = undefined;
 	});
 

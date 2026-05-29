@@ -66,9 +66,10 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 
 		ctx.logged_args = undefined;
 		child.info('visible from child');
-		assert.ok(ctx.logged_args);
+		const child_args = ctx.logged_args as Array<unknown> | undefined;
+		assert.ok(child_args);
 		assert.ok(
-			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('visible from child')),
+			child_args.some((arg) => typeof arg === 'string' && arg.includes('visible from child')),
 		);
 	});
 

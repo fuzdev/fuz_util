@@ -7,7 +7,7 @@ const custom_message = 'Custom message';
 test('UnreachableError is an Error', () => {
 	const error = new UnreachableError('test' as never);
 	assert.instanceOf(error, Error);
-	assert.instanceOf(error, UnreachableError);
+	assert.ok(error instanceof UnreachableError);
 });
 
 test('UnreachableError accepts custom message', () => {
@@ -29,7 +29,7 @@ test('unreachable helper throws UnreachableError', () => {
 		caught_error = error;
 	}
 
-	assert.instanceOf(caught_error, UnreachableError);
+	assert.ok(caught_error instanceof UnreachableError);
 });
 
 test('unreachable helper with custom message', () => {
@@ -41,8 +41,8 @@ test('unreachable helper with custom message', () => {
 		caught_error = error;
 	}
 
-	assert.instanceOf(caught_error, UnreachableError);
-	assert.strictEqual(caught_error.message, custom_message);
+	assert.ok(caught_error instanceof UnreachableError);
+	assert.strictEqual((caught_error as UnreachableError).message, custom_message);
 });
 
 test('unreachable helper requires never type parameter', () => {

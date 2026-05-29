@@ -93,7 +93,7 @@
     "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/estree": "^1.0.8",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.12.4",
     "@webref/css": "^8.2.0",
     "dequal": "^2.0.3",
     "eslint": "^9.39.1",
