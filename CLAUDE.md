@@ -102,9 +102,11 @@ See `docs/benchmark.md` for full documentation.
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
   logo, tagline, etc.)
 - `library_json.ts` - `LibraryJson` combining package.json + source metadata,
-  `library_json_parse`; the `SourceJson` wrapper types `modules` with
-  `svelte-docinfo`'s `ModuleJsonInput` (optional peer dep — module/declaration
-  schemas are owned by `svelte-docinfo`, not duplicated here)
+  `library_json_parse`, and `library_json_from_modules` (convenience that builds
+  a `LibraryJson` from a package.json + `svelte-docinfo` `modules`); the
+  `SourceJson` wrapper types `modules` with `svelte-docinfo`'s `ModuleJsonInput`
+  (optional peer dep — module/declaration schemas are owned by `svelte-docinfo`,
+  not duplicated here)
 - `result.ts` - Result type pattern
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion)
 - `args.ts` - CLI argument parsing with Zod validation

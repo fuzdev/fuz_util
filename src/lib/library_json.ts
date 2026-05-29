@@ -113,6 +113,30 @@ export const library_json_parse = (
 };
 
 /**
+ * Builds a `LibraryJson` from a `package.json` and analyzed `modules`,
+ * deriving the `SourceJson` wrapper from the package's own `name`/`version`.
+ *
+ * Convenience over `library_json_parse` for the common case where `modules`
+ * come from `svelte-docinfo` (e.g. its `virtual:svelte-docinfo` Vite module or
+ * `analyzeFromFiles`).
+ */
+export const library_json_from_modules = (
+	package_json: PackageJson,
+	modules: SourceJson['modules'],
+): LibraryJson => {
+	if (package_json.version === undefined) {
+		throw Error(
+			`failed to build library_json - package.json for "${package_json.name}" has no version`,
+		);
+	}
+	return library_json_parse(package_json, {
+		name: package_json.name,
+		version: package_json.version,
+		modules,
+	});
+};
+
+/**
  * Extracts repo name from a package name, e.g. `@fuzdev/fuz_ui` → `fuz`.
  */
 export const library_repo_name_parse = (name: string): string => {
