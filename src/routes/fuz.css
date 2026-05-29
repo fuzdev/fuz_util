@@ -1273,9 +1273,6 @@ a.chip {
 .mt_0 {
 	margin-top: 0;
 }
-.mt_lg {
-	margin-top: var(--space_lg);
-}
 .mt_xl {
 	margin-top: var(--space_xl);
 }
