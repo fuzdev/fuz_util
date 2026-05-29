@@ -42,7 +42,7 @@ test('unreachable helper with custom message', () => {
 	}
 
 	assert.ok(caught_error instanceof UnreachableError);
-	assert.strictEqual((caught_error as UnreachableError).message, custom_message);
+	assert.strictEqual((caught_error).message, custom_message);
 });
 
 test('unreachable helper requires never type parameter', () => {
