@@ -51,7 +51,7 @@ describe('Logger > Core Functionality', () => {
 
 		log.info('info message');
 		assert.ok(ctx.logged_args);
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 
 		log.debug('debug message');
 		assert.ok(ctx.logged_args);

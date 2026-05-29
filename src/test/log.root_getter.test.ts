@@ -64,7 +64,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 			),
 		);
 
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 		child.info('visible from child');
 		assert.ok(ctx.logged_args);
 		assert.ok(
@@ -312,7 +312,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 		// Verify both grandchildren can log debug
 		grandchild1.debug('from gc1');
 		assert.ok(ctx.logged_args);
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 
 		grandchild2.debug('from gc2');
 		assert.ok(ctx.logged_args);
@@ -327,7 +327,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 		assert.equal(grandchild1.level, 'warn');
 
 		// Verify debug is now blocked for both
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 		grandchild1.debug('hidden from gc1');
 		assert.equal(ctx.logged_args, undefined);
 
@@ -364,7 +364,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 		l0.error('l0 sees error');
 		assert.ok(ctx.error_args);
 
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 		l2.info('l2 blocked by l1 warn');
 		assert.equal(ctx.logged_args, undefined); // warn level blocks info
 
@@ -424,7 +424,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 		root.debug('root can debug');
 		assert.ok(ctx3.logged_args);
 
-		ctx3.logged_args = undefined as any;
+		ctx3.logged_args = undefined;
 		child.debug('child blocked');
 		assert.equal(ctx3.logged_args, undefined); // child has warn level (override)
 

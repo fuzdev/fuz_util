@@ -18,7 +18,7 @@
 		children: Snippet;
 	} = $props();
 
-	const library_json = library_json_from_modules(package_json as PackageJson, modules);
+	const library_json = library_json_from_modules(package_json, modules);
 
 	library_context.set(new Library(library_json));
 </script>

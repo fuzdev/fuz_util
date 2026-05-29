@@ -52,7 +52,7 @@ export const git_current_branch_name = async (options?: SpawnOptions): Promise<G
  * @throws Error if the `git ls-remote` command fails for a reason other than the branch not existing
  */
 export const git_remote_branch_exists = async (
-	origin: GitOrigin = 'origin' as GitOrigin,
+	origin: GitOrigin = 'origin',
 	branch?: GitBranch,
 	options?: SpawnOptions,
 ): Promise<boolean> => {
@@ -227,7 +227,7 @@ export const git_check_fully_staged_workspace = async (
  * @throws Error if the underlying git command fails
  */
 export const git_fetch = async (
-	origin: GitOrigin = 'origin' as GitOrigin,
+	origin: GitOrigin = 'origin',
 	branch?: GitBranch,
 	options?: SpawnOptions,
 ): Promise<void> => {
@@ -268,7 +268,7 @@ export const git_checkout = async (
  * @throws Error if the underlying git command fails
  */
 export const git_pull = async (
-	origin: GitOrigin = 'origin' as GitOrigin,
+	origin: GitOrigin = 'origin',
 	branch?: GitBranch,
 	options?: SpawnOptions,
 ): Promise<void> => {
@@ -306,7 +306,7 @@ export const git_push = async (
  * @throws Error if the underlying git command fails
  */
 export const git_push_to_create = async (
-	origin: GitOrigin = 'origin' as GitOrigin,
+	origin: GitOrigin = 'origin',
 	branch?: GitBranch,
 	options?: SpawnOptions,
 ): Promise<void> => {
