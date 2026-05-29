@@ -7,7 +7,6 @@
 /**
  * Converts a `Uint8Array` to a lowercase hex string.
  *
- * @param bytes - binary data to encode
  * @returns hex string with two characters per byte
  */
 export const to_hex = (bytes: Uint8Array): string => {

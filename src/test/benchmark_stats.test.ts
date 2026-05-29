@@ -28,6 +28,69 @@ describe('BenchmarkStats', () => {
 		assert.approximately(stats.mean_ns, 1080, 1);
 	});
 
+	test('upper-tail order statistics use raw samples; central stats use cleaned', () => {
+		const timings_ns = [1000, 1100, 1200, 1100, 1000, 100_000];
+		const stats = new BenchmarkStats(timings_ns);
+
+		// the high outlier is detected and reported
+		assert.include(stats.outliers_ns, 100_000);
+		assert.isAbove(stats.outlier_ratio, 0);
+
+		// upper-tail order statistics (max/p75-p99) are over the RAW timings, so
+		// the tail event is visible — max is the outlier and p99 sits far above
+		// the cleaned max (1200)
+		assert.strictEqual(stats.max_ns, 100_000);
+		assert.isAbove(stats.p99_ns, 1200);
+
+		// central-tendency statistics exclude the outlier (MAD-cleaned)
+		assert.approximately(stats.mean_ns, 1080, 1);
+	});
+
+	test('min uses the cleaned set so a low glitch is not reported as best case', () => {
+		// the `1` is a sub-cost measurement glitch, not a genuine fast run
+		const timings_ns = [1000, 1100, 1200, 1100, 1000, 1];
+		const stats = new BenchmarkStats(timings_ns);
+
+		// the low outlier is detected
+		assert.include(stats.outliers_ns, 1);
+
+		// min reflects the fastest *valid* iteration, not the glitch
+		assert.isAbove(stats.min_ns, 1);
+		assert.strictEqual(stats.min_ns, 1000);
+	});
+
+	test('high and low outliers in the same sample diverge across the three populations', () => {
+		// `1` is a sub-cost glitch (low), `100_000` is a real tail event (high)
+		const timings_ns = [1000, 1100, 1200, 1100, 1000, 1, 100_000];
+		const stats = new BenchmarkStats(timings_ns);
+
+		// both tails are detected
+		assert.include(stats.outliers_ns, 1);
+		assert.include(stats.outliers_ns, 100_000);
+
+		// upper-tail order stats keep the high outlier (raw)
+		assert.strictEqual(stats.max_ns, 100_000);
+		assert.isAbove(stats.p99_ns, 1200);
+
+		// min drops the low outlier (cleaned)
+		assert.strictEqual(stats.min_ns, 1000);
+
+		// central tendency drops both (cleaned)
+		assert.approximately(stats.mean_ns, 1080, 1);
+	});
+
+	test('below the outlier-detection floor the asymmetry collapses to raw', () => {
+		// fewer than 3 valid samples: `stats_outliers_mad` does not run, so
+		// nothing is cleaned and min_ns sees the would-be low outlier
+		const timings_ns = [1, 1000];
+		const stats = new BenchmarkStats(timings_ns);
+
+		assert.deepStrictEqual(stats.outliers_ns, []);
+		assert.strictEqual(stats.sample_size, 2);
+		assert.strictEqual(stats.min_ns, 1);
+		assert.strictEqual(stats.max_ns, 1000);
+	});
+
 	test('with failed iterations', () => {
 		const timings_ns = [1200, 1300, NaN, 1100, Infinity, -1, 1400];
 		const stats = new BenchmarkStats(timings_ns);
@@ -177,6 +240,26 @@ describe('benchmark_stats_compare', () => {
 		assert.strictEqual(comparison.effect_magnitude, 'negligible');
 	});
 
+	test('equal means with non-zero variance go through t-test', () => {
+		// Same mean (~1000) with realistic spread — exercises Welch's t-test path
+		// rather than the zero-variance special case.
+		const a_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 5) - 2) * 50);
+		const b_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 7) - 3) * 30);
+		const a = new BenchmarkStats(a_data);
+		const b = new BenchmarkStats(b_data);
+
+		assert.isAbove(a.std_dev_ns, 0);
+		assert.isAbove(b.std_dev_ns, 0);
+
+		const comparison = benchmark_stats_compare(a, b);
+
+		// High p-value because the underlying means are equal.
+		assert.isAbove(comparison.p_value, 0.5);
+		assert.strictEqual(comparison.effect_magnitude, 'negligible');
+		assert.strictEqual(comparison.faster, 'equal');
+		assert.isFalse(comparison.significant);
+	});
+
 	test('negligible difference', () => {
 		// Very small difference with realistic variance
 		const base_a = 1000;
@@ -212,19 +295,19 @@ describe('benchmark_stats_compare', () => {
 		assert.include(comparison.recommendation, 'Insufficient data');
 	});
 
-	test('custom alpha', () => {
-		// Create data with moderate difference
+	test('custom alpha can flip significant from true to false', () => {
 		const a = new BenchmarkStats([1000, 1100, 1200, 1050, 1150]);
 		const b = new BenchmarkStats([1500, 1600, 1700, 1550, 1650]);
 
-		// With default alpha (0.05), should be significant
-		const comparison_default = benchmark_stats_compare(a, b);
-		assert.isTrue(comparison_default.significant);
+		const default_comparison = benchmark_stats_compare(a, b);
+		assert.isTrue(default_comparison.significant);
+		assert.isBelow(default_comparison.p_value, 0.05);
 
-		// With very strict alpha (0.001), might not be significant
-		const comparison_strict = benchmark_stats_compare(a, b, {alpha: 0.001});
-		// p_value should be reported regardless
-		assert.isAbove(comparison_strict.p_value, 0);
+		// Tighten alpha below the observed p_value — significance must flip off.
+		const tight_alpha = default_comparison.p_value / 10;
+		const strict = benchmark_stats_compare(a, b, {alpha: tight_alpha});
+		assert.isFalse(strict.significant);
+		assert.strictEqual(strict.p_value, default_comparison.p_value);
 	});
 
 	test('confidence interval overlap with very close means', () => {

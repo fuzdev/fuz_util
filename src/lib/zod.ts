@@ -16,7 +16,6 @@ import type {z} from 'zod';
 /**
  * Unwrap nested schema types (optional, default, nullable, etc).
  *
- * @param def - Zod type definition to unwrap
  * @returns inner schema if wrapped, undefined otherwise
  */
 export const zod_to_subschema = (def: z.core.$ZodTypeDef): z.ZodType | undefined => {
@@ -44,11 +43,10 @@ export const ZOD_WRAPPER_TYPES = new Set([
  * Unwrap Zod wrappers (optional, default, nullable, pipe, transform)
  * to get the base type definition.
  *
- * @param schema - Zod schema to unwrap
  * @returns the innermost non-wrapper type definition
  */
 export const zod_unwrap_def = (schema: z.ZodType): z.core.$ZodTypeDef => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
 		if (sub) return zod_unwrap_def(sub);
@@ -59,25 +57,20 @@ export const zod_unwrap_def = (schema: z.ZodType): z.core.$ZodTypeDef => {
 /**
  * Get the base type name for a Zod schema, unwrapping all wrappers.
  *
- * @param schema - Zod schema to inspect
  * @returns base type name (e.g. `'string'`, `'object'`, `'uuid'`)
  */
 export const zod_get_base_type = (schema: z.ZodType): string => zod_unwrap_def(schema).type;
 
 /**
  * Check if a schema is optional at the outermost level.
- *
- * @param schema - Zod schema to check
  */
-export const zod_is_optional = (schema: z.ZodType): boolean => schema._zod.def.type === 'optional';
+export const zod_is_optional = (schema: z.ZodType): boolean => schema.def.type === 'optional';
 
 /**
  * Check if a schema accepts null at any wrapping level.
- *
- * @param schema - Zod schema to check
  */
 export const zod_is_nullable = (schema: z.ZodType): boolean => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if (def.type === 'nullable') return true;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
@@ -91,11 +84,9 @@ export const zod_is_nullable = (schema: z.ZodType): boolean => {
  *
  * Unlike `zod_to_schema_default` (which returns the value), this returns a boolean.
  * Distinguishes "no default" from "default is undefined".
- *
- * @param schema - Zod schema to check
  */
 export const zod_has_default = (schema: z.ZodType): boolean => {
-	const def = schema._zod.def;
+	const {def} = schema;
 	if ('defaultValue' in def) return true;
 	const sub = zod_to_subschema(def);
 	if (sub) return zod_has_default(sub);
@@ -103,18 +94,67 @@ export const zod_has_default = (schema: z.ZodType): boolean => {
 };
 
 /**
+ * Unwrap a schema through every wrapper type (optional, nullable, default,
+ * transform, pipe, prefault) to reach the innermost schema. Like `zod_unwrap_def`
+ * but returns the schema (so callers can `.shape`, `instanceof`-check, etc.)
+ * instead of the def.
+ *
+ * @returns the innermost non-wrapper schema
+ */
+export const zod_get_innermost_type = (schema: z.ZodType): z.ZodType => {
+	if (ZOD_WRAPPER_TYPES.has(schema.def.type)) {
+		const sub = zod_to_subschema(schema.def);
+		if (sub) return zod_get_innermost_type(sub);
+	}
+	return schema;
+};
+
+/**
+ * Get all property keys from an object schema, unwrapping wrappers.
+ * Returns an empty array if the innermost type is not an object.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ */
+export const zod_get_schema_keys = <T extends z.ZodType>(
+	schema: T,
+): Array<keyof z.infer<T> & string> => {
+	const obj = zod_unwrap_to_object(schema);
+	return obj ? (Object.keys(obj.shape) as Array<keyof z.infer<T> & string>) : [];
+};
+
+/**
+ * Get the field schema for a key in an object schema, returning `undefined` if
+ * the schema is not an object or the key is missing.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ * @param key - the property name
+ * @returns the field's schema, or `undefined`
+ */
+export const zod_maybe_get_field_schema = (schema: z.ZodType, key: string): z.ZodType | undefined =>
+	zod_unwrap_to_object(schema)?.shape[key];
+
+/**
+ * Get the field schema for a key in an object schema.
+ *
+ * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
+ * @throws Error if the schema is not an object or the key is missing
+ */
+export const zod_get_field_schema = (schema: z.ZodType, key: string): z.ZodType => {
+	const field = zod_maybe_get_field_schema(schema, key);
+	if (!field) throw new Error(`Field "${key}" not found in schema`);
+	return field;
+};
+
+/**
  * Unwrap a schema to find the inner `ZodObject`, or `null` if not an object schema.
  * Handles wrappers like `z.strictObject({...}).default({...})`.
- *
- * @param schema - Zod schema to unwrap
- * @returns the inner ZodObject or null
  */
 export const zod_unwrap_to_object = (schema: z.ZodType): z.ZodObject | null => {
 	const def = zod_unwrap_def(schema);
 	if (def.type !== 'object') return null;
 	let s: z.ZodType = schema;
-	while (s._zod.def.type !== 'object') {
-		const sub = zod_to_subschema(s._zod.def);
+	while (s.def.type !== 'object') {
+		const sub = zod_to_subschema(s.def);
 		if (!sub) return null;
 		s = sub;
 	}
@@ -134,9 +174,6 @@ export interface ZodFieldInfo {
 
 /**
  * Extract field metadata from a Zod object schema.
- *
- * @param schema - Zod object schema to extract from
- * @returns array of field info for each property
  */
 export const zod_extract_fields = (schema: z.ZodObject): Array<ZodFieldInfo> => {
 	const fields: Array<ZodFieldInfo> = [];
@@ -158,7 +195,6 @@ export const zod_extract_fields = (schema: z.ZodObject): Array<ZodFieldInfo> => 
 /**
  * Get the description from a schema's metadata, unwrapping if needed.
  *
- * @param schema - Zod schema to extract description from
  * @returns description string or null if not found
  */
 export const zod_to_schema_description = (schema: z.ZodType): string | null => {
@@ -176,11 +212,10 @@ export const zod_to_schema_description = (schema: z.ZodType): string | null => {
 /**
  * Get the default value from a schema, unwrapping if needed.
  *
- * @param schema - Zod schema to extract default from
  * @returns default value or undefined
  */
 export const zod_to_schema_default = (schema: z.ZodType): unknown => {
-	const {def} = schema._zod;
+	const {def} = schema;
 	if ('defaultValue' in def) {
 		return def.defaultValue;
 	}
@@ -193,9 +228,6 @@ export const zod_to_schema_default = (schema: z.ZodType): unknown => {
 
 /**
  * Get aliases from a schema's metadata, unwrapping if needed.
- *
- * @param schema - Zod schema to extract aliases from
- * @returns array of alias strings
  */
 export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
 	const meta = schema.meta();
@@ -212,11 +244,10 @@ export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
 /**
  * Get the type string for a schema, suitable for display.
  *
- * @param schema - Zod schema to get type string for
  * @returns human-readable type string
  */
 export const zod_to_schema_type_string = (schema: z.ZodType): string => {
-	const {def} = schema._zod;
+	const {def} = schema;
 	switch (def.type) {
 		case 'string':
 			return 'string';
@@ -263,9 +294,6 @@ export const zod_to_schema_type_string = (schema: z.ZodType): string => {
 
 /**
  * Format a value for display in help text.
- *
- * @param value - value to format
- * @returns formatted string representation
  */
 export const zod_format_value = (value: unknown): string => {
 	if (value === undefined) return '';
@@ -294,9 +322,6 @@ export interface ZodSchemaProperty {
 
 /**
  * Extract properties from a Zod object schema.
- *
- * @param schema - Zod object schema to extract from
- * @returns array of property definitions
  */
 export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProperty> => {
 	const {def} = schema;
@@ -325,9 +350,6 @@ export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProp
 
 /**
  * Get all property names and their aliases from an object schema.
- *
- * @param schema - Zod object schema
- * @returns set of all names and aliases
  */
 export const zod_to_schema_names_with_aliases = (schema: z.ZodType): Set<string> => {
 	const names: Set<string> = new Set();

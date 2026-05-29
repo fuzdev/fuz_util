@@ -9,6 +9,10 @@ import {
 	zod_is_optional,
 	zod_is_nullable,
 	zod_has_default,
+	zod_get_innermost_type,
+	zod_get_schema_keys,
+	zod_get_field_schema,
+	zod_maybe_get_field_schema,
 	zod_unwrap_to_object,
 	zod_extract_fields,
 	zod_to_schema_description,
@@ -210,6 +214,131 @@ describe('zod_has_default', () => {
 
 	test('detects default of false', () => {
 		assert.ok(zod_has_default(z.boolean().default(false)));
+	});
+});
+
+// -- zod_get_innermost_type --
+
+describe('zod_get_innermost_type', () => {
+	test('returns base type unchanged', () => {
+		const schema = z.string();
+		assert.equal(zod_get_innermost_type(schema), schema);
+	});
+
+	test('unwraps optional', () => {
+		const inner = z.string();
+		assert.equal(zod_get_innermost_type(inner.optional()), inner);
+	});
+
+	test('unwraps nullable', () => {
+		const inner = z.number();
+		assert.equal(zod_get_innermost_type(inner.nullable()), inner);
+	});
+
+	test('unwraps default', () => {
+		const inner = z.boolean();
+		assert.equal(zod_get_innermost_type(inner.default(false)), inner);
+	});
+
+	test('unwraps pipe to input schema', () => {
+		const input = z.string();
+		assert.equal(zod_get_innermost_type(input.pipe(z.string())), input);
+	});
+
+	test('unwraps multiple wrappers', () => {
+		const inner = z.string();
+		const wrapped = inner.nullable().default('x').optional();
+		assert.equal(zod_get_innermost_type(wrapped), inner);
+	});
+
+	test('returns ZodObject for wrapped object', () => {
+		const obj = z.strictObject({a: z.string()});
+		const result = zod_get_innermost_type(obj.optional().default({a: 'hi'}));
+		assert.equal(result.def.type, 'object');
+		assert.ok('a' in (result as z.ZodObject).shape);
+	});
+
+	test('returns ZodArray for array', () => {
+		const arr = z.array(z.number());
+		assert.equal(zod_get_innermost_type(arr), arr);
+	});
+});
+
+// -- zod_get_schema_keys --
+
+describe('zod_get_schema_keys', () => {
+	test('returns keys for plain object', () => {
+		const schema = z.strictObject({a: z.string(), b: z.number(), c: z.boolean()});
+		assert.deepEqual(zod_get_schema_keys(schema), ['a', 'b', 'c']);
+	});
+
+	test('returns keys through wrappers', () => {
+		const schema = z
+			.strictObject({x: z.string(), y: z.number()})
+			.default({x: 'hi', y: 1})
+			.optional();
+		assert.deepEqual(zod_get_schema_keys(schema), ['x', 'y']);
+	});
+
+	test('empty object returns empty array', () => {
+		assert.deepEqual(zod_get_schema_keys(z.strictObject({})), []);
+	});
+
+	test('non-object schema returns empty array', () => {
+		assert.deepEqual(zod_get_schema_keys(z.string()), []);
+		assert.deepEqual(zod_get_schema_keys(z.array(z.string())), []);
+		assert.deepEqual(zod_get_schema_keys(z.enum(['a'])), []);
+	});
+});
+
+// -- zod_maybe_get_field_schema --
+
+describe('zod_maybe_get_field_schema', () => {
+	test('returns field schema when present', () => {
+		const inner = z.string();
+		const schema = z.strictObject({name: inner});
+		assert.equal(zod_maybe_get_field_schema(schema, 'name'), inner);
+	});
+
+	test('returns undefined for missing key', () => {
+		const schema = z.strictObject({name: z.string()});
+		assert.equal(zod_maybe_get_field_schema(schema, 'absent'), undefined);
+	});
+
+	test('unwraps wrappers around object', () => {
+		const inner = z.number();
+		const schema = z.strictObject({n: inner}).default({n: 0}).optional();
+		assert.equal(zod_maybe_get_field_schema(schema, 'n'), inner);
+	});
+
+	test('returns undefined for non-object schema', () => {
+		assert.equal(zod_maybe_get_field_schema(z.string(), 'x'), undefined);
+		assert.equal(zod_maybe_get_field_schema(z.array(z.string()), '0'), undefined);
+	});
+});
+
+// -- zod_get_field_schema --
+
+describe('zod_get_field_schema', () => {
+	test('returns field schema when present', () => {
+		const inner = z.string();
+		const schema = z.strictObject({name: inner});
+		assert.equal(zod_get_field_schema(schema, 'name'), inner);
+	});
+
+	test('throws for missing key', () => {
+		const schema = z.strictObject({name: z.string()});
+		assert.throws(() => zod_get_field_schema(schema, 'absent'), /Field "absent" not found/);
+	});
+
+	test('throws for non-object schema', () => {
+		assert.throws(() => zod_get_field_schema(z.string(), 'x'), /Field "x" not found/);
+	});
+
+	test('unwraps wrappers around object', () => {
+		const inner = z.boolean();
+		const schema = z.strictObject({on: inner}).optional();
+		assert.equal(zod_get_field_schema(schema, 'on'), inner);
 	});
 });
 

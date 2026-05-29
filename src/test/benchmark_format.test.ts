@@ -32,6 +32,13 @@ const create_result = (name: string, ops_per_second: number): BenchmarkResult =>
 		raw_sample_size: 1000,
 		failed_iterations: 0,
 	},
+	budget: {
+		duration_ms: 1000,
+		warmup_iterations: 10,
+		min_iterations: 30,
+		max_iterations: 100_000,
+		async_resolved: false,
+	},
 });
 
 describe('benchmark_format_table', () => {

@@ -96,7 +96,7 @@ export const strip_ansi = (str: string): string => str.replaceAll(/\x1B\[[0-9;]*
  * @source https://2ality.com/2025/04/stringification-javascript.html
  */
 export const stringify = (value: unknown): string =>
-	typeof value === 'bigint' ? value + 'n' : (JSON.stringify(value) ?? String(value)); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+	typeof value === 'bigint' ? value + 'n' : (JSON.stringify(value) ?? String(value));
 
 /**
  * Calculate the display width of a string in terminal columns.
@@ -168,8 +168,6 @@ export const pad_width = (
  * Calculates the Levenshtein distance between two strings.
  * Useful for typo detection and fuzzy matching.
  *
- * @param a - first string
- * @param b - second string
  * @returns the edit distance between the strings
  */
 export const levenshtein_distance = (a: string, b: string): number => {
@@ -239,8 +237,5 @@ export const escape_js_string = (value: string): string =>
  * Check if content appears to be binary.
  *
  * Checks for null bytes in the first 8KB of content.
- *
- * @param content - content to check
- * @returns true if content appears to be binary
  */
 export const string_is_binary = (content: string): boolean => content.slice(0, 8192).includes('\0');

@@ -8,6 +8,11 @@ focuses on pure TypeScript helpers.
 
 For coding conventions, see the [fuz-stack skill](https://github.com/fuzdev/fuz_docs).
 
+## Committing
+
+`git add` and `git commit` are denied by `.claude/settings.local.json` in
+this repo — make the edits and stop, the user commits.
+
 ## Gro commands
 
 ```bash
@@ -47,6 +52,18 @@ fuz_util is a **foundational utility library**:
   `@fuzdev/blake3_wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
   for non-security uses)
+- `fact_hash.ts` - `FactHash` branded `blake3:`-prefixed digest
+  (`FactHashSchema`), `fact_hash_bytes`, `fact_hash_stream`, `is_fact_hash`,
+  `fact_hash_verify`, `fact_hash_extract_refs` (depth-first scan of a JSON
+  value for `blake3:` refs)
+- `fact_store.ts` - `FactStore` backend-agnostic content-addressed byte-store
+  interface (`put` / `get` / `put_ref` / `delete` / `has` / `get_meta` /
+  `get_refs`), `FactMeta`, `FactPutOptions`. Interface only — backend
+  implementations live downstream (zero backend deps here)
+- `fractional_index.ts` - lex-ordered key generation for ordered lists
+  without rebalancing (`fractional_index_between`,
+  `fractional_indices_between`; base62 alphabet, helper-side jitter,
+  `FRACTIONAL_INDEX_REGEX` / `_LENGTH_MAX`)
 
 ### Async and timing
 
@@ -70,11 +87,12 @@ multiple output formats (`table()`, `markdown()`, `summary()`, `json()`).
 ```bash
 npm run benchmark              # Run and compare against baseline
 npm run benchmark:save         # Save new baseline (after intentional changes)
-npm run benchmark_slugify      # Run individual benchmark
-npm run benchmark_deep_equal   # Run individual benchmark
+npm run benchmark:clean        # Remove the local baseline (forces next run to seed fresh)
+npm run benchmark:slugify      # Run individual benchmark
+npm run benchmark:deep_equal   # Run individual benchmark
 ```
 
-Baseline stored in `src/benchmarks/baseline.json` (committed to repo).
+Baseline stored in `src/benchmarks/baseline.json` (gitignored — local-only).
 
 See `docs/benchmark.md` for full documentation.
 
@@ -110,8 +128,8 @@ See `docs/benchmark.md` for full documentation.
 - `git.ts` - git operations
 - `log.ts` - hierarchical logging system
 
-- `process.ts` - `spawn()` with typed results (`SpawnResultExited`,
-  `SpawnResultSignaled`, `SpawnResultError`) and type guards
+- `process.ts` - `spawn()` with `kind`-discriminated results (`SpawnResultExited`,
+  `SpawnResultSignaled`, `SpawnResultError`); narrow with `result.kind === ...`
 - `log.ts` - `Logger` class with hierarchical children, auto-detects level from
   `PUBLIC_LOG_LEVEL` env var
 
@@ -119,6 +137,13 @@ See `docs/benchmark.md` for full documentation.
 
 - `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
   detection)
+
+### Testing helpers
+
+- `testing.ts` - shared vitest assertions (`assert_property` for narrowing
+  discriminated unions by a literal property value, `assert_rejects` for async
+  rejection matching, `create_mock_logger` for a `Logger`-compatible `vi.fn()`
+  mock with per-level call tracking). Only depends on vitest.
 
 ### Svelte preprocessor utilities
 

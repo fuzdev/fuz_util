@@ -21,9 +21,8 @@ export const NOT_OK = Object.freeze({ok: false} as const);
  * A helper that says,
  * "hey I know this is wrapped in a `Result`, but I expect it to be `ok`,
  * so if it's not, I understand it will throw an error that wraps the result".
- * @param result - some `Result` object
- * @param message - optional custom error message
- * @returns the wrapped value
+ *
+ * @throws ResultError if `result.ok` is false
  */
 export const unwrap = <TValue extends {value?: unknown}, TError extends {message?: string}>(
 	result: Result<TValue, TError>,
@@ -54,9 +53,8 @@ export class ResultError extends Error {
 /**
  * A helper that does the opposite of `unwrap`, throwing if the `Result` is ok.
  * Note that while `unwrap` returns the wrapped `value`, `unwrap_error` returns the entire result.
- * @param result - some `Result` object
- * @param message - optional custom error message
- * @returns the type-narrowed result
+ *
+ * @throws Error if `result.ok` is true
  */
 export const unwrap_error = <TError extends object>(
 	result: Result<object, TError>,

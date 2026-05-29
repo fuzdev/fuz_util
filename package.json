@@ -1,6 +1,6 @@
 {
   "name": "@fuzdev/fuz_util",
-  "version": "0.55.0",
+  "version": "0.61.1",
   "description": "utility belt for JS",
   "glyph": "🦕",
   "logo": "logo.svg",
@@ -29,15 +29,16 @@
     "deploy": "gro deploy",
     "benchmark": "gro run src/benchmarks/run.ts",
     "benchmark:save": "gro run src/benchmarks/run.ts --save",
-    "benchmark_slugify": "gro run src/benchmarks/slugify.benchmark.ts",
-    "benchmark_deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
-    "benchmark_deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
-    "benchmark_random": "gro run src/benchmarks/random.benchmark.ts",
-    "benchmark_random_quality": "gro run src/benchmarks/random_quality.ts"
+    "benchmark:clean": "rm -f src/benchmarks/baseline.json",
+    "benchmark:slugify": "gro run src/benchmarks/slugify.benchmark.ts",
+    "benchmark:deep_equal": "gro run src/benchmarks/deep_equal.benchmark.ts",
+    "benchmark:deep_equal_comparison": "gro run src/benchmarks/deep_equal_comparison.benchmark.ts",
+    "benchmark:random": "gro run src/benchmarks/random.benchmark.ts",
+    "benchmark:random_quality": "gro run src/benchmarks/random_quality.ts"
   },
   "type": "module",
   "engines": {
-    "node": ">=22.15"
+    "node": ">=24.14"
   },
   "keywords": [
     "js",
@@ -75,7 +76,7 @@
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
-    "@fuzdev/blake3_wasm": "^0.1.0",
+    "@fuzdev/blake3_wasm": "^0.1.1",
     "@fuzdev/fuz_code": "^0.45.1",
     "@fuzdev/fuz_css": "^0.60.0",
     "@fuzdev/fuz_ui": "^0.194.0",
@@ -99,7 +100,7 @@
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",
     "svelte": "^5.55.10",
-    "svelte-check": "^4.3.6",
+    "svelte-check": "^4.4.6",
     "svelte-docinfo": "^0.1.0",
     "svelte2tsx": "^0.7.47",
     "tslib": "^2.8.1",

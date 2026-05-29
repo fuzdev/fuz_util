@@ -2,9 +2,9 @@ export type Json = JsonPrimitive | JsonObject | JsonArray;
 
 export type JsonPrimitive = string | number | boolean | null;
 
-export interface JsonObject extends Record<string, Json> {} // eslint-disable-line @typescript-eslint/no-empty-object-type
+export interface JsonObject extends Record<string, Json> {}
 
-export interface JsonArray extends Array<Json> {} // eslint-disable-line @typescript-eslint/no-empty-object-type
+export interface JsonArray extends Array<Json> {}
 
 /**
  * Like `typeof json`, but includes arrays. Excludes `'undefined'` because it's not valid JSON.
@@ -42,9 +42,7 @@ export const json_embed = <T>(data: T, stringify: (data: T) => string = JSON.str
 /**
  * Serializes a value to JSON with deterministic key ordering.
  * Recursively sorts object keys alphabetically for consistent hashing.
- * Arrays and primitives are serialized as-is.
  *
- * @param value - any JSON-serializable value
  * @returns deterministic JSON string representation
  */
 export const json_stringify_deterministic = (value: unknown): string =>

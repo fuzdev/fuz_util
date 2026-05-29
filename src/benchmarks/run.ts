@@ -103,8 +103,26 @@ if (save_baseline) {
 	const formatted = await format_file(content, {filepath: BASELINE_FILE});
 	await writeFile(BASELINE_FILE, formatted);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
-} else if (comparison.baseline_found && comparison.regressions.length > 0) {
-	console.log('\n⚠️  Regressions detected. Run with --save to update baseline if intentional.');
+} else if (comparison.baseline_found) {
+	if (comparison.regressions.length > 0) {
+		console.log('\n⚠️  Regressions detected. Run with --save to update baseline if intentional.');
+	}
+	if (comparison.methodology_changed.length > 0) {
+		console.log(
+			'\n⚠️  Methodology changed on some tasks. Re-run with --save to update the baseline and surface any drift masked by the budget change.',
+		);
+	}
+	// Tally noise warnings across the three Welch-eligible buckets — a
+	// methodology_changed row gets its own banner above, so don't double-count.
+	const noise_count =
+		comparison.regressions.filter((r) => r.noise_warning).length +
+		comparison.improvements.filter((r) => r.noise_warning).length +
+		comparison.unchanged.filter((r) => r.noise_warning).length;
+	if (noise_count > 0) {
+		console.log(
+			`\n⚠️  ${noise_count} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`,
+		);
+	}
 }
 
 // Prevent optimization

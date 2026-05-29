@@ -211,7 +211,7 @@ export const args_validate_schema = (
  *
  * @param unparsed_args - args object from CLI parser (mri, minimist, etc.)
  * @param schema - zod object schema with optional alias metadata
- * @returns Zod SafeParseResult with expanded/synced data on success
+ * @returns `z.ZodSafeParseResult` with expanded/synced data on success
  */
 export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
 	unparsed_args: Args,
@@ -276,9 +276,7 @@ export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
- * @param args - args object to serialize
  * @param schema - optional zod schema to extract aliases for short form preference
- * @returns array of CLI argument strings
  */
 export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> => {
 	const result: Array<string> = [];
@@ -350,7 +348,6 @@ export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> =>
  * Note: Returns copies of the cached data to prevent mutation of internal cache.
  *
  * @param schema - zod object schema with optional `.meta({aliases})` on fields
- * @returns object with aliases map and canonical_keys set
  */
 export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
 	const cache = get_schema_cache(schema);

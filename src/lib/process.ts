@@ -18,14 +18,17 @@ const log = new Logger('process');
 /**
  * Spawn failed before the process could run.
  *
+ * Note: `child` is still present because `node:child_process.spawn` returns a
+ * `ChildProcess` synchronously and then emits `'error'` asynchronously — the
+ * handle exists but the OS process never started.
+ *
  * @example ENOENT when command not found
  */
 export interface SpawnResultError {
+	kind: 'error';
 	ok: false;
 	child: ChildProcess;
 	error: Error;
-	code: null;
-	signal: null;
 }
 
 /**
@@ -33,52 +36,27 @@ export interface SpawnResultError {
  * `ok` is true when `code` is 0.
  */
 export interface SpawnResultExited {
+	kind: 'exited';
 	ok: boolean;
 	child: ChildProcess;
-	error: null;
 	code: number;
-	signal: null;
 }
 
 /**
  * Process was terminated by a signal (e.g., SIGTERM, SIGKILL).
  */
 export interface SpawnResultSignaled {
+	kind: 'signaled';
 	ok: false;
 	child: ChildProcess;
-	error: null;
-	code: null;
 	signal: NodeJS.Signals;
 }
 
 /**
  * Discriminated union representing all possible spawn outcomes.
- * Use type guards `spawn_result_is_error`, `spawn_result_is_signaled`,
- * and `spawn_result_is_exited` to narrow the type.
+ * Narrow via `result.kind === 'error' | 'exited' | 'signaled'`.
  */
 export type SpawnResult = SpawnResultError | SpawnResultExited | SpawnResultSignaled;
-
-//
-// Type Guards
-//
-
-/**
- * Type guard for spawn errors (process failed to start).
- */
-export const spawn_result_is_error = (result: SpawnResult): result is SpawnResultError =>
-	result.error !== null;
-
-/**
- * Type guard for signal termination.
- */
-export const spawn_result_is_signaled = (result: SpawnResult): result is SpawnResultSignaled =>
-	result.signal !== null;
-
-/**
- * Type guard for normal exit with code.
- */
-export const spawn_result_is_exited = (result: SpawnResult): result is SpawnResultExited =>
-	result.code !== null;
 
 //
 // Spawn Options
@@ -123,7 +101,9 @@ export interface DespawnOptions {
 /**
  * Result of spawning a detached process.
  */
-export type SpawnDetachedResult = {ok: true; child: ChildProcess} | {ok: false; message: string};
+export type SpawnDetachedResult =
+	| {kind: 'spawned'; child: ChildProcess}
+	| {kind: 'error'; message: string};
 
 //
 // Process Handle Types
@@ -169,16 +149,16 @@ const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 	child.once('error', (err) => {
 		if (resolved) return;
 		resolved = true;
-		resolve({ok: false, child, error: err, code: null, signal: null});
+		resolve({kind: 'error', ok: false, child, error: err});
 	});
 
 	child.once('close', (code, signal) => {
 		if (resolved) return;
 		resolved = true;
 		if (signal !== null) {
-			resolve({ok: false, child, error: null, code: null, signal});
+			resolve({kind: 'signaled', ok: false, child, signal});
 		} else {
-			resolve({ok: code === 0, child, error: null, code: code ?? 0, signal: null});
+			resolve({kind: 'exited', ok: code === 0, child, code: code ?? 0});
 		}
 	});
 
@@ -201,7 +181,7 @@ const setup_abort_signal = (child: ChildProcess, signal: AbortSignal): (() => vo
 
 /**
  * Validates timeout_ms option.
- * @throws if timeout_ms is negative
+ * @throws Error if `timeout_ms` is negative
  */
 const validate_timeout_ms = (timeout_ms: number | undefined): void => {
 	if (timeout_ms !== undefined && timeout_ms < 0) {
@@ -250,10 +230,9 @@ export class ProcessRegistry {
 	 * Spawns a process and tracks it in this registry.
 	 * The process is automatically unregistered when it exits.
 	 *
-	 * @param command - the command to run
-	 * @param args - arguments to pass to the command
 	 * @param options - spawn options including `signal` and `timeout_ms`
-	 * @returns handle with `child` process and `closed` promise
+	 * @mutates this.processes - adds the spawned child; removed automatically when it exits
+	 * @throws Error if `timeout_ms` is negative
 	 */
 	spawn(
 		command: string,
@@ -295,13 +274,11 @@ export class ProcessRegistry {
 	 * Spawns a process and captures stdout/stderr as strings.
 	 * Sets `stdio: 'pipe'` automatically.
 	 *
-	 * @param command - the command to run
-	 * @param args - arguments to pass to the command
-	 * @param options - spawn options
 	 * @returns result with captured `stdout` and `stderr`
 	 *   - `null` means spawn failed (ENOENT, etc.) or stream was unavailable
 	 *   - `''` (empty string) means process ran but produced no output
 	 *   - non-empty string contains the captured output
+	 * @throws Error if `timeout_ms` is negative
 	 */
 	async spawn_out(
 		command: string,
@@ -328,7 +305,7 @@ export class ProcessRegistry {
 		child.stderr?.off('data', on_stderr);
 		// If spawn failed (error result), streams are meaningless - return null
 		// Otherwise: '' = available but empty, string = has content
-		const spawn_failed = spawn_result_is_error(result);
+		const spawn_failed = result.kind === 'error';
 		const stdout = spawn_failed || !stdout_available ? null : stdout_chunks.join('');
 		const stderr = spawn_failed || !stderr_available ? null : stderr_chunks.join('');
 		return {result, stdout, stderr};
@@ -337,9 +314,8 @@ export class ProcessRegistry {
 	/**
 	 * Kills a child process and waits for it to exit.
 	 *
-	 * @param child - the child process to kill
 	 * @param options - kill options including signal and timeout
-	 * @returns the spawn result after the process exits
+	 * @throws Error if `timeout_ms` is negative
 	 */
 	async despawn(child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> {
 		const {signal = 'SIGTERM', timeout_ms} = options ?? {};
@@ -348,20 +324,18 @@ export class ProcessRegistry {
 		// Already exited with code
 		if (child.exitCode !== null) {
 			return {
+				kind: 'exited',
 				ok: child.exitCode === 0,
 				child,
-				error: null,
 				code: child.exitCode,
-				signal: null,
 			};
 		}
 		// Already terminated by signal
 		if (child.signalCode !== null) {
 			return {
+				kind: 'signaled',
 				ok: false,
 				child,
-				error: null,
-				code: null,
 				signal: child.signalCode,
 			};
 		}
@@ -383,7 +357,6 @@ export class ProcessRegistry {
 	 * Kills all processes in this registry.
 	 *
 	 * @param options - kill options applied to all processes
-	 * @returns array of spawn results
 	 */
 	async despawn_all(options?: DespawnOptions): Promise<Array<SpawnResult>> {
 		return Promise.all([...this.processes].map((child) => this.despawn(child, options)));
@@ -409,6 +382,8 @@ export class ProcessRegistry {
 	 *   many ms before SIGKILL. Recommended: 100-500ms. If null/undefined, uses
 	 *   immediate SIGKILL (default).
 	 * @returns cleanup function to remove the handler
+	 * @mutates this.#error_handler - sets the handler; the returned cleanup function clears it and unsubscribes from `process.uncaughtException`
+	 * @throws Error if a handler is already attached to this registry
 	 */
 	attach_error_handler(options?: {
 		to_error_label?: (err: Error, origin: NodeJS.UncaughtExceptionOrigin) => string | null;
@@ -564,8 +539,6 @@ export const attach_process_error_handler = (
  * Unlike other spawn functions, this is NOT tracked in any `ProcessRegistry`.
  * The spawned process is meant to outlive the parent (e.g., daemon processes).
  *
- * @param command - the command to run
- * @param args - arguments to pass to the command
  * @param options - spawn options (use `stdio` to redirect output to file descriptors)
  * @returns result with pid on success, or error message on failure
  *
@@ -600,12 +573,15 @@ export const spawn_detached = (
 		child.unref();
 
 		if (child.pid === undefined) {
-			return {ok: false, message: 'Failed to get child PID'};
+			return {kind: 'error', message: 'Failed to get child PID'};
 		}
 
-		return {ok: true, child};
+		return {kind: 'spawned', child};
 	} catch (error) {
-		return {ok: false, message: error instanceof Error ? error.message : String(error)};
+		return {
+			kind: 'error',
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 };
 
@@ -630,18 +606,28 @@ export const print_child_process = (child: ChildProcess): string =>
  */
 export const print_spawn_result = (result: SpawnResult): string => {
 	if (result.ok) return 'ok';
-	if (spawn_result_is_error(result)) return result.error.message;
-	if (spawn_result_is_signaled(result)) return print_key_value('signal', result.signal);
-	return print_key_value('code', result.code);
+	switch (result.kind) {
+		case 'error':
+			return result.error.message;
+		case 'signaled':
+			return print_key_value('signal', result.signal);
+		case 'exited':
+			return print_key_value('code', result.code);
+	}
 };
 
 /**
  * Formats a spawn result for use in error messages.
  */
 export const spawn_result_to_message = (result: SpawnResult): string => {
-	if (spawn_result_is_error(result)) return `error: ${result.error.message}`;
-	if (spawn_result_is_signaled(result)) return `signal ${result.signal}`;
-	return `code ${result.code}`;
+	switch (result.kind) {
+		case 'error':
+			return `error: ${result.error.message}`;
+		case 'signaled':
+			return `signal ${result.signal}`;
+		case 'exited':
+			return `code ${result.code}`;
+	}
 };
 
 //

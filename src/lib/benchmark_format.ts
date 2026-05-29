@@ -6,9 +6,8 @@ import {format_number} from './maths.js';
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
  * All times use the same unit for easy comparison.
- * @param results - array of benchmark results
  * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
- * @returns formatted table string with enhanced metrics
+ * @throws Error if `baseline` is provided but no result has that name
  *
  * @example
  * ```ts
@@ -126,9 +125,8 @@ export const benchmark_format_table = (
 /**
  * Format results as a Markdown table with key metrics.
  * All times use the same unit for easy comparison.
- * @param results - array of benchmark results
  * @param baseline - optional task name to use as baseline for comparison (defaults to fastest)
- * @returns formatted markdown table string
+ * @throws Error if `baseline` is provided but no result has that name
  *
  * @example
  * ```ts
@@ -238,9 +236,6 @@ export const benchmark_format_markdown = (
 
 /**
  * Format results as grouped Markdown tables with headers between groups.
- * @param results - array of benchmark results
- * @param groups - array of group definitions
- * @returns formatted markdown string with group headers and tables
  *
  * @example
  * ```ts
@@ -272,10 +267,16 @@ export const benchmark_format_markdown_grouped = (
 		const group_results = results.filter(group.filter);
 		if (group_results.length === 0) continue;
 
-		// Add group header and table
+		// Header and table are pushed without trailing newlines; the final
+		// `'\n\n'` join inserts exactly one blank line between every adjacent
+		// pair. Trailing newlines on the header would double up between the
+		// heading and its own table; missing blank lines after a table would
+		// squash the next heading directly onto the last row, which Prettier
+		// then treats as a malformed table block and reformats column padding
+		// as collateral damage.
 		const header = group.description
-			? `### ${group.name}\n\n${group.description}\n`
-			: `### ${group.name}\n`;
+			? `### ${group.name}\n\n${group.description}`
+			: `### ${group.name}`;
 		sections.push(header);
 		sections.push(benchmark_format_markdown(group_results, group.baseline));
 	}
@@ -285,11 +286,11 @@ export const benchmark_format_markdown_grouped = (
 	const ungrouped = results.filter((r) => !grouped_names.has(r.name));
 
 	if (ungrouped.length > 0) {
-		sections.push('### Other\n');
+		sections.push('### Other');
 		sections.push(benchmark_format_markdown(ungrouped));
 	}
 
-	return sections.join('\n');
+	return sections.join('\n\n');
 };
 
 export interface BenchmarkFormatJsonOptions {
@@ -301,9 +302,6 @@ export interface BenchmarkFormatJsonOptions {
 
 /**
  * Format results as JSON.
- * @param results - array of benchmark results
- * @param options - formatting options
- * @returns JSON string
  *
  * @example
  * ```ts
@@ -348,9 +346,6 @@ export const benchmark_format_json = (
 
 /**
  * Format results as a grouped table with visual separators between groups.
- * @param results - array of benchmark results
- * @param groups - array of group definitions
- * @returns formatted table string with group separators
  *
  * @example
  * ```ts

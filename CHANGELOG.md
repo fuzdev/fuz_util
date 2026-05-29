@@ -1,5 +1,81 @@
 # @fuzdev/fuz_util
 
+## 0.61.1
+
+### Patch Changes
+
+- feat: add `fractional_index.ts`, `fact_hash.ts`, and `fact_store.ts` ([960cb44](https://github.com/fuzdev/fuz_util/commit/960cb44))
+
+## 0.61.0
+
+### Minor Changes
+
+- fix: treat benchmark timing outliers asymmetrically ([9596566](https://github.com/fuzdev/fuz_util/commit/9596566))
+  - `BenchmarkStats` now computes the upper-tail order statistics (`max_ns`, `p75_ns`–`p99_ns`) over the raw valid timings instead of the MAD-cleaned set
+  - `max_ns` and the `p75_ns`–`p99_ns` percentiles shift on distributions with detected high outliers
+
+## 0.60.1
+
+### Patch Changes
+
+- fix: benchmark md formatting ([05f34dc](https://github.com/fuzdev/fuz_util/commit/05f34dc))
+
+## 0.60.0
+
+### Minor Changes
+
+- feat: improve benchmark API ([1a71bad](https://github.com/fuzdev/fuz_util/commit/1a71bad))
+- feat: refine benchmark API ([f6dc2b0](https://github.com/fuzdev/fuz_util/commit/f6dc2b0))
+
+### Patch Changes
+
+- fix: warmup edge case in benchmarks ([889ad0b](https://github.com/fuzdev/fuz_util/commit/889ad0b))
+
+## 0.59.1
+
+### Patch Changes
+
+- fix: loosen type for `to_bytes` and `hash_blake3` to include `Uint8Array` ([e73e6a4](https://github.com/fuzdev/fuz_util/commit/e73e6a4))
+
+## 0.59.0
+
+### Minor Changes
+
+- feat: add `datetime.ts` and schema for `Uuid` ([d73e2f8](https://github.com/fuzdev/fuz_util/commit/d73e2f8))
+- feat: add some zod helpers ([d73e2f8](https://github.com/fuzdev/fuz_util/commit/d73e2f8))
+
+## 0.58.0
+
+### Minor Changes
+
+- bump node@24.14 ([fbefe82](https://github.com/fuzdev/fuz_util/commit/fbefe82))
+
+### Patch Changes
+
+- feat: add `lru_map.ts` with `LruMap` ([3671f15](https://github.com/fuzdev/fuz_util/commit/3671f15))
+
+## 0.57.0
+
+### Minor Changes
+
+- feat: rework deps interfaces ([#76](https://github.com/fuzdev/fuz_util/pull/76))
+- feat: add `assert_property` test helper ([#78](https://github.com/fuzdev/fuz_util/pull/78))
+- feat: kind-based discriminators on `SpawnResult` and `SpawnDetachedResult` (breaking: replaces sentinel-null fields; removes `spawn_result_is_*` type guards) ([#77](https://github.com/fuzdev/fuz_util/pull/77))
+
+### Patch Changes
+
+- fix: `deep_equal` for `Error` ([cede27a](https://github.com/fuzdev/fuz_util/commit/cede27a))
+
+## 0.56.0
+
+### Minor Changes
+
+- fix: change `PackageJson` `version` to be optional ([47cb39d](https://github.com/fuzdev/fuz_util/commit/47cb39d))
+
+### Patch Changes
+
+- feat: add `testing.ts` ([#75](https://github.com/fuzdev/fuz_util/pull/75))
+
 ## 0.55.0
 
 ### Minor Changes

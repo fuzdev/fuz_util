@@ -22,7 +22,7 @@ export interface ThrottleOptions {
  * during the pending window except for the most recent.
  * Unlike debouncing, this calls the throttled callback
  * both on the leading and trailing edges of the delay window by default,
- * and this can be customized by setting `leading` or `trailing.
+ * and this can be customized by setting `when` to `'leading'` or `'trailing'`.
  * It also differs from a queue where every call to the throttled callback eventually runs.
  * @returns same as `cb`
  */

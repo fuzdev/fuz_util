@@ -1,4 +1,4 @@
-import {describe, test, expect} from 'vitest';
+import {describe, test, assert} from 'vitest';
 
 import {hash_sha1, hash_sha256, hash_sha384, hash_sha512, hash_insecure} from '$lib/hash.js';
 
@@ -46,66 +46,66 @@ const hello_bytes = new Uint8Array([104, 101, 108, 108, 111]);
 
 describe.each(webcrypto_fns)('$name', ({fn, hex_len, vector_index}) => {
 	test.each(vectors)('vector %#: %j', async (input, ...expected) => {
-		expect(await fn(input)).toBe(expected[vector_index - 1]);
+		assert.strictEqual(await fn(input), expected[vector_index - 1]);
 	});
 
 	test(`returns ${hex_len}-character lowercase hex`, async () => {
 		const result = await fn('test');
-		expect(result).toHaveLength(hex_len);
-		expect(result).toMatch(/^[0-9a-f]+$/);
+		assert.strictEqual(result.length, hex_len);
+		assert.match(result, /^[0-9a-f]+$/);
 	});
 
 	test('Uint8Array input matches string', async () => {
 		const from_bytes = await fn(hello_bytes);
 		const from_string = await fn('hello');
-		expect(from_bytes).toBe(from_string);
+		assert.strictEqual(from_bytes, from_string);
 	});
 
 	test('ArrayBuffer input', async () => {
-		expect(await fn(hello_bytes.buffer)).toBe(await fn('hello'));
+		assert.strictEqual(await fn(hello_bytes.buffer), await fn('hello'));
 	});
 
 	test('Uint8Array slice with byteOffset', async () => {
 		const padded = new Uint8Array([0, 0, 104, 101, 108, 108, 111, 0, 0]);
 		const slice = new Uint8Array(padded.buffer, 2, 5);
-		expect(await fn(slice)).toBe(await fn('hello'));
+		assert.strictEqual(await fn(slice), await fn('hello'));
 	});
 
 	test('DataView input', async () => {
 		const view = new DataView(hello_bytes.buffer);
-		expect(await fn(view)).toBe(await fn('hello'));
+		assert.strictEqual(await fn(view), await fn('hello'));
 	});
 
 	test('Int8Array input', async () => {
 		const array = new Int8Array([104, 101, 108, 108, 111]);
-		expect(await fn(array)).toBe(await fn('hello'));
+		assert.strictEqual(await fn(array), await fn('hello'));
 	});
 
 	test('empty string equals empty buffer', async () => {
-		expect(await fn('')).toBe(await fn(new ArrayBuffer(0)));
+		assert.strictEqual(await fn(''), await fn(new ArrayBuffer(0)));
 	});
 
 	test('unicode and emoji produce valid hex', async () => {
 		for (const input of ['日本語', '🎉']) {
 			const result = await fn(input);
-			expect(result).toHaveLength(hex_len);
-			expect(result).toMatch(/^[0-9a-f]+$/);
+			assert.strictEqual(result.length, hex_len);
+			assert.match(result, /^[0-9a-f]+$/);
 		}
 	});
 
 	test('same input produces same output', async () => {
-		expect(await fn('deterministic')).toBe(await fn('deterministic'));
+		assert.strictEqual(await fn('deterministic'), await fn('deterministic'));
 	});
 
 	test('distinct whitespace strings produce distinct hashes', async () => {
 		const results = await Promise.all([fn(' '), fn('\t'), fn('\n'), fn('  ')]);
-		expect(new Set(results).size).toBe(4);
+		assert.strictEqual(new Set(results).size, 4);
 	});
 
 	test('large buffer', async () => {
 		const result = await fn(new Uint8Array(1_000_000).fill(42));
-		expect(result).toHaveLength(hex_len);
-		expect(result).toMatch(/^[0-9a-f]+$/);
+		assert.strictEqual(result.length, hex_len);
+		assert.match(result, /^[0-9a-f]+$/);
 	});
 
 	test('parallel calls produce correct results', async () => {
@@ -114,7 +114,7 @@ describe.each(webcrypto_fns)('$name', ({fn, hex_len, vector_index}) => {
 			Promise.all(inputs.map(fn)),
 			Promise.all(inputs.map(fn)),
 		]);
-		expect(run1).toEqual(run2);
+		assert.deepEqual(run1, run2);
 	});
 });
 
@@ -122,25 +122,26 @@ describe('hash_insecure', () => {
 	test('returns 8-character hex', () => {
 		for (const input of ['', 'hello', '日本語', '🎉']) {
 			const result = hash_insecure(input);
-			expect(result).toHaveLength(8);
-			expect(result).toMatch(/^[0-9a-f]+$/);
+			assert.strictEqual(result.length, 8);
+			assert.match(result, /^[0-9a-f]+$/);
 		}
 	});
 
 	test('empty buffer is DJB2 initial value', () => {
-		expect(hash_insecure(new ArrayBuffer(0))).toBe('00001505');
+		assert.strictEqual(hash_insecure(new ArrayBuffer(0)), '00001505');
 	});
 
 	test('different inputs produce different outputs', () => {
 		const inputs = ['hello', 'world', 'foo', 'bar', 'baz'];
-		expect(new Set(inputs.map(hash_insecure)).size).toBe(inputs.length);
+		assert.strictEqual(new Set(inputs.map(hash_insecure)).size, inputs.length);
 	});
 
 	test('BufferSource types', () => {
 		const expected = hash_insecure(new Uint8Array([104, 101, 108, 108, 111]));
-		expect(hash_insecure(new TextEncoder().encode('hello').buffer)).toMatch(/^[0-9a-f]{8}$/);
-		expect(hash_insecure(new Int8Array([104, 101, 108, 108, 111]))).toBe(expected);
-		expect(hash_insecure(new DataView(new Uint8Array([104, 101, 108, 108, 111]).buffer))).toBe(
+		assert.match(hash_insecure(new TextEncoder().encode('hello').buffer), /^[0-9a-f]{8}$/);
+		assert.strictEqual(hash_insecure(new Int8Array([104, 101, 108, 108, 111])), expected);
+		assert.strictEqual(
+			hash_insecure(new DataView(new Uint8Array([104, 101, 108, 108, 111]).buffer)),
 			expected,
 		);
 	});
@@ -148,24 +149,33 @@ describe('hash_insecure', () => {
 	test('Uint8Array slice with byteOffset', () => {
 		const padded = new Uint8Array([0, 0, 104, 101, 108, 108, 111, 0, 0]);
 		const slice = new Uint8Array(padded.buffer, 2, 5);
-		expect(hash_insecure(slice)).toBe(hash_insecure(new Uint8Array([104, 101, 108, 108, 111])));
+		assert.strictEqual(
+			hash_insecure(slice),
+			hash_insecure(new Uint8Array([104, 101, 108, 108, 111])),
+		);
 	});
 
 	test('ASCII string equals buffer with same byte values', () => {
 		// for ASCII, charCodeAt and UTF-8 bytes are identical
-		expect(hash_insecure('hello')).toBe(hash_insecure(new Uint8Array([104, 101, 108, 108, 111])));
+		assert.strictEqual(
+			hash_insecure('hello'),
+			hash_insecure(new Uint8Array([104, 101, 108, 108, 111])),
+		);
 	});
 
 	test('non-ASCII string differs from UTF-8 buffer', () => {
 		// string uses UTF-16 code units, buffer uses UTF-8 bytes
-		expect(hash_insecure('🎉')).not.toBe(hash_insecure(new TextEncoder().encode('🎉')));
+		assert.notStrictEqual(hash_insecure('🎉'), hash_insecure(new TextEncoder().encode('🎉')));
 	});
 
 	test('null bytes differ from empty', () => {
-		expect(hash_insecure(new Uint8Array([0, 0, 0, 0]))).not.toBe(hash_insecure(new ArrayBuffer(0)));
+		assert.notStrictEqual(
+			hash_insecure(new Uint8Array([0, 0, 0, 0])),
+			hash_insecure(new ArrayBuffer(0)),
+		);
 	});
 
 	test('distinct whitespace strings', () => {
-		expect(new Set([' ', '\t', '\n', '  '].map(hash_insecure)).size).toBe(4);
+		assert.strictEqual(new Set([' ', '\t', '\n', '  '].map(hash_insecure)).size, 4);
 	});
 });

@@ -10,9 +10,6 @@ import {
 	spawn_restartable_process,
 	ProcessRegistry,
 	process_registry_default,
-	spawn_result_is_error,
-	spawn_result_is_signaled,
-	spawn_result_is_exited,
 	process_is_pid_running,
 	print_child_process,
 	print_spawn_result,
@@ -20,28 +17,27 @@ import {
 	attach_process_error_handler,
 	type SpawnResult,
 } from '$lib/process.js';
+import {assert_property} from '$lib/testing.js';
 
 describe('spawn', () => {
 	test('returns ok for successful command', async () => {
 		const result = await spawn('echo', ['hello']);
 		assert.ok(result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 		assert.strictEqual(result.code, 0);
-		assert.strictEqual(result.signal, null);
 	});
 
 	test('returns not ok with exit code for failed command', async () => {
 		const result = await spawn('node', ['-e', 'process.exit(42)']);
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 		assert.strictEqual(result.code, 42);
-		assert.strictEqual(result.signal, null);
 	});
 
 	test('returns error for non-existent command', async () => {
 		const result = await spawn('nonexistent_command_xyz_12345');
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_error(result));
+		assert_property(result, 'kind', 'error');
 		assert.ok(result.error instanceof Error);
 		assert.ok(
 			result.error.message.includes('ENOENT') ||
@@ -52,7 +48,7 @@ describe('spawn', () => {
 	test('supports timeout_ms option', async () => {
 		const result = await spawn('sleep', ['10'], {timeout_ms: 50});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
 	});
 
@@ -64,7 +60,7 @@ describe('spawn', () => {
 		controller.abort();
 		const result = await promise;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
 	});
 
@@ -73,7 +69,7 @@ describe('spawn', () => {
 		controller.abort();
 		const result = await spawn('sleep', ['10'], {signal: controller.signal});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 	});
 
 	test('supports both signal and timeout_ms together', async () => {
@@ -84,7 +80,7 @@ describe('spawn', () => {
 			timeout_ms: 50,
 		});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
 	});
 });
@@ -125,7 +121,7 @@ describe('spawn_out', () => {
 			'console.log("out"); console.error("err"); process.exit(1);',
 		]);
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 		assert.strictEqual(result.code, 1);
 		assert.strictEqual(stdout, 'out\n');
 		assert.strictEqual(stderr, 'err\n');
@@ -134,7 +130,7 @@ describe('spawn_out', () => {
 	test('returns null streams for non-existent command', async () => {
 		const {result, stdout, stderr} = await spawn_out('nonexistent_command_xyz_12345');
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_error(result));
+		assert_property(result, 'kind', 'error');
 		assert.strictEqual(stdout, null);
 		assert.strictEqual(stderr, null);
 	});
@@ -142,7 +138,7 @@ describe('spawn_out', () => {
 	test('supports timeout_ms option', async () => {
 		const {result} = await spawn_out('sleep', ['10'], {timeout_ms: 50});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
 	});
 
@@ -153,7 +149,7 @@ describe('spawn_out', () => {
 		controller.abort();
 		const {result} = await promise;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 	});
 
 	test('returns empty string for empty output', async () => {
@@ -195,7 +191,7 @@ describe('spawn_process', () => {
 		child.kill('SIGTERM');
 		const result = await closed;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
 	});
 });
@@ -205,7 +201,7 @@ describe('despawn', () => {
 		const {child, closed} = spawn_process('sleep', ['10']);
 		const result = await despawn(child);
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		// Also verify closed resolves
 		const closedResult = await closed;
 		assert.ok(!closedResult.ok);
@@ -216,7 +212,7 @@ describe('despawn', () => {
 		await closed;
 		const result = await despawn(child);
 		assert.ok(result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 		assert.strictEqual(result.code, 0);
 	});
 
@@ -226,7 +222,7 @@ describe('despawn', () => {
 		await closed;
 		const result = await despawn(child);
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
 	});
 
@@ -234,34 +230,43 @@ describe('despawn', () => {
 		const {child} = spawn_process('sleep', ['10']);
 		const result = await despawn(child, {signal: 'SIGKILL'});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
 	});
 
 	test('escalates to SIGKILL after timeout', async () => {
-		// Process that ignores SIGTERM - needs time to set up handler
-		const {child} = spawn_process('node', [
-			'-e',
-			'process.on("SIGTERM", () => console.log("ignored")); setInterval(() => {}, 1000);',
-		]);
-		// Wait for process to start and set up handler
-		await new Promise((r) => setTimeout(r, 50));
+		// Process that ignores SIGTERM, prints "ready" once handler is installed
+		const {child} = spawn_process(
+			'node',
+			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
+			{stdio: 'pipe'},
+		);
+		await new Promise<void>((resolve) => {
+			child.stdout!.on('data', (d) => {
+				if (d.toString().includes('ready')) resolve();
+			});
+		});
 		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 100});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
 	});
 
 	test('timeout_ms of 0 escalates to SIGKILL immediately', async () => {
-		// Process that ignores SIGTERM
-		const {child} = spawn_process('node', [
-			'-e',
-			'process.on("SIGTERM", () => {}); setInterval(() => {}, 1000);',
-		]);
-		await new Promise((r) => setTimeout(r, 50));
+		// Process that ignores SIGTERM, prints "ready" once handler is installed
+		const {child} = spawn_process(
+			'node',
+			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
+			{stdio: 'pipe'},
+		);
+		await new Promise<void>((resolve) => {
+			child.stdout!.on('data', (d) => {
+				if (d.toString().includes('ready')) resolve();
+			});
+		});
 		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 0});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
 	});
 });
@@ -320,7 +325,7 @@ describe('ProcessRegistry', () => {
 
 		const result = await closed;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_error(result));
+		assert_property(result, 'kind', 'error');
 		// After error, process should be removed from registry
 		assert.strictEqual(registry.processes.size, 0);
 	});
@@ -369,7 +374,7 @@ describe('ProcessRegistry', () => {
 
 		const result = await closed;
 		assert.ok(result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 		assert.strictEqual(result.code, 0);
 	});
 
@@ -425,7 +430,7 @@ describe('spawn_restartable_process', () => {
 		await rp.spawned;
 		const result = await rp.closed;
 		assert.ok(result.ok);
-		assert.ok(spawn_result_is_exited(result));
+		assert_property(result, 'kind', 'exited');
 	});
 
 	test('restart kills current and starts new process', async () => {
@@ -448,7 +453,7 @@ describe('spawn_restartable_process', () => {
 		const firstClosed = rp.closed;
 		const firstResult = await firstClosed;
 		assert.ok(!firstResult.ok);
-		assert.ok(spawn_result_is_exited(firstResult));
+		assert_property(firstResult, 'kind', 'exited');
 		assert.strictEqual(firstResult.code, 1);
 
 		await rp.restart();
@@ -467,7 +472,7 @@ describe('spawn_restartable_process', () => {
 		controller.abort();
 		const result = await rp.closed;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 	});
 
 	test('concurrent restart calls are coalesced', async () => {
@@ -541,7 +546,7 @@ describe('spawn_restartable_process', () => {
 		// Process should be killed immediately due to pre-aborted signal
 		const result = await rp.closed;
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 	});
 
 	test('concurrent kill and restart resolves without error', async () => {
@@ -570,74 +575,6 @@ describe('spawn_restartable_process', () => {
 		await Promise.all(kills);
 
 		assert.ok(!rp.active);
-	});
-});
-
-describe('type guards', () => {
-	test('spawn_result_is_error identifies error results', () => {
-		const error: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: new Error('test'),
-			code: null,
-			signal: null,
-		};
-		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
-		const signaled: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: null,
-			code: null,
-			signal: 'SIGTERM',
-		};
-
-		assert.ok(spawn_result_is_error(error));
-		assert.ok(!spawn_result_is_error(exited));
-		assert.ok(!spawn_result_is_error(signaled));
-	});
-
-	test('spawn_result_is_exited identifies exited results', () => {
-		const error: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: new Error('test'),
-			code: null,
-			signal: null,
-		};
-		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
-		const signaled: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: null,
-			code: null,
-			signal: 'SIGTERM',
-		};
-
-		assert.ok(!spawn_result_is_exited(error));
-		assert.ok(spawn_result_is_exited(exited));
-		assert.ok(!spawn_result_is_exited(signaled));
-	});
-
-	test('spawn_result_is_signaled identifies signaled results', () => {
-		const error: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: new Error('test'),
-			code: null,
-			signal: null,
-		};
-		const exited: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
-		const signaled: SpawnResult = {
-			ok: false,
-			child: null!,
-			error: null,
-			code: null,
-			signal: 'SIGTERM',
-		};
-
-		assert.ok(!spawn_result_is_signaled(error));
-		assert.ok(!spawn_result_is_signaled(exited));
-		assert.ok(spawn_result_is_signaled(signaled));
 	});
 });
 
@@ -683,27 +620,25 @@ describe('print utilities', () => {
 	});
 
 	test('print_spawn_result returns ok for success', () => {
-		const result: SpawnResult = {ok: true, child: null!, error: null, code: 0, signal: null};
+		const result: SpawnResult = {kind: 'exited', ok: true, child: null!, code: 0};
 		assert.strictEqual(print_spawn_result(result), 'ok');
 	});
 
 	test('print_spawn_result returns error message for error', () => {
 		const result: SpawnResult = {
+			kind: 'error',
 			ok: false,
 			child: null!,
 			error: new Error('test error'),
-			code: null,
-			signal: null,
 		};
 		assert.strictEqual(print_spawn_result(result), 'test error');
 	});
 
 	test('print_spawn_result returns signal for signaled', () => {
 		const result: SpawnResult = {
+			kind: 'signaled',
 			ok: false,
 			child: null!,
-			error: null,
-			code: null,
 			signal: 'SIGTERM',
 		};
 		const output = print_spawn_result(result);
@@ -712,7 +647,7 @@ describe('print utilities', () => {
 	});
 
 	test('print_spawn_result returns code for exited', () => {
-		const result: SpawnResult = {ok: false, child: null!, error: null, code: 42, signal: null};
+		const result: SpawnResult = {kind: 'exited', ok: false, child: null!, code: 42};
 		const output = print_spawn_result(result);
 		assert.ok(output.includes('code'));
 		assert.ok(output.includes('42'));
@@ -720,28 +655,26 @@ describe('print utilities', () => {
 
 	test('spawn_result_to_message formats error', () => {
 		const result: SpawnResult = {
+			kind: 'error',
 			ok: false,
 			child: null!,
 			error: new Error('test error'),
-			code: null,
-			signal: null,
 		};
 		assert.strictEqual(spawn_result_to_message(result), 'error: test error');
 	});
 
 	test('spawn_result_to_message formats signal', () => {
 		const result: SpawnResult = {
+			kind: 'signaled',
 			ok: false,
 			child: null!,
-			error: null,
-			code: null,
 			signal: 'SIGKILL',
 		};
 		assert.strictEqual(spawn_result_to_message(result), 'signal SIGKILL');
 	});
 
 	test('spawn_result_to_message formats code', () => {
-		const result: SpawnResult = {ok: false, child: null!, error: null, code: 1, signal: null};
+		const result: SpawnResult = {kind: 'exited', ok: false, child: null!, code: 1};
 		assert.strictEqual(spawn_result_to_message(result), 'code 1');
 	});
 });
@@ -770,7 +703,7 @@ describe('timeout_ms validation', () => {
 		// 0 is valid but immediately sends SIGTERM
 		const result = await spawn('sleep', ['10'], {timeout_ms: 0});
 		assert.ok(!result.ok);
-		assert.ok(spawn_result_is_signaled(result));
+		assert_property(result, 'kind', 'signaled');
 	});
 });
 

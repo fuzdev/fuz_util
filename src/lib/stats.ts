@@ -26,10 +26,12 @@ export const stats_mean = (values: Array<number>): number => {
 
 /**
  * Calculate the median of an array of numbers.
+ * NaN values are filtered out before computing.
  */
 export const stats_median = (values: Array<number>): number => {
-	if (values.length === 0) return NaN;
-	const sorted = [...values].sort((a, b) => a - b);
+	const valid = values.filter((v) => !Number.isNaN(v));
+	if (valid.length === 0) return NaN;
+	const sorted = valid.sort((a, b) => a - b);
 	const mid = Math.floor(sorted.length / 2);
 	return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
 };
@@ -59,7 +61,6 @@ export const stats_variance = (values: Array<number>, mean?: number): number => 
  * Calculate a percentile of an array of numbers using linear interpolation.
  * Uses the "R-7" method (default in R, NumPy, Excel) which interpolates between
  * data points for more accurate percentile estimates, especially with smaller samples.
- * @param values - array of numbers
  * @param p - percentile (0-1, e.g., 0.95 for 95th percentile)
  */
 export const stats_percentile = (values: Array<number>, p: number): number => {
@@ -95,16 +96,19 @@ export const stats_cv = (mean: number, std_dev: number): number => {
 
 /**
  * Calculate min and max values.
+ * NaN values are ignored.
  */
 export const stats_min_max = (values: Array<number>): {min: number; max: number} => {
 	if (values.length === 0) return {min: NaN, max: NaN};
-	let min = values[0]!;
-	let max = values[0]!;
-	for (let i = 1; i < values.length; i++) {
+	let min = Infinity;
+	let max = -Infinity;
+	for (let i = 0; i < values.length; i++) {
 		const val = values[i]!;
+		if (Number.isNaN(val)) continue;
 		if (val < min) min = val;
 		if (val > max) max = val;
 	}
+	if (min === Infinity) return {min: NaN, max: NaN};
 	return {min, max};
 };
 
@@ -286,6 +290,8 @@ export const STATS_CONFIDENCE_Z_SCORES: Record<number, number> = {
  * Convert a confidence level (0-1) to a z-score.
  * Uses a lookup table for common values, approximates others.
  *
+ * @throws Error if `level` is not in the open interval (0, 1)
+ *
  * @example
  * ```ts
  * stats_confidence_level_to_z_score(0.95); // 1.96
@@ -329,9 +335,7 @@ export interface StatsConfidenceIntervalOptions {
 
 /**
  * Calculate confidence interval for the mean.
- * @param values - array of numbers
- * @param options - configuration options
- * @returns [lower_bound, upper_bound]
+ * @returns `[lower_bound, upper_bound]`
  */
 export const stats_confidence_interval = (
 	values: Array<number>,
@@ -348,11 +352,7 @@ export const stats_confidence_interval = (
 /**
  * Calculate confidence interval from summary statistics (mean, std_dev, sample_size).
  * Useful when raw data is not available.
- * @param mean - mean of the data
- * @param std_dev - standard deviation of the data
- * @param sample_size - number of samples
- * @param options - configuration options
- * @returns [lower_bound, upper_bound]
+ * @returns `[lower_bound, upper_bound]`
  */
 export const stats_confidence_interval_from_summary = (
 	mean: number,
@@ -393,12 +393,7 @@ export interface StatsWelchTTestResult {
  * Calculate Welch's t-test statistic and degrees of freedom.
  * Welch's t-test is more robust than Student's t-test when variances are unequal.
  *
- * @param mean1 - mean of first sample
- * @param std1 - standard deviation of first sample
- * @param n1 - size of first sample
- * @param mean2 - mean of second sample
- * @param std2 - standard deviation of second sample
- * @param n2 - size of second sample
+ * Params suffixed `1` describe the first sample, `2` the second.
  */
 export const stats_welch_t_test = (
 	mean1: number,

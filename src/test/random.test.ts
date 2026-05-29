@@ -58,10 +58,15 @@ describe('random_int', () => {
 });
 
 describe('random_boolean', () => {
-	test('-5.5 to 7', () => {
-		for (let i = 0; i < 20; i++) {
-			assert.strictEqual(typeof random_boolean(), 'boolean');
+	test('returns booleans and produces both values', () => {
+		const results = new Set<boolean>();
+		for (let i = 0; i < 100; i++) {
+			const result = random_boolean();
+			assert.strictEqual(typeof result, 'boolean');
+			results.add(result);
 		}
+		assert.isTrue(results.has(true), 'should produce true');
+		assert.isTrue(results.has(false), 'should produce false');
 	});
 });
 
@@ -96,13 +101,38 @@ describe('random_item', () => {
 });
 
 describe('shuffle', () => {
-	test('shuffles an array', () => {
+	test('shuffles an array in place', () => {
 		const original_items = ['a', 'b', 'c'];
 		const items = original_items.slice();
 		const shuffled = shuffle(items);
 		assert.strictEqual(items, shuffled); // mutated not cloned
 		assert.strictEqual(shuffled.length, 3);
 		for (const item of original_items) {
+			assert.ok(shuffled.includes(item));
+		}
+	});
+
+	test('empty array', () => {
+		const arr: Array<number> = [];
+		const shuffled = shuffle(arr);
+		assert.strictEqual(shuffled, arr);
+		assert.deepEqual(shuffled, []);
+	});
+
+	test('single-element array', () => {
+		const arr = [42];
+		const shuffled = shuffle(arr);
+		assert.strictEqual(shuffled, arr);
+		assert.deepEqual(shuffled, [42]);
+	});
+
+	test('deterministic with seeded random', () => {
+		const seeded_random = (min: number, _max: number): number => min; // always pick min
+		const arr = [1, 2, 3, 4, 5];
+		const shuffled = shuffle(arr.slice(), seeded_random);
+		assert.strictEqual(shuffled.length, 5);
+		// all original elements preserved
+		for (const item of [1, 2, 3, 4, 5]) {
 			assert.ok(shuffled.includes(item));
 		}
 	});

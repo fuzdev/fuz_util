@@ -44,12 +44,18 @@ import type {
 const DEFAULT_DURATION_MS = 1000;
 const DEFAULT_WARMUP_ITERATIONS = 10;
 const DEFAULT_COOLDOWN_MS = 100;
-const DEFAULT_ITERATIONS_MIN = 10;
-const DEFAULT_ITERATIONS_MAX = 100_000;
+// 30 (not 10) so Welch's-t DOF approximation is stable on the floor case
+// — a slow function that hits `min_iterations` exactly on both baseline and
+// current sides. At n=10 the DOF is noisy and a single tail outlier can swing
+// the p-value across the significance threshold; the system would then report
+// "regression" with confidence the math doesn't support. 30 is the standard
+// "central limit theorem starts behaving" sample size for this kind of test.
+const DEFAULT_MIN_ITERATIONS = 30;
+const DEFAULT_MAX_ITERATIONS = 100_000;
 
 /**
- * Validate and normalize benchmark configuration.
- * Throws if configuration is invalid.
+ * Validate benchmark configuration.
+ * @throws Error if configuration values are out of range or `min_iterations` exceeds `max_iterations`
  */
 const validate_config = (config: BenchmarkConfig): void => {
 	if (config.duration_ms !== undefined && config.duration_ms <= 0) {
@@ -79,19 +85,55 @@ const validate_config = (config: BenchmarkConfig): void => {
 };
 
 /**
- * Internal task representation with detected async status.
+ * Validate a task's per-task time-budget overrides against the already-resolved
+ * suite config. Cross-field min/max is checked using effective values (task
+ * field if set, otherwise suite default) so that e.g. a task raising
+ * `min_iterations` past the suite's `max_iterations` errors at `add()` time.
+ *
+ * @throws Error if any override is out of range or effective min exceeds effective max
  */
-interface BenchmarkTaskInternal extends BenchmarkTask {
-	/** Whether the function returns a promise (detected during warmup or from hint) */
-	is_async?: boolean;
-}
+const validate_task = (
+	task: BenchmarkTask,
+	suite: {min_iterations: number; max_iterations: number},
+): void => {
+	if (task.duration_ms !== undefined && task.duration_ms <= 0) {
+		throw new Error(`task "${task.name}" duration_ms must be positive, got ${task.duration_ms}`);
+	}
+	if (task.warmup_iterations !== undefined && task.warmup_iterations < 0) {
+		throw new Error(
+			`task "${task.name}" warmup_iterations must be non-negative, got ${task.warmup_iterations}`,
+		);
+	}
+	if (task.min_iterations !== undefined && task.min_iterations < 1) {
+		throw new Error(
+			`task "${task.name}" min_iterations must be at least 1, got ${task.min_iterations}`,
+		);
+	}
+	if (task.max_iterations !== undefined && task.max_iterations < 1) {
+		throw new Error(
+			`task "${task.name}" max_iterations must be at least 1, got ${task.max_iterations}`,
+		);
+	}
+	if (task.min_iterations !== undefined || task.max_iterations !== undefined) {
+		const effective_min = task.min_iterations ?? suite.min_iterations;
+		const effective_max = task.max_iterations ?? suite.max_iterations;
+		if (effective_min > effective_max) {
+			throw new Error(
+				`task "${task.name}" effective min_iterations (${effective_min}) cannot exceed effective max_iterations (${effective_max})`,
+			);
+		}
+	}
+};
 
 /**
  * Warmup function by running it multiple times.
  * Detects whether the function is async based on return value.
  *
+ * When no `async_hint` is provided, at least one detection iteration runs even
+ * if `iterations` is 0 — otherwise async detection would be impossible and
+ * async functions would have their returned promises leaked as unhandled.
+ *
  * @param fn - function to warmup (sync or async)
- * @param iterations - number of warmup iterations
  * @param async_hint - if provided, use this instead of detecting
  * @returns whether the function is async
  *
@@ -111,21 +153,25 @@ export const benchmark_warmup = async (
 		for (let i = 0; i < iterations; i++) {
 			const result = fn();
 			if (async_hint && is_promise(result)) {
-				await result; // eslint-disable-line no-await-in-loop
+				await result;
 			}
 		}
 		return async_hint;
 	}
 
-	// Detect on first iteration
+	// Detect on first iteration. Force at least one call even if iterations=0,
+	// otherwise async fns are silently misclassified as sync (timings would
+	// measure only the synchronous prelude, and the returned promise would
+	// leak as unhandled).
+	const total = iterations < 1 ? 1 : iterations;
 	let detected_async = false;
-	for (let i = 0; i < iterations; i++) {
+	for (let i = 0; i < total; i++) {
 		const result = fn();
 		if (i === 0) {
 			detected_async = is_promise(result);
 		}
 		if (detected_async && is_promise(result)) {
-			await result; // eslint-disable-line no-await-in-loop
+			await result;
 		}
 	}
 	return detected_async;
@@ -137,7 +183,7 @@ export const benchmark_warmup = async (
 export class Benchmark {
 	readonly #config: Required<Omit<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>> &
 		Pick<BenchmarkConfig, 'on_iteration' | 'on_task_complete'>;
-	readonly #tasks: Array<BenchmarkTaskInternal> = [];
+	readonly #tasks: Array<BenchmarkTask> = [];
 	#results: Array<BenchmarkResult> = [];
 
 	constructor(config: BenchmarkConfig = {}) {
@@ -146,8 +192,8 @@ export class Benchmark {
 			duration_ms: config.duration_ms ?? DEFAULT_DURATION_MS,
 			warmup_iterations: config.warmup_iterations ?? DEFAULT_WARMUP_ITERATIONS,
 			cooldown_ms: config.cooldown_ms ?? DEFAULT_COOLDOWN_MS,
-			min_iterations: config.min_iterations ?? DEFAULT_ITERATIONS_MIN,
-			max_iterations: config.max_iterations ?? DEFAULT_ITERATIONS_MAX,
+			min_iterations: config.min_iterations ?? DEFAULT_MIN_ITERATIONS,
+			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
 			timer: config.timer ?? timer_default,
 			on_iteration: config.on_iteration,
 			on_task_complete: config.on_task_complete,
@@ -159,6 +205,7 @@ export class Benchmark {
 	 * @param name - task name or full task object
 	 * @param fn - Function to benchmark (if name is string). Return values are ignored.
 	 * @returns this `Benchmark` instance for chaining
+	 * @throws Error if a task with the same name already exists, or if `fn` is missing when `name` is a string
 	 *
 	 * @example
 	 * ```ts
@@ -183,18 +230,21 @@ export class Benchmark {
 			throw new Error(`Task "${task_name}" already exists`);
 		}
 
+		let task: BenchmarkTask;
 		if (typeof name_or_task === 'string') {
 			if (!fn) throw new Error('Function required when name is string');
-			this.#tasks.push({name: name_or_task, fn});
+			task = {name: name_or_task, fn};
 		} else {
-			this.#tasks.push(name_or_task);
+			task = name_or_task;
 		}
+
+		validate_task(task, this.#config);
+		this.#tasks.push(task);
 		return this;
 	}
 
 	/**
 	 * Remove a benchmark task by name.
-	 * @param name - name of the task to remove
 	 * @returns this `Benchmark` instance for chaining
 	 * @throws Error if task with given name doesn't exist
 	 *
@@ -216,55 +266,15 @@ export class Benchmark {
 	}
 
 	/**
-	 * Mark a task to be skipped during benchmark runs.
-	 * @param name - name of the task to skip
-	 * @returns this `Benchmark` instance for chaining
-	 * @throws Error if task with given name doesn't exist
-	 *
-	 * @example
-	 * ```ts
-	 * bench.add('task1', () => fn1());
-	 * bench.add('task2', () => fn2());
-	 * bench.skip('task1');
-	 * // Only task2 will run
-	 * ```
-	 */
-	skip(name: string): this {
-		const task = this.#tasks.find((t) => t.name === name);
-		if (!task) {
-			throw new Error(`Task "${name}" not found`);
-		}
-		task.skip = true;
-		return this;
-	}
-
-	/**
-	 * Mark a task to run exclusively (along with other `only` tasks).
-	 * @param name - name of the task to run exclusively
-	 * @returns this `Benchmark` instance for chaining
-	 * @throws Error if task with given name doesn't exist
-	 *
-	 * @example
-	 * ```ts
-	 * bench.add('task1', () => fn1());
-	 * bench.add('task2', () => fn2());
-	 * bench.add('task3', () => fn3());
-	 * bench.only('task2');
-	 * // Only task2 will run
-	 * ```
-	 */
-	only(name: string): this {
-		const task = this.#tasks.find((t) => t.name === name);
-		if (!task) {
-			throw new Error(`Task "${name}" not found`);
-		}
-		task.only = true;
-		return this;
-	}
-
-	/**
 	 * Run all benchmark tasks.
-	 * @returns array of benchmark results
+	 *
+	 * Tasks execute in `add()` order. The first task runs against a colder
+	 * runtime than subsequent ones (uncompiled JS, cold caches) — a
+	 * property of in-process benchmarking that matters more when an early
+	 * task has aggressive overrides like low `warmup_iterations` or
+	 * `min_iterations`. If first-position bias is a concern, put a
+	 * throwaway warm-up task first, or call `run()` twice and use the
+	 * second result set.
 	 */
 	async run(): Promise<Array<BenchmarkResult>> {
 		this.#results = [];
@@ -279,7 +289,7 @@ export class Benchmark {
 
 		for (let i = 0; i < tasks_to_run.length; i++) {
 			const task = tasks_to_run[i]!;
-			const result = await this.#run_task(task); // eslint-disable-line no-await-in-loop
+			const result = await this.#run_task(task);
 			this.#results.push(result);
 
 			// Call on_task_complete callback
@@ -287,7 +297,7 @@ export class Benchmark {
 
 			// Cooldown between tasks (skip after last task)
 			if (this.#config.cooldown_ms > 0 && i < tasks_to_run.length - 1) {
-				await wait(this.#config.cooldown_ms); // eslint-disable-line no-await-in-loop
+				await wait(this.#config.cooldown_ms);
 			}
 		}
 
@@ -296,15 +306,33 @@ export class Benchmark {
 
 	/**
 	 * Run a single benchmark task.
-	 * Throws if the task fails during setup, warmup, or measurement.
+	 * @throws Error if the task fails during setup, warmup, or measurement
 	 */
-	async #run_task(task: BenchmarkTaskInternal): Promise<BenchmarkResult> {
-		const suite_start_ns = this.#config.timer.now();
+	async #run_task(task: BenchmarkTask): Promise<BenchmarkResult> {
+		// Per-task overrides shadow the suite config. Validation at `add()` time
+		// guarantees effective min_iterations <= effective max_iterations.
+		const duration_ms = task.duration_ms ?? this.#config.duration_ms;
+		const warmup_iterations = task.warmup_iterations ?? this.#config.warmup_iterations;
+		const min_iterations = task.min_iterations ?? this.#config.min_iterations;
+		const max_iterations = task.max_iterations ?? this.#config.max_iterations;
+
+		// Locals to avoid per-iteration property lookups in the un-optimized path.
+		// `timer` and `on_iteration` come from the readonly `#config`, so they're
+		// stable for the suite's lifetime. `fn` and `name` are captured below
+		// after `setup()` runs, so setup is still allowed to mutate them.
+		const {timer, on_iteration} = this.#config;
+
+		const suite_start_ns = timer.now();
 
 		// Pre-allocate array to avoid GC pressure during measurement
-		const max_iterations = this.#config.max_iterations;
 		const timings_ns: Array<number> = new Array(max_iterations);
 		let timing_count = 0;
+
+		// Resolved during warmup inside the try block, surfaced into
+		// `result.budget` after the loop. Declared out here so it survives the
+		// `try/finally` scope — the value is part of the result, not just
+		// loop-local state.
+		let async_resolved = false;
 
 		try {
 			// Setup
@@ -312,30 +340,34 @@ export class Benchmark {
 				await task.setup();
 			}
 
-			// Warmup and detect async
-			const is_async = await benchmark_warmup(task.fn, this.#config.warmup_iterations, task.async);
-			task.is_async = is_async;
+			// Capture after setup so setup can still mutate task.fn / task.name.
+			const {fn, name} = task;
+
+			// Warmup and detect async. The resolved boolean (not `task.async`) is
+			// what the loop actually used; we persist it into `result.budget`
+			// below so baseline comparison can detect an async-classification
+			// flip between runs as methodology drift.
+			async_resolved = await benchmark_warmup(fn, warmup_iterations, task.async);
 
 			// Measurement phase
-			const target_time_ns = this.#config.duration_ms * 1_000_000; // Convert ms to ns
-			const min_iterations = this.#config.min_iterations;
+			const target_time_ns = duration_ms * 1_000_000; // Convert ms to ns
 
-			let aborted = false as boolean;
+			let aborted = false as boolean; // widen — closure-only assignment doesn't widen for CFA
 			const abort = (): void => {
 				aborted = true;
 			};
-			const measurement_start_ns = this.#config.timer.now();
+			const measurement_start_ns = timer.now();
 
 			// Use separate code paths for sync vs async for better performance
-			if (is_async) {
+			if (async_resolved) {
 				// Async code path - await each iteration
 				// eslint-disable-next-line no-unmodified-loop-condition
 				while (timing_count < max_iterations && !aborted) {
-					const iter_start_ns = this.#config.timer.now();
-					await task.fn(); // eslint-disable-line no-await-in-loop
-					const iter_end_ns = this.#config.timer.now();
+					const iter_start_ns = timer.now();
+					await fn();
+					const iter_end_ns = timer.now();
 					timings_ns[timing_count++] = iter_end_ns - iter_start_ns;
-					this.#config.on_iteration?.(task.name, timing_count, abort);
+					on_iteration?.(name, timing_count, abort);
 
 					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
 					if (timing_count >= min_iterations && total_elapsed_ns >= target_time_ns) {
@@ -346,11 +378,11 @@ export class Benchmark {
 				// Sync code path - no promise checking overhead
 				// eslint-disable-next-line no-unmodified-loop-condition
 				while (timing_count < max_iterations && !aborted) {
-					const iter_start_ns = this.#config.timer.now();
-					task.fn();
-					const iter_end_ns = this.#config.timer.now();
+					const iter_start_ns = timer.now();
+					fn();
+					const iter_end_ns = timer.now();
 					timings_ns[timing_count++] = iter_end_ns - iter_start_ns;
-					this.#config.on_iteration?.(task.name, timing_count, abort);
+					on_iteration?.(name, timing_count, abort);
 
 					const total_elapsed_ns = iter_end_ns - measurement_start_ns;
 					if (timing_count >= min_iterations && total_elapsed_ns >= target_time_ns) {
@@ -365,28 +397,34 @@ export class Benchmark {
 			}
 		}
 
-		// Trim array to actual size
-		timings_ns.length = timing_count;
+		// Right-size: `length =` doesn't reliably shrink V8's backing store, so
+		// we copy into a packed array and let the over-allocated original GC.
+		const trimmed_timings = timings_ns.slice(0, timing_count);
 
-		const suite_end_ns = this.#config.timer.now();
+		const suite_end_ns = timer.now();
 		const total_time_ms = (suite_end_ns - suite_start_ns) / 1_000_000; // Convert back to ms for display
 
 		// Analyze results
-		const stats = new BenchmarkStats(timings_ns);
+		const stats = new BenchmarkStats(trimmed_timings);
 
 		return {
 			name: task.name,
 			stats,
 			iterations: timing_count,
 			total_time_ms,
-			timings_ns,
+			timings_ns: trimmed_timings,
+			budget: {
+				duration_ms,
+				warmup_iterations,
+				min_iterations,
+				max_iterations,
+				async_resolved,
+			},
 		};
 	}
 
 	/**
 	 * Format results as an ASCII table with percentiles, min/max, and relative performance.
-	 * @param options - formatting options
-	 * @returns formatted table string
 	 *
 	 * @example
 	 * ```ts
@@ -444,8 +482,7 @@ export class Benchmark {
 
 	/**
 	 * Get the benchmark results.
-	 * Returns a shallow copy to prevent external mutation.
-	 * @returns array of benchmark results
+	 * @returns shallow copy of the results array (prevents external mutation)
 	 */
 	results(): Array<BenchmarkResult> {
 		return [...this.#results];
@@ -468,8 +505,7 @@ export class Benchmark {
 
 	/**
 	 * Get results as a map for convenient lookup by task name.
-	 * Returns a new Map each call to prevent external mutation.
-	 * @returns map of task name to benchmark result
+	 * @returns fresh `Map` of task name to benchmark result (prevents external mutation)
 	 *
 	 * @example
 	 * ```ts
@@ -496,7 +532,6 @@ export class Benchmark {
 
 	/**
 	 * Clear everything (results and tasks).
-	 * Use this to start fresh with a new set of benchmarks.
 	 * @returns this `Benchmark` instance for chaining
 	 */
 	clear(): this {

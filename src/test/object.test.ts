@@ -1,6 +1,16 @@
 import {describe, test, assert} from 'vitest';
 
-import {map_record, omit, pick_by, omit_undefined, reorder, traverse} from '$lib/object.ts';
+import {
+	map_record,
+	omit,
+	pick_by,
+	omit_undefined,
+	reorder,
+	traverse,
+	is_plain_object,
+	EMPTY_OBJECT,
+	transform_empty_object_to_undefined,
+} from '$lib/object.ts';
 
 describe('map_record', () => {
 	test('basic behavior', () => {
@@ -65,7 +75,7 @@ describe('reorder', () => {
 
 describe('traverse', () => {
 	test('basic behavior', () => {
-		const results: Array<string> = [];
+		const results: Array<any> = [];
 		const obj = {a: 1, b: {c: 2, d: ['33', undefined]}, e: null};
 		traverse(obj, (key, value, obj) => results.push(key, value, obj));
 		assert.deepStrictEqual(results, [
@@ -91,5 +101,73 @@ describe('traverse', () => {
 			null,
 			obj,
 		]);
+	});
+});
+
+describe('is_plain_object', () => {
+	test('returns true for plain objects', () => {
+		assert.isTrue(is_plain_object({}));
+		assert.isTrue(is_plain_object({a: 1}));
+	});
+
+	test('returns true for Object.create(null)', () => {
+		assert.isTrue(is_plain_object(Object.create(null)));
+	});
+
+	test('returns false for class instances', () => {
+		assert.isFalse(is_plain_object(new Map()));
+		assert.isFalse(is_plain_object(new Set()));
+		assert.isFalse(is_plain_object(new Date()));
+		assert.isFalse(is_plain_object(new Error('test')));
+	});
+
+	test('returns false for arrays', () => {
+		assert.isFalse(is_plain_object([]));
+		assert.isFalse(is_plain_object([1, 2]));
+	});
+
+	test('returns false for null, undefined, and primitives', () => {
+		assert.isFalse(is_plain_object(null));
+		assert.isFalse(is_plain_object(undefined));
+		assert.isFalse(is_plain_object(0));
+		assert.isFalse(is_plain_object(''));
+		assert.isFalse(is_plain_object(false));
+	});
+});
+
+describe('EMPTY_OBJECT', () => {
+	test('is a frozen empty object', () => {
+		assert.isTrue(Object.isFrozen(EMPTY_OBJECT));
+		assert.strictEqual(Object.keys(EMPTY_OBJECT).length, 0);
+	});
+
+	test('property access returns undefined', () => {
+		assert.strictEqual(EMPTY_OBJECT['anything-here'], undefined);
+		assert.strictEqual(EMPTY_OBJECT[42], undefined);
+	});
+
+	test('mutations throw', () => {
+		assert.throws(() => {
+			(EMPTY_OBJECT as any).x = 1;
+		});
+	});
+});
+
+describe('transform_empty_object_to_undefined', () => {
+	test('returns undefined for empty object', () => {
+		assert.strictEqual(transform_empty_object_to_undefined({}), undefined);
+	});
+
+	test('returns the object if it has properties', () => {
+		const obj = {a: 1};
+		assert.strictEqual(transform_empty_object_to_undefined(obj), obj);
+	});
+
+	test('returns falsy values as-is', () => {
+		assert.strictEqual(transform_empty_object_to_undefined(null), null);
+		// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+		assert.strictEqual(transform_empty_object_to_undefined(undefined), undefined);
+		assert.strictEqual(transform_empty_object_to_undefined(0 as any), 0);
+		assert.strictEqual(transform_empty_object_to_undefined('' as any), '');
 	});
 });

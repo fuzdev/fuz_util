@@ -58,11 +58,11 @@ export const pick_by = <T extends Record<K, any>, K extends string | number>(
 };
 
 /**
- * `omit_undefined` is a commonly used form of `pick_by`.
- * See this issue for why it's used so much:
- * https://github.com/Microsoft/TypeScript/issues/13195
- * @param obj - the object to filter
+ * A commonly used form of `pick_by`.
+ *
  * @returns `obj` with all `undefined` properties removed
+ *
+ * @see {@link https://github.com/Microsoft/TypeScript/issues/13195}
  */
 export const omit_undefined = <T extends Record<string | number, any>>(obj: T): T =>
 	pick_by(obj, (v) => v !== undefined) as T;
@@ -90,7 +90,6 @@ export const EMPTY_OBJECT: Record<string | number | symbol, undefined> & object 
 /**
  * Performs a depth-first traversal of an object's enumerable properties,
  * calling `cb` for every key and value with the current `obj` context.
- * @param obj - any object with enumerable properties
  * @param cb - receives the key, value, and `obj` for every enumerable property on `obj` and its descendents
  */
 export const traverse = (obj: any, cb: (key: string, value: any, obj: any) => void): void => {
