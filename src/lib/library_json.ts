@@ -4,10 +4,26 @@
  * @module
  */
 
+import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
+
 import {ensure_end, strip_end, strip_start} from './string.js';
 import type {PackageJson} from './package_json.js';
-import type {SourceJson} from './source_json.js';
 import type {Url} from './url.js';
+
+/**
+ * A library's analyzed source: package identity plus the module metadata
+ * produced by `svelte-docinfo`.
+ *
+ * `modules` uses `svelte-docinfo`'s wire shape (`ModuleJsonInput`), the same
+ * shape its Vite plugin's `virtual:svelte-docinfo` and CLI emit. `svelte-docinfo`
+ * is an optional peer dependency — install it to type this field, otherwise the
+ * reference degrades to `any`.
+ */
+export interface SourceJson {
+	name: string;
+	version: string;
+	modules?: Array<ModuleJsonInput>;
+}
 
 /**
  * A library's package.json and source metadata with computed properties.
