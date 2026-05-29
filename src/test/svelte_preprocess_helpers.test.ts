@@ -185,18 +185,12 @@ describe('evaluate_static_expr', () => {
 
 	test('resolves identifier from bindings', () => {
 		const bindings = new Map([['x', 'hello']]);
-		assert.equal(
-			evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings),
-			'hello',
-		);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), 'hello');
 	});
 
 	test('returns null for identifier not in bindings', () => {
 		const bindings = new Map([['y', 'hello']]);
-		assert.equal(
-			evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings),
-			null,
-		);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), null);
 	});
 
 	test('returns null for identifier without bindings', () => {
