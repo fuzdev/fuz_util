@@ -21,19 +21,19 @@ import {
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 'hello'} as Expression), 'hello');
+		assert.equal(evaluate_static_expr({type: 'Literal', value: 'hello'}), 'hello');
 	});
 
 	test('returns null for number literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 42} as Expression), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: 42}), null);
 	});
 
 	test('returns null for boolean literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: true} as Expression), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: true}), null);
 	});
 
 	test('returns null for null literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: null} as Expression), null);
+		assert.equal(evaluate_static_expr({type: 'Literal', value: null}), null);
 	});
 
 	test('returns cooked value for template literal without interpolation', () => {
@@ -42,7 +42,7 @@ describe('evaluate_static_expr', () => {
 				type: 'TemplateLiteral',
 				expressions: [],
 				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'hello', raw: 'hello'}}],
-			} as Expression),
+			}),
 			'hello',
 		);
 	});
@@ -56,7 +56,7 @@ describe('evaluate_static_expr', () => {
 					{type: 'TemplateElement', tail: false, value: {cooked: 'a', raw: 'a'}},
 					{type: 'TemplateElement', tail: true, value: {cooked: 'b', raw: 'b'}},
 				],
-			} as Expression),
+			}),
 			null,
 		);
 	});
@@ -68,7 +68,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Literal', value: 'hello '},
 				right: {type: 'Literal', value: 'world'},
-			} as Expression),
+			}),
 			'hello world',
 		);
 	});
@@ -85,7 +85,7 @@ describe('evaluate_static_expr', () => {
 					right: {type: 'Literal', value: 'b'},
 				},
 				right: {type: 'Literal', value: 'c'},
-			} as Expression),
+			}),
 			'abc',
 		);
 	});
@@ -97,7 +97,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Identifier', name: 'x'},
 				right: {type: 'Literal', value: 'b'},
-			} as Expression),
+			}),
 			null,
 		);
 	});
@@ -109,7 +109,7 @@ describe('evaluate_static_expr', () => {
 				operator: '-',
 				left: {type: 'Literal', value: 'a'},
 				right: {type: 'Literal', value: 'b'},
-			} as Expression),
+			}),
 			null,
 		);
 	});
@@ -121,7 +121,7 @@ describe('evaluate_static_expr', () => {
 				operator: '+',
 				left: {type: 'Literal', value: 'a'},
 				right: {type: 'Identifier', name: 'x'},
-			} as Expression),
+			}),
 			null,
 		);
 	});
@@ -137,13 +137,13 @@ describe('evaluate_static_expr', () => {
 					expressions: [],
 					quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'world', raw: 'world'}}],
 				},
-			} as Expression),
+			}),
 			'hello world',
 		);
 	});
 
 	test('returns value for empty string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: ''} as Expression), '');
+		assert.equal(evaluate_static_expr({type: 'Literal', value: ''}), '');
 	});
 
 	test('returns null for call expression', () => {
@@ -157,7 +157,7 @@ describe('evaluate_static_expr', () => {
 	});
 
 	test('returns null for identifier', () => {
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression), null);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}), null);
 	});
 
 	test('falls back to raw when cooked is null', () => {
@@ -166,7 +166,7 @@ describe('evaluate_static_expr', () => {
 				type: 'TemplateLiteral',
 				expressions: [],
 				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: null, raw: '\\x41'}}],
-			} as Expression),
+			}),
 			'\\x41',
 		);
 	});
@@ -185,22 +185,16 @@ describe('evaluate_static_expr', () => {
 
 	test('resolves identifier from bindings', () => {
 		const bindings = new Map([['x', 'hello']]);
-		assert.equal(
-			evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression, bindings),
-			'hello',
-		);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), 'hello');
 	});
 
 	test('returns null for identifier not in bindings', () => {
 		const bindings = new Map([['y', 'hello']]);
-		assert.equal(
-			evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression, bindings),
-			null,
-		);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), null);
 	});
 
 	test('returns null for identifier without bindings', () => {
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'} as Expression), null);
+		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}), null);
 	});
 
 	test('resolves identifier in binary concat', () => {
@@ -212,7 +206,7 @@ describe('evaluate_static_expr', () => {
 					operator: '+',
 					left: {type: 'Identifier', name: 'x'},
 					right: {type: 'Literal', value: ' world'},
-				} as Expression,
+				},
 				bindings,
 			),
 			'hello world',
@@ -230,7 +224,7 @@ describe('evaluate_static_expr', () => {
 						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
 						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
 					],
-				} as Expression,
+				},
 				bindings,
 			),
 			'hello world!',
@@ -248,7 +242,7 @@ describe('evaluate_static_expr', () => {
 						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
 						{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
 					],
-				} as Expression,
+				},
 				bindings,
 			),
 			null,
@@ -273,7 +267,7 @@ describe('evaluate_static_expr', () => {
 						{type: 'TemplateElement', tail: false, value: {cooked: ' ', raw: ' '}},
 						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
 					],
-				} as Expression,
+				},
 				bindings,
 			),
 			'hello world!',
@@ -289,7 +283,7 @@ describe('evaluate_static_expr', () => {
 					{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
 					{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
 				],
-			} as Expression),
+			}),
 			'hello world',
 		);
 	});

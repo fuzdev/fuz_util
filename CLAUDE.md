@@ -48,7 +48,7 @@ fuz_util is a **foundational utility library**:
 - `iterator.ts` - iterator helpers
 - `bytes.ts` - binary data conversion (`to_bytes`)
 - `hex.ts` - hex encoding (`to_hex`)
-- `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex, via
+- `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex; `Blake3Hash` Zod schema, via
   `@fuzdev/blake3_wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
   for non-security uses)
@@ -101,9 +101,12 @@ See `docs/benchmark.md` for full documentation.
 - `types.ts` - TypeScript utility types (Flavored, Branded, union helpers)
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
   logo, tagline, etc.)
-- `source_json.ts` - `SourceJson`, `ModuleJson`, `DeclarationJson` Zod schemas
-  for `.well-known/src.json` metadata
-- `library_json.ts` - `LibraryJson` combining package.json + source metadata
+- `library_json.ts` - `LibraryJson` combining package.json + source metadata,
+  `library_json_parse`, and `library_json_from_modules` (convenience that builds
+  a `LibraryJson` from a package.json + `svelte-docinfo` `modules`); the
+  `SourceJson` wrapper types `modules` with `svelte-docinfo`'s `ModuleJsonInput`
+  (optional peer dep — module/declaration schemas are owned by `svelte-docinfo`,
+  not duplicated here)
 - `result.ts` - Result type pattern
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion)
 - `args.ts` - CLI argument parsing with Zod validation
@@ -204,7 +207,8 @@ Note: Browser timing is coarsened due to Spectre/Meltdown mitigations.
 - Svelte-specific UI code (use fuz_ui; preprocessor helpers are here)
 - Build tooling (use gro)
 - CSS utilities (use fuz_css)
-- UI helper functions for source_json (use fuz_ui's helpers)
+- Source/declaration analysis types and schemas (use `svelte-docinfo`)
+- UI helper functions for library metadata (use fuz_ui's helpers)
 
 ## Project standards
 

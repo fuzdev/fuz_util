@@ -724,7 +724,7 @@ describe('argv_parse', () => {
 		test('constructor as flag name', () => {
 			const result = argv_parse(['--constructor', 'test']);
 			assert.deepEqual(result._, []);
-			assert.strictEqual(result['constructor'] as unknown, 'test');
+			assert.strictEqual(result['constructor'], 'test' as any);
 		});
 
 		test('no prototype pollution', () => {

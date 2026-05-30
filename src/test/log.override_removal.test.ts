@@ -167,7 +167,7 @@ describe('Logger > Override Removal', () => {
 		assert.ok(ctx.logged_args);
 
 		// Clear override
-		ctx.logged_args = undefined as any;
+		ctx.logged_args = undefined;
 		child.clear_level_override();
 
 		// Info should now be blocked (inherits warn from parent)

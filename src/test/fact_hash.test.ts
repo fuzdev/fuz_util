@@ -221,10 +221,7 @@ describe('fact_hash_extract_refs', () => {
 	test('multiple refs in one string preserve their in-string order', () => {
 		// `String.match` returns matches left-to-right; pin that the dedup Set
 		// preserves that order for a single scanned string.
-		assert.deepStrictEqual(fact_hash_extract_refs(`${HASH_B} then ${HASH_A}` as Json), [
-			HASH_B,
-			HASH_A,
-		]);
+		assert.deepStrictEqual(fact_hash_extract_refs(`${HASH_B} then ${HASH_A}`), [HASH_B, HASH_A]);
 	});
 
 	test('rejects an over-long hex run instead of truncating to a wrong hash', () => {

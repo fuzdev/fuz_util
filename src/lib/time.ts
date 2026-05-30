@@ -214,7 +214,7 @@ export interface TimeResult {
  * @example
  * ```ts
  * const {result, timing} = await time_async(async () => {
- *   await fetch('https://api.example.com/data');
+ *   await fetch('https://api.fuz.dev/data');
  *   return 42;
  * });
  * console.log(`Result: ${result}, took ${time_format_adaptive(timing.elapsed_ns)}`);

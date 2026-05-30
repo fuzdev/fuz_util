@@ -52,6 +52,7 @@
     "@types/node": "^24",
     "esm-env": "^1.2.2",
     "svelte": "^5",
+    "svelte-docinfo": "^0.1.0",
     "zod": "^4.0.14"
   },
   "peerDependenciesMeta": {
@@ -70,6 +71,9 @@
     "svelte": {
       "optional": true
     },
+    "svelte-docinfo": {
+      "optional": true
+    },
     "zod": {
       "optional": true
     }
@@ -78,18 +82,18 @@
     "@changesets/changelog-git": "^0.2.1",
     "@fuzdev/blake3_wasm": "^0.1.1",
     "@fuzdev/fuz_code": "^0.45.1",
-    "@fuzdev/fuz_css": "^0.58.0",
-    "@fuzdev/fuz_ui": "^0.192.0",
+    "@fuzdev/fuz_css": "^0.60.0",
+    "@fuzdev/fuz_ui": "^0.195.1",
     "@fuzdev/gro": "^0.199.1",
     "@jridgewell/trace-mapping": "^0.3.31",
     "@ryanatkn/eslint-config": "^0.12.1",
     "@sveltejs/acorn-typescript": "^1.0.9",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.58.0",
+    "@sveltejs/kit": "^2.61.1",
     "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/estree": "^1.0.8",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.12.4",
     "@webref/css": "^8.2.0",
     "dequal": "^2.0.3",
     "eslint": "^9.39.1",
@@ -99,9 +103,10 @@
     "magic-string": "^0.30.21",
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",
-    "svelte": "^5.55.5",
-    "svelte-check": "^4.4.6",
-    "svelte2tsx": "^0.7.47",
+    "svelte": "^5.56.0",
+    "svelte-check": "^4.4.8",
+    "svelte-docinfo": "^0.1.0",
+    "svelte2tsx": "^0.7.55",
     "tslib": "^2.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1",
