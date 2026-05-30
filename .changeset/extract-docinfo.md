@@ -1,8 +1,8 @@
 ---
-'@fuzdev/fuz_util': major
+'@fuzdev/fuz_util': minor
 ---
 
-Extract source/declaration analysis schemas to `svelte-docinfo`
+feat: extract source/declaration analysis schemas to `svelte-docinfo`
 
 - Remove `source_json.ts` — `DeclarationKind`, `GenericParamInfo`, `ParameterInfo`, `ComponentPropInfo`, `DeclarationJson`, `ModuleJson`, `SourceJson` schemas and the `declaration_get_display_name` / `declaration_generate_import` helpers now live in `svelte-docinfo`.
 - Move the `SourceJson` wrapper (`{name, version, modules}`) to `library_json.ts`, typing `modules` with `svelte-docinfo`'s `ModuleJsonInput`.
