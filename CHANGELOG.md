@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.63.0
+
+### Minor Changes
+
+- deps: upgrade `svelte-docinfo` ([8f9dc7a](https://github.com/fuzdev/fuz_util/commit/8f9dc7a))
+
 ## 0.62.0
 
 ### Minor Changes
