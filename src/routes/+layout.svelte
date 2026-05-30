@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '$routes/fuz.css';
+	import 'virtual:fuz.css';
 	import '@fuzdev/fuz_code/theme.css';
 	import '$routes/style.css';
 

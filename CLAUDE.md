@@ -19,7 +19,6 @@ this repo — make the edits and stop, the user commits.
 gro check     # typecheck, test, lint, format check (run before committing)
 gro typecheck # typecheck only (faster iteration)
 gro test      # run tests with vitest
-gro gen       # regenerate .gen files
 gro build     # build the package for production
 ```
 
