@@ -27,7 +27,7 @@ const BASELINE_VERSION = 3;
  * Persisted on every entry so comparison can detect methodology drift.
  * Internal — consumers access the inferred TS type via
  * `BenchmarkBaselineEntry['budget']` or `BenchmarkBudget` from
- * `benchmark_types.js`.
+ * `benchmark_types.ts`.
  */
 const BenchmarkBaselineBudget = z.object({
 	duration_ms: z.number(),
