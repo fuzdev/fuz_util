@@ -52,7 +52,7 @@
     "@types/node": "^24",
     "esm-env": "^1.2.2",
     "svelte": "^5",
-    "svelte-docinfo": "^0.2.0",
+    "svelte-docinfo": ">=0.2.0",
     "zod": "^4.0.14"
   },
   "peerDependenciesMeta": {
