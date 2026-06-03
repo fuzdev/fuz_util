@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.63.1
+
+### Patch Changes
+
+- feat: add `put_stream` to `FactStore` ([78120df](https://github.com/fuzdev/fuz_util/commit/78120df))
+
 ## 0.63.0
 
 ### Minor Changes
