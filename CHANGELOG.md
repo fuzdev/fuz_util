@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.63.2
+
+### Patch Changes
+
+- deps: >= for svelte-docinfo ([073060b](https://github.com/fuzdev/fuz_util/commit/073060b))
+
 ## 0.63.1
 
 ### Patch Changes
