@@ -31,6 +31,21 @@ export interface FactPutOptions {
 }
 
 /**
+ * Outcome of a streaming `put_stream` — the finalized digests + byte count.
+ *
+ * `hash` is the `blake3:`-prefixed fact hash (content address); `sha256` is the
+ * bare-hex SHA-256 computed in the same pass, so a consumer can persist it
+ * alongside the fact and let clients verify downloads with the ubiquitous
+ * `sha256sum` (there is no universal shell BLAKE3 tool); `size` is the streamed
+ * byte count. Mirrors the Rust `PutStreamOutcome`.
+ */
+export interface PutStreamOutcome {
+	hash: FactHash;
+	sha256: string;
+	size: number;
+}
+
+/**
  * Per-fact metadata returned by `FactStore.get_meta`.
  *
  * `external` is `true` when the fact is stored as a URL reference rather
@@ -65,6 +80,26 @@ export interface FactStore {
 	 * twice is a no-op that returns the same hash.
 	 */
 	put: (bytes: Uint8Array, options?: FactPutOptions) => Promise<FactHash>;
+
+	/**
+	 * Stream bytes into the store with bounded memory, returning the finalized
+	 * digests + size. Hashes BLAKE3 (content address) **and** SHA-256 in a single
+	 * pass over the stream, buffers in memory only up to the embedded threshold,
+	 * then spills to the disk CAS — so a multi-GB upload never buffers in RAM.
+	 *
+	 * Enforces `max_bytes` mid-stream: a body whose running byte count passes the
+	 * cap throws `PayloadTooLargeError` (the backstop for a chunked or
+	 * mis-declared `Content-Length`). A disk-full (`ENOSPC`) mid-stream throws
+	 * `StorageFullError`. Idempotent like `put` — identical bytes land on the same
+	 * content-addressed path and the underlying insert is `ON CONFLICT DO NOTHING`.
+	 *
+	 * The streaming twin of `put`; mirrors the Rust `FactStore::put_stream`.
+	 */
+	put_stream: (
+		stream: ReadableStream<Uint8Array>,
+		max_bytes: number,
+		options?: FactPutOptions,
+	) => Promise<PutStreamOutcome>;
 
 	/**
 	 * Store a reference to external content (large files). Hashes the content
