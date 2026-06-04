@@ -7,7 +7,7 @@
 import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
 
 import {ensure_end, strip_end, strip_start} from './string.js';
-import type {PkgJson} from './pkg_json.js';
+import type {PackageJson} from './package_json.js';
 import type {Url} from './url.js';
 
 /**
@@ -45,14 +45,19 @@ export interface LibraryJson {
 	changelog_url: Url | null;
 	/** True if has exports and version is not `0.0.1`. */
 	published: boolean;
-	pkg_json: PkgJson;
+	/**
+	 * The package.json. Client docs feed the curated `virtual:pkg.json` (a
+	 * `PkgJson` subset) here; tooling like fuz_gitops feeds the full file and
+	 * reads `dependencies`/`devDependencies`, so the type stays `PackageJson`.
+	 */
+	pkg_json: PackageJson;
 	source_json: SourceJson;
 }
 
 /**
  * Creates a `LibraryJson` with computed properties from package.json and source metadata.
  */
-export const library_json_parse = (pkg_json: PkgJson, source_json: SourceJson): LibraryJson => {
+export const library_json_parse = (pkg_json: PackageJson, source_json: SourceJson): LibraryJson => {
 	const {name} = pkg_json;
 
 	// TODO hacky
@@ -117,7 +122,7 @@ export const library_json_parse = (pkg_json: PkgJson, source_json: SourceJson): 
  * `analyzeFromFiles`).
  */
 export const library_json_from_modules = (
-	pkg_json: PkgJson,
+	pkg_json: PackageJson,
 	modules: SourceJson['modules'],
 ): LibraryJson => {
 	if (pkg_json.version === undefined) {
