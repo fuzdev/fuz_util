@@ -7,7 +7,7 @@
 import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
 
 import {ensure_end, strip_end, strip_start} from './string.js';
-import type {PackageJson} from './package_json.js';
+import type {PkgJson} from './pkg_json.js';
 import type {Url} from './url.js';
 
 /**
@@ -45,18 +45,15 @@ export interface LibraryJson {
 	changelog_url: Url | null;
 	/** True if has exports and version is not `0.0.1`. */
 	published: boolean;
-	package_json: PackageJson;
+	package_json: PkgJson;
 	source_json: SourceJson;
 }
 
 /**
  * Creates a `LibraryJson` with computed properties from package.json and source metadata.
  */
-export const library_json_parse = (
-	package_json: PackageJson,
-	source_json: SourceJson,
-): LibraryJson => {
-	const {name} = package_json;
+export const library_json_parse = (pkg_json: PkgJson, source_json: SourceJson): LibraryJson => {
+	const {name} = pkg_json;
 
 	// TODO hacky
 	const parse_repo = (r: string | null | undefined) => {
@@ -65,23 +62,22 @@ export const library_json_parse = (
 	};
 
 	const repo_url = parse_repo(
-		package_json.repository
-			? typeof package_json.repository === 'string'
-				? package_json.repository
-				: package_json.repository.url
+		pkg_json.repository
+			? typeof pkg_json.repository === 'string'
+				? pkg_json.repository
+				: pkg_json.repository.url
 			: null,
 	);
 	if (!repo_url) {
 		throw Error('failed to parse library_json - `repo_url` is required in package_json');
 	}
 
-	const homepage_url = package_json.homepage ?? null;
+	const homepage_url = pkg_json.homepage ?? null;
 
-	const published =
-		!package_json.private && !!package_json.exports && package_json.version !== '0.0.1';
+	const published = !pkg_json.private && !!pkg_json.exports && pkg_json.version !== '0.0.1';
 
 	// TODO generic registries
-	const npm_url = published ? 'https://www.npmjs.com/package/' + package_json.name : null;
+	const npm_url = published ? 'https://www.npmjs.com/package/' + pkg_json.name : null;
 
 	const changelog_url = published && repo_url ? repo_url + '/blob/main/CHANGELOG.md' : null;
 
@@ -91,10 +87,10 @@ export const library_json_parse = (
 
 	const logo_url = homepage_url
 		? ensure_end(homepage_url, '/') +
-			(package_json.logo ? strip_start(package_json.logo, '/') : 'favicon.png')
+			(pkg_json.logo ? strip_start(pkg_json.logo, '/') : 'favicon.png')
 		: null;
 
-	const logo_alt = package_json.logo_alt ?? `logo for ${repo_name}`;
+	const logo_alt = pkg_json.logo_alt ?? `logo for ${repo_name}`;
 
 	return {
 		name,
@@ -107,7 +103,7 @@ export const library_json_parse = (
 		npm_url,
 		changelog_url,
 		published,
-		package_json,
+		package_json: pkg_json,
 		source_json,
 	};
 };
@@ -121,17 +117,15 @@ export const library_json_parse = (
  * `analyzeFromFiles`).
  */
 export const library_json_from_modules = (
-	package_json: PackageJson,
+	pkg_json: PkgJson,
 	modules: SourceJson['modules'],
 ): LibraryJson => {
-	if (package_json.version === undefined) {
-		throw Error(
-			`failed to build library_json - package.json for "${package_json.name}" has no version`,
-		);
+	if (pkg_json.version === undefined) {
+		throw Error(`failed to build library_json - package.json for "${pkg_json.name}" has no version`);
 	}
-	return library_json_parse(package_json, {
-		name: package_json.name,
-		version: package_json.version,
+	return library_json_parse(pkg_json, {
+		name: pkg_json.name,
+		version: pkg_json.version,
 		modules,
 	});
 };
