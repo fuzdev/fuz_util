@@ -45,6 +45,11 @@ export interface LibraryJson {
 	changelog_url: Url | null;
 	/** True if has exports and version is not `0.0.1`. */
 	published: boolean;
+	/**
+	 * The package.json. Client docs feed the curated `virtual:pkg.json` (a
+	 * `PkgJson` subset) here; tooling like fuz_gitops feeds the full file and
+	 * reads `dependencies`/`devDependencies`, so the type stays `PackageJson`.
+	 */
 	package_json: PackageJson;
 	source_json: SourceJson;
 }
