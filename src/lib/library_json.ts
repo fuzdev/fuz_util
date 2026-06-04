@@ -45,7 +45,7 @@ export interface LibraryJson {
 	changelog_url: Url | null;
 	/** True if has exports and version is not `0.0.1`. */
 	published: boolean;
-	package_json: PkgJson;
+	pkg_json: PkgJson;
 	source_json: SourceJson;
 }
 
@@ -103,7 +103,7 @@ export const library_json_parse = (pkg_json: PkgJson, source_json: SourceJson): 
 		npm_url,
 		changelog_url,
 		published,
-		package_json: pkg_json,
+		pkg_json,
 		source_json,
 	};
 };
@@ -121,7 +121,9 @@ export const library_json_from_modules = (
 	modules: SourceJson['modules'],
 ): LibraryJson => {
 	if (pkg_json.version === undefined) {
-		throw Error(`failed to build library_json - package.json for "${pkg_json.name}" has no version`);
+		throw Error(
+			`failed to build library_json - package.json for "${pkg_json.name}" has no version`,
+		);
 	}
 	return library_json_parse(pkg_json, {
 		name: pkg_json.name,
