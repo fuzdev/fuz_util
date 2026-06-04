@@ -2,13 +2,13 @@
  * The curated, publish-safe subset of `package.json`.
  *
  * `PkgJson` is the shape served by the `virtual:pkg.json` Vite module (see
- * fuz_ui's `vite_plugin_fuz_pkg`) and stored on `LibraryJson.package_json`. It
+ * fuz_ui's `vite_plugin_fuz_pkg`) and fed to `LibraryJson.pkg_json`. It
  * exists to keep the rest of `package.json` — `scripts`, `dependencies`,
  * `devDependencies`, `engines`, `files`, internal config — out of client
  * bundles and rendered output. The plugin strips to `pkg_json_keys` at build
  * time; `PkgJson` is `Pick`ed from the same list, so the runtime strip and the
  * type can't drift, and the type is strict (accessing a stripped field like
- * `package_json.scripts` is a compile error).
+ * `pkg_json.scripts` is a compile error).
  *
  * @module
  */
