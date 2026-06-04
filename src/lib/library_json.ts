@@ -57,7 +57,10 @@ export interface LibraryJson {
 /**
  * Creates a `LibraryJson` with computed properties from package.json and source metadata.
  */
-export const library_json_parse = (package_json: PackageJson, source_json: SourceJson): LibraryJson => {
+export const library_json_parse = (
+	package_json: PackageJson,
+	source_json: SourceJson,
+): LibraryJson => {
 	const {name} = package_json;
 
 	// TODO hacky
@@ -79,7 +82,8 @@ export const library_json_parse = (package_json: PackageJson, source_json: Sourc
 
 	const homepage_url = package_json.homepage ?? null;
 
-	const published = !package_json.private && !!package_json.exports && package_json.version !== '0.0.1';
+	const published =
+		!package_json.private && !!package_json.exports && package_json.version !== '0.0.1';
 
 	// TODO generic registries
 	const npm_url = published ? 'https://www.npmjs.com/package/' + package_json.name : null;
