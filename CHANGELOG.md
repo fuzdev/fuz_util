@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.64.0
+
+### Minor Changes
+
+- feat: add `PkgJson`, the curated publish-safe subset of `PackageJson`, plus `pkg_json_keys` ([#79](https://github.com/fuzdev/fuz_util/pull/79))
+- fix: make `esm-env` a required peer instead of optional ([d04f6f3](https://github.com/fuzdev/fuz_util/commit/d04f6f3))
+
 ## 0.63.2
 
 ### Patch Changes
