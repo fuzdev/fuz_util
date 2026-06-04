@@ -2,7 +2,7 @@ import {test, assert} from 'vitest';
 
 import {pkg_json_keys} from '$lib/pkg_json.ts';
 
-// `pkg_json_keys` is the allowlist `vite_plugin_fuz_pkg` strips package.json down
+// `pkg_json_keys` is the allowlist `vite_plugin_pkg_json` strips package.json down
 // to. These fields must NEVER appear in it — they'd ship to the client bundle.
 const FOOTGUN_KEYS = [
 	'scripts',
