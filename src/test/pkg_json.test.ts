@@ -76,4 +76,20 @@ describe('pkg_json_from_package_json', () => {
 		});
 		assert.deepEqual(pkg_json_from_package_json(once as any), once);
 	});
+
+	test('a custom keys list overrides the default allowlist', () => {
+		const source = {name: 'p', version: '1.0.0', keywords: ['a'], glyph: '🦊'};
+
+		// default keys: keywords is not curated, so it's dropped
+		assert.ok(!('keywords' in pkg_json_from_package_json(source)));
+
+		// widened keys: keywords survives, default fields still kept
+		const widened = pkg_json_from_package_json(source, [...pkg_json_keys, 'keywords']);
+		assert.deepEqual((widened as any).keywords, ['a']);
+		assert.equal(widened.glyph, '🦊');
+
+		// narrowed keys: only the listed fields survive
+		const narrowed = pkg_json_from_package_json(source, ['name', 'version']);
+		assert.deepEqual(Object.keys(narrowed), ['name', 'version']);
+	});
 });

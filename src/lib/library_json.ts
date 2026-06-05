@@ -6,7 +6,7 @@
 
 import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
 
-import {pkg_json_from_package_json, type PkgJson} from './pkg_json.js';
+import {pkg_json_from_package_json, pkg_json_keys, type PkgJson} from './pkg_json.js';
 import type {PackageJson} from './package_json.js';
 
 /**
@@ -40,11 +40,17 @@ export interface LibraryJson {
  * `pkg_json_from_package_json`, so a full `package.json` (the common case from
  * gro's loader or a JSON import) is accepted and stripped, while an
  * already-curated `PkgJson` passes through unchanged.
+ *
+ * `keys` overrides the curated field set, and must match the `keys` passed to
+ * the build-time strip (fuz_ui's `vite_plugin_pkg_json`): the re-strip here
+ * drops any field not in `keys`, so a wider build-time list with the default
+ * here would silently discard the extras. Pass the same shared list to both.
  */
 export const library_json_from_modules = (
 	package_json: PackageJson,
 	modules: SourceJson['modules'],
+	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys,
 ): LibraryJson => ({
-	pkg_json: pkg_json_from_package_json(package_json),
+	pkg_json: pkg_json_from_package_json(package_json, keys),
 	source_json: {modules},
 });

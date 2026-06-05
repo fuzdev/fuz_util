@@ -52,10 +52,20 @@ export type PkgJson = Pick<PackageJson, PkgJsonKey>;
  * curation the type promises actually holds at runtime — otherwise the full
  * manifest rides along, typed as the subset (see fuz_ui's `vite_plugin_pkg_json`
  * for the parallel build-time strip).
+ *
+ * `keys` overrides the field set to keep — pass a wider list (typically
+ * `` [...pkg_json_keys, 'keywords'] ``) to expose extra publish-safe fields.
+ * The result is then a superset of `PkgJson`, so the extra fields stay
+ * statically untyped; the same `keys` must reach `library_json_from_modules`
+ * (and the consumer's `virtual:pkg.json` ambient type) for them to survive end
+ * to end.
  */
-export const pkg_json_from_package_json = (source: PackageJson): PkgJson => {
-	const result: {[key: string]: unknown} = {};
-	for (const key of pkg_json_keys) {
+export const pkg_json_from_package_json = (
+	source: PackageJson,
+	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys,
+): PkgJson => {
+	const result: Record<string, unknown> = {};
+	for (const key of keys) {
 		if (source[key] !== undefined) result[key] = source[key];
 	}
 	return result as PkgJson;
