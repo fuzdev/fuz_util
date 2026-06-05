@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.65.0
+
+### Minor Changes
+
+- feat: rework `LibraryJson` and `SourceJson` for `PkgJson` ([289360c](https://github.com/fuzdev/fuz_util/commit/289360c))
+
+### Patch Changes
+
+- feat: add `package_helpers.ts` ([289360c](https://github.com/fuzdev/fuz_util/commit/289360c))
+
 ## 0.64.0
 
 ### Minor Changes
