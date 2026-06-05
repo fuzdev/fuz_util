@@ -101,12 +101,19 @@ See `docs/benchmark.md` for full documentation.
 - `types.ts` - TypeScript utility types (Flavored, Branded, union helpers)
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
   logo, tagline, etc.)
-- `library_json.ts` - `LibraryJson` combining package.json + source metadata,
-  `library_json_parse`, and `library_json_from_modules` (convenience that builds
-  a `LibraryJson` from a package.json + `svelte-docinfo` `modules`); the
-  `SourceJson` wrapper types `modules` with `svelte-docinfo`'s `ModuleJsonInput`
-  (optional peer dep — module/declaration schemas are owned by `svelte-docinfo`,
-  not duplicated here)
+- `pkg_json.ts` - `PkgJson`, the curated publish-safe subset of `PackageJson`
+  (`Pick`ed from `pkg_json_keys`), plus `pkg_json_from_package_json` (the runtime
+  strip keyed off the same `pkg_json_keys`, so the type and the strip can't drift)
+- `library_json.ts` - `LibraryJson`, the raw `{pkg_json, source_json}` pair (all
+  derived values are computed by the consumer, e.g. fuz_ui's `Library`, not stored
+  here), and `library_json_from_modules` (convenience that builds a `LibraryJson`
+  from a package.json + `svelte-docinfo` `modules`); the `SourceJson` wrapper types
+  `modules` with `svelte-docinfo`'s `ModuleJsonInput` (optional peer dep —
+  module/declaration schemas are owned by `svelte-docinfo`, not duplicated here)
+- `package_helpers.ts` - framework-free package/repo derivation helpers over
+  `PackageJson`: `repo_url_parse`, `repo_name_parse`, `repo_url_github_owner`,
+  `url_github_file`, `url_npm_package`, `url_logo`, `package_is_published`
+  (consumed by fuz_ui's `Library` and by build-time tooling)
 - `result.ts` - Result type pattern
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion)
 - `args.ts` - CLI argument parsing with Zod validation
@@ -208,7 +215,9 @@ Note: Browser timing is coarsened due to Spectre/Meltdown mitigations.
 - Build tooling (use gro)
 - CSS utilities (use fuz_css)
 - Source/declaration analysis types and schemas (use `svelte-docinfo`)
-- UI helper functions for library metadata (use fuz_ui's helpers)
+- Runtime/DOM-bound UI helpers (e.g. SvelteKit `$app/state` URL helpers live in
+  fuz_ui); the framework-free package/repo derivation helpers are here in
+  `package_helpers.ts`
 
 ## Project standards
 

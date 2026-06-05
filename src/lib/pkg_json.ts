@@ -2,7 +2,7 @@
  * The curated, publish-safe subset of `package.json`.
  *
  * `PkgJson` is the shape served by the `virtual:pkg.json` Vite module (see
- * fuz_ui's `vite_plugin_pkg_json`) and fed to `LibraryJson.package_json`. It
+ * fuz_ui's `vite_plugin_pkg_json`) and fed to `LibraryJson.pkg_json`. It
  * exists to keep the rest of `package.json` — `scripts`, `dependencies`,
  * `devDependencies`, `engines`, `files`, internal config — out of client
  * bundles and rendered output. The plugin strips to `pkg_json_keys` at build
@@ -18,8 +18,8 @@ import type {PackageJson} from './package_json.js';
 /**
  * The keys kept when stripping `package.json` down to a `PkgJson` — package
  * identity plus the Fuz extension fields (`tagline`, `glyph`, `logo`,
- * `logo_alt`). `exports` and `private` are kept because `library_json_parse`
- * derives `published` from them; everything omitted stays out of the client.
+ * `logo_alt`). `exports` and `private` are kept because a consumer derives a
+ * library's `published` status from them; everything omitted stays out of the client.
  */
 export const pkg_json_keys = [
 	'name',
@@ -41,3 +41,22 @@ export type PkgJsonKey = (typeof pkg_json_keys)[number];
 
 /** Publish-safe subset of `PackageJson`. */
 export type PkgJson = Pick<PackageJson, PkgJsonKey>;
+
+/**
+ * Picks the curated, publish-safe subset from a full `package.json`-shaped
+ * object — the runtime counterpart of the `PkgJson` type, keyed off the same
+ * `pkg_json_keys` so the strip and the type can't drift. Idempotent: an
+ * already-curated `PkgJson` passes through unchanged.
+ *
+ * Use it at every boundary that feeds `package.json` into a `LibraryJson` so the
+ * curation the type promises actually holds at runtime — otherwise the full
+ * manifest rides along, typed as the subset (see fuz_ui's `vite_plugin_pkg_json`
+ * for the parallel build-time strip).
+ */
+export const pkg_json_from_package_json = (source: PackageJson): PkgJson => {
+	const result: {[key: string]: unknown} = {};
+	for (const key of pkg_json_keys) {
+		if (source[key] !== undefined) result[key] = source[key];
+	}
+	return result as PkgJson;
+};
