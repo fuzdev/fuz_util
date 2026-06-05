@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.65.1
+
+### Patch Changes
+
+- feat: add configurable optional `keys` to `library_json_from_modules` and `pkg_json_from_package_json` ([5c86f08](https://github.com/fuzdev/fuz_util/commit/5c86f08))
+
 ## 0.65.0
 
 ### Minor Changes
