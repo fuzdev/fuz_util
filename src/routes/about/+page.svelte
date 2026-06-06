@@ -5,9 +5,11 @@
 	import {FUZ_DEV_URL} from '@fuzdev/fuz_ui/constants.js';
 	import EcosystemLinksPanel from '@fuzdev/fuz_ui/EcosystemLinksPanel.svelte';
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
-	import {library_context} from '@fuzdev/fuz_ui/library.svelte.js';
+	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 
-	const library = library_context.get();
+	import {library_json} from '$routes/library.js';
+
+	const library = library_context.set(new Library(library_json));
 	const site = site_context.get();
 </script>
 
