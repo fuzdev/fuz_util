@@ -78,10 +78,10 @@
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@fuzdev/blake3_wasm": "^0.1.1",
-    "@fuzdev/fuz_code": "^0.45.1",
+    "@fuzdev/fuz_code": "^0.46.0",
     "@fuzdev/fuz_css": "^0.62.0",
     "@fuzdev/fuz_ui": "^0.199.0",
-    "@fuzdev/gro": "^0.203.0",
+    "@fuzdev/gro": "^0.204.0",
     "@ryanatkn/eslint-config": "^0.12.1",
     "@sveltejs/acorn-typescript": "^1.0.9",
     "@sveltejs/adapter-static": "^3.0.10",
