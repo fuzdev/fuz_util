@@ -69,9 +69,7 @@
 	--disabled_opacity: 60%;
 	--distance_md: 800px;
 	--distance_sm: 320px;
-	--duration_1: 0.08s;
 	--duration_2: 0.2s;
-	--duration_3: 0.5s;
 	--fg_05: var(--darken_05);
 	--fg_10: var(--darken_10);
 	--fg_20: var(--darken_20);
@@ -1108,6 +1106,7 @@ These are used as modifiers to buttons.
 .gap_md { gap: var(--space_md); }
 .display\:block { display: block; }
 .display\:flex { display: flex; }
+.flex-wrap\:wrap { flex-wrap: wrap; }
 .flex\:1 { flex: 1; }
 .font-weight\:500 { font-weight: 500; }
 .justify-content\:space-between { justify-content: space-between; }
