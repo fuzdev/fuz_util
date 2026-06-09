@@ -12,10 +12,14 @@ import type {PackageJson} from './package_json.js';
 /**
  * A library's analyzed source: the module metadata produced by `svelte-docinfo`.
  *
- * `modules` uses `svelte-docinfo`'s wire shape (`ModuleJsonInput`), the same
- * shape its Vite plugin's `virtual:svelte-docinfo` and CLI emit. `svelte-docinfo`
- * is an optional peer dependency — install it to type this field, otherwise the
- * reference degrades to `any`.
+ * `modules` is typed as `svelte-docinfo`'s wire shape (`ModuleJsonInput`), the
+ * input side where defaulted arrays and booleans may be absent. Its Vite plugin
+ * (`virtual:svelte-docinfo`) and CLI emit exactly this compacted shape; gro's
+ * loader instead hands back the parsed output-side superset (defaults
+ * materialized), which is structurally assignable and can be re-compacted to the
+ * wire shape with `compactReplacer`. Either way consumers must treat defaulted
+ * fields as optional. `svelte-docinfo` is an optional peer dependency — install
+ * it to type this field, otherwise the reference degrades to `any`.
  */
 export interface SourceJson {
 	modules?: Array<ModuleJsonInput>;
