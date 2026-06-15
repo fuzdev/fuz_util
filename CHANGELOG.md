@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.65.2
+
+### Patch Changes
+
+- add `to_error_message` to `error.ts` ([331b153](https://github.com/fuzdev/fuz_util/commit/331b153))
+
 ## 0.65.1
 
 ### Patch Changes
