@@ -20,3 +20,11 @@ export const unreachable: (value: never, message?: string) => asserts value is n
 ) => {
 	throw new UnreachableError(value, message);
 };
+
+/**
+ * Extract a human-readable message from an unknown thrown value. Returns
+ * `value.message` when `value` is an `Error`, otherwise `fallback`
+ * (defaulting to `String(value)`).
+ */
+export const to_error_message = (value: unknown, fallback?: string): string =>
+	value instanceof Error ? value.message : (fallback ?? String(value));
