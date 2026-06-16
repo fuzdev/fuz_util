@@ -1,6 +1,6 @@
 import {test, assert} from 'vitest';
 
-import {create_counter} from '$lib/counter.ts';
+import {create_counter} from '../lib/counter.ts';
 
 test('basic behavior', () => {
 	const counter = create_counter();

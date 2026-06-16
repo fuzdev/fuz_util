@@ -5,9 +5,10 @@ import {
 } from 'node:child_process';
 import {styleText as st} from 'node:util';
 
-import {Logger} from './log.js';
-import {print_error, print_key_value} from './print.js';
-import {noop} from './function.js';
+import {to_error_message} from './error.ts';
+import {Logger} from './log.ts';
+import {print_error, print_key_value} from './print.ts';
+import {noop} from './function.ts';
 
 const log = new Logger('process');
 
@@ -580,7 +581,7 @@ export const spawn_detached = (
 	} catch (error) {
 		return {
 			kind: 'error',
-			message: error instanceof Error ? error.message : String(error),
+			message: to_error_message(error),
 		};
 	}
 };

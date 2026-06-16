@@ -1,6 +1,6 @@
 import {test, assert} from 'vitest';
 
-import {format_url} from '$lib/url.ts';
+import {format_url} from '../lib/url.ts';
 
 test('format_url', () => {
 	assert.strictEqual(format_url('https://www.fuz.dev/'), 'fuz.dev');

@@ -1,6 +1,6 @@
 import {test, assert} from 'vitest';
 
-import {LruMap} from '$lib/lru_map.ts';
+import {LruMap} from '../lib/lru_map.ts';
 
 test('basic set / get / has / delete / size behave like Map', () => {
 	const lru = new LruMap<string, number>(3);

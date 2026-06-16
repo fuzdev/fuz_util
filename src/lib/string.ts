@@ -1,4 +1,4 @@
-import {count_iterator} from './iterator.js';
+import {count_iterator} from './iterator.ts';
 
 /**
  * Truncates a string to a maximum length, adding a suffix if needed that defaults to `...`.

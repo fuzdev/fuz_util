@@ -3,8 +3,8 @@
 	import Docs from '@fuzdev/fuz_ui/Docs.svelte';
 	import {Library, library_context} from '@fuzdev/fuz_ui/library.svelte.js';
 
-	import {tomes} from '$routes/docs/tomes.js';
-	import {library_json} from '$routes/library.js';
+	import {tomes} from './tomes.ts';
+	import {library_json} from '../library.ts';
 
 	const {
 		children,

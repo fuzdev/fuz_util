@@ -3,7 +3,7 @@ import {mkdir, open, readFile, rm, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 
-import {fs_classify_error, type FsError} from '$lib/fs.ts';
+import {fs_classify_error, type FsError} from '../lib/fs.ts';
 
 const create_temp_dir = async (): Promise<string> => {
 	const dir = join(

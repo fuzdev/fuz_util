@@ -8,7 +8,7 @@
  * @module
  */
 
-import type {ArrayElement} from './types.js';
+import type {ArrayElement} from './types.ts';
 
 /**
  * Generates a random `number` between `min` and `max`.

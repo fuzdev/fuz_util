@@ -8,7 +8,7 @@ import {
 	each_concurrent,
 	map_concurrent,
 	map_concurrent_settled,
-} from '$lib/async.ts';
+} from '../lib/async.ts';
 
 const make_concurrency_tracker = () => {
 	let max = 0;

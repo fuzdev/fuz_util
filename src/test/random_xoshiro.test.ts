@@ -8,7 +8,7 @@ CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
 
 import {test, assert} from 'vitest';
 
-import {create_random_xoshiro} from '$lib/random_xoshiro.ts';
+import {create_random_xoshiro} from '../lib/random_xoshiro.ts';
 
 test('deterministic output with seed 42', () => {
 	const random = create_random_xoshiro(42);

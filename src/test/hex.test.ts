@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {from_hex, to_hex} from '$lib/hex.js';
+import {from_hex, to_hex} from '../lib/hex.ts';
 
 describe('to_hex', () => {
 	test('empty Uint8Array', () => {

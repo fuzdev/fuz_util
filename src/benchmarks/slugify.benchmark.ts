@@ -1,5 +1,5 @@
-import {Benchmark} from '$lib/benchmark.js';
-import {slugify} from '$lib/path.js';
+import {Benchmark} from '../lib/benchmark.ts';
+import {slugify} from '../lib/path.ts';
 
 /* eslint-disable no-console */
 

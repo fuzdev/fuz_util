@@ -115,7 +115,7 @@ See `docs/benchmark.md` for full documentation.
   `url_github_file`, `url_npm_package`, `url_logo`, `package_is_published`
   (consumed by fuz_ui's `Library` and by build-time tooling)
 - `result.ts` - Result type pattern
-- `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion)
+- `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion, `to_error_message` thrown-value → string)
 - `args.ts` - CLI argument parsing with Zod validation
 
 - `types.ts` - `Flavored` (loose nominal typing, no cast needed) and `Branded`

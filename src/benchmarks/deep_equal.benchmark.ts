@@ -1,6 +1,6 @@
-import {Benchmark} from '$lib/benchmark.js';
-import {deep_equal} from '$lib/deep_equal.js';
-import type {BenchmarkGroup} from '$lib/benchmark_types.js';
+import {Benchmark} from '../lib/benchmark.ts';
+import {deep_equal} from '../lib/deep_equal.ts';
+import type {BenchmarkGroup} from '../lib/benchmark_types.ts';
 
 /* eslint-disable no-console, no-new-wrappers */
 

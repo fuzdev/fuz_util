@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {random_boolean, random_float, random_int, random_item, shuffle} from '$lib/random.ts';
+import {random_boolean, random_float, random_int, random_item, shuffle} from '../lib/random.ts';
 
 describe('random_float', () => {
 	test('-5.5 to 7', () => {

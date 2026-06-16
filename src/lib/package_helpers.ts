@@ -20,8 +20,8 @@
  * @module
  */
 
-import {ensure_end, strip_end, strip_start} from './string.js';
-import type {PackageJson} from './package_json.js';
+import {ensure_end, strip_end, strip_start} from './string.ts';
+import type {PackageJson} from './package_json.ts';
 
 /**
  * Build GitHub file URL for a repository.

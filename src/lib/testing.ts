@@ -10,7 +10,7 @@
 
 import {assert, vi} from 'vitest';
 
-import type {Logger} from './log.js';
+import type {Logger} from './log.ts';
 
 /**
  * Narrows a discriminated union by a literal property value, failing the test

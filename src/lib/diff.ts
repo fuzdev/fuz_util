@@ -4,7 +4,7 @@
  * @module
  */
 
-import {string_is_binary} from './string.js';
+import {string_is_binary} from './string.ts';
 
 /** Line diff result */
 export interface DiffLine {

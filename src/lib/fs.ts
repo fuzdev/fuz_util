@@ -2,10 +2,11 @@ import {rm, readdir, access, constants} from 'node:fs/promises';
 import type {RmOptions} from 'node:fs';
 import {join, isAbsolute} from 'node:path';
 
-import {EMPTY_OBJECT} from './object.js';
-import {to_array} from './array.js';
-import {ensure_end} from './string.js';
-import type {FileFilter, ResolvedPath, PathFilter} from './path.js';
+import {to_error_message} from './error.ts';
+import {EMPTY_OBJECT} from './object.ts';
+import {to_array} from './array.ts';
+import {ensure_end} from './string.ts';
+import type {FileFilter, ResolvedPath, PathFilter} from './path.ts';
 
 /**
  * Discriminated filesystem error kinds.
@@ -36,7 +37,7 @@ export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
  * fall through to `io_error`.
  */
 export const fs_classify_error = (error: unknown): FsError => {
-	const message = error instanceof Error ? error.message : String(error);
+	const message = to_error_message(error);
 	if (error && typeof error === 'object' && 'code' in error) {
 		switch ((error as {code: string}).code) {
 			case 'ENOENT':

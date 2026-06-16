@@ -19,7 +19,7 @@ import {
 	stats_ln_gamma,
 	stats_incomplete_beta,
 	stats_t_distribution_p_value,
-} from '$lib/stats.ts';
+} from '../lib/stats.ts';
 
 describe('stats_mean', () => {
 	test('stats_mean', () => {

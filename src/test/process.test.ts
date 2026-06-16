@@ -16,8 +16,8 @@ import {
 	spawn_result_to_message,
 	attach_process_error_handler,
 	type SpawnResult,
-} from '$lib/process.js';
-import {assert_property} from '$lib/testing.js';
+} from '../lib/process.ts';
+import {assert_property} from '../lib/testing.ts';
 
 describe('spawn', () => {
 	test('returns ok for successful command', async () => {

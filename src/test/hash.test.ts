@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {hash_sha1, hash_sha256, hash_sha384, hash_sha512, hash_insecure} from '$lib/hash.js';
+import {hash_sha1, hash_sha256, hash_sha384, hash_sha512, hash_insecure} from '../lib/hash.ts';
 
 // test vectors generated via WebCrypto `crypto.subtle.digest`
 // format: [input, sha1, sha256, sha384, sha512]

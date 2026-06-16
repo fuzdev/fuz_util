@@ -21,9 +21,9 @@
  * @module
  */
 
-import {is_promise, wait} from './async.js';
-import {BenchmarkStats} from './benchmark_stats.js';
-import {timer_default, time_unit_detect_best, time_format} from './time.js';
+import {is_promise, wait} from './async.ts';
+import {BenchmarkStats} from './benchmark_stats.ts';
+import {timer_default, time_unit_detect_best, time_format} from './time.ts';
 import {
 	benchmark_format_table,
 	benchmark_format_table_grouped,
@@ -32,13 +32,13 @@ import {
 	benchmark_format_json,
 	benchmark_format_number,
 	type BenchmarkFormatJsonOptions,
-} from './benchmark_format.js';
+} from './benchmark_format.ts';
 import type {
 	BenchmarkConfig,
 	BenchmarkTask,
 	BenchmarkResult,
 	BenchmarkFormatTableOptions,
-} from './benchmark_types.js';
+} from './benchmark_types.ts';
 
 // Default configuration values
 const DEFAULT_DURATION_MS = 1000;

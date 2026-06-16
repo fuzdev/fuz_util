@@ -9,8 +9,8 @@
  * @module
  */
 
-import {AsyncSemaphore, create_deferred, type Deferred} from './async.js';
-import {topological_sort, type Sortable} from './sort.js';
+import {AsyncSemaphore, create_deferred, type Deferred} from './async.ts';
+import {topological_sort, type Sortable} from './sort.ts';
 
 /**
  * Minimum shape for a DAG node.

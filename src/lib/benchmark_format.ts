@@ -1,7 +1,7 @@
-import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.js';
-import {time_unit_detect_best, time_format, TIME_UNIT_DISPLAY} from './time.js';
-import {string_display_width, pad_width} from './string.js';
-import {format_number} from './maths.js';
+import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.ts';
+import {time_unit_detect_best, time_format, TIME_UNIT_DISPLAY} from './time.ts';
+import {string_display_width, pad_width} from './string.ts';
+import {format_number} from './maths.ts';
 
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.

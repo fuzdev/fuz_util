@@ -10,9 +10,9 @@ import {
 	fact_hash_verify,
 	fact_hash_extract_refs,
 	type FactHash,
-} from '$lib/fact_hash.js';
-import {hash_blake3} from '$lib/hash_blake3.js';
-import type {Json} from '$lib/json.js';
+} from '../lib/fact_hash.ts';
+import {hash_blake3} from '../lib/hash_blake3.ts';
+import type {Json} from '../lib/json.ts';
 
 /** A syntactically valid (if not content-derived) fact hash literal. */
 const HASH_A = (FACT_HASH_PREFIX + 'a'.repeat(64)) as FactHash;

@@ -1,5 +1,5 @@
-import type {BenchmarkStats} from './benchmark_stats.js';
-import type {Timer} from './time.js';
+import type {BenchmarkStats} from './benchmark_stats.ts';
+import type {Timer} from './time.ts';
 
 /**
  * Configuration options for a benchmark suite.

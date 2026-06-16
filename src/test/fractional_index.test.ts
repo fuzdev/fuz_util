@@ -6,7 +6,7 @@ import {
 	FRACTIONAL_INDEX_LENGTH_MAX,
 	fractional_index_between,
 	fractional_indices_between,
-} from '$lib/fractional_index.js';
+} from '../lib/fractional_index.ts';
 
 /** Deterministic "no jitter" source: every sample is 0 → empty jitter suffix. */
 const no_jitter = (): number => 0;

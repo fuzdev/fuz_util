@@ -1,6 +1,6 @@
 import {z} from 'zod';
 
-import {create_counter} from './counter.js';
+import {create_counter} from './counter.ts';
 
 export const create_uuid = (): Uuid => crypto.randomUUID() as Uuid;
 

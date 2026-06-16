@@ -5,9 +5,9 @@
 
 import {describe, test, assert} from 'vitest';
 
-import {create_random_alea} from '$lib/random_alea.ts';
-import {create_random_xoshiro} from '$lib/random_xoshiro.ts';
-import {stats_mean, stats_variance, stats_std_dev} from '$lib/stats.ts';
+import {create_random_alea} from '../lib/random_alea.ts';
+import {create_random_xoshiro} from '../lib/random_xoshiro.ts';
+import {stats_mean, stats_variance, stats_std_dev} from '../lib/stats.ts';
 
 import {
 	type Prng,

@@ -1,7 +1,7 @@
 import {describe, test, assert} from 'vitest';
 import {randomUUID} from 'node:crypto';
 
-import {is_uuid, create_client_id_creator, create_uuid, Uuid, UuidWithDefault} from '$lib/id.ts';
+import {is_uuid, create_client_id_creator, create_uuid, Uuid, UuidWithDefault} from '../lib/id.ts';
 
 describe('is_uuid', () => {
 	test('basic behavior', () => {

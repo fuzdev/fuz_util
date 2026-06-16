@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {clamp, lerp, round, format_number} from '$lib/maths.ts';
+import {clamp, lerp, round, format_number} from '../lib/maths.ts';
 
 describe('clamp', () => {
 	test('clamps a no-op', () => {

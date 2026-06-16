@@ -13,7 +13,7 @@
  * @module
  */
 
-import type {PackageJson} from './package_json.js';
+import type {PackageJson} from './package_json.ts';
 
 /**
  * The keys kept when stripping `package.json` down to a `PkgJson` — package

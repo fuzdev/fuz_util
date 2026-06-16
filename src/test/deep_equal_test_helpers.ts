@@ -1,6 +1,6 @@
 import {test, assert} from 'vitest';
 
-import {deep_equal} from '$lib/deep_equal.ts';
+import {deep_equal} from '../lib/deep_equal.ts';
 
 /**
  * Helper to test equal values with bidirectional assertions.

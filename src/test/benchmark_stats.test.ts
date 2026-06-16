@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {BenchmarkStats, benchmark_stats_compare} from '$lib/benchmark_stats.js';
+import {BenchmarkStats, benchmark_stats_compare} from '../lib/benchmark_stats.ts';
 
 describe('BenchmarkStats', () => {
 	test('basic usage', () => {

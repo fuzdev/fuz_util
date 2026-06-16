@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {Logger} from '$lib/log.ts';
+import {Logger} from '../lib/log.ts';
 import {create_test_context} from './log_test_helpers.ts';
 
 describe('Logger > Root Getter', () => {

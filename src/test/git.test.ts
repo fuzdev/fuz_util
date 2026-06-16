@@ -13,7 +13,7 @@ import {
 	git_workspace_is_clean,
 	git_workspace_is_fully_staged,
 	type GitWorkspaceStatus,
-} from '$lib/git.ts';
+} from '../lib/git.ts';
 
 describe('git_workspace_is_clean', () => {
 	test('returns true when all flags are false', () => {

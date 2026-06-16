@@ -10,7 +10,7 @@ import {
 	is_plain_object,
 	EMPTY_OBJECT,
 	transform_empty_object_to_undefined,
-} from '$lib/object.ts';
+} from '../lib/object.ts';
 
 describe('map_record', () => {
 	test('basic behavior', () => {

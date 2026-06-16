@@ -1,10 +1,10 @@
 import type {SpawnOptions} from 'node:child_process';
 import {z} from 'zod';
 
-import {spawn, spawn_out, spawn_result_to_message} from './process.js';
-import type {Flavored} from './types.js';
-import {to_file_path} from './path.js';
-import {fs_exists} from './fs.js';
+import {spawn, spawn_out, spawn_result_to_message} from './process.ts';
+import type {Flavored} from './types.ts';
+import {to_file_path} from './path.ts';
+import {fs_exists} from './fs.ts';
 
 /**
  * Basic git repository info.
