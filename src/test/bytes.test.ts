@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {format_bytes, to_bytes} from '../lib/bytes.ts';
+import {format_bytes, to_bytes} from '$lib/bytes.ts';
 
 describe('to_bytes', () => {
 	describe('string input', () => {

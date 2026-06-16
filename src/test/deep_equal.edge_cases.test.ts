@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {deep_equal} from '../lib/deep_equal.ts';
+import {deep_equal} from '$lib/deep_equal.ts';
 import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.ts';
 
 /* eslint-disable no-new-wrappers */

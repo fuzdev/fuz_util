@@ -1,6 +1,6 @@
 import {test, assert, describe} from 'vitest';
 
-import {pkg_json_keys, pkg_json_from_package_json} from '../lib/pkg_json.ts';
+import {pkg_json_keys, pkg_json_from_package_json} from '$lib/pkg_json.ts';
 
 // `pkg_json_keys` is the allowlist `vite_plugin_pkg_json` strips package.json down
 // to. These fields must NEVER appear in it — they'd ship to the client bundle.

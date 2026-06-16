@@ -3,7 +3,7 @@ import {mkdir, writeFile, readdir, rm, stat, symlink} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 
-import {fs_exists, fs_empty_dir, fs_search} from '../lib/fs.ts';
+import {fs_exists, fs_empty_dir, fs_search} from '$lib/fs.ts';
 
 const create_temp_dir = async (): Promise<string> => {
 	const dir = join(

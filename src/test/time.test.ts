@@ -1,7 +1,7 @@
 import {test, assert} from 'vitest';
 
-import {is_promise, wait} from '../lib/async.ts';
-import {benchmark_warmup} from '../lib/benchmark.ts';
+import {is_promise, wait} from '$lib/async.ts';
+import {benchmark_warmup} from '$lib/benchmark.ts';
 import {
 	timer_node,
 	timer_browser,
@@ -13,7 +13,7 @@ import {
 	time_format,
 	time_unit_detect_best,
 	type Timer,
-} from '../lib/time.ts';
+} from '$lib/time.ts';
 
 test('is_promise: detects promises', () => {
 	// True for promises

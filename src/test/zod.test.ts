@@ -22,7 +22,7 @@ import {
 	zod_format_value,
 	zod_to_schema_properties,
 	zod_to_schema_names_with_aliases,
-} from '../lib/zod.ts';
+} from '$lib/zod.ts';
 
 // -- zod_to_subschema --
 

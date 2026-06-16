@@ -1,7 +1,7 @@
 import {test, assert, describe} from 'vitest';
 
-import {json_type_of, json_embed, json_stringify_deterministic} from '../lib/json.ts';
-import {noop} from '../lib/function.ts';
+import {json_type_of, json_embed, json_stringify_deterministic} from '$lib/json.ts';
+import {noop} from '$lib/function.ts';
 
 describe('json_type_of', () => {
 	test('returns correct type for strings', () => {

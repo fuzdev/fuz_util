@@ -1,6 +1,6 @@
 import {test, assert} from 'vitest';
 
-import {sort_map} from '../lib/map.ts';
+import {sort_map} from '$lib/map.ts';
 
 test('basic behavior', () => {
 	assert.deepEqual(

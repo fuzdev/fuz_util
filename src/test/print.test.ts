@@ -12,7 +12,7 @@ import {
 	print_value,
 	print_error,
 	print_timing,
-} from '../lib/print.ts';
+} from '$lib/print.ts';
 
 let original_st: typeof st;
 

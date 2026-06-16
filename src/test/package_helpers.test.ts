@@ -8,7 +8,7 @@ import {
 	package_is_published,
 	repo_name_parse,
 	repo_url_parse,
-} from '../lib/package_helpers.ts';
+} from '$lib/package_helpers.ts';
 
 describe('url_github_file', () => {
 	test('builds basic file URL', () => {

@@ -1,4 +1,5 @@
-import type {Tome} from '@fuzdev/fuz_ui/tome.js';
+import type {Tome} from '@fuzdev/fuz_ui/tome.ts';
+
 import ApiPage from './api/+page.svelte';
 import LibraryPage from './library/+page.svelte';
 

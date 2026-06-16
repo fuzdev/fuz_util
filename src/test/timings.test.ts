@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {create_stopwatch, Timings} from '../lib/timings.ts';
+import {create_stopwatch, Timings} from '$lib/timings.ts';
 
 describe('create_stopwatch', () => {
 	test('returns elapsed time >= 0', () => {

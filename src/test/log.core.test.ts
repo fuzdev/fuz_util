@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {Logger, log_level_to_number, log_level_parse} from '../lib/log.ts';
+import {Logger, log_level_to_number, log_level_parse} from '$lib/log.ts';
 import {create_test_context} from './log_test_helpers.ts';
 
 describe('Logger > Core Functionality', () => {

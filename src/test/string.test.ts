@@ -18,7 +18,7 @@ import {
 	string_display_width,
 	pad_width,
 	levenshtein_distance,
-} from '../lib/string.ts';
+} from '$lib/string.ts';
 
 describe('truncate', () => {
 	test('basic behavior', () => {

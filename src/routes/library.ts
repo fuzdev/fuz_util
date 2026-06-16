@@ -1,4 +1,4 @@
-import {library_json_from_modules} from '../lib/library_json.ts';
+import {library_json_from_modules} from '$lib/library_json.ts';
 import {modules} from 'virtual:svelte-docinfo';
 import pkg_json from 'virtual:pkg.json';
 

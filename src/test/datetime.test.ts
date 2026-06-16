@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {Datetime, DatetimeNow, get_datetime_now} from '../lib/datetime.ts';
+import {Datetime, DatetimeNow, get_datetime_now} from '$lib/datetime.ts';
 
 describe('get_datetime_now', () => {
 	test('returns a value parseable by the Datetime schema', () => {

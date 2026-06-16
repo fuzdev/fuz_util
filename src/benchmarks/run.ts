@@ -9,7 +9,7 @@
 /* eslint-disable no-console */
 
 import {readFile, writeFile} from 'node:fs/promises';
-import {format_file} from '@fuzdev/gro/format_file.js';
+import {format_file} from '@fuzdev/gro/format_file.ts';
 
 import {Benchmark} from '../lib/benchmark.ts';
 import {

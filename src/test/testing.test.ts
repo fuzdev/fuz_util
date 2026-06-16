@@ -5,7 +5,7 @@ import {
 	assert_rejects,
 	create_mock_logger,
 	type MockLogger,
-} from '../lib/testing.ts';
+} from '$lib/testing.ts';
 
 describe('assert_property', () => {
 	type Shape =
@@ -194,7 +194,7 @@ describe('create_mock_logger', () => {
 	test('is assignable to Logger', () => {
 		const log: MockLogger = create_mock_logger();
 		// type-level check — if this compiles, the assignment works
-		const _use_as_logger: import('../lib/log.ts').Logger = log;
+		const _use_as_logger: import('$lib/log.ts').Logger = log;
 		assert.ok(_use_as_logger);
 	});
 });

@@ -1,7 +1,7 @@
 import {test, assert, describe} from 'vitest';
 
-import {library_json_from_modules} from '../lib/library_json.ts';
-import {pkg_json_keys} from '../lib/pkg_json.ts';
+import {library_json_from_modules} from '$lib/library_json.ts';
+import {pkg_json_keys} from '$lib/pkg_json.ts';
 
 describe('library_json_from_modules', () => {
 	test('curates package_json to the publish-safe subset', () => {

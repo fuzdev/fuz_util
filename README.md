@@ -32,8 +32,8 @@ npm i -D @fuzdev/fuz_util
 Import modules at their full paths:
 
 ```ts
-import {type Result, unwrap} from '@fuzdev/fuz_util/result.js';
-import {random_int} from '@fuzdev/fuz_util/random.js';
+import {type Result, unwrap} from '@fuzdev/fuz_util/result.ts';
+import {random_int} from '@fuzdev/fuz_util/random.ts';
 ```
 
 `.ts` imports also work:

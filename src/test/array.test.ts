@@ -1,6 +1,6 @@
 import {describe, test, assert} from 'vitest';
 
-import {EMPTY_ARRAY, to_array, remove_unordered, to_next} from '../lib/array.ts';
+import {EMPTY_ARRAY, to_array, remove_unordered, to_next} from '$lib/array.ts';
 
 describe('EMPTY_ARRAY', () => {
 	test('is an empty frozen array', () => {

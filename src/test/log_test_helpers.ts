@@ -1,4 +1,4 @@
-import {Logger, type LogConsole} from '../lib/log.ts';
+import {Logger, type LogConsole} from '$lib/log.ts';
 
 const log = new Logger();
 

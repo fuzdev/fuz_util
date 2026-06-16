@@ -3,7 +3,7 @@
  *
  * @example
  * ```ts
- * import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+ * import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
  *
  * const bench = new Benchmark({
  *   duration_ms: 5000,

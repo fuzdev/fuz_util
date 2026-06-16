@@ -17,7 +17,7 @@ import {
 	handle_preprocess_error,
 	escape_svelte_text,
 	type PreprocessImportInfo,
-} from '../lib/svelte_preprocess_helpers.ts';
+} from '$lib/svelte_preprocess_helpers.ts';
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {

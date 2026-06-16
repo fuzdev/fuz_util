@@ -10,10 +10,10 @@ import {
 	benchmark_baseline_format,
 	benchmark_baseline_format_json,
 	benchmark_budget_diff,
-} from '../lib/benchmark_baseline.ts';
-import {Benchmark} from '../lib/benchmark.ts';
-import {BenchmarkStats} from '../lib/benchmark_stats.ts';
-import type {BenchmarkResult} from '../lib/benchmark_types.ts';
+} from '$lib/benchmark_baseline.ts';
+import {Benchmark} from '$lib/benchmark.ts';
+import {BenchmarkStats} from '$lib/benchmark_stats.ts';
+import type {BenchmarkResult} from '$lib/benchmark_types.ts';
 
 // Default budget for synthetic results. Mirrors the DEFAULT_* constants in
 // `benchmark.ts` — keep these in sync if the Benchmark class defaults change,
@@ -194,7 +194,7 @@ describe('benchmark_baseline_load', () => {
 
 	test('handles version mismatch', async () => {
 		const {writeFile} = await import('node:fs/promises');
-		const {fs_exists} = await import('../lib/fs.ts');
+		const {fs_exists} = await import('$lib/fs.ts');
 
 		// Write a schema-valid baseline but with a stale version number
 		await mkdir(test_dir, {recursive: true});

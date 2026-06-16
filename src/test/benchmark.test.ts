@@ -1,8 +1,8 @@
 import {describe, test, assert} from 'vitest';
 
-import {Benchmark} from '../lib/benchmark.ts';
-import {wait} from '../lib/async.ts';
-import type {Timer} from '../lib/time.ts';
+import {Benchmark} from '$lib/benchmark.ts';
+import {wait} from '$lib/async.ts';
+import type {Timer} from '$lib/time.ts';
 
 describe('Benchmark', () => {
 	describe('basic usage', () => {
