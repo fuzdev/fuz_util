@@ -285,7 +285,7 @@ export const time_sync = <T>(
  *   await process_data();
  * }, 100);
  *
- * import {BenchmarkStats} from './benchmark_stats.js';
+ * import {BenchmarkStats} from './benchmark_stats.ts';
  * const stats = new BenchmarkStats(timings_ns);
  * console.log(`Mean: ${time_format_adaptive(stats.mean_ns)}`);
  * ```

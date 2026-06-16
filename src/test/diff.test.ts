@@ -12,7 +12,7 @@ import {
 	format_diff,
 	generate_diff,
 	type DiffLine,
-} from '$lib/diff.js';
+} from '$lib/diff.ts';
 
 describe('diff_lines', () => {
 	describe('identical content', () => {

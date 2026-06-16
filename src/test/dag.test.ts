@@ -6,7 +6,7 @@
 
 import {assert, test, describe} from 'vitest';
 
-import {run_dag, type DagNode, type DagResult} from '$lib/dag.js';
+import {run_dag, type DagNode, type DagResult} from '$lib/dag.ts';
 
 /**
  * Helper to create a simple DAG node.

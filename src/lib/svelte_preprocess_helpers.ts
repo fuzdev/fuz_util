@@ -22,6 +22,8 @@ import type {
 } from 'estree';
 import type {AST} from 'svelte/compiler';
 
+import {to_error_message} from './error.ts';
+
 /** Import metadata for a single import specifier. */
 export interface PreprocessImportInfo {
 	/** The module path to import from. */
@@ -205,7 +207,7 @@ export const try_extract_conditional_chain = (
 	return branches;
 };
 
-// TODO cross-import tracing: resolve `import {x} from './constants.js'` by reading
+// TODO cross-import tracing: resolve `import {x} from './constants.ts'` by reading
 // and parsing the imported module, extracting `export const` values. Would need path
 // resolution ($lib, tsconfig paths), a Program-node variant of this function, and
 // cache invalidation when the imported file changes. Start with relative .ts/.js only.
@@ -585,7 +587,7 @@ export const handle_preprocess_error = (
 	filename: string | undefined,
 	on_error: 'throw' | 'log',
 ): void => {
-	const message = `${prefix} Preprocessing failed${filename ? ` in ${filename}` : ''}: ${error instanceof Error ? error.message : String(error)}`;
+	const message = `${prefix} Preprocessing failed${filename ? ` in ${filename}` : ''}: ${to_error_message(error)}`;
 	if (on_error === 'throw') {
 		throw new Error(message, {cause: error});
 	}

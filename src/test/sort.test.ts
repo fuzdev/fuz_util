@@ -6,7 +6,7 @@
 
 import {assert, test, describe} from 'vitest';
 
-import {topological_sort, type Sortable, type TopologicalSortResult} from '$lib/sort.js';
+import {topological_sort, type Sortable, type TopologicalSortResult} from '$lib/sort.ts';
 
 /**
  * Helper to create a sortable item.

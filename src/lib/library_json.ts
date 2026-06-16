@@ -6,8 +6,8 @@
 
 import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
 
-import {pkg_json_from_package_json, pkg_json_keys, type PkgJson} from './pkg_json.js';
-import type {PackageJson} from './package_json.js';
+import {pkg_json_from_package_json, pkg_json_keys, type PkgJson} from './pkg_json.ts';
+import type {PackageJson} from './package_json.ts';
 
 /**
  * A library's analyzed source: the module metadata produced by `svelte-docinfo`.

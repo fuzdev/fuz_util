@@ -9,16 +9,16 @@
 
 /* eslint-disable no-console */
 
-import {create_random_alea} from '$lib/random_alea.js';
-import {create_random_xoshiro} from '$lib/random_xoshiro.js';
-import {stats_mean, stats_variance} from '$lib/stats.js';
-import {string_display_width, pad_width} from '$lib/string.js';
+import {create_random_alea} from '../lib/random_alea.ts';
+import {create_random_xoshiro} from '../lib/random_xoshiro.ts';
+import {stats_mean, stats_variance} from '../lib/stats.ts';
+import {string_display_width, pad_width} from '../lib/string.ts';
 
 import {
 	type Prng,
 	create_random_lcg,
 	create_random_xorshift32,
-} from '../test/random_test_helpers.js';
+} from '../test/random_test_helpers.ts';
 
 const deep = process.argv.includes('--deep');
 const N = deep ? 10_000_000 : 1_000_000;

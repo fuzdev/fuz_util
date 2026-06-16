@@ -1,4 +1,4 @@
-import {round} from './maths.js';
+import {round} from './maths.ts';
 
 export type Stopwatch = (reset?: boolean) => number;
 

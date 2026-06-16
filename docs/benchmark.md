@@ -9,7 +9,7 @@ Comprehensive statistical analysis, percentile tracking, and rich output formatt
 ## Quick Start
 
 ```ts
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
 
 const bench = new Benchmark({
 	duration_ms: 5000, // Run each task for 5 seconds
@@ -641,7 +641,7 @@ import {
 	stats_confidence_interval,
 	stats_outliers_iqr,
 	stats_outliers_mad,
-} from '@fuzdev/fuz_util/stats.js';
+} from '@fuzdev/fuz_util/stats.ts';
 
 // Calculate statistics on any numeric array
 const values = [1.2, 1.5, 1.3, 1.4, 1.6, 10.0]; // 10.0 is an outlier
@@ -765,7 +765,7 @@ function benchmark_stats_compare(
 Use `benchmark_stats_compare()` to determine if performance differences are statistically significant:
 
 ```ts
-import {benchmark_stats_compare} from '@fuzdev/fuz_util/benchmark_stats.js';
+import {benchmark_stats_compare} from '@fuzdev/fuz_util/benchmark_stats.ts';
 
 const results = await bench.run();
 const [result_a, result_b] = results;
@@ -805,13 +805,13 @@ interface BenchmarkComparison {
 Save benchmark results to disk and compare against baselines for CI/CD regression detection:
 
 ```ts
-import {Benchmark} from '@fuzdev/fuz_util/benchmark.js';
+import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
 import {
 	benchmark_baseline_save,
 	benchmark_baseline_compare,
 	benchmark_baseline_format,
 	benchmark_baseline_format_json,
-} from '@fuzdev/fuz_util/benchmark_baseline.js';
+} from '@fuzdev/fuz_util/benchmark_baseline.ts';
 
 const bench = new Benchmark();
 bench.add('parse', () => parse(input));

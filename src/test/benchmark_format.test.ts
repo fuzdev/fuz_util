@@ -4,8 +4,8 @@ import {
 	benchmark_format_markdown,
 	benchmark_format_table_grouped,
 	benchmark_format_markdown_grouped,
-} from '$lib/benchmark_format.js';
-import type {BenchmarkResult} from '$lib/benchmark_types.js';
+} from '$lib/benchmark_format.ts';
+import type {BenchmarkResult} from '$lib/benchmark_types.ts';
 
 // Helper to create minimal benchmark results for testing
 const create_result = (name: string, ops_per_second: number): BenchmarkResult => ({

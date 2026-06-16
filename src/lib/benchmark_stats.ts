@@ -6,7 +6,7 @@
  * @module
  */
 
-import {TIME_NS_PER_SEC, time_format_adaptive} from './time.js';
+import {TIME_NS_PER_SEC, time_format_adaptive} from './time.ts';
 import {
 	stats_mean,
 	stats_median,
@@ -18,7 +18,7 @@ import {
 	stats_outliers_mad,
 	stats_welch_t_test,
 	stats_t_distribution_p_value,
-} from './stats.js';
+} from './stats.ts';
 
 /**
  * Minimal stats interface for comparison.

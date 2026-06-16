@@ -22,9 +22,9 @@
 import {hash_stream} from '@fuzdev/blake3_wasm';
 import {z} from 'zod';
 
-import {hash_blake3} from './hash_blake3.js';
-import {to_hex} from './hex.js';
-import type {Json} from './json.js';
+import {hash_blake3} from './hash_blake3.ts';
+import {to_hex} from './hex.ts';
+import type {Json} from './json.ts';
 
 /** Algorithm prefix on every fact hash. The colon is the separator. */
 export const FACT_HASH_PREFIX = 'blake3:';

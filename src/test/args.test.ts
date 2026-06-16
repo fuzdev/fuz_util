@@ -8,7 +8,7 @@ import {
 	args_extract_aliases,
 	argv_parse,
 	type Args,
-} from '../lib/args.ts';
+} from '$lib/args.ts';
 
 describe('args_validate_schema', () => {
 	test('valid schema with no aliases', () => {

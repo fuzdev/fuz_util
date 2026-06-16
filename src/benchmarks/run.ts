@@ -9,16 +9,16 @@
 /* eslint-disable no-console */
 
 import {readFile, writeFile} from 'node:fs/promises';
-import {format_file} from '@fuzdev/gro/format_file.js';
+import {format_file} from '@fuzdev/gro/format_file.ts';
 
-import {Benchmark} from '$lib/benchmark.js';
+import {Benchmark} from '../lib/benchmark.ts';
 import {
 	benchmark_baseline_save,
 	benchmark_baseline_compare,
 	benchmark_baseline_format,
-} from '$lib/benchmark_baseline.js';
-import {slugify} from '$lib/path.js';
-import {deep_equal} from '$lib/deep_equal.js';
+} from '../lib/benchmark_baseline.ts';
+import {slugify} from '../lib/path.ts';
+import {deep_equal} from '../lib/deep_equal.ts';
 
 const save_baseline = process.argv.includes('--save');
 const BASELINE_PATH = 'src/benchmarks';

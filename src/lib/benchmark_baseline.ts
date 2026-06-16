@@ -9,15 +9,15 @@ import {readFile, writeFile, mkdir, rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {z} from 'zod';
 
-import {fs_exists} from './fs.js';
-import {git_info_get} from './git.js';
-import type {BenchmarkResult} from './benchmark_types.js';
+import {fs_exists} from './fs.ts';
+import {git_info_get} from './git.ts';
+import type {BenchmarkResult} from './benchmark_types.ts';
 import {
 	benchmark_stats_compare,
 	type BenchmarkComparison,
 	type BenchmarkStatsComparable,
-} from './benchmark_stats.js';
-import {stats_confidence_interval_from_summary, stats_cv} from './stats.js';
+} from './benchmark_stats.ts';
+import {stats_confidence_interval_from_summary, stats_cv} from './stats.ts';
 
 // Version for forward compatibility - increment when schema changes
 const BASELINE_VERSION = 3;

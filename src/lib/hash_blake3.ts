@@ -11,8 +11,8 @@
 import {z} from 'zod';
 import {hash, init} from '@fuzdev/blake3_wasm';
 
-import {to_hex} from './hex.js';
-import {to_bytes} from './bytes.js';
+import {to_hex} from './hex.ts';
+import {to_bytes} from './bytes.ts';
 
 /**
  * Resolves when the BLAKE3 WASM module is initialized and ready.

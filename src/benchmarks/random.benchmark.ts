@@ -1,8 +1,8 @@
-import {Benchmark} from '$lib/benchmark.js';
-import {create_random_alea} from '$lib/random_alea.js';
-import {create_random_xoshiro} from '$lib/random_xoshiro.js';
+import {Benchmark} from '../lib/benchmark.ts';
+import {create_random_alea} from '../lib/random_alea.ts';
+import {create_random_xoshiro} from '../lib/random_xoshiro.ts';
 
-import {create_random_lcg, create_random_xorshift32} from '../test/random_test_helpers.js';
+import {create_random_lcg, create_random_xorshift32} from '../test/random_test_helpers.ts';
 
 /* eslint-disable no-console */
 
