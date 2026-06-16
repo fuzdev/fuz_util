@@ -187,7 +187,7 @@ See `docs/benchmark.md` for full documentation.
 - explicit file extensions in imports
 - tab indentation, 100 character width
 - no re-exports - import directly from the source module (e.g., import baseline
-  functions from `benchmark_baseline.js`, not from `benchmark.js`)
+  functions from `benchmark_baseline.ts`, not from `benchmark.ts`)
 - no backwards compatibility preservation - breaking changes are acceptable
 
 ## Configuration
