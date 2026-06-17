@@ -98,7 +98,10 @@ export const print_error = (err: Error): string =>
  * Formats a timing entry with `key` for printing.
  */
 export const print_timing = (key: string | number, timing: number | undefined): string =>
-	`${timing === undefined ? '...' : print_ms(timing, undefined)} ${st('gray', '←')} ${st('gray', key + '')}`;
+	`${timing === undefined ? '...' : print_ms(timing, undefined)} ${st('gray', '←')} ${st(
+		'gray',
+		key + '',
+	)}`;
 
 /**
  * Prints all timings in a `Timings` object.

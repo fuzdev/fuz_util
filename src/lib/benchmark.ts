@@ -79,7 +79,9 @@ const validate_config = (config: BenchmarkConfig): void => {
 		config.min_iterations > config.max_iterations
 	) {
 		throw new Error(
-			`min_iterations (${config.min_iterations}) cannot exceed max_iterations (${config.max_iterations})`,
+			`min_iterations (${config.min_iterations}) cannot exceed max_iterations (${
+				config.max_iterations
+			})`,
 		);
 	}
 };
@@ -119,7 +121,9 @@ const validate_task = (
 		const effective_max = task.max_iterations ?? suite.max_iterations;
 		if (effective_min > effective_max) {
 			throw new Error(
-				`task "${task.name}" effective min_iterations (${effective_min}) cannot exceed effective max_iterations (${effective_max})`,
+				`task "${task.name}" effective min_iterations (${
+					effective_min
+				}) cannot exceed effective max_iterations (${effective_max})`,
 			);
 		}
 	}
@@ -571,12 +575,16 @@ export class Benchmark {
 
 		const lines: Array<string> = [];
 		lines.push(
-			`Fastest: ${fastest.name} (${benchmark_format_number(fastest.stats.ops_per_second)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
+			`Fastest: ${fastest.name} (${benchmark_format_number(
+				fastest.stats.ops_per_second,
+			)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
 		);
 
 		if (this.#results.length > 1) {
 			lines.push(
-				`Slowest: ${slowest.name} (${benchmark_format_number(slowest.stats.ops_per_second)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
+				`Slowest: ${slowest.name} (${benchmark_format_number(
+					slowest.stats.ops_per_second,
+				)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
 			);
 			lines.push(`Speed difference: ${ratio.toFixed(2)}x`);
 		}

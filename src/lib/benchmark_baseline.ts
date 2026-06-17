@@ -332,7 +332,7 @@ export type BenchmarkBudgetDiffEntry =
 			field: 'duration_ms' | 'warmup_iterations' | 'min_iterations' | 'max_iterations';
 			baseline: number;
 			current: number;
-	  }
+		}
 	| {field: 'async_resolved'; baseline: boolean; current: boolean};
 
 /**
@@ -469,7 +469,11 @@ export const benchmark_baseline_load = async (
 		if (baseline.version !== BASELINE_VERSION) {
 			// eslint-disable-next-line no-console
 			console.warn(
-				`Benchmark baseline version mismatch (got ${baseline.version}, expected ${BASELINE_VERSION}). Removing stale baseline: ${filepath}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
+				`Benchmark baseline version mismatch (got ${baseline.version}, expected ${
+					BASELINE_VERSION
+				}). Removing stale baseline: ${
+					filepath
+				}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
 			);
 			await rm(filepath, {force: true});
 			return null;
@@ -479,7 +483,9 @@ export const benchmark_baseline_load = async (
 	} catch (error) {
 		// eslint-disable-next-line no-console
 		console.warn(
-			`Invalid or corrupted benchmark baseline file. Removing: ${filepath}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
+			`Invalid or corrupted benchmark baseline file. Removing: ${
+				filepath
+			}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
 			error instanceof Error ? error.message : error,
 		);
 		await rm(filepath, {force: true});
@@ -753,7 +759,9 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 	// which one tripped — they answer different questions about noise.
 	const noise_suffix = (r: BenchmarkBaselineTaskComparison): string =>
 		r.noise_warning
-			? ` ⚠ noisy (cv=${(r.max_cv * 100).toFixed(1)}%, outliers=${(r.max_outlier_ratio * 100).toFixed(1)}%)`
+			? ` ⚠ noisy (cv=${(r.max_cv * 100).toFixed(1)}%, outliers=${(
+					r.max_outlier_ratio * 100
+				).toFixed(1)}%)`
 			: '';
 
 	if (result.regressions.length > 0) {
@@ -763,7 +771,9 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 			const pct = (r.comparison.percent_difference * 100).toFixed(1);
 			const p = r.comparison.p_value.toFixed(3);
 			lines.push(
-				`  ${r.name}: ${ratio}x slower (${pct}%, p=${p}, ${r.comparison.effect_magnitude})${noise_suffix(r)}`,
+				`  ${r.name}: ${ratio}x slower (${pct}%, p=${p}, ${
+					r.comparison.effect_magnitude
+				})${noise_suffix(r)}`,
 			);
 		}
 		lines.push('');
@@ -776,7 +786,9 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 			const pct = (r.comparison.percent_difference * 100).toFixed(1);
 			const p = r.comparison.p_value.toFixed(3);
 			lines.push(
-				`  ${r.name}: ${ratio}x faster (${pct}%, p=${p}, ${r.comparison.effect_magnitude})${noise_suffix(r)}`,
+				`  ${r.name}: ${ratio}x faster (${pct}%, p=${p}, ${
+					r.comparison.effect_magnitude
+				})${noise_suffix(r)}`,
 			);
 		}
 		lines.push('');

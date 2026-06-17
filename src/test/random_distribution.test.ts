@@ -361,7 +361,9 @@ describe('birthday spacings', () => {
 				const z = Math.abs(collisions - lambda) / std_dev_lambda;
 				assert.ok(
 					z < 4,
-					`${name}: birthday collisions = ${collisions}, expected ≈ ${lambda.toFixed(0)}, z = ${z.toFixed(2)}`,
+					`${name}: birthday collisions = ${collisions}, expected ≈ ${lambda.toFixed(
+						0,
+					)}, z = ${z.toFixed(2)}`,
 				);
 			}
 		});
@@ -424,7 +426,9 @@ describe('bad generators fail at least one test', () => {
 
 		assert.ok(
 			has_issues,
-			`Middle Square should show distribution issues (mean_err=${mean_error.toFixed(4)}, std_err=${std_dev_error.toFixed(4)})`,
+			`Middle Square should show distribution issues (mean_err=${mean_error.toFixed(
+				4,
+			)}, std_err=${std_dev_error.toFixed(4)})`,
 		);
 	});
 });

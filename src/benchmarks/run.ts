@@ -100,7 +100,7 @@ console.log(benchmark_baseline_format(comparison));
 if (save_baseline) {
 	await benchmark_baseline_save(bench.results(), {path: BASELINE_PATH});
 	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = await format_file(content, {filepath: BASELINE_FILE});
+	const formatted = format_file(content, {filepath: BASELINE_FILE});
 	await writeFile(BASELINE_FILE, formatted);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 } else if (comparison.baseline_found) {
@@ -120,7 +120,9 @@ if (save_baseline) {
 		comparison.unchanged.filter((r) => r.noise_warning).length;
 	if (noise_count > 0) {
 		console.log(
-			`\n⚠️  ${noise_count} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`,
+			`\n⚠️  ${
+				noise_count
+			} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`,
 		);
 	}
 }

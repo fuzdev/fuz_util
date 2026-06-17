@@ -269,7 +269,11 @@ export class BenchmarkStats {
 	 * Format stats as a human-readable string.
 	 */
 	toString(): string {
-		return `BenchmarkStats(mean=${time_format_adaptive(this.mean_ns)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${this.sample_size})`;
+		return `BenchmarkStats(mean=${time_format_adaptive(
+			this.mean_ns,
+		)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${
+			this.sample_size
+		})`;
 	}
 }
 
@@ -389,9 +393,15 @@ export const benchmark_stats_compare = (
 	if (percent_difference < min_pct) {
 		recommendation = 'No meaningful difference detected';
 	} else if (!significant) {
-		recommendation = `${(percent_difference * 100).toFixed(1)}% difference observed but not statistically significant (p=${p_value.toFixed(3)})`;
+		recommendation = `${(percent_difference * 100).toFixed(
+			1,
+		)}% difference observed but not statistically significant (p=${p_value.toFixed(3)})`;
 	} else {
-		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(2)}x faster with ${effect_magnitude} effect size (${(percent_difference * 100).toFixed(1)}%, p=${p_value.toFixed(3)})`;
+		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(
+			2,
+		)}x faster with ${effect_magnitude} effect size (${(percent_difference * 100).toFixed(
+			1,
+		)}%, p=${p_value.toFixed(3)})`;
 	}
 
 	// Adjust 'faster' to 'equal' if effect is negligible

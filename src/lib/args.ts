@@ -153,7 +153,9 @@ const to_conflict_error = (errors: SchemaAnalysisResult['errors']): z.ZodError =
 			path: [err.alias],
 			message:
 				err.type === 'alias_canonical_conflict'
-					? `Alias '${err.alias}' for '${err.canonical}' conflicts with canonical key '${err.conflict_with}'`
+					? `Alias '${err.alias}' for '${err.canonical}' conflicts with canonical key '${
+							err.conflict_with
+						}'`
 					: `Alias '${err.alias}' is used by both '${err.canonical}' and '${err.conflict_with}'`,
 		})),
 	);

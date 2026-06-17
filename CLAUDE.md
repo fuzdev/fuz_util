@@ -222,7 +222,7 @@ Note: Browser timing is coarsened due to Spectre/Meltdown mitigations.
 ## Project standards
 
 - TypeScript strict mode
-- Prettier with tabs, 100 char width
+- tsv with tabs, 100 char width
 - Node >= 22.15
 - Tests in `src/test/` (not co-located)
 - No runtime Svelte dependency (`svelte_preprocess_helpers.ts` uses type-only imports)

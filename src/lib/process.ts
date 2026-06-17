@@ -599,7 +599,10 @@ export const spawn_detached = (
  * ```
  */
 export const print_child_process = (child: ChildProcess): string =>
-	`${st('gray', 'pid(')}${child.pid ?? 'none'}${st('gray', ')')} ← ${st('green', child.spawnargs.join(' '))}`;
+	`${st('gray', 'pid(')}${child.pid ?? 'none'}${st('gray', ')')} ← ${st(
+		'green',
+		child.spawnargs.join(' '),
+	)}`;
 
 /**
  * Formats a spawn result for display.

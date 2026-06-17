@@ -507,7 +507,9 @@ console.log('\n\n── Detailed Analysis ──\n');
 	const n_buck = Math.min(N, 1_000_000);
 	const expected = n_buck / k;
 	console.log(
-		`\nBucket distribution (N=${n_buck.toLocaleString()}, ${k} buckets, expected=${expected.toLocaleString()}/bucket):\n`,
+		`\nBucket distribution (N=${n_buck.toLocaleString()}, ${
+			k
+		} buckets, expected=${expected.toLocaleString()}/bucket):\n`,
 	);
 
 	for (const gen of generators) {

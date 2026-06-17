@@ -587,7 +587,9 @@ export const handle_preprocess_error = (
 	filename: string | undefined,
 	on_error: 'throw' | 'log',
 ): void => {
-	const message = `${prefix} Preprocessing failed${filename ? ` in ${filename}` : ''}: ${to_error_message(error)}`;
+	const message = `${prefix} Preprocessing failed${
+		filename ? ` in ${filename}` : ''
+	}: ${to_error_message(error)}`;
 	if (on_error === 'throw') {
 		throw new Error(message, {cause: error});
 	}

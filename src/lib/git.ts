@@ -71,7 +71,9 @@ export const git_remote_branch_exists = async (
 		return false;
 	} else {
 		throw Error(
-			`git_remote_branch_exists failed for origin '${origin}' and branch '${final_branch}' with ${spawn_result_to_message(result)}`,
+			`git_remote_branch_exists failed for origin '${origin}' and branch '${
+				final_branch
+			}' with ${spawn_result_to_message(result)}`,
 		);
 	}
 };
@@ -236,7 +238,9 @@ export const git_fetch = async (
 	const result = await spawn('git', args, options);
 	if (!result.ok) {
 		throw Error(
-			`git_fetch failed for origin '${origin}' and branch '${branch}' with ${spawn_result_to_message(result)}`,
+			`git_fetch failed for origin '${origin}' and branch '${
+				branch
+			}' with ${spawn_result_to_message(result)}`,
 		);
 	}
 };
@@ -337,7 +341,9 @@ export const git_delete_local_branch = async (
 	const result = await spawn('git', ['branch', '-D', branch], options);
 	if (!result.ok) {
 		throw Error(
-			`git_delete_local_branch failed for branch '${branch}' with ${spawn_result_to_message(result)}`,
+			`git_delete_local_branch failed for branch '${branch}' with ${spawn_result_to_message(
+				result,
+			)}`,
 		);
 	}
 };
@@ -354,7 +360,9 @@ export const git_delete_remote_branch = async (
 	const result = await spawn('git', ['push', origin, ':' + branch], options);
 	if (!result.ok) {
 		throw Error(
-			`git_delete_remote_branch failed for branch '${branch}' with ${spawn_result_to_message(result)}`,
+			`git_delete_remote_branch failed for branch '${branch}' with ${spawn_result_to_message(
+				result,
+			)}`,
 		);
 	}
 };

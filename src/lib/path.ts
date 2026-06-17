@@ -72,11 +72,11 @@ export type PathPiece =
 			type: 'piece';
 			path: PathId;
 			name: string;
-	  }
+		}
 	| {
 			type: 'separator';
 			path: PathId;
-	  };
+		};
 
 /**
  * Treats all paths as absolute, so the first piece is always a `'/'` with type `'separator'`.

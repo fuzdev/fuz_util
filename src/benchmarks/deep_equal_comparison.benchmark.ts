@@ -301,7 +301,9 @@ for (const [, results] of groups) {
 for (const [library, stats] of library_stats) {
 	const avg_hz = stats.total_hz / stats.count;
 	console.log(
-		`  ${library.padEnd(20)} avg: ${avg_hz.toFixed(0).padStart(10)} ops/sec  |  wins: ${stats.wins}/${groups.size}`,
+		`  ${library.padEnd(20)} avg: ${avg_hz.toFixed(0).padStart(10)} ops/sec  |  wins: ${
+			stats.wins
+		}/${groups.size}`,
 	);
 }
 

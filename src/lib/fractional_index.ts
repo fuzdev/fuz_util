@@ -87,7 +87,9 @@ const validate_bound = (label: string, value: string): void => {
 	}
 	if (value.length > FRACTIONAL_INDEX_LENGTH_MAX) {
 		throw new Error(
-			`fractional_index: ${label} exceeds length cap (${value.length} > ${FRACTIONAL_INDEX_LENGTH_MAX})`,
+			`fractional_index: ${label} exceeds length cap (${value.length} > ${
+				FRACTIONAL_INDEX_LENGTH_MAX
+			})`,
 		);
 	}
 };
@@ -173,7 +175,9 @@ export const fractional_index_between = (
 	// or the next call's input validation — would later reject opaquely.
 	if (result.length > FRACTIONAL_INDEX_LENGTH_MAX) {
 		throw new Error(
-			`fractional_index: generated key exceeds length cap (${result.length} > ${FRACTIONAL_INDEX_LENGTH_MAX}); bounds too long to fit a key under it`,
+			`fractional_index: generated key exceeds length cap (${result.length} > ${
+				FRACTIONAL_INDEX_LENGTH_MAX
+			}); bounds too long to fit a key under it`,
 		);
 	}
 	return result;
