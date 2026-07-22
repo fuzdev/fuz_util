@@ -1,6 +1,6 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {LruMap} from '$lib/lru_map.ts';
+import { LruMap } from '$lib/lru_map.ts';
 
 test('basic set / get / has / delete / size behave like Map', () => {
 	const lru = new LruMap<string, number>(3);
@@ -131,8 +131,8 @@ test('iteration order is LRU → MRU and reflects access', () => {
 		[
 			['a', 1],
 			['b', 2],
-			['c', 3],
-		],
+			['c', 3]
+		]
 	);
 	assert.deepEqual([...lru.keys()], ['a', 'b', 'c']);
 	assert.deepEqual([...lru.values()], [1, 2, 3]);
@@ -141,8 +141,8 @@ test('iteration order is LRU → MRU and reflects access', () => {
 		[
 			['a', 1],
 			['b', 2],
-			['c', 3],
-		],
+			['c', 3]
+		]
 	);
 
 	lru.get('a'); // move 'a' to MRU
@@ -155,7 +155,7 @@ test('on_evict fires with the evicted (key, value) when included', () => {
 	const lru = new LruMap<string, number>(2, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -168,7 +168,7 @@ test('on_evict fires with the evicted (key, value) when included', () => {
 	lru.set('d', 4); // evicts 'b'
 	assert.deepEqual(evictions, [
 		['a', 1],
-		['b', 2],
+		['b', 2]
 	]);
 });
 
@@ -177,7 +177,7 @@ test('on_evict does NOT fire on delete, clear, or overwrite', () => {
 	const lru = new LruMap<string, number>(3, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -218,7 +218,7 @@ test('capacity of 1 works and always evicts the previous entry', () => {
 	const lru = new LruMap<string, number>(1, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -232,10 +232,10 @@ test('capacity of 1 works and always evicts the previous entry', () => {
 });
 
 test('works with object keys', () => {
-	const lru = new LruMap<{id: number}, string>(2);
-	const k1 = {id: 1};
-	const k2 = {id: 2};
-	const k3 = {id: 3};
+	const lru = new LruMap<{ id: number }, string>(2);
+	const k1 = { id: 1 };
+	const k2 = { id: 2 };
+	const k3 = { id: 3 };
 
 	lru.set(k1, 'one');
 	lru.set(k2, 'two');
@@ -252,7 +252,7 @@ test('overwriting an existing key at capacity does NOT evict', () => {
 	const lru = new LruMap<string, number>(3, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -278,7 +278,7 @@ test('delete frees a slot so the next insert does not evict', () => {
 	const lru = new LruMap<string, number>(3, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -301,7 +301,7 @@ test('deleting the current LRU changes the next eviction target', () => {
 	const lru = new LruMap<string, number>(3, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -351,7 +351,7 @@ test('undefined as a value is distinguishable from absence and participates in L
 	const lru = new LruMap<string, number | undefined>(3, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', undefined);
@@ -383,7 +383,7 @@ test('undefined as a value is distinguishable from absence and participates in L
 		['b', 2],
 		['c', 3],
 		['d', 4],
-		['a', 42],
+		['a', 42]
 	]);
 });
 
@@ -392,7 +392,7 @@ test('on_evict receives undefined when the evicted value is undefined', () => {
 	const lru = new LruMap<string, number | undefined>(2, {
 		on_evict: (key, value) => {
 			evictions.push([key, value]);
-		},
+		}
 	});
 
 	lru.set('a', undefined);
@@ -422,15 +422,15 @@ test('re-setting the same key with the same value still marks it MRU', () => {
 });
 
 test('on_evict fires AFTER the new entry is inserted', () => {
-	const observed: Array<{evicted: [string, number]; size: number; has_new: boolean}> = [];
+	const observed: Array<{ evicted: [string, number]; size: number; has_new: boolean }> = [];
 	const lru = new LruMap<string, number>(2, {
 		on_evict: (key, value) => {
 			observed.push({
 				evicted: [key, value],
 				size: lru.size,
-				has_new: lru.has('c'),
+				has_new: lru.has('c')
 			});
-		},
+		}
 	});
 
 	lru.set('a', 1);
@@ -448,7 +448,7 @@ test('on_evict that throws leaves the map in a consistent post-set state', () =>
 	const lru = new LruMap<string, number>(2, {
 		on_evict: () => {
 			throw new Error('boom');
-		},
+		}
 	});
 
 	lru.set('a', 1);

@@ -1,4 +1,4 @@
-import type {OmitStrict} from './types.ts';
+import type { OmitStrict } from './types.ts';
 
 /**
  * Returns a boolean indicating if `value` is
@@ -15,7 +15,7 @@ export const is_plain_object = (value: any): boolean =>
  */
 export const map_record = <T, K extends string | number, U>(
 	obj: Record<K, T>,
-	mapper: (value: T, key: string) => U,
+	mapper: (value: T, key: string) => U
 ): Record<K, U> => {
 	const result = {} as Record<K, U>;
 	for (const key in obj) {
@@ -29,7 +29,7 @@ export const map_record = <T, K extends string | number, U>(
  */
 export const omit = <T extends Record<K, any>, K extends keyof T>(
 	obj: T,
-	keys: Array<K>,
+	keys: Array<K>
 ): OmitStrict<T, K> => {
 	const result = {} as T;
 	for (const key in obj) {
@@ -45,7 +45,7 @@ export const omit = <T extends Record<K, any>, K extends keyof T>(
  */
 export const pick_by = <T extends Record<K, any>, K extends string | number>(
 	obj: T,
-	should_pick: (value: any, key: K) => boolean,
+	should_pick: (value: any, key: K) => boolean
 ): Partial<T> => {
 	const result = {} as Partial<T>;
 	for (const key in obj) {
@@ -72,7 +72,7 @@ export const omit_undefined = <T extends Record<string | number, any>>(obj: T): 
  */
 export const reorder = <T extends Record<K, any>, K extends string | number>(
 	obj: T,
-	keys: Array<K>,
+	keys: Array<K>
 ): T => {
 	const result = {} as T;
 	for (const k of keys) result[k] = obj[k];

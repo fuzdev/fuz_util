@@ -21,9 +21,9 @@
  * @module
  */
 
-import {is_promise, wait} from './async.ts';
-import {BenchmarkStats} from './benchmark_stats.ts';
-import {timer_default, time_unit_detect_best, time_format} from './time.ts';
+import { is_promise, wait } from './async.ts';
+import { BenchmarkStats } from './benchmark_stats.ts';
+import { timer_default, time_unit_detect_best, time_format } from './time.ts';
 import {
 	benchmark_format_table,
 	benchmark_format_table_grouped,
@@ -31,13 +31,13 @@ import {
 	benchmark_format_markdown_grouped,
 	benchmark_format_json,
 	benchmark_format_number,
-	type BenchmarkFormatJsonOptions,
+	type BenchmarkFormatJsonOptions
 } from './benchmark_format.ts';
 import type {
 	BenchmarkConfig,
 	BenchmarkTask,
 	BenchmarkResult,
-	BenchmarkFormatTableOptions,
+	BenchmarkFormatTableOptions
 } from './benchmark_types.ts';
 
 // Default configuration values
@@ -81,7 +81,7 @@ const validate_config = (config: BenchmarkConfig): void => {
 		throw new Error(
 			`min_iterations (${config.min_iterations}) cannot exceed max_iterations (${
 				config.max_iterations
-			})`,
+			})`
 		);
 	}
 };
@@ -96,24 +96,24 @@ const validate_config = (config: BenchmarkConfig): void => {
  */
 const validate_task = (
 	task: BenchmarkTask,
-	suite: {min_iterations: number; max_iterations: number},
+	suite: { min_iterations: number; max_iterations: number }
 ): void => {
 	if (task.duration_ms !== undefined && task.duration_ms <= 0) {
 		throw new Error(`task "${task.name}" duration_ms must be positive, got ${task.duration_ms}`);
 	}
 	if (task.warmup_iterations !== undefined && task.warmup_iterations < 0) {
 		throw new Error(
-			`task "${task.name}" warmup_iterations must be non-negative, got ${task.warmup_iterations}`,
+			`task "${task.name}" warmup_iterations must be non-negative, got ${task.warmup_iterations}`
 		);
 	}
 	if (task.min_iterations !== undefined && task.min_iterations < 1) {
 		throw new Error(
-			`task "${task.name}" min_iterations must be at least 1, got ${task.min_iterations}`,
+			`task "${task.name}" min_iterations must be at least 1, got ${task.min_iterations}`
 		);
 	}
 	if (task.max_iterations !== undefined && task.max_iterations < 1) {
 		throw new Error(
-			`task "${task.name}" max_iterations must be at least 1, got ${task.max_iterations}`,
+			`task "${task.name}" max_iterations must be at least 1, got ${task.max_iterations}`
 		);
 	}
 	if (task.min_iterations !== undefined || task.max_iterations !== undefined) {
@@ -123,7 +123,7 @@ const validate_task = (
 			throw new Error(
 				`task "${task.name}" effective min_iterations (${
 					effective_min
-				}) cannot exceed effective max_iterations (${effective_max})`,
+				}) cannot exceed effective max_iterations (${effective_max})`
 			);
 		}
 	}
@@ -149,7 +149,7 @@ const validate_task = (
 export const benchmark_warmup = async (
 	fn: () => unknown,
 	iterations: number,
-	async_hint?: boolean,
+	async_hint?: boolean
 ): Promise<boolean> => {
 	// If we have an explicit hint, use it
 	if (async_hint !== undefined) {
@@ -200,7 +200,7 @@ export class Benchmark {
 			max_iterations: config.max_iterations ?? DEFAULT_MAX_ITERATIONS,
 			timer: config.timer ?? timer_default,
 			on_iteration: config.on_iteration,
-			on_task_complete: config.on_task_complete,
+			on_task_complete: config.on_task_complete
 		};
 	}
 
@@ -237,7 +237,7 @@ export class Benchmark {
 		let task: BenchmarkTask;
 		if (typeof name_or_task === 'string') {
 			if (!fn) throw new Error('Function required when name is string');
-			task = {name: name_or_task, fn};
+			task = { name: name_or_task, fn };
 		} else {
 			task = name_or_task;
 		}
@@ -324,7 +324,7 @@ export class Benchmark {
 		// `timer` and `on_iteration` come from the readonly `#config`, so they're
 		// stable for the suite's lifetime. `fn` and `name` are captured below
 		// after `setup()` runs, so setup is still allowed to mutate them.
-		const {timer, on_iteration} = this.#config;
+		const { timer, on_iteration } = this.#config;
 
 		const suite_start_ns = timer.now();
 
@@ -345,7 +345,7 @@ export class Benchmark {
 			}
 
 			// Capture after setup so setup can still mutate task.fn / task.name.
-			const {fn, name} = task;
+			const { fn, name } = task;
 
 			// Warmup and detect async. The resolved boolean (not `task.async`) is
 			// what the loop actually used; we persist it into `result.budget`
@@ -422,8 +422,8 @@ export class Benchmark {
 				warmup_iterations,
 				min_iterations,
 				max_iterations,
-				async_resolved,
-			},
+				async_resolved
+			}
 		};
 	}
 
@@ -560,11 +560,11 @@ export class Benchmark {
 		if (this.#results.length === 0) return 'No results';
 
 		const fastest = this.#results.reduce((a, b) =>
-			a.stats.ops_per_second > b.stats.ops_per_second ? a : b,
+			a.stats.ops_per_second > b.stats.ops_per_second ? a : b
 		);
 
 		const slowest = this.#results.reduce((a, b) =>
-			a.stats.ops_per_second < b.stats.ops_per_second ? a : b,
+			a.stats.ops_per_second < b.stats.ops_per_second ? a : b
 		);
 
 		const ratio = fastest.stats.ops_per_second / slowest.stats.ops_per_second;
@@ -576,15 +576,15 @@ export class Benchmark {
 		const lines: Array<string> = [];
 		lines.push(
 			`Fastest: ${fastest.name} (${benchmark_format_number(
-				fastest.stats.ops_per_second,
-			)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`,
+				fastest.stats.ops_per_second
+			)} ops/sec, ${time_format(fastest.stats.mean_ns, unit)} per op)`
 		);
 
 		if (this.#results.length > 1) {
 			lines.push(
 				`Slowest: ${slowest.name} (${benchmark_format_number(
-					slowest.stats.ops_per_second,
-				)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`,
+					slowest.stats.ops_per_second
+				)} ops/sec, ${time_format(slowest.stats.mean_ns, unit)} per op)`
 			);
 			lines.push(`Speed difference: ${ratio.toFixed(2)}x`);
 		}

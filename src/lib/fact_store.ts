@@ -13,7 +13,7 @@
  * @module
  */
 
-import type {FactHash} from './fact_hash.ts';
+import type { FactHash } from './fact_hash.ts';
 
 /**
  * Optional metadata + ref declarations on a `put` / `put_ref` call.
@@ -98,7 +98,7 @@ export interface FactStore {
 	put_stream: (
 		stream: ReadableStream<Uint8Array>,
 		max_bytes: number,
-		options?: FactPutOptions,
+		options?: FactPutOptions
 	) => Promise<PutStreamOutcome>;
 
 	/**
@@ -144,5 +144,5 @@ export interface FactStore {
 	 * Implementations do NOT verify the hash is unreferenced — that
 	 * policy lives one layer up (orphan-fact admin, GC walker).
 	 */
-	delete: (hash: FactHash) => Promise<{size: number; external_url: string | null} | null>;
+	delete: (hash: FactHash) => Promise<{ size: number; external_url: string | null } | null>;
 }

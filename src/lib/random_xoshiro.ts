@@ -113,12 +113,12 @@ export const create_random_xoshiro = (seed?: number): RandomXoshiro => {
  * Expands a 32-bit state by one step using the SplitMix32 algorithm,
  * producing the four state words needed by Xoshiro128**.
  */
-const splitmix32_next = (prev_state: number): {value: number; state: number} => {
+const splitmix32_next = (prev_state: number): { value: number; state: number } => {
 	const next_state = (prev_state + 0x9e3779b9) | 0;
 	let z = next_state;
 	z = Math.imul(z ^ (z >>> 16), 0x85ebca6b);
 	z = Math.imul(z ^ (z >>> 13), 0xc2b2ae35);
-	return {value: (z ^ (z >>> 16)) >>> 0, state: next_state};
+	return { value: (z ^ (z >>> 16)) >>> 0, state: next_state };
 };
 
 const rotl = (x: number, k: number): number => (x << k) | (x >>> (32 - k));

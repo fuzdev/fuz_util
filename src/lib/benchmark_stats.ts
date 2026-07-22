@@ -6,7 +6,7 @@
  * @module
  */
 
-import {TIME_NS_PER_SEC, time_format_adaptive} from './time.ts';
+import { TIME_NS_PER_SEC, time_format_adaptive } from './time.ts';
 import {
 	stats_mean,
 	stats_median,
@@ -17,7 +17,7 @@ import {
 	stats_confidence_interval,
 	stats_outliers_mad,
 	stats_welch_t_test,
-	stats_t_distribution_p_value,
+	stats_t_distribution_p_value
 } from './stats.ts';
 
 /**
@@ -198,7 +198,7 @@ export class BenchmarkStats {
 
 		// Detect outliers once; how each statistic uses the result depends on
 		// what an outlier physically means at that tail.
-		const {cleaned, outliers} = stats_outliers_mad(valid_timings);
+		const { cleaned, outliers } = stats_outliers_mad(valid_timings);
 
 		this.outliers_ns = outliers;
 		this.outlier_ratio = outliers.length / valid_timings.length;
@@ -258,7 +258,7 @@ export class BenchmarkStats {
 		const ci_raw = stats_confidence_interval(cleaned);
 		this.confidence_interval_ns = [
 			this.mean_ns - (this.mean_ns - ci_raw[0]) * bessel,
-			this.mean_ns + (ci_raw[1] - this.mean_ns) * bessel,
+			this.mean_ns + (ci_raw[1] - this.mean_ns) * bessel
 		];
 
 		// Calculate throughput (operations per second)
@@ -270,7 +270,7 @@ export class BenchmarkStats {
 	 */
 	toString(): string {
 		return `BenchmarkStats(mean=${time_format_adaptive(
-			this.mean_ns,
+			this.mean_ns
 		)}, ops/sec=${this.ops_per_second.toFixed(2)}, cv=${(this.cv * 100).toFixed(1)}%, samples=${
 			this.sample_size
 		})`;
@@ -300,7 +300,7 @@ export class BenchmarkStats {
 export const benchmark_stats_compare = (
 	a: BenchmarkStatsComparable,
 	b: BenchmarkStatsComparable,
-	options?: BenchmarkCompareOptions,
+	options?: BenchmarkCompareOptions
 ): BenchmarkComparison => {
 	const alpha = options?.alpha ?? 0.05;
 	const min_pct = options?.min_percent_difference ?? 0.1;
@@ -316,7 +316,7 @@ export const benchmark_stats_compare = (
 			effect_size: 0,
 			effect_magnitude: 'negligible',
 			ci_overlap: true,
-			recommendation: 'Insufficient data for comparison',
+			recommendation: 'Insufficient data for comparison'
 		};
 	}
 
@@ -335,13 +335,13 @@ export const benchmark_stats_compare = (
 		// When there's no variance, any difference is 100% reliable (p=0) or identical (p=1)
 		p_value = a.mean_ns === b.mean_ns ? 1 : 0;
 	} else {
-		const {t_statistic, degrees_of_freedom} = stats_welch_t_test(
+		const { t_statistic, degrees_of_freedom } = stats_welch_t_test(
 			a.mean_ns,
 			a.std_dev_ns,
 			a.sample_size,
 			b.mean_ns,
 			b.std_dev_ns,
-			b.sample_size,
+			b.sample_size
 		);
 		// Calculate two-tailed p-value using t-distribution approximation
 		p_value = stats_t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
@@ -350,7 +350,7 @@ export const benchmark_stats_compare = (
 	// Cohen's d effect size (informational only — not used for classification)
 	const pooled_std_dev = Math.sqrt(
 		((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
-			(a.sample_size + b.sample_size - 2),
+			(a.sample_size + b.sample_size - 2)
 	);
 	let effect_size: number;
 	if (pooled_std_dev === 0) {
@@ -394,13 +394,13 @@ export const benchmark_stats_compare = (
 		recommendation = 'No meaningful difference detected';
 	} else if (!significant) {
 		recommendation = `${(percent_difference * 100).toFixed(
-			1,
+			1
 		)}% difference observed but not statistically significant (p=${p_value.toFixed(3)})`;
 	} else {
 		recommendation = `${faster === 'a' ? 'First' : 'Second'} is ${speedup_ratio.toFixed(
-			2,
+			2
 		)}x faster with ${effect_magnitude} effect size (${(percent_difference * 100).toFixed(
-			1,
+			1
 		)}%, p=${p_value.toFixed(3)})`;
 	}
 
@@ -416,6 +416,6 @@ export const benchmark_stats_compare = (
 		effect_size,
 		effect_magnitude,
 		ci_overlap,
-		recommendation,
+		recommendation
 	};
 };

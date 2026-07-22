@@ -1,6 +1,6 @@
-import {test, assert, describe} from 'vitest';
-import {parse} from 'svelte/compiler';
-import type {Expression, ImportDeclaration} from 'estree';
+import { test, assert, describe } from 'vitest';
+import { parse } from 'svelte/compiler';
+import type { Expression, ImportDeclaration } from 'estree';
 
 import {
 	find_attribute,
@@ -16,24 +16,24 @@ import {
 	remove_import_specifier,
 	handle_preprocess_error,
 	escape_svelte_text,
-	type PreprocessImportInfo,
+	type PreprocessImportInfo
 } from '$lib/svelte_preprocess_helpers.ts';
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 'hello'}), 'hello');
+		assert.equal(evaluate_static_expr({ type: 'Literal', value: 'hello' }), 'hello');
 	});
 
 	test('returns null for number literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: 42}), null);
+		assert.equal(evaluate_static_expr({ type: 'Literal', value: 42 }), null);
 	});
 
 	test('returns null for boolean literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: true}), null);
+		assert.equal(evaluate_static_expr({ type: 'Literal', value: true }), null);
 	});
 
 	test('returns null for null literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: null}), null);
+		assert.equal(evaluate_static_expr({ type: 'Literal', value: null }), null);
 	});
 
 	test('returns cooked value for template literal without interpolation', () => {
@@ -41,9 +41,9 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
 				expressions: [],
-				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'hello', raw: 'hello'}}],
+				quasis: [{ type: 'TemplateElement', tail: true, value: { cooked: 'hello', raw: 'hello' } }]
 			}),
-			'hello',
+			'hello'
 		);
 	});
 
@@ -51,13 +51,13 @@ describe('evaluate_static_expr', () => {
 		assert.equal(
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
-				expressions: [{type: 'Identifier', name: 'x'}],
+				expressions: [{ type: 'Identifier', name: 'x' }],
 				quasis: [
-					{type: 'TemplateElement', tail: false, value: {cooked: 'a', raw: 'a'}},
-					{type: 'TemplateElement', tail: true, value: {cooked: 'b', raw: 'b'}},
-				],
+					{ type: 'TemplateElement', tail: false, value: { cooked: 'a', raw: 'a' } },
+					{ type: 'TemplateElement', tail: true, value: { cooked: 'b', raw: 'b' } }
+				]
 			}),
-			null,
+			null
 		);
 	});
 
@@ -66,10 +66,10 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '+',
-				left: {type: 'Literal', value: 'hello '},
-				right: {type: 'Literal', value: 'world'},
+				left: { type: 'Literal', value: 'hello ' },
+				right: { type: 'Literal', value: 'world' }
 			}),
-			'hello world',
+			'hello world'
 		);
 	});
 
@@ -81,12 +81,12 @@ describe('evaluate_static_expr', () => {
 				left: {
 					type: 'BinaryExpression',
 					operator: '+',
-					left: {type: 'Literal', value: 'a'},
-					right: {type: 'Literal', value: 'b'},
+					left: { type: 'Literal', value: 'a' },
+					right: { type: 'Literal', value: 'b' }
 				},
-				right: {type: 'Literal', value: 'c'},
+				right: { type: 'Literal', value: 'c' }
 			}),
-			'abc',
+			'abc'
 		);
 	});
 
@@ -95,10 +95,10 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '+',
-				left: {type: 'Identifier', name: 'x'},
-				right: {type: 'Literal', value: 'b'},
+				left: { type: 'Identifier', name: 'x' },
+				right: { type: 'Literal', value: 'b' }
 			}),
-			null,
+			null
 		);
 	});
 
@@ -107,10 +107,10 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '-',
-				left: {type: 'Literal', value: 'a'},
-				right: {type: 'Literal', value: 'b'},
+				left: { type: 'Literal', value: 'a' },
+				right: { type: 'Literal', value: 'b' }
 			}),
-			null,
+			null
 		);
 	});
 
@@ -119,10 +119,10 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '+',
-				left: {type: 'Literal', value: 'a'},
-				right: {type: 'Identifier', name: 'x'},
+				left: { type: 'Literal', value: 'a' },
+				right: { type: 'Identifier', name: 'x' }
 			}),
-			null,
+			null
 		);
 	});
 
@@ -131,33 +131,35 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '+',
-				left: {type: 'Literal', value: 'hello '},
+				left: { type: 'Literal', value: 'hello ' },
 				right: {
 					type: 'TemplateLiteral',
 					expressions: [],
-					quasis: [{type: 'TemplateElement', tail: true, value: {cooked: 'world', raw: 'world'}}],
-				},
+					quasis: [
+						{ type: 'TemplateElement', tail: true, value: { cooked: 'world', raw: 'world' } }
+					]
+				}
 			}),
-			'hello world',
+			'hello world'
 		);
 	});
 
 	test('returns value for empty string literal', () => {
-		assert.equal(evaluate_static_expr({type: 'Literal', value: ''}), '');
+		assert.equal(evaluate_static_expr({ type: 'Literal', value: '' }), '');
 	});
 
 	test('returns null for call expression', () => {
 		assert.equal(
 			evaluate_static_expr({
 				type: 'CallExpression',
-				callee: {type: 'Identifier', name: 'fn'},
+				callee: { type: 'Identifier', name: 'fn' }
 			} as Expression),
-			null,
+			null
 		);
 	});
 
 	test('returns null for identifier', () => {
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}), null);
+		assert.equal(evaluate_static_expr({ type: 'Identifier', name: 'x' }), null);
 	});
 
 	test('falls back to raw when cooked is null', () => {
@@ -165,9 +167,9 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
 				expressions: [],
-				quasis: [{type: 'TemplateElement', tail: true, value: {cooked: null, raw: '\\x41'}}],
+				quasis: [{ type: 'TemplateElement', tail: true, value: { cooked: null, raw: '\\x41' } }]
 			}),
-			'\\x41',
+			'\\x41'
 		);
 	});
 
@@ -176,25 +178,25 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr({
 				type: 'BinaryExpression',
 				operator: '+',
-				left: {type: 'PrivateIdentifier', name: 'x'},
-				right: {type: 'Literal', value: 'b'},
+				left: { type: 'PrivateIdentifier', name: 'x' },
+				right: { type: 'Literal', value: 'b' }
 			} as unknown as Expression),
-			null,
+			null
 		);
 	});
 
 	test('resolves identifier from bindings', () => {
 		const bindings = new Map([['x', 'hello']]);
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), 'hello');
+		assert.equal(evaluate_static_expr({ type: 'Identifier', name: 'x' }, bindings), 'hello');
 	});
 
 	test('returns null for identifier not in bindings', () => {
 		const bindings = new Map([['y', 'hello']]);
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}, bindings), null);
+		assert.equal(evaluate_static_expr({ type: 'Identifier', name: 'x' }, bindings), null);
 	});
 
 	test('returns null for identifier without bindings', () => {
-		assert.equal(evaluate_static_expr({type: 'Identifier', name: 'x'}), null);
+		assert.equal(evaluate_static_expr({ type: 'Identifier', name: 'x' }), null);
 	});
 
 	test('resolves identifier in binary concat', () => {
@@ -204,12 +206,12 @@ describe('evaluate_static_expr', () => {
 				{
 					type: 'BinaryExpression',
 					operator: '+',
-					left: {type: 'Identifier', name: 'x'},
-					right: {type: 'Literal', value: ' world'},
+					left: { type: 'Identifier', name: 'x' },
+					right: { type: 'Literal', value: ' world' }
 				},
-				bindings,
+				bindings
 			),
-			'hello world',
+			'hello world'
 		);
 	});
 
@@ -219,15 +221,15 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr(
 				{
 					type: 'TemplateLiteral',
-					expressions: [{type: 'Identifier', name: 'name'}],
+					expressions: [{ type: 'Identifier', name: 'name' }],
 					quasis: [
-						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
-						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
-					],
+						{ type: 'TemplateElement', tail: false, value: { cooked: 'hello ', raw: 'hello ' } },
+						{ type: 'TemplateElement', tail: true, value: { cooked: '!', raw: '!' } }
+					]
 				},
-				bindings,
+				bindings
 			),
-			'hello world!',
+			'hello world!'
 		);
 	});
 
@@ -237,40 +239,40 @@ describe('evaluate_static_expr', () => {
 			evaluate_static_expr(
 				{
 					type: 'TemplateLiteral',
-					expressions: [{type: 'Identifier', name: 'name'}],
+					expressions: [{ type: 'Identifier', name: 'name' }],
 					quasis: [
-						{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
-						{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
-					],
+						{ type: 'TemplateElement', tail: false, value: { cooked: 'hello ', raw: 'hello ' } },
+						{ type: 'TemplateElement', tail: true, value: { cooked: '', raw: '' } }
+					]
 				},
-				bindings,
+				bindings
 			),
-			null,
+			null
 		);
 	});
 
 	test('resolves template literal with multiple interpolations', () => {
 		const bindings = new Map([
 			['greeting', 'hello'],
-			['name', 'world'],
+			['name', 'world']
 		]);
 		assert.equal(
 			evaluate_static_expr(
 				{
 					type: 'TemplateLiteral',
 					expressions: [
-						{type: 'Identifier', name: 'greeting'},
-						{type: 'Identifier', name: 'name'},
+						{ type: 'Identifier', name: 'greeting' },
+						{ type: 'Identifier', name: 'name' }
 					],
 					quasis: [
-						{type: 'TemplateElement', tail: false, value: {cooked: '', raw: ''}},
-						{type: 'TemplateElement', tail: false, value: {cooked: ' ', raw: ' '}},
-						{type: 'TemplateElement', tail: true, value: {cooked: '!', raw: '!'}},
-					],
+						{ type: 'TemplateElement', tail: false, value: { cooked: '', raw: '' } },
+						{ type: 'TemplateElement', tail: false, value: { cooked: ' ', raw: ' ' } },
+						{ type: 'TemplateElement', tail: true, value: { cooked: '!', raw: '!' } }
+					]
 				},
-				bindings,
+				bindings
 			),
-			'hello world!',
+			'hello world!'
 		);
 	});
 
@@ -278,13 +280,13 @@ describe('evaluate_static_expr', () => {
 		assert.equal(
 			evaluate_static_expr({
 				type: 'TemplateLiteral',
-				expressions: [{type: 'Literal', value: 'world'}],
+				expressions: [{ type: 'Literal', value: 'world' }],
 				quasis: [
-					{type: 'TemplateElement', tail: false, value: {cooked: 'hello ', raw: 'hello '}},
-					{type: 'TemplateElement', tail: true, value: {cooked: '', raw: ''}},
-				],
+					{ type: 'TemplateElement', tail: false, value: { cooked: 'hello ', raw: 'hello ' } },
+					{ type: 'TemplateElement', tail: true, value: { cooked: '', raw: '' } }
+				]
 			}),
-			'hello world',
+			'hello world'
 		);
 	});
 });
@@ -295,11 +297,11 @@ describe('extract_static_string', () => {
 	});
 
 	test('returns text data for single Text array', () => {
-		assert.equal(extract_static_string([{type: 'Text', data: 'hello'}] as any), 'hello');
+		assert.equal(extract_static_string([{ type: 'Text', data: 'hello' }] as any), 'hello');
 	});
 
 	test('returns empty string for single empty Text', () => {
-		assert.equal(extract_static_string([{type: 'Text', data: ''}] as any), '');
+		assert.equal(extract_static_string([{ type: 'Text', data: '' }] as any), '');
 	});
 
 	test('returns null for empty array', () => {
@@ -309,10 +311,10 @@ describe('extract_static_string', () => {
 	test('returns null for mixed Text and ExpressionTag', () => {
 		assert.equal(
 			extract_static_string([
-				{type: 'Text', data: 'a '},
-				{type: 'ExpressionTag', expression: {type: 'Identifier', name: 'x'}},
+				{ type: 'Text', data: 'a ' },
+				{ type: 'ExpressionTag', expression: { type: 'Identifier', name: 'x' } }
 			] as any),
-			null,
+			null
 		);
 	});
 
@@ -320,9 +322,9 @@ describe('extract_static_string', () => {
 		assert.equal(
 			extract_static_string({
 				type: 'ExpressionTag',
-				expression: {type: 'Literal', value: 'hello'},
+				expression: { type: 'Literal', value: 'hello' }
 			} as any),
-			'hello',
+			'hello'
 		);
 	});
 
@@ -330,9 +332,9 @@ describe('extract_static_string', () => {
 		assert.equal(
 			extract_static_string({
 				type: 'ExpressionTag',
-				expression: {type: 'Literal', value: null},
+				expression: { type: 'Literal', value: null }
 			} as any),
-			null,
+			null
 		);
 	});
 
@@ -340,19 +342,19 @@ describe('extract_static_string', () => {
 		assert.equal(
 			extract_static_string({
 				type: 'ExpressionTag',
-				expression: {type: 'Identifier', name: 'x'},
+				expression: { type: 'Identifier', name: 'x' }
 			} as any),
-			null,
+			null
 		);
 	});
 
 	test('returns null for array with multiple Text nodes', () => {
 		assert.equal(
 			extract_static_string([
-				{type: 'Text', data: 'a'},
-				{type: 'Text', data: 'b'},
+				{ type: 'Text', data: 'a' },
+				{ type: 'Text', data: 'b' }
 			] as any),
-			null,
+			null
 		);
 	});
 
@@ -362,9 +364,9 @@ describe('extract_static_string', () => {
 	test('returns null for array with single ExpressionTag', () => {
 		assert.equal(
 			extract_static_string([
-				{type: 'ExpressionTag', expression: {type: 'Literal', value: 'hello'}},
+				{ type: 'ExpressionTag', expression: { type: 'Literal', value: 'hello' } }
 			] as any),
-			null,
+			null
 		);
 	});
 
@@ -375,11 +377,11 @@ describe('extract_static_string', () => {
 				expression: {
 					type: 'BinaryExpression',
 					operator: '+',
-					left: {type: 'Literal', value: 'hello '},
-					right: {type: 'Literal', value: 'world'},
-				},
+					left: { type: 'Literal', value: 'hello ' },
+					right: { type: 'Literal', value: 'world' }
+				}
 			} as any),
-			'hello world',
+			'hello world'
 		);
 	});
 
@@ -389,11 +391,11 @@ describe('extract_static_string', () => {
 			extract_static_string(
 				{
 					type: 'ExpressionTag',
-					expression: {type: 'Identifier', name: 'msg'},
+					expression: { type: 'Identifier', name: 'msg' }
 				} as any,
-				bindings,
+				bindings
 			),
-			'hello',
+			'hello'
 		);
 	});
 
@@ -401,9 +403,9 @@ describe('extract_static_string', () => {
 		assert.equal(
 			extract_static_string({
 				type: 'ExpressionTag',
-				expression: {type: 'Identifier', name: 'msg'},
+				expression: { type: 'Identifier', name: 'msg' }
 			} as any),
-			null,
+			null
 		);
 	});
 });
@@ -414,7 +416,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const msg = 'hello';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('msg'), 'hello');
@@ -425,7 +427,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const msg = \`hello world\`;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('msg'), 'hello world');
@@ -437,7 +439,7 @@ describe('build_static_bindings', () => {
 	const a = 'hello';
 	const b = a;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('a'), 'hello');
@@ -450,7 +452,7 @@ describe('build_static_bindings', () => {
 	const prefix = 'hello';
 	const msg = prefix + ' world';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('msg'), 'hello world');
@@ -462,7 +464,7 @@ describe('build_static_bindings', () => {
 	const name = 'world';
 	const msg = \`hello \${name}\`;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('msg'), 'hello world');
@@ -473,7 +475,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	let msg = 'hello';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('msg'), false);
@@ -484,7 +486,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const el = document.getElementById('x');
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('el'), false);
@@ -495,7 +497,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const {a} = {a: 'hello'};
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('a'), false);
@@ -507,7 +509,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	declare const x: string;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('x'), false);
@@ -518,7 +520,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const x = 42;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('x'), false);
@@ -532,7 +534,7 @@ describe('build_static_bindings', () => {
 <script lang="ts">
 	const b = 'from instance';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('a'), 'from module');
@@ -540,7 +542,7 @@ describe('build_static_bindings', () => {
 	});
 
 	test('returns empty map when no scripts', () => {
-		const ast = parse(`<p>No script</p>`, {modern: true});
+		const ast = parse(`<p>No script</p>`, { modern: true });
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.size, 0);
 	});
@@ -552,7 +554,7 @@ describe('build_static_bindings', () => {
 	const msg = 'hello';
 	function fn() { return 'world'; }
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.size, 1);
@@ -565,7 +567,7 @@ describe('build_static_bindings', () => {
 	const a = b;
 	const b = 'hello';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('a'), false);
@@ -577,7 +579,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const a = 'hello', b = 'world';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('a'), 'hello');
@@ -591,7 +593,7 @@ describe('build_static_bindings', () => {
 	const last = 'world';
 	const msg = \`\${first} \${last}!\`;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('msg'), 'hello world!');
@@ -602,7 +604,7 @@ describe('build_static_bindings', () => {
 			`<script lang="ts">
 	const msg = $state('hello');
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.has('msg'), false);
@@ -614,7 +616,7 @@ describe('build_static_bindings', () => {
 	const base = 'hello';
 	const msg = $derived(base + ' world');
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const bindings = build_static_bindings(ast);
 		assert.equal(bindings.get('base'), 'hello');
@@ -626,9 +628,9 @@ describe('find_attribute', () => {
 	test('finds attribute by name', () => {
 		const node = {
 			attributes: [
-				{type: 'Attribute', name: 'content', value: 'test'},
-				{type: 'Attribute', name: 'class', value: 'foo'},
-			],
+				{ type: 'Attribute', name: 'content', value: 'test' },
+				{ type: 'Attribute', name: 'class', value: 'foo' }
+			]
 		} as any;
 		const result = find_attribute(node, 'content');
 		assert.equal(result?.name, 'content');
@@ -636,7 +638,7 @@ describe('find_attribute', () => {
 
 	test('returns undefined when attribute not found', () => {
 		const node = {
-			attributes: [{type: 'Attribute', name: 'class', value: 'foo'}],
+			attributes: [{ type: 'Attribute', name: 'class', value: 'foo' }]
 		} as any;
 		assert.equal(find_attribute(node, 'content'), undefined);
 	});
@@ -644,25 +646,25 @@ describe('find_attribute', () => {
 	test('skips SpreadAttribute nodes', () => {
 		const node = {
 			attributes: [
-				{type: 'SpreadAttribute', expression: {}},
-				{type: 'Attribute', name: 'content', value: 'test'},
-			],
+				{ type: 'SpreadAttribute', expression: {} },
+				{ type: 'Attribute', name: 'content', value: 'test' }
+			]
 		} as any;
 		const result = find_attribute(node, 'content');
 		assert.equal(result?.name, 'content');
 	});
 
 	test('returns undefined for empty attributes array', () => {
-		const node = {attributes: []} as any;
+		const node = { attributes: [] } as any;
 		assert.equal(find_attribute(node, 'content'), undefined);
 	});
 
 	test('skips directive nodes', () => {
 		const node = {
 			attributes: [
-				{type: 'BindDirective', name: 'value'},
-				{type: 'Attribute', name: 'content', value: 'test'},
-			],
+				{ type: 'BindDirective', name: 'value' },
+				{ type: 'Attribute', name: 'content', value: 'test' }
+			]
 		} as any;
 		const result = find_attribute(node, 'content');
 		assert.equal(result?.name, 'content');
@@ -672,37 +674,37 @@ describe('find_attribute', () => {
 describe('generate_import_lines', () => {
 	test('generates single default import', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['DocsLink', {path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default'}],
+			['DocsLink', { path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports),
-			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';",
+			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';"
 		);
 	});
 
 	test('generates single named import', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['resolve', {path: '$app/paths', kind: 'named'}],
+			['resolve', { path: '$app/paths', kind: 'named' }]
 		]);
 		assert.equal(generate_import_lines(imports), "\timport {resolve} from '$app/paths';");
 	});
 
 	test('groups multiple named imports from same path', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['resolve', {path: '$app/paths', kind: 'named'}],
-			['base', {path: '$app/paths', kind: 'named'}],
+			['resolve', { path: '$app/paths', kind: 'named' }],
+			['base', { path: '$app/paths', kind: 'named' }]
 		]);
 		assert.equal(generate_import_lines(imports), "\timport {resolve, base} from '$app/paths';");
 	});
 
 	test('handles mixed default and named imports', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['DocsLink', {path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default'}],
-			['resolve', {path: '$app/paths', kind: 'named'}],
+			['DocsLink', { path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default' }],
+			['resolve', { path: '$app/paths', kind: 'named' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports),
-			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';\n\timport {resolve} from '$app/paths';",
+			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';\n\timport {resolve} from '$app/paths';"
 		);
 	});
 
@@ -712,50 +714,50 @@ describe('generate_import_lines', () => {
 
 	test('generates multiple default imports on separate lines', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['DocsLink', {path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default'}],
-			['Code', {path: '@fuzdev/fuz_code/Code.svelte', kind: 'default'}],
+			['DocsLink', { path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default' }],
+			['Code', { path: '@fuzdev/fuz_code/Code.svelte', kind: 'default' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports),
-			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';\n\timport Code from '@fuzdev/fuz_code/Code.svelte';",
+			"\timport DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';\n\timport Code from '@fuzdev/fuz_code/Code.svelte';"
 		);
 	});
 
 	test('generates separate lines for named imports from different paths', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['resolve', {path: '$app/paths', kind: 'named'}],
-			['getContext', {path: 'svelte', kind: 'named'}],
+			['resolve', { path: '$app/paths', kind: 'named' }],
+			['getContext', { path: 'svelte', kind: 'named' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports),
-			"\timport {resolve} from '$app/paths';\n\timport {getContext} from 'svelte';",
+			"\timport {resolve} from '$app/paths';\n\timport {getContext} from 'svelte';"
 		);
 	});
 
 	test('uses custom indent for default import', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['DocsLink', {path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default'}],
+			['DocsLink', { path: '@fuzdev/fuz_ui/DocsLink.svelte', kind: 'default' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports, '  '),
-			"  import DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';",
+			"  import DocsLink from '@fuzdev/fuz_ui/DocsLink.svelte';"
 		);
 	});
 
 	test('uses custom indent for named imports', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['resolve', {path: '$app/paths', kind: 'named'}],
-			['base', {path: '$app/paths', kind: 'named'}],
+			['resolve', { path: '$app/paths', kind: 'named' }],
+			['base', { path: '$app/paths', kind: 'named' }]
 		]);
 		assert.equal(
 			generate_import_lines(imports, '    '),
-			"    import {resolve, base} from '$app/paths';",
+			"    import {resolve, base} from '$app/paths';"
 		);
 	});
 
 	test('uses empty indent', () => {
 		const imports: Map<string, PreprocessImportInfo> = new Map([
-			['resolve', {path: '$app/paths', kind: 'named'}],
+			['resolve', { path: '$app/paths', kind: 'named' }]
 		]);
 		assert.equal(generate_import_lines(imports, ''), "import {resolve} from '$app/paths';");
 	});
@@ -764,7 +766,7 @@ describe('generate_import_lines', () => {
 describe('resolve_component_names', () => {
 	test('resolves default import', () => {
 		const ast = parse(`<script lang="ts">import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
-			modern: true,
+			modern: true
 		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -774,7 +776,7 @@ describe('resolve_component_names', () => {
 	test('resolves renamed default import', () => {
 		const ast = parse(
 			`<script lang="ts">import Markdown from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Markdown'));
@@ -782,13 +784,15 @@ describe('resolve_component_names', () => {
 	});
 
 	test('returns empty map for unrelated import', () => {
-		const ast = parse(`<script lang="ts">import Foo from './Foo.svelte';</script>`, {modern: true});
+		const ast = parse(`<script lang="ts">import Foo from './Foo.svelte';</script>`, {
+			modern: true
+		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
 	});
 
 	test('returns empty map when no script', () => {
-		const ast = parse(`<p>No script</p>`, {modern: true});
+		const ast = parse(`<p>No script</p>`, { modern: true });
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
 	});
@@ -799,7 +803,7 @@ describe('resolve_component_names', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	import Markdown from '$lib/Mdz.svelte';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte', '$lib/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -810,7 +814,7 @@ describe('resolve_component_names', () => {
 	test('ignores namespace imports', () => {
 		const ast = parse(
 			`<script lang="ts">import * as Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
@@ -822,7 +826,7 @@ describe('resolve_component_names', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	import Foo from './Foo.svelte';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -832,7 +836,7 @@ describe('resolve_component_names', () => {
 
 	test('returns import node references', () => {
 		const ast = parse(`<script lang="ts">import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
-			modern: true,
+			modern: true
 		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		const info = names.get('Mdz');
@@ -843,7 +847,7 @@ describe('resolve_component_names', () => {
 
 	test('resolves named import', () => {
 		const ast = parse(`<script lang="ts">import {Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
-			modern: true,
+			modern: true
 		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -853,7 +857,7 @@ describe('resolve_component_names', () => {
 	test('resolves aliased named import', () => {
 		const ast = parse(
 			`<script lang="ts">import {default as Markdown} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Markdown'));
@@ -862,7 +866,7 @@ describe('resolve_component_names', () => {
 
 	test('resolves import from module script', () => {
 		const ast = parse(`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
-			modern: true,
+			modern: true
 		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -872,7 +876,7 @@ describe('resolve_component_names', () => {
 	test('resolves multiple specifiers from same import', () => {
 		const ast = parse(
 			`<script lang="ts">import Mdz, {helper} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -884,7 +888,7 @@ describe('resolve_component_names', () => {
 
 	test('returns empty map for side-effect-only import with no specifiers', () => {
 		const ast = parse(`<script lang="ts">import '@fuzdev/fuz_ui/Mdz.svelte';</script>`, {
-			modern: true,
+			modern: true
 		});
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
@@ -894,11 +898,11 @@ describe('resolve_component_names', () => {
 		const ast = parse(
 			`<script module>import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>
 <script lang="ts">import Code from '@fuzdev/fuz_code/Code.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, [
 			'@fuzdev/fuz_ui/Mdz.svelte',
-			'@fuzdev/fuz_code/Code.svelte',
+			'@fuzdev/fuz_code/Code.svelte'
 		]);
 		assert.ok(names.has('Mdz'));
 		assert.ok(names.has('Code'));
@@ -908,7 +912,7 @@ describe('resolve_component_names', () => {
 	test('skips import type declaration', () => {
 		const ast = parse(
 			`<script lang="ts">import type Mdz from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
@@ -917,7 +921,7 @@ describe('resolve_component_names', () => {
 	test('skips type specifier in mixed import', () => {
 		const ast = parse(
 			`<script lang="ts">import Mdz, {type MdzNode} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
@@ -928,7 +932,7 @@ describe('resolve_component_names', () => {
 	test('skips import type with aliased specifier', () => {
 		const ast = parse(
 			`<script lang="ts">import type {default as Mdz} from '@fuzdev/fuz_ui/Mdz.svelte';</script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte']);
 		assert.equal(names.size, 0);
@@ -942,7 +946,7 @@ describe('find_import_insert_position', () => {
 	import {resolve} from '$app/paths';
 	const x = 1;
 </script>`;
-		const ast = parse(source, {modern: true});
+		const ast = parse(source, { modern: true });
 		const pos = find_import_insert_position(ast.instance!);
 		// Position should be immediately after the last import's semicolon
 		const last_import_end = source.indexOf("from '$app/paths';") + "from '$app/paths';".length;
@@ -953,7 +957,7 @@ describe('find_import_insert_position', () => {
 		const source = `<script lang="ts">
 	const x = 1;
 </script>`;
-		const ast = parse(source, {modern: true});
+		const ast = parse(source, { modern: true });
 		const pos = find_import_insert_position(ast.instance!);
 		assert.equal(pos, (ast.instance!.content as any).start);
 	});
@@ -963,7 +967,7 @@ describe('find_import_insert_position', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	const x = 1;
 </script>`;
-		const ast = parse(source, {modern: true});
+		const ast = parse(source, { modern: true });
 		const pos = find_import_insert_position(ast.instance!);
 		const import_end =
 			source.indexOf("from '@fuzdev/fuz_ui/Mdz.svelte';") +
@@ -977,7 +981,7 @@ describe('find_import_insert_position', () => {
 	const x = 1;
 	import {resolve} from '$app/paths';
 </script>`;
-		const ast = parse(source, {modern: true});
+		const ast = parse(source, { modern: true });
 		const pos = find_import_insert_position(ast.instance!);
 		// Should return end of the last import, even though there's a statement in between
 		const last_import_end = source.indexOf("from '$app/paths';") + "from '$app/paths';".length;
@@ -1007,19 +1011,19 @@ describe('has_identifier_in_tree', () => {
 	});
 
 	test('returns false for empty object', () => {
-		assert.equal(has_identifier_in_tree({type: 'Program', body: []}, 'Mdz'), false);
+		assert.equal(has_identifier_in_tree({ type: 'Program', body: [] }, 'Mdz'), false);
 	});
 
 	test('returns true for direct identifier match', () => {
-		assert.equal(has_identifier_in_tree({type: 'Identifier', name: 'Mdz'}, 'Mdz'), true);
+		assert.equal(has_identifier_in_tree({ type: 'Identifier', name: 'Mdz' }, 'Mdz'), true);
 	});
 
 	test('returns false for different identifier name', () => {
-		assert.equal(has_identifier_in_tree({type: 'Identifier', name: 'Foo'}, 'Mdz'), false);
+		assert.equal(has_identifier_in_tree({ type: 'Identifier', name: 'Foo' }, 'Mdz'), false);
 	});
 
 	test('returns false for string literal with matching value', () => {
-		assert.equal(has_identifier_in_tree({type: 'Literal', value: 'Mdz'}, 'Mdz'), false);
+		assert.equal(has_identifier_in_tree({ type: 'Literal', value: 'Mdz' }, 'Mdz'), false);
 	});
 
 	test('finds identifier in variable declaration init', () => {
@@ -1028,10 +1032,10 @@ describe('has_identifier_in_tree', () => {
 			declarations: [
 				{
 					type: 'VariableDeclarator',
-					id: {type: 'Identifier', name: 'X'},
-					init: {type: 'Identifier', name: 'Mdz'},
-				},
-			],
+					id: { type: 'Identifier', name: 'X' },
+					init: { type: 'Identifier', name: 'Mdz' }
+				}
+			]
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1039,8 +1043,8 @@ describe('has_identifier_in_tree', () => {
 	test('finds identifier in function call argument', () => {
 		const node = {
 			type: 'CallExpression',
-			callee: {type: 'Identifier', name: 'fn'},
-			arguments: [{type: 'Identifier', name: 'Mdz'}],
+			callee: { type: 'Identifier', name: 'fn' },
+			arguments: [{ type: 'Identifier', name: 'Mdz' }]
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1048,8 +1052,8 @@ describe('has_identifier_in_tree', () => {
 	test('finds identifier in member expression object', () => {
 		const node = {
 			type: 'MemberExpression',
-			object: {type: 'Identifier', name: 'Mdz'},
-			property: {type: 'Identifier', name: 'foo'},
+			object: { type: 'Identifier', name: 'Mdz' },
+			property: { type: 'Identifier', name: 'foo' }
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1057,8 +1061,8 @@ describe('has_identifier_in_tree', () => {
 	test('finds identifier in assignment right side', () => {
 		const node = {
 			type: 'AssignmentExpression',
-			left: {type: 'Identifier', name: 'X'},
-			right: {type: 'Identifier', name: 'Mdz'},
+			left: { type: 'Identifier', name: 'X' },
+			right: { type: 'Identifier', name: 'Mdz' }
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1068,15 +1072,15 @@ describe('has_identifier_in_tree', () => {
 			type: 'ExpressionStatement',
 			expression: {
 				type: 'CallExpression',
-				callee: {type: 'Identifier', name: 'outer'},
+				callee: { type: 'Identifier', name: 'outer' },
 				arguments: [
 					{
 						type: 'CallExpression',
-						callee: {type: 'Identifier', name: 'inner'},
-						arguments: [{type: 'Identifier', name: 'Mdz'}],
-					},
-				],
-			},
+						callee: { type: 'Identifier', name: 'inner' },
+						arguments: [{ type: 'Identifier', name: 'Mdz' }]
+					}
+				]
+			}
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1084,16 +1088,16 @@ describe('has_identifier_in_tree', () => {
 	test('skips nodes in the skip set', () => {
 		const import_node = {
 			type: 'ImportDeclaration',
-			specifiers: [{type: 'ImportDefaultSpecifier', local: {type: 'Identifier', name: 'Mdz'}}],
-			source: {type: 'Literal', value: '@fuzdev/fuz_ui/Mdz.svelte'},
+			specifiers: [{ type: 'ImportDefaultSpecifier', local: { type: 'Identifier', name: 'Mdz' } }],
+			source: { type: 'Literal', value: '@fuzdev/fuz_ui/Mdz.svelte' }
 		};
 		assert.equal(has_identifier_in_tree(import_node, 'Mdz', new Set([import_node])), false);
 	});
 
 	test('finds identifier in array elements', () => {
 		const node = [
-			{type: 'Identifier', name: 'Foo'},
-			{type: 'Identifier', name: 'Mdz'},
+			{ type: 'Identifier', name: 'Foo' },
+			{ type: 'Identifier', name: 'Mdz' }
 		];
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1107,9 +1111,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for non-computed member property (obj.Mdz)', () => {
 		const node = {
 			type: 'MemberExpression',
-			object: {type: 'Identifier', name: 'obj'},
-			property: {type: 'Identifier', name: 'Mdz'},
-			computed: false,
+			object: { type: 'Identifier', name: 'obj' },
+			property: { type: 'Identifier', name: 'Mdz' },
+			computed: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1117,10 +1121,10 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for non-computed object key ({ Mdz: 123 })', () => {
 		const node = {
 			type: 'Property',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Literal', value: 123},
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Literal', value: 123 },
 			computed: false,
-			shorthand: false,
+			shorthand: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1128,10 +1132,10 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for non-computed destructuring key ({ Mdz: x } = obj)', () => {
 		const node = {
 			type: 'Property',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Identifier', name: 'x'},
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Identifier', name: 'x' },
 			computed: false,
-			shorthand: false,
+			shorthand: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1139,9 +1143,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for non-computed method name (class { Mdz() {} })', () => {
 		const node = {
 			type: 'MethodDefinition',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'FunctionExpression', body: {type: 'BlockStatement', body: []}},
-			computed: false,
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'FunctionExpression', body: { type: 'BlockStatement', body: [] } },
+			computed: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1149,8 +1153,8 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for labeled statement (Mdz: for(;;){})', () => {
 		const node = {
 			type: 'LabeledStatement',
-			label: {type: 'Identifier', name: 'Mdz'},
-			body: {type: 'ForStatement', body: {type: 'BlockStatement', body: []}},
+			label: { type: 'Identifier', name: 'Mdz' },
+			body: { type: 'ForStatement', body: { type: 'BlockStatement', body: [] } }
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1158,7 +1162,7 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for break statement label (break Mdz)', () => {
 		const node = {
 			type: 'BreakStatement',
-			label: {type: 'Identifier', name: 'Mdz'},
+			label: { type: 'Identifier', name: 'Mdz' }
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1166,7 +1170,7 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for continue statement label (continue Mdz)', () => {
 		const node = {
 			type: 'ContinueStatement',
-			label: {type: 'Identifier', name: 'Mdz'},
+			label: { type: 'Identifier', name: 'Mdz' }
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1174,9 +1178,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns false for non-computed class field (class { Mdz = 1 })', () => {
 		const node = {
 			type: 'PropertyDefinition',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Literal', value: 1},
-			computed: false,
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Literal', value: 1 },
+			computed: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), false);
 	});
@@ -1184,9 +1188,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns true for computed class field (class { [Mdz] = 1 })', () => {
 		const node = {
 			type: 'PropertyDefinition',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Literal', value: 1},
-			computed: true,
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Literal', value: 1 },
+			computed: true
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1196,9 +1200,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns true for computed member property (obj[Mdz])', () => {
 		const node = {
 			type: 'MemberExpression',
-			object: {type: 'Identifier', name: 'obj'},
-			property: {type: 'Identifier', name: 'Mdz'},
-			computed: true,
+			object: { type: 'Identifier', name: 'obj' },
+			property: { type: 'Identifier', name: 'Mdz' },
+			computed: true
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1206,10 +1210,10 @@ describe('has_identifier_in_tree', () => {
 	test('returns true for computed object key ({ [Mdz]: 123 })', () => {
 		const node = {
 			type: 'Property',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Literal', value: 123},
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Literal', value: 123 },
 			computed: true,
-			shorthand: false,
+			shorthand: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1217,10 +1221,10 @@ describe('has_identifier_in_tree', () => {
 	test('returns true for shorthand property ({ Mdz })', () => {
 		const node = {
 			type: 'Property',
-			key: {type: 'Identifier', name: 'Mdz'},
-			value: {type: 'Identifier', name: 'Mdz'},
+			key: { type: 'Identifier', name: 'Mdz' },
+			value: { type: 'Identifier', name: 'Mdz' },
 			computed: false,
-			shorthand: true,
+			shorthand: true
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1228,9 +1232,9 @@ describe('has_identifier_in_tree', () => {
 	test('returns true for member expression object (Mdz.foo)', () => {
 		const node = {
 			type: 'MemberExpression',
-			object: {type: 'Identifier', name: 'Mdz'},
-			property: {type: 'Identifier', name: 'foo'},
-			computed: false,
+			object: { type: 'Identifier', name: 'Mdz' },
+			property: { type: 'Identifier', name: 'foo' },
+			computed: false
 		};
 		assert.equal(has_identifier_in_tree(node, 'Mdz'), true);
 	});
@@ -1302,7 +1306,7 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 </script>
 
 {Mdz}`,
-			{modern: true},
+			{ modern: true }
 		);
 		assert.equal(has_identifier_in_tree(ast.fragment, 'Mdz'), true);
 	});
@@ -1315,7 +1319,7 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 </script>
 
 <Foo comp={Mdz} />`,
-			{modern: true},
+			{ modern: true }
 		);
 		assert.equal(has_identifier_in_tree(ast.fragment, 'Mdz'), true);
 	});
@@ -1327,7 +1331,7 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 </script>
 
 {#if Mdz}yes{/if}`,
-			{modern: true},
+			{ modern: true }
 		);
 		assert.equal(has_identifier_in_tree(ast.fragment, 'Mdz'), true);
 	});
@@ -1339,7 +1343,7 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 </script>
 
 <Mdz content="text" />`,
-			{modern: true},
+			{ modern: true }
 		);
 		assert.equal(has_identifier_in_tree(ast.fragment, 'Mdz'), false);
 	});
@@ -1350,12 +1354,12 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	const X = Mdz;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const import_node = ast.instance!.content.body[0];
 		assert.equal(
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
-			true,
+			true
 		);
 	});
 
@@ -1364,12 +1368,12 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 			`<script lang="ts">
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const import_node = ast.instance!.content.body[0];
 		assert.equal(
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
-			false,
+			false
 		);
 	});
 
@@ -1379,12 +1383,12 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	const x = obj.Mdz;
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const import_node = ast.instance!.content.body[0];
 		assert.equal(
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
-			false,
+			false
 		);
 	});
 
@@ -1394,12 +1398,12 @@ describe('has_identifier_in_tree with parsed Svelte ASTs', () => {
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
 	const x = obj[Mdz];
 </script>`,
-			{modern: true},
+			{ modern: true }
 		);
 		const import_node = ast.instance!.content.body[0];
 		assert.equal(
 			has_identifier_in_tree(ast.instance!.content, 'Mdz', new Set([import_node])),
-			true,
+			true
 		);
 	});
 });
@@ -1411,19 +1415,19 @@ describe('try_extract_conditional_chain', () => {
 
 	test('returns null for array value', () => {
 		assert.equal(
-			try_extract_conditional_chain([{type: 'Text', data: 'hello'}] as any, '', new Map()),
-			null,
+			try_extract_conditional_chain([{ type: 'Text', data: 'hello' }] as any, '', new Map()),
+			null
 		);
 	});
 
 	test('returns null for non-conditional expression', () => {
 		assert.equal(
 			try_extract_conditional_chain(
-				{type: 'ExpressionTag', expression: {type: 'Literal', value: 'hello'}} as any,
+				{ type: 'ExpressionTag', expression: { type: 'Literal', value: 'hello' } } as any,
 				'hello',
-				new Map(),
+				new Map()
 			),
-			null,
+			null
 		);
 	});
 
@@ -1434,13 +1438,13 @@ describe('try_extract_conditional_chain', () => {
 				type: 'ExpressionTag',
 				expression: {
 					type: 'ConditionalExpression',
-					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
-					consequent: {type: 'Literal', value: 'yes'},
-					alternate: {type: 'Literal', value: 'no'},
-				},
+					test: { type: 'Identifier', name: 'show', start: 0, end: 4 },
+					consequent: { type: 'Literal', value: 'yes' },
+					alternate: { type: 'Literal', value: 'no' }
+				}
 			} as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.ok(result !== null);
 		assert.equal(result.length, 2);
@@ -1457,18 +1461,18 @@ describe('try_extract_conditional_chain', () => {
 				type: 'ExpressionTag',
 				expression: {
 					type: 'ConditionalExpression',
-					test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-					consequent: {type: 'Literal', value: 'x'},
+					test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+					consequent: { type: 'Literal', value: 'x' },
 					alternate: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'b', start: 10, end: 11},
-						consequent: {type: 'Literal', value: 'y'},
-						alternate: {type: 'Literal', value: 'z'},
-					},
-				},
+						test: { type: 'Identifier', name: 'b', start: 10, end: 11 },
+						consequent: { type: 'Literal', value: 'y' },
+						alternate: { type: 'Literal', value: 'z' }
+					}
+				}
 			} as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.ok(result !== null);
 		assert.equal(result.length, 3);
@@ -1487,23 +1491,23 @@ describe('try_extract_conditional_chain', () => {
 				type: 'ExpressionTag',
 				expression: {
 					type: 'ConditionalExpression',
-					test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-					consequent: {type: 'Literal', value: 'w'},
+					test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+					consequent: { type: 'Literal', value: 'w' },
 					alternate: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'b', start: 10, end: 11},
-						consequent: {type: 'Literal', value: 'x'},
+						test: { type: 'Identifier', name: 'b', start: 10, end: 11 },
+						consequent: { type: 'Literal', value: 'x' },
 						alternate: {
 							type: 'ConditionalExpression',
-							test: {type: 'Identifier', name: 'c', start: 20, end: 21},
-							consequent: {type: 'Literal', value: 'y'},
-							alternate: {type: 'Literal', value: 'z'},
-						},
-					},
-				},
+							test: { type: 'Identifier', name: 'c', start: 20, end: 21 },
+							consequent: { type: 'Literal', value: 'y' },
+							alternate: { type: 'Literal', value: 'z' }
+						}
+					}
+				}
 			} as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.ok(result !== null);
 		assert.equal(result.length, 4);
@@ -1525,20 +1529,20 @@ describe('try_extract_conditional_chain', () => {
 					type: 'ExpressionTag',
 					expression: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-						consequent: {type: 'Literal', value: 'x'},
+						test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+						consequent: { type: 'Literal', value: 'x' },
 						alternate: {
 							type: 'ConditionalExpression',
-							test: {type: 'Identifier', name: 'b', start: 10, end: 11},
-							consequent: {type: 'Identifier', name: 'dynamic'},
-							alternate: {type: 'Literal', value: 'z'},
-						},
-					},
+							test: { type: 'Identifier', name: 'b', start: 10, end: 11 },
+							consequent: { type: 'Identifier', name: 'dynamic' },
+							alternate: { type: 'Literal', value: 'z' }
+						}
+					}
 				} as any,
 				source,
-				new Map(),
+				new Map()
 			),
-			null,
+			null
 		);
 	});
 
@@ -1550,15 +1554,15 @@ describe('try_extract_conditional_chain', () => {
 					type: 'ExpressionTag',
 					expression: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-						consequent: {type: 'Identifier', name: 'dynamic'},
-						alternate: {type: 'Literal', value: 'z'},
-					},
+						test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+						consequent: { type: 'Identifier', name: 'dynamic' },
+						alternate: { type: 'Literal', value: 'z' }
+					}
 				} as any,
 				source,
-				new Map(),
+				new Map()
 			),
-			null,
+			null
 		);
 	});
 
@@ -1570,20 +1574,20 @@ describe('try_extract_conditional_chain', () => {
 					type: 'ExpressionTag',
 					expression: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-						consequent: {type: 'Literal', value: 'x'},
+						test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+						consequent: { type: 'Literal', value: 'x' },
 						alternate: {
 							type: 'ConditionalExpression',
-							test: {type: 'Identifier', name: 'b', start: 10, end: 11},
-							consequent: {type: 'Literal', value: 'y'},
-							alternate: {type: 'Identifier', name: 'dynamic'},
-						},
-					},
+							test: { type: 'Identifier', name: 'b', start: 10, end: 11 },
+							consequent: { type: 'Literal', value: 'y' },
+							alternate: { type: 'Identifier', name: 'dynamic' }
+						}
+					}
 				} as any,
 				source,
-				new Map(),
+				new Map()
 			),
-			null,
+			null
 		);
 	});
 
@@ -1592,25 +1596,25 @@ describe('try_extract_conditional_chain', () => {
 		const bindings = new Map([
 			['A', 'alpha'],
 			['B', 'beta'],
-			['C', 'gamma'],
+			['C', 'gamma']
 		]);
 		const result = try_extract_conditional_chain(
 			{
 				type: 'ExpressionTag',
 				expression: {
 					type: 'ConditionalExpression',
-					test: {type: 'Identifier', name: 'a', start: 0, end: 1},
-					consequent: {type: 'Identifier', name: 'A'},
+					test: { type: 'Identifier', name: 'a', start: 0, end: 1 },
+					consequent: { type: 'Identifier', name: 'A' },
 					alternate: {
 						type: 'ConditionalExpression',
-						test: {type: 'Identifier', name: 'b', start: 8, end: 9},
-						consequent: {type: 'Identifier', name: 'B'},
-						alternate: {type: 'Identifier', name: 'C'},
-					},
-				},
+						test: { type: 'Identifier', name: 'b', start: 8, end: 9 },
+						consequent: { type: 'Identifier', name: 'B' },
+						alternate: { type: 'Identifier', name: 'C' }
+					}
+				}
 			} as any,
 			source,
-			bindings,
+			bindings
 		);
 		assert.ok(result !== null);
 		assert.equal(result.length, 3);
@@ -1626,13 +1630,13 @@ describe('try_extract_conditional_chain', () => {
 				type: 'ExpressionTag',
 				expression: {
 					type: 'ConditionalExpression',
-					test: {type: 'Identifier', name: 'show', start: 0, end: 4},
-					consequent: {type: 'Literal', value: 'content'},
-					alternate: {type: 'Literal', value: ''},
-				},
+					test: { type: 'Identifier', name: 'show', start: 0, end: 4 },
+					consequent: { type: 'Literal', value: 'content' },
+					alternate: { type: 'Literal', value: '' }
+				}
 			} as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.ok(result !== null);
 		assert.equal(result.length, 2);
@@ -1645,22 +1649,22 @@ describe('try_extract_conditional_chain', () => {
 		// 9 conditions + 1 final else = 10 branches
 		const build_chain = (depth: number): any => {
 			if (depth === 0) {
-				return {type: 'Literal', value: 'v9'};
+				return { type: 'Literal', value: 'v9' };
 			}
 			const i = 9 - depth;
 			return {
 				type: 'ConditionalExpression',
-				test: {type: 'Identifier', name: `a${i}`, start: i * 10, end: i * 10 + 2},
-				consequent: {type: 'Literal', value: `v${i}`},
-				alternate: build_chain(depth - 1),
+				test: { type: 'Identifier', name: `a${i}`, start: i * 10, end: i * 10 + 2 },
+				consequent: { type: 'Literal', value: `v${i}` },
+				alternate: build_chain(depth - 1)
 			};
 		};
 		const source =
 			'a0 ? v0 : a1 ? v1 : a2 ? v2 : a3 ? v3 : a4 ? v4 : a5 ? v5 : a6 ? v6 : a7 ? v7 : a8 ? v8 : v9';
 		const result = try_extract_conditional_chain(
-			{type: 'ExpressionTag', expression: build_chain(9)} as any,
+			{ type: 'ExpressionTag', expression: build_chain(9) } as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.ok(result !== null, 'should handle exactly 10 branches');
 		assert.equal(result.length, 10);
@@ -1674,22 +1678,22 @@ describe('try_extract_conditional_chain', () => {
 		// Build an 11-branch chain: 10 conditions + 1 final else
 		const build_chain = (depth: number): any => {
 			if (depth === 0) {
-				return {type: 'Literal', value: 'v10'};
+				return { type: 'Literal', value: 'v10' };
 			}
 			const i = 10 - depth;
 			return {
 				type: 'ConditionalExpression',
-				test: {type: 'Identifier', name: `a${i}`, start: i * 10, end: i * 10 + 2},
-				consequent: {type: 'Literal', value: `v${i}`},
-				alternate: build_chain(depth - 1),
+				test: { type: 'Identifier', name: `a${i}`, start: i * 10, end: i * 10 + 2 },
+				consequent: { type: 'Literal', value: `v${i}` },
+				alternate: build_chain(depth - 1)
 			};
 		};
 		const source =
 			'a0 ? v0 : a1 ? v1 : a2 ? v2 : a3 ? v3 : a4 ? v4 : a5 ? v5 : a6 ? v6 : a7 ? v7 : a8 ? v8 : a9 ? v9 : v10';
 		const result = try_extract_conditional_chain(
-			{type: 'ExpressionTag', expression: build_chain(10)} as any,
+			{ type: 'ExpressionTag', expression: build_chain(10) } as any,
 			source,
-			new Map(),
+			new Map()
 		);
 		assert.equal(result, null, 'should return null when exceeding MAX_BRANCHES');
 	});
@@ -1699,9 +1703,9 @@ describe('remove_import_declaration', () => {
 	test('removes import and consumes surrounding whitespace', () => {
 		const source = "line_before\n\timport Foo from 'foo';\nline_after";
 		// "import Foo from 'foo';" starts at 13, ends at 35 (semicolon is at 34)
-		const node = {start: 13, end: 35} as ImportDeclaration & {start: number; end: number};
+		const node = { start: 13, end: 35 } as ImportDeclaration & { start: number; end: number };
 		const removed: Array<[number, number]> = [];
-		const s = {remove: (a: number, b: number) => removed.push([a, b])};
+		const s = { remove: (a: number, b: number) => removed.push([a, b]) };
 		remove_import_declaration(s, node, source);
 		// Should consume leading tab (pos 12) and trailing newline (pos 35)
 		assert.equal(removed.length, 1);
@@ -1713,42 +1717,42 @@ describe('remove_import_declaration', () => {
 describe('remove_import_specifier', () => {
 	test('removes default specifier from mixed import', () => {
 		const source = "\timport Mdz, {other} from '@fuzdev/fuz_ui/Mdz.svelte';";
-		const default_spec = {type: 'ImportDefaultSpecifier', local: {name: 'Mdz'}} as any;
+		const default_spec = { type: 'ImportDefaultSpecifier', local: { name: 'Mdz' } } as any;
 		const named_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'other'},
-			imported: {type: 'Identifier', name: 'other'},
+			local: { name: 'other' },
+			imported: { type: 'Identifier', name: 'other' }
 		} as any;
 		const node = {
 			start: 1,
 			end: 54,
 			specifiers: [default_spec, named_spec],
-			source: {value: '@fuzdev/fuz_ui/Mdz.svelte'},
-		} as ImportDeclaration & {start: number; end: number};
+			source: { value: '@fuzdev/fuz_ui/Mdz.svelte' }
+		} as ImportDeclaration & { start: number; end: number };
 
 		let overwritten = '';
-		const s = {overwrite: (_a: number, _b: number, content: string) => (overwritten = content)};
+		const s = { overwrite: (_a: number, _b: number, content: string) => (overwritten = content) };
 		remove_import_specifier(s, node, default_spec, source);
 		assert.equal(overwritten, "\timport {other} from '@fuzdev/fuz_ui/Mdz.svelte';");
 	});
 
 	test('removes named specifier keeping default', () => {
 		const source = "\timport Default, {Mdz} from 'source';";
-		const default_spec = {type: 'ImportDefaultSpecifier', local: {name: 'Default'}} as any;
+		const default_spec = { type: 'ImportDefaultSpecifier', local: { name: 'Default' } } as any;
 		const named_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'Mdz'},
-			imported: {type: 'Identifier', name: 'Mdz'},
+			local: { name: 'Mdz' },
+			imported: { type: 'Identifier', name: 'Mdz' }
 		} as any;
 		const node = {
 			start: 1,
 			end: 37,
 			specifiers: [default_spec, named_spec],
-			source: {value: 'source'},
-		} as ImportDeclaration & {start: number; end: number};
+			source: { value: 'source' }
+		} as ImportDeclaration & { start: number; end: number };
 
 		let overwritten = '';
-		const s = {overwrite: (_a: number, _b: number, content: string) => (overwritten = content)};
+		const s = { overwrite: (_a: number, _b: number, content: string) => (overwritten = content) };
 		remove_import_specifier(s, node, named_spec, source);
 		assert.equal(overwritten, "\timport Default from 'source';");
 	});
@@ -1757,23 +1761,23 @@ describe('remove_import_specifier', () => {
 		const source = "\timport {default as Mdz, MdzNode} from 'source';";
 		const alias_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'Mdz'},
-			imported: {type: 'Identifier', name: 'default'},
+			local: { name: 'Mdz' },
+			imported: { type: 'Identifier', name: 'default' }
 		} as any;
 		const other_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'MdzNode'},
-			imported: {type: 'Identifier', name: 'MdzNode'},
+			local: { name: 'MdzNode' },
+			imported: { type: 'Identifier', name: 'MdzNode' }
 		} as any;
 		const node = {
 			start: 1,
 			end: 48,
 			specifiers: [alias_spec, other_spec],
-			source: {value: 'source'},
-		} as ImportDeclaration & {start: number; end: number};
+			source: { value: 'source' }
+		} as ImportDeclaration & { start: number; end: number };
 
 		let overwritten = '';
-		const s = {overwrite: (_a: number, _b: number, content: string) => (overwritten = content)};
+		const s = { overwrite: (_a: number, _b: number, content: string) => (overwritten = content) };
 		remove_import_specifier(s, node, alias_spec, source);
 		assert.equal(overwritten, "\timport {MdzNode} from 'source';");
 	});
@@ -1782,44 +1786,44 @@ describe('remove_import_specifier', () => {
 		const source = "\timport {Mdz, foo as bar} from 'source';";
 		const mdz_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'Mdz'},
-			imported: {type: 'Identifier', name: 'Mdz'},
+			local: { name: 'Mdz' },
+			imported: { type: 'Identifier', name: 'Mdz' }
 		} as any;
 		const renamed_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'bar'},
-			imported: {type: 'Identifier', name: 'foo'},
+			local: { name: 'bar' },
+			imported: { type: 'Identifier', name: 'foo' }
 		} as any;
 		const node = {
 			start: 1,
 			end: 40,
 			specifiers: [mdz_spec, renamed_spec],
-			source: {value: 'source'},
-		} as ImportDeclaration & {start: number; end: number};
+			source: { value: 'source' }
+		} as ImportDeclaration & { start: number; end: number };
 
 		let overwritten = '';
-		const s = {overwrite: (_a: number, _b: number, content: string) => (overwritten = content)};
+		const s = { overwrite: (_a: number, _b: number, content: string) => (overwritten = content) };
 		remove_import_specifier(s, node, mdz_spec, source);
 		assert.equal(overwritten, "\timport {foo as bar} from 'source';");
 	});
 
 	test('appends additional_lines to overwrite', () => {
 		const source = "\timport Mdz, {other} from 'source';";
-		const default_spec = {type: 'ImportDefaultSpecifier', local: {name: 'Mdz'}} as any;
+		const default_spec = { type: 'ImportDefaultSpecifier', local: { name: 'Mdz' } } as any;
 		const named_spec = {
 			type: 'ImportSpecifier',
-			local: {name: 'other'},
-			imported: {type: 'Identifier', name: 'other'},
+			local: { name: 'other' },
+			imported: { type: 'Identifier', name: 'other' }
 		} as any;
 		const node = {
 			start: 1,
 			end: 35,
 			specifiers: [default_spec, named_spec],
-			source: {value: 'source'},
-		} as ImportDeclaration & {start: number; end: number};
+			source: { value: 'source' }
+		} as ImportDeclaration & { start: number; end: number };
 
 		let overwritten = '';
-		const s = {overwrite: (_a: number, _b: number, content: string) => (overwritten = content)};
+		const s = { overwrite: (_a: number, _b: number, content: string) => (overwritten = content) };
 		remove_import_specifier(s, node, default_spec, source, "\n\timport New from 'new';");
 		assert.equal(overwritten, "\timport {other} from 'source';\n\timport New from 'new';");
 	});

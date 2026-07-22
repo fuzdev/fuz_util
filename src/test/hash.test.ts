@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {hash_sha1, hash_sha256, hash_sha384, hash_sha512, hash_insecure} from '$lib/hash.ts';
+import { hash_sha1, hash_sha256, hash_sha384, hash_sha512, hash_insecure } from '$lib/hash.ts';
 
 // test vectors generated via WebCrypto `crypto.subtle.digest`
 // format: [input, sha1, sha256, sha384, sha512]
@@ -10,41 +10,41 @@ const vectors: Array<[string, string, string, string, string]> = [
 		'da39a3ee5e6b4b0d3255bfef95601890afd80709',
 		'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
 		'38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b',
-		'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
+		'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e'
 	],
 	[
 		'hello',
 		'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d',
 		'2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
 		'59e1748777448c69de6b800d7a33bbfb9ff1b463e44354c3553bcdb9c666fa90125a3c79f90397bdf5f6a13de828684f',
-		'9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043',
+		'9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043'
 	],
 	[
 		'hello world',
 		'2aae6c35c94fcfb415dbe95f408b9ce91ee846ed',
 		'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
 		'fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bd',
-		'309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f',
+		'309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f'
 	],
 	[
 		'abc',
 		'a9993e364706816aba3e25717850c26c9cd0d89d',
 		'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
 		'cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7',
-		'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f',
-	],
+		'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f'
+	]
 ];
 
 const webcrypto_fns = [
-	{name: 'hash_sha1', fn: hash_sha1, hex_len: 40, vector_index: 1},
-	{name: 'hash_sha256', fn: hash_sha256, hex_len: 64, vector_index: 2},
-	{name: 'hash_sha384', fn: hash_sha384, hex_len: 96, vector_index: 3},
-	{name: 'hash_sha512', fn: hash_sha512, hex_len: 128, vector_index: 4},
+	{ name: 'hash_sha1', fn: hash_sha1, hex_len: 40, vector_index: 1 },
+	{ name: 'hash_sha256', fn: hash_sha256, hex_len: 64, vector_index: 2 },
+	{ name: 'hash_sha384', fn: hash_sha384, hex_len: 96, vector_index: 3 },
+	{ name: 'hash_sha512', fn: hash_sha512, hex_len: 128, vector_index: 4 }
 ] as const;
 
 const hello_bytes = new Uint8Array([104, 101, 108, 108, 111]);
 
-describe.each(webcrypto_fns)('$name', ({fn, hex_len, vector_index}) => {
+describe.each(webcrypto_fns)('$name', ({ fn, hex_len, vector_index }) => {
 	test.each(vectors)('vector %#: %j', async (input, ...expected) => {
 		assert.strictEqual(await fn(input), expected[vector_index - 1]);
 	});
@@ -112,7 +112,7 @@ describe.each(webcrypto_fns)('$name', ({fn, hex_len, vector_index}) => {
 		const inputs = ['one', 'two', 'three', 'four', 'five'];
 		const [run1, run2] = await Promise.all([
 			Promise.all(inputs.map(fn)),
-			Promise.all(inputs.map(fn)),
+			Promise.all(inputs.map(fn))
 		]);
 		assert.deepEqual(run1, run2);
 	});
@@ -142,7 +142,7 @@ describe('hash_insecure', () => {
 		assert.strictEqual(hash_insecure(new Int8Array([104, 101, 108, 108, 111])), expected);
 		assert.strictEqual(
 			hash_insecure(new DataView(new Uint8Array([104, 101, 108, 108, 111]).buffer)),
-			expected,
+			expected
 		);
 	});
 
@@ -151,7 +151,7 @@ describe('hash_insecure', () => {
 		const slice = new Uint8Array(padded.buffer, 2, 5);
 		assert.strictEqual(
 			hash_insecure(slice),
-			hash_insecure(new Uint8Array([104, 101, 108, 108, 111])),
+			hash_insecure(new Uint8Array([104, 101, 108, 108, 111]))
 		);
 	});
 
@@ -159,7 +159,7 @@ describe('hash_insecure', () => {
 		// for ASCII, charCodeAt and UTF-8 bytes are identical
 		assert.strictEqual(
 			hash_insecure('hello'),
-			hash_insecure(new Uint8Array([104, 101, 108, 108, 111])),
+			hash_insecure(new Uint8Array([104, 101, 108, 108, 111]))
 		);
 	});
 
@@ -171,7 +171,7 @@ describe('hash_insecure', () => {
 	test('null bytes differ from empty', () => {
 		assert.notStrictEqual(
 			hash_insecure(new Uint8Array([0, 0, 0, 0])),
-			hash_insecure(new ArrayBuffer(0)),
+			hash_insecure(new ArrayBuffer(0))
 		);
 	});
 

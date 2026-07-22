@@ -1,11 +1,11 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
 import {
 	FRACTIONAL_INDEX_ALPHABET,
 	FRACTIONAL_INDEX_REGEX,
 	FRACTIONAL_INDEX_LENGTH_MAX,
 	fractional_index_between,
-	fractional_indices_between,
+	fractional_indices_between
 } from '$lib/fractional_index.ts';
 
 /** Deterministic "no jitter" source: every sample is 0 → empty jitter suffix. */
@@ -26,7 +26,7 @@ describe('alphabet', () => {
 			// strictly increasing (not just sorted) also rules out a repeated digit
 			assert.ok(
 				FRACTIONAL_INDEX_ALPHABET[i - 1]! < FRACTIONAL_INDEX_ALPHABET[i]!,
-				`monotonic at ${i}: ${FRACTIONAL_INDEX_ALPHABET[i - 1]} < ${FRACTIONAL_INDEX_ALPHABET[i]}`,
+				`monotonic at ${i}: ${FRACTIONAL_INDEX_ALPHABET[i - 1]} < ${FRACTIONAL_INDEX_ALPHABET[i]}`
 			);
 		}
 	});
@@ -52,7 +52,7 @@ describe('fractional_index_between — deterministic mids (no jitter)', () => {
 			['A', 'z'],
 			['aa', 'ab'],
 			['abc', 'abd'],
-			['V', 'W'],
+			['V', 'W']
 		];
 		for (const [a, b] of brackets) {
 			const mid = fractional_index_between(a, b, no_jitter);
@@ -78,13 +78,13 @@ describe('fractional_index_between — deterministic mids (no jitter)', () => {
 			['1', '3', '2'], // gap ≥ 2 → numeric midpoint digit
 			['a', 'b', 'aV'], // gap === 1 → keep `a[i]`, extend with mid
 			['1', '2', '1V'], // gap === 1 across digit tier
-			['a', 'aa', 'aZ'], // `a` is a strict prefix of `b` → step below b
+			['a', 'aa', 'aZ'] // `a` is a strict prefix of `b` → step below b
 		];
 		for (const [a, b, expected] of cases) {
 			assert.strictEqual(
 				fractional_index_between(a, b, no_jitter),
 				expected,
-				`(${JSON.stringify(a)}, ${JSON.stringify(b)})`,
+				`(${JSON.stringify(a)}, ${JSON.stringify(b)})`
 			);
 		}
 	});
@@ -92,7 +92,7 @@ describe('fractional_index_between — deterministic mids (no jitter)', () => {
 	test('is deterministic for a fixed bracket and random source', () => {
 		assert.strictEqual(
 			fractional_index_between('a', 'z', no_jitter),
-			fractional_index_between('a', 'z', no_jitter),
+			fractional_index_between('a', 'z', no_jitter)
 		);
 	});
 
@@ -130,7 +130,7 @@ describe('fractional_index_between — invariant violations throw', () => {
 		const at_cap = 'z'.repeat(FRACTIONAL_INDEX_LENGTH_MAX);
 		assert.throws(
 			() => fractional_index_between(at_cap, null, no_jitter),
-			/generated key exceeds length cap/,
+			/generated key exceeds length cap/
 		);
 	});
 

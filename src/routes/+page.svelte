@@ -1,11 +1,11 @@
 <script lang="ts">
 	import DocsFooter from '@fuzdev/fuz_ui/DocsFooter.svelte';
-	import {site_context} from '@fuzdev/fuz_ui/site.svelte.ts';
-	import {FUZ_DEV_URL} from '@fuzdev/fuz_ui/constants.ts';
+	import { site_context } from '@fuzdev/fuz_ui/site.svelte.ts';
+	import { FUZ_DEV_URL } from '@fuzdev/fuz_ui/constants.ts';
 	import Card from '@fuzdev/fuz_ui/Card.svelte';
 	import Svg from '@fuzdev/fuz_ui/Svg.svelte';
-	import {logo_fuz_util} from '@fuzdev/fuz_ui/logos.ts';
-	import {resolve} from '$app/paths';
+	import { logo_fuz_util } from '@fuzdev/fuz_ui/logos.ts';
+	import { resolve } from '$app/paths';
 
 	const site = site_context.get();
 </script>

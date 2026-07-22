@@ -1,7 +1,7 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {is_promise, wait} from '$lib/async.ts';
-import {benchmark_warmup} from '$lib/benchmark.ts';
+import { is_promise, wait } from '$lib/async.ts';
+import { benchmark_warmup } from '$lib/benchmark.ts';
 import {
 	timer_node,
 	timer_browser,
@@ -12,7 +12,7 @@ import {
 	time_format_adaptive,
 	time_format,
 	time_unit_detect_best,
-	type Timer,
+	type Timer
 } from '$lib/time.ts';
 
 test('is_promise: detects promises', () => {
@@ -23,7 +23,7 @@ test('is_promise: detects promises', () => {
 	assert.strictEqual(is_promise(new Promise(() => {})), true);
 
 	// True for thenables
-	assert.strictEqual(is_promise({then: () => {}}), true);
+	assert.strictEqual(is_promise({ then: () => {} }), true);
 
 	// False for non-promises
 	assert.strictEqual(is_promise(null), false);
@@ -34,7 +34,7 @@ test('is_promise: detects promises', () => {
 	assert.strictEqual(is_promise([]), false);
 	assert.strictEqual(
 		is_promise(() => {}),
-		false,
+		false
 	);
 });
 
@@ -74,7 +74,7 @@ test('time_format_adaptive: formats nanoseconds', () => {
 });
 
 test('time_sync: times synchronous function', () => {
-	const {result, timing} = time_sync(() => {
+	const { result, timing } = time_sync(() => {
 		let sum = 0;
 		for (let i = 0; i < 1000; i++) {
 			sum += i;
@@ -95,10 +95,10 @@ test('time_sync: with custom timer', () => {
 		now: () => {
 			counter += 10_000_000; // 10ms in ns
 			return counter;
-		},
+		}
 	};
 
-	const {timing} = time_sync(() => 42, custom_timer);
+	const { timing } = time_sync(() => 42, custom_timer);
 
 	assert.strictEqual(timing.started_at_ns, 10_000_000);
 	assert.strictEqual(timing.ended_at_ns, 20_000_000);
@@ -107,7 +107,7 @@ test('time_sync: with custom timer', () => {
 });
 
 test('time_async: times asynchronous function', async () => {
-	const {result, timing} = await time_async(async () => {
+	const { result, timing } = await time_async(async () => {
 		await wait(10);
 		return 'done';
 	});
@@ -123,10 +123,10 @@ test('time_async: with custom timer', async () => {
 		now: () => {
 			counter += 5_000_000; // 5ms in ns
 			return counter;
-		},
+		}
 	};
 
-	const {timing} = await time_async(() => Promise.resolve('test'), custom_timer);
+	const { timing } = await time_async(() => Promise.resolve('test'), custom_timer);
 
 	assert.strictEqual(timing.started_at_ns, 5_000_000);
 	assert.strictEqual(timing.ended_at_ns, 10_000_000);
@@ -202,7 +202,7 @@ test('benchmark_warmup: zero iterations with explicit hint skips the call', asyn
 			count++;
 		},
 		0,
-		false,
+		false
 	);
 
 	// When the caller provides a hint, no detection call is needed.

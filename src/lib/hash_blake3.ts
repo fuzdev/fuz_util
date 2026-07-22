@@ -8,11 +8,11 @@
  * @module
  */
 
-import {z} from 'zod';
-import {hash, init} from '@fuzdev/blake3_wasm';
+import { z } from 'zod';
+import { hash, init } from '@fuzdev/blake3_wasm';
 
-import {to_hex} from './hex.ts';
-import {to_bytes} from './bytes.ts';
+import { to_hex } from './hex.ts';
+import { to_bytes } from './bytes.ts';
 
 /**
  * Resolves when the BLAKE3 WASM module is initialized and ready.

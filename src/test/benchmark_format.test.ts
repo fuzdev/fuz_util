@@ -1,11 +1,11 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 import {
 	benchmark_format_table,
 	benchmark_format_markdown,
 	benchmark_format_table_grouped,
-	benchmark_format_markdown_grouped,
+	benchmark_format_markdown_grouped
 } from '$lib/benchmark_format.ts';
-import type {BenchmarkResult} from '$lib/benchmark_types.ts';
+import type { BenchmarkResult } from '$lib/benchmark_types.ts';
 
 // Helper to create minimal benchmark results for testing
 const create_result = (name: string, ops_per_second: number): BenchmarkResult => ({
@@ -30,15 +30,15 @@ const create_result = (name: string, ops_per_second: number): BenchmarkResult =>
 		outlier_ratio: 0,
 		sample_size: 1000,
 		raw_sample_size: 1000,
-		failed_iterations: 0,
+		failed_iterations: 0
 	},
 	budget: {
 		duration_ms: 1000,
 		warmup_iterations: 10,
 		min_iterations: 30,
 		max_iterations: 100_000,
-		async_resolved: false,
-	},
+		async_resolved: false
+	}
 });
 
 describe('benchmark_format_table', () => {
@@ -131,7 +131,7 @@ describe('benchmark_format_table', () => {
 
 		assert.throws(
 			() => benchmark_format_table(results, 'nonexistent'),
-			'Baseline task "nonexistent" not found in results. Available tasks: task1, task2',
+			'Baseline task "nonexistent" not found in results. Available tasks: task1, task2'
 		);
 	});
 });
@@ -151,7 +151,7 @@ describe('benchmark_format_markdown', () => {
 
 		assert.throws(
 			() => benchmark_format_markdown(results, 'nonexistent'),
-			'Baseline task "nonexistent" not found',
+			'Baseline task "nonexistent" not found'
 		);
 	});
 });
@@ -161,19 +161,19 @@ describe('benchmark_format_table_grouped', () => {
 		const results = [
 			create_result('format/prettier', 500_000),
 			create_result('format/tsv', 2_000_000),
-			create_result('parse/babel', 100_000),
+			create_result('parse/babel', 100_000)
 		];
 
 		const table = benchmark_format_table_grouped(results, [
 			{
 				name: 'Format',
 				filter: (r) => r.name.startsWith('format/'),
-				baseline: 'format/prettier',
+				baseline: 'format/prettier'
 			},
 			{
 				name: 'Parse',
-				filter: (r) => r.name.startsWith('parse/'),
-			},
+				filter: (r) => r.name.startsWith('parse/')
+			}
 		]);
 
 		assert.include(table, 'vs format/prettier');
@@ -190,10 +190,10 @@ describe('benchmark_format_table_grouped', () => {
 					{
 						name: 'Format',
 						filter: (r) => r.name.startsWith('format/'),
-						baseline: 'format/prettier',
-					},
+						baseline: 'format/prettier'
+					}
 				]),
-			'Baseline task "format/prettier" not found',
+			'Baseline task "format/prettier" not found'
 		);
 	});
 });
@@ -203,19 +203,19 @@ describe('benchmark_format_markdown_grouped', () => {
 		const results = [
 			create_result('format/prettier', 500_000),
 			create_result('format/tsv', 2_000_000),
-			create_result('parse/babel', 100_000),
+			create_result('parse/babel', 100_000)
 		];
 
 		const markdown = benchmark_format_markdown_grouped(results, [
 			{
 				name: 'Format',
 				filter: (r) => r.name.startsWith('format/'),
-				baseline: 'format/prettier',
+				baseline: 'format/prettier'
 			},
 			{
 				name: 'Parse',
-				filter: (r) => r.name.startsWith('parse/'),
-			},
+				filter: (r) => r.name.startsWith('parse/')
+			}
 		]);
 
 		assert.include(markdown, '### Format');
@@ -230,8 +230,8 @@ describe('benchmark_format_markdown_grouped', () => {
 			{
 				name: 'Test Group',
 				description: 'This is a description',
-				filter: () => true,
-			},
+				filter: () => true
+			}
 		]);
 
 		assert.include(markdown, '### Test Group');

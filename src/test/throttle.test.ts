@@ -1,7 +1,7 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {throttle} from '$lib/throttle.ts';
-import {wait} from '$lib/async.ts';
+import { throttle } from '$lib/throttle.ts';
+import { wait } from '$lib/async.ts';
 
 test('throttles calls to a function', async () => {
 	const results: Array<string> = [];
@@ -70,7 +70,7 @@ test("throttles calls to a function with when='trailing'", async () => {
 			await wait();
 			results.push(name + '_done');
 		},
-		{when: 'trailing'},
+		{ when: 'trailing' }
 	);
 
 	const promise_a = fn('a'); // discarded
@@ -129,7 +129,7 @@ test('throttles with non-zero delay', async () => {
 			await wait();
 			results.push(name + '_done');
 		},
-		{delay: 10},
+		{ delay: 10 }
 	);
 
 	const promise_a = fn('a'); // called immediately
@@ -159,7 +159,7 @@ test("throttles calls to a function with when='leading'", async () => {
 			await wait();
 			results.push(name + '_done');
 		},
-		{when: 'leading'},
+		{ when: 'leading' }
 	);
 
 	const promise_a = fn('a'); // called immediately

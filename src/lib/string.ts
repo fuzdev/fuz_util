@@ -1,4 +1,4 @@
-import {count_iterator} from './iterator.ts';
+import { count_iterator } from './iterator.ts';
 
 /**
  * Truncates a string to a maximum length, adding a suffix if needed that defaults to `...`.
@@ -112,7 +112,7 @@ export const string_display_width = (str: string): number => {
 
 	let width = 0;
 	const segmenter = new Intl.Segmenter();
-	for (const {segment} of segmenter.segment(clean)) {
+	for (const { segment } of segmenter.segment(clean)) {
 		const code = segment.codePointAt(0)!;
 
 		// Handle control characters
@@ -153,7 +153,7 @@ export const string_display_width = (str: string): number => {
 export const pad_width = (
 	str: string,
 	target_width: number,
-	align: 'left' | 'right' = 'left',
+	align: 'left' | 'right' = 'left'
 ): string => {
 	const current_width = string_display_width(str);
 	const padding = Math.max(0, target_width - current_width);

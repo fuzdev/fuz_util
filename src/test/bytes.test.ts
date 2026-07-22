@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {format_bytes, to_bytes} from '$lib/bytes.ts';
+import { format_bytes, to_bytes } from '$lib/bytes.ts';
 
 describe('to_bytes', () => {
 	describe('string input', () => {
@@ -102,7 +102,7 @@ describe('format_bytes', () => {
 		[1048576, '1.0 MB'],
 		[1572864, '1.5 MB'],
 		[1073741824, '1.0 GB'],
-		[1610612736, '1.5 GB'],
+		[1610612736, '1.5 GB']
 	];
 
 	test.each(cases)('%d → %s', (input, expected) => {

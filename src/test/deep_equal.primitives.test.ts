@@ -1,6 +1,6 @@
-import {describe} from 'vitest';
+import { describe } from 'vitest';
 
-import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.ts';
+import { test_equal_values, test_unequal_values } from './deep_equal_test_helpers.ts';
 
 // shared test values
 const symbol = Symbol('test');
@@ -42,7 +42,7 @@ describe('primitives', () => {
 			// bigint
 			['bigint', 1n, 1n],
 			['negative bigint', -100n, -100n],
-			['large bigint', 9007199254740991n, 9007199254740991n],
+			['large bigint', 9007199254740991n, 9007199254740991n]
 		]);
 	});
 
@@ -83,7 +83,7 @@ describe('primitives', () => {
 			['boolean and number', true, 1],
 			['null and object', null, {}],
 			['undefined and null', undefined, null],
-			['string and object', 'test', {0: 't', 1: 'e', 2: 's', 3: 't'}],
+			['string and object', 'test', { 0: 't', 1: 'e', 2: 's', 3: 't' }]
 		]);
 	});
 });

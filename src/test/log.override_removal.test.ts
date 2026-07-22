@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Override Removal', () => {
 	test('clear_level_override restores parent inheritance', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'warn', console: ctx.console, colors: false});
-		const child = parent.child('child', {level: 'info'}); // Override
+		const parent = new Logger('parent', { level: 'warn', console: ctx.console, colors: false });
+		const child = parent.child('child', { level: 'info' }); // Override
 
 		// Child has override
 		assert.equal(child.level, 'info');
@@ -24,8 +24,8 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clear_colors_override restores parent inheritance', () => {
-		const parent = new Logger('parent', {colors: false});
-		const child = parent.child('child', {colors: true}); // Override
+		const parent = new Logger('parent', { colors: false });
+		const child = parent.child('child', { colors: true }); // Override
 
 		// Child has override
 		assert.equal(child.colors, true);
@@ -44,8 +44,8 @@ describe('Logger > Override Removal', () => {
 	test('clear_console_override restores parent inheritance', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const parent = new Logger('parent', {console: ctx1.console, level: 'info', colors: false});
-		const child = parent.child('child', {console: ctx2.console}); // Override
+		const parent = new Logger('parent', { console: ctx1.console, level: 'info', colors: false });
+		const child = parent.child('child', { console: ctx2.console }); // Override
 
 		// Child has override
 		assert.equal(child.console, ctx2.console);
@@ -63,7 +63,7 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clear_level_override on root logger uses default', () => {
-		const log = new Logger('root', {level: 'error'});
+		const log = new Logger('root', { level: 'error' });
 
 		assert.equal(log.level, 'error');
 
@@ -77,7 +77,7 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clear_colors_override on root logger uses default', () => {
-		const log = new Logger('root', {colors: false});
+		const log = new Logger('root', { colors: false });
 
 		assert.equal(log.colors, false);
 
@@ -89,7 +89,7 @@ describe('Logger > Override Removal', () => {
 
 	test('clear_console_override on root logger uses global console', () => {
 		const ctx = create_test_context();
-		const log = new Logger('root', {console: ctx.console});
+		const log = new Logger('root', { console: ctx.console });
 
 		assert.equal(log.console, ctx.console);
 
@@ -101,7 +101,7 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clearing non-existent override is safe', () => {
-		const parent = new Logger('parent', {level: 'info'});
+		const parent = new Logger('parent', { level: 'info' });
 		const child = parent.child('child'); // No override
 
 		assert.equal(child.level, 'info'); // Inherits from parent
@@ -113,8 +113,8 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clearing override in middle of chain affects descendants', () => {
-		const root = new Logger('root', {level: 'info'});
-		const child = root.child('child', {level: 'warn'}); // Override
+		const root = new Logger('root', { level: 'info' });
+		const child = root.child('child', { level: 'warn' }); // Override
 		const grandchild = child.child('grandchild');
 
 		// Grandchild inherits from child's override
@@ -135,8 +135,8 @@ describe('Logger > Override Removal', () => {
 
 	test('clearing override works with root getter', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'warn', console: ctx.console, colors: false});
-		const child = root.child('child', {level: 'info'}); // Override
+		const root = new Logger('root', { level: 'warn', console: ctx.console, colors: false });
+		const child = root.child('child', { level: 'info' }); // Override
 		const grandchild = child.child('grandchild');
 
 		// Grandchild inherits from child's override
@@ -159,8 +159,8 @@ describe('Logger > Override Removal', () => {
 
 	test('clear_level_override invalidates level cache', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'warn', console: ctx.console, colors: false});
-		const child = parent.child('child', {level: 'info'});
+		const parent = new Logger('parent', { level: 'warn', console: ctx.console, colors: false });
+		const child = parent.child('child', { level: 'info' });
 
 		// Info is visible with child's override
 		child.info('visible');
@@ -181,8 +181,8 @@ describe('Logger > Override Removal', () => {
 
 	test('clear_colors_override invalidates prefix cache', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {colors: false, console: ctx.console, level: 'info'});
-		const child = parent.child('child', {colors: true}); // Override with colors
+		const parent = new Logger('parent', { colors: false, console: ctx.console, level: 'info' });
+		const child = parent.child('child', { colors: true }); // Override with colors
 
 		// Child uses colors
 		assert.equal(child.colors, true);
@@ -204,12 +204,12 @@ describe('Logger > Override Removal', () => {
 		const parent = new Logger('parent', {
 			level: 'warn',
 			colors: false,
-			console: ctx1.console,
+			console: ctx1.console
 		});
 		const child = parent.child('child', {
 			level: 'info',
 			colors: true,
-			console: ctx2.console,
+			console: ctx2.console
 		});
 
 		// Verify overrides
@@ -229,8 +229,8 @@ describe('Logger > Override Removal', () => {
 	});
 
 	test('clearing and re-setting override', () => {
-		const parent = new Logger('parent', {level: 'warn'});
-		const child = parent.child('child', {level: 'info'}); // Override
+		const parent = new Logger('parent', { level: 'warn' });
+		const child = parent.child('child', { level: 'info' }); // Override
 
 		assert.equal(child.level, 'info');
 

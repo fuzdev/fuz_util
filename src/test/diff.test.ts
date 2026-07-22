@@ -4,14 +4,14 @@
  * @module
  */
 
-import {assert, test, describe} from 'vitest';
+import { assert, test, describe } from 'vitest';
 
 import {
 	diff_lines,
 	filter_diff_context,
 	format_diff,
 	generate_diff,
-	type DiffLine,
+	type DiffLine
 } from '$lib/diff.ts';
 
 describe('diff_lines', () => {
@@ -201,10 +201,10 @@ describe('filter_diff_context', () => {
 		const diff: Array<DiffLine> = [];
 		for (let i = 0; i < length; i++) {
 			if (change_indices.includes(i)) {
-				diff.push({type: 'remove', line: `old line ${i}`});
-				diff.push({type: 'add', line: `new line ${i}`});
+				diff.push({ type: 'remove', line: `old line ${i}` });
+				diff.push({ type: 'add', line: `new line ${i}` });
 			} else {
-				diff.push({type: 'same', line: `line ${i}`});
+				diff.push({ type: 'same', line: `line ${i}` });
 			}
 		}
 		return diff;
@@ -217,9 +217,9 @@ describe('filter_diff_context', () => {
 
 	test('no changes returns empty', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'same', line: 'a'},
-			{type: 'same', line: 'b'},
-			{type: 'same', line: 'c'},
+			{ type: 'same', line: 'a' },
+			{ type: 'same', line: 'b' },
+			{ type: 'same', line: 'c' }
 		];
 		const result = filter_diff_context(diff);
 		assert.deepEqual(result, []);
@@ -227,8 +227,8 @@ describe('filter_diff_context', () => {
 
 	test('all changes are included', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'remove', line: 'old'},
-			{type: 'add', line: 'new'},
+			{ type: 'remove', line: 'old' },
+			{ type: 'add', line: 'new' }
 		];
 		const result = filter_diff_context(diff);
 		assert.lengthOf(result, 2);
@@ -238,13 +238,13 @@ describe('filter_diff_context', () => {
 
 	test('includes context lines around changes', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'same', line: 'ctx before 3'},
-			{type: 'same', line: 'ctx before 2'},
-			{type: 'same', line: 'ctx before 1'},
-			{type: 'remove', line: 'changed'},
-			{type: 'same', line: 'ctx after 1'},
-			{type: 'same', line: 'ctx after 2'},
-			{type: 'same', line: 'ctx after 3'},
+			{ type: 'same', line: 'ctx before 3' },
+			{ type: 'same', line: 'ctx before 2' },
+			{ type: 'same', line: 'ctx before 1' },
+			{ type: 'remove', line: 'changed' },
+			{ type: 'same', line: 'ctx after 1' },
+			{ type: 'same', line: 'ctx after 2' },
+			{ type: 'same', line: 'ctx after 3' }
 		];
 		const result = filter_diff_context(diff, 3);
 		assert.lengthOf(result, 7); // 3 before + 1 change + 3 after
@@ -252,11 +252,11 @@ describe('filter_diff_context', () => {
 
 	test('custom context_lines parameter', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'same', line: 'far before'},
-			{type: 'same', line: 'near before'},
-			{type: 'add', line: 'new'},
-			{type: 'same', line: 'near after'},
-			{type: 'same', line: 'far after'},
+			{ type: 'same', line: 'far before' },
+			{ type: 'same', line: 'near before' },
+			{ type: 'add', line: 'new' },
+			{ type: 'same', line: 'near after' },
+			{ type: 'same', line: 'far after' }
 		];
 		const result = filter_diff_context(diff, 1);
 		assert.lengthOf(result, 3); // 1 before + 1 change + 1 after
@@ -274,9 +274,9 @@ describe('filter_diff_context', () => {
 
 	test('no ellipsis when changes are close together', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'add', line: 'a'},
-			{type: 'same', line: 'between'},
-			{type: 'add', line: 'b'},
+			{ type: 'add', line: 'a' },
+			{ type: 'same', line: 'between' },
+			{ type: 'add', line: 'b' }
 		];
 		const result = filter_diff_context(diff, 3);
 		const ellipses = result.filter((d) => d.line === '...');
@@ -285,8 +285,8 @@ describe('filter_diff_context', () => {
 
 	test('context does not exceed diff boundaries', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'add', line: 'at start'},
-			{type: 'same', line: 'after'},
+			{ type: 'add', line: 'at start' },
+			{ type: 'same', line: 'after' }
 		];
 		const result = filter_diff_context(diff, 5);
 		// Should not crash or produce out-of-bounds results
@@ -296,10 +296,10 @@ describe('filter_diff_context', () => {
 
 	test('context_lines 0 includes only changed lines', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'same', line: 'before'},
-			{type: 'remove', line: 'old'},
-			{type: 'add', line: 'new'},
-			{type: 'same', line: 'after'},
+			{ type: 'same', line: 'before' },
+			{ type: 'remove', line: 'old' },
+			{ type: 'add', line: 'new' },
+			{ type: 'same', line: 'after' }
 		];
 		const result = filter_diff_context(diff, 0);
 		assert.lengthOf(result, 2);
@@ -310,41 +310,41 @@ describe('filter_diff_context', () => {
 
 describe('format_diff', () => {
 	test('includes file path headers', () => {
-		const diff: Array<DiffLine> = [{type: 'same', line: 'content'}];
+		const diff: Array<DiffLine> = [{ type: 'same', line: 'content' }];
 		const result = format_diff(diff, 'file.txt', 'file.txt');
 		assert.include(result, '--- file.txt (current)');
 		assert.include(result, '+++ file.txt (desired)');
 	});
 
 	test('uses different paths for current and desired', () => {
-		const diff: Array<DiffLine> = [{type: 'same', line: 'x'}];
+		const diff: Array<DiffLine> = [{ type: 'same', line: 'x' }];
 		const result = format_diff(diff, 'old.txt', 'new.txt');
 		assert.include(result, '--- old.txt (current)');
 		assert.include(result, '+++ new.txt (desired)');
 	});
 
 	test('prefixes added lines with +', () => {
-		const diff: Array<DiffLine> = [{type: 'add', line: 'new line'}];
-		const result = format_diff(diff, 'a', 'b', {use_color: false});
+		const diff: Array<DiffLine> = [{ type: 'add', line: 'new line' }];
+		const result = format_diff(diff, 'a', 'b', { use_color: false });
 		assert.include(result, '+new line');
 	});
 
 	test('prefixes removed lines with -', () => {
-		const diff: Array<DiffLine> = [{type: 'remove', line: 'old line'}];
-		const result = format_diff(diff, 'a', 'b', {use_color: false});
+		const diff: Array<DiffLine> = [{ type: 'remove', line: 'old line' }];
+		const result = format_diff(diff, 'a', 'b', { use_color: false });
 		assert.include(result, '-old line');
 	});
 
 	test('prefixes same lines with space', () => {
-		const diff: Array<DiffLine> = [{type: 'same', line: 'unchanged'}];
-		const result = format_diff(diff, 'a', 'b', {use_color: false});
+		const diff: Array<DiffLine> = [{ type: 'same', line: 'unchanged' }];
+		const result = format_diff(diff, 'a', 'b', { use_color: false });
 		assert.include(result, ' unchanged');
 	});
 
 	test('applies ANSI colors by default', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'add', line: 'added'},
-			{type: 'remove', line: 'removed'},
+			{ type: 'add', line: 'added' },
+			{ type: 'remove', line: 'removed' }
 		];
 		const result = format_diff(diff, 'a', 'b');
 		assert.include(result, '\x1b[32m'); // green for add
@@ -354,24 +354,24 @@ describe('format_diff', () => {
 
 	test('no ANSI colors when use_color is false', () => {
 		const diff: Array<DiffLine> = [
-			{type: 'add', line: 'added'},
-			{type: 'remove', line: 'removed'},
+			{ type: 'add', line: 'added' },
+			{ type: 'remove', line: 'removed' }
 		];
-		const result = format_diff(diff, 'a', 'b', {use_color: false});
+		const result = format_diff(diff, 'a', 'b', { use_color: false });
 		assert.notInclude(result, '\x1b[');
 	});
 
 	test('no ANSI colors on same lines even with use_color', () => {
-		const diff: Array<DiffLine> = [{type: 'same', line: 'unchanged'}];
-		const result = format_diff(diff, 'a', 'b', {use_color: true});
+		const diff: Array<DiffLine> = [{ type: 'same', line: 'unchanged' }];
+		const result = format_diff(diff, 'a', 'b', { use_color: true });
 		const lines = result.split('\n');
 		const same_line = lines.find((l) => l.includes('unchanged'))!;
 		assert.notInclude(same_line, '\x1b[');
 	});
 
 	test('respects prefix option', () => {
-		const diff: Array<DiffLine> = [{type: 'same', line: 'content'}];
-		const result = format_diff(diff, 'a', 'b', {prefix: '  '});
+		const diff: Array<DiffLine> = [{ type: 'same', line: 'content' }];
+		const result = format_diff(diff, 'a', 'b', { prefix: '  ' });
 		const lines = result.split('\n');
 		for (const line of lines) {
 			assert.isTrue(line.startsWith('  '));
@@ -379,20 +379,20 @@ describe('format_diff', () => {
 	});
 
 	test('respects max_lines option', () => {
-		const diff: Array<DiffLine> = Array.from({length: 100}, (_, i) => ({
+		const diff: Array<DiffLine> = Array.from({ length: 100 }, (_, i) => ({
 			type: 'add' as const,
-			line: `line ${i}`,
+			line: `line ${i}`
 		}));
-		const result = format_diff(diff, 'a', 'b', {use_color: false, max_lines: 5});
+		const result = format_diff(diff, 'a', 'b', { use_color: false, max_lines: 5 });
 		assert.include(result, '... (95 more lines)');
 	});
 
 	test('max_lines 0 shows all lines', () => {
-		const diff: Array<DiffLine> = Array.from({length: 10}, (_, i) => ({
+		const diff: Array<DiffLine> = Array.from({ length: 10 }, (_, i) => ({
 			type: 'add' as const,
-			line: `line ${i}`,
+			line: `line ${i}`
 		}));
-		const result = format_diff(diff, 'a', 'b', {use_color: false, max_lines: 0});
+		const result = format_diff(diff, 'a', 'b', { use_color: false, max_lines: 0 });
 		assert.notInclude(result, 'more lines');
 		// 2 header lines + 10 content lines
 		assert.lengthOf(result.split('\n'), 12);
@@ -429,14 +429,14 @@ describe('generate_diff', () => {
 	});
 
 	test('passes options through to format_diff', () => {
-		const result = generate_diff('old', 'new', 'file.txt', {use_color: false});
+		const result = generate_diff('old', 'new', 'file.txt', { use_color: false });
 		assert.isString(result);
 		assert.notInclude(result!, '\x1b[');
 	});
 
 	test('identical content produces empty-looking diff', () => {
 		const content = 'same\ncontent';
-		const result = generate_diff(content, content, 'file.txt', {use_color: false});
+		const result = generate_diff(content, content, 'file.txt', { use_color: false });
 		assert.isString(result);
 		// filter_diff_context returns [] for no changes, so format_diff returns just headers
 		const lines = result!.split('\n');
@@ -444,25 +444,25 @@ describe('generate_diff', () => {
 	});
 
 	test('uses path for both current and desired labels', () => {
-		const result = generate_diff('a', 'b', 'src/file.ts', {use_color: false});
+		const result = generate_diff('a', 'b', 'src/file.ts', { use_color: false });
 		assert.isString(result);
 		assert.include(result!, '--- src/file.ts (current)');
 		assert.include(result!, '+++ src/file.ts (desired)');
 	});
 
 	test('handles multiline changes with context filtering', () => {
-		const lines_a = Array.from({length: 20}, (_, i) => `line ${i}`);
+		const lines_a = Array.from({ length: 20 }, (_, i) => `line ${i}`);
 		const lines_b = [...lines_a];
 		lines_b[10] = 'modified line 10';
 		const result = generate_diff(lines_a.join('\n'), lines_b.join('\n'), 'file.txt', {
-			use_color: false,
+			use_color: false
 		});
 		assert.isString(result);
 		assert.include(result!, 'modified line 10');
 	});
 
 	test('both empty strings', () => {
-		const result = generate_diff('', '', 'file.txt', {use_color: false});
+		const result = generate_diff('', '', 'file.txt', { use_color: false });
 		assert.isString(result);
 		// Identical content → just headers
 		const lines = result!.split('\n');

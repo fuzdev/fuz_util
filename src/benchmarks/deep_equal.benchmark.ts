@@ -1,6 +1,6 @@
-import {Benchmark} from '../lib/benchmark.ts';
-import {deep_equal} from '../lib/deep_equal.ts';
-import type {BenchmarkGroup} from '../lib/benchmark_types.ts';
+import { Benchmark } from '../lib/benchmark.ts';
+import { deep_equal } from '../lib/deep_equal.ts';
+import type { BenchmarkGroup } from '../lib/benchmark_types.ts';
 
 /* eslint-disable no-console, no-new-wrappers */
 
@@ -9,14 +9,14 @@ import type {BenchmarkGroup} from '../lib/benchmark_types.ts';
 
 const bench = new Benchmark({
 	duration_ms: 1000, // 1000ms per benchmark for good balance of accuracy and memory usage
-	warmup_iterations: 10, // Warmup iterations before measuring
+	warmup_iterations: 10 // Warmup iterations before measuring
 });
 
 //
 // 1. FAST PATHS (should be nanoseconds - baseline)
 //
 
-const obj = {a: 1, b: 2, c: 3};
+const obj = { a: 1, b: 2, c: 3 };
 const arr = [1, 2, 3, 4, 5];
 
 bench.add('same reference (fastest path)', () => {
@@ -43,9 +43,9 @@ bench.add('constructor mismatch: array vs object', () => {
 // 2. COMMON CASES (microseconds - typical usage)
 //
 
-const small_obj_a = {id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b']};
-const small_obj_b = {id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b']};
-const small_obj_c = {id: 1, name: 'alice', active: true, count: 99, tags: ['a', 'b']};
+const small_obj_a = { id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b'] };
+const small_obj_b = { id: 1, name: 'alice', active: true, count: 42, tags: ['a', 'b'] };
+const small_obj_c = { id: 1, name: 'alice', active: true, count: 99, tags: ['a', 'b'] };
 
 bench.add('small object: equal (5 props, 1 nested array)', () => {
 	deep_equal(small_obj_a, small_obj_b);
@@ -181,22 +181,22 @@ bench.add('boxed Number: different values', () => {
 //
 
 const nested_2_levels = {
-	a: {x: 1, y: 2},
-	b: {x: 3, y: 4},
-	c: {x: 5, y: 6},
+	a: { x: 1, y: 2 },
+	b: { x: 3, y: 4 },
+	c: { x: 5, y: 6 }
 };
 const nested_2_levels_copy = {
-	a: {x: 1, y: 2},
-	b: {x: 3, y: 4},
-	c: {x: 5, y: 6},
+	a: { x: 1, y: 2 },
+	b: { x: 3, y: 4 },
+	c: { x: 5, y: 6 }
 };
 
 bench.add('nested object: 2 levels', () => {
 	deep_equal(nested_2_levels, nested_2_levels_copy);
 });
 
-const nested_5_levels = {a: {b: {c: {d: {e: {f: 'deep'}}}}}};
-const nested_5_levels_copy = {a: {b: {c: {d: {e: {f: 'deep'}}}}}};
+const nested_5_levels = { a: { b: { c: { d: { e: { f: 'deep' } } } } } };
+const nested_5_levels_copy = { a: { b: { c: { d: { e: { f: 'deep' } } } } } };
 
 bench.add('nested object: 5 levels deep', () => {
 	deep_equal(nested_5_levels, nested_5_levels_copy);
@@ -217,8 +217,8 @@ bench.add('large object: 100 properties', () => {
 	deep_equal(large_obj, large_obj_copy);
 });
 
-const large_arr_a = Array.from({length: 1000}, (_, i) => i);
-const large_arr_b = Array.from({length: 1000}, (_, i) => i);
+const large_arr_a = Array.from({ length: 1000 }, (_, i) => i);
+const large_arr_b = Array.from({ length: 1000 }, (_, i) => i);
 
 bench.add('large array: 1000 elements', () => {
 	deep_equal(large_arr_a, large_arr_b);
@@ -231,12 +231,12 @@ bench.add('large array: 1000 elements', () => {
 const map_a = new Map([
 	['a', 1],
 	['b', 2],
-	['c', 3],
+	['c', 3]
 ]);
 const map_b = new Map([
 	['a', 1],
 	['b', 2],
-	['c', 3],
+	['c', 3]
 ]);
 
 bench.add('Map: equal (3 entries)', () => {
@@ -266,23 +266,23 @@ const groups: Array<BenchmarkGroup> = [
 		filter: (r) =>
 			r.name.includes('same reference') ||
 			r.name.includes('primitives') ||
-			r.name.includes('constructor mismatch'),
+			r.name.includes('constructor mismatch')
 	},
-	{name: 'SMALL DATA STRUCTURES', filter: (r) => r.name.startsWith('small ')},
-	{name: 'TYPED ARRAYS', filter: (r) => r.name.startsWith('typed array')},
+	{ name: 'SMALL DATA STRUCTURES', filter: (r) => r.name.startsWith('small ') },
+	{ name: 'TYPED ARRAYS', filter: (r) => r.name.startsWith('typed array') },
 	{
 		name: 'SPECIAL TYPES (Date, Error, etc.)',
 		filter: (r) =>
 			r.name.includes('Date:') ||
 			r.name.includes('Error:') ||
 			r.name.includes('ArrayBuffer') ||
-			r.name.includes('boxed'),
+			r.name.includes('boxed')
 	},
-	{name: 'NESTED STRUCTURES', filter: (r) => r.name.startsWith('nested ')},
-	{name: 'STRESS TESTS', filter: (r) => r.name.startsWith('large ')},
-	{name: 'COLLECTIONS', filter: (r) => r.name.includes('Map:') || r.name.includes('Set:')},
+	{ name: 'NESTED STRUCTURES', filter: (r) => r.name.startsWith('nested ') },
+	{ name: 'STRESS TESTS', filter: (r) => r.name.startsWith('large ') },
+	{ name: 'COLLECTIONS', filter: (r) => r.name.includes('Map:') || r.name.includes('Set:') }
 ];
-console.log(bench.table({groups}));
+console.log(bench.table({ groups }));
 
 console.log('\n📈 Summary\n');
 console.log(bench.summary());

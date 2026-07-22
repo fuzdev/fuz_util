@@ -1,6 +1,6 @@
-import {describe} from 'vitest';
+import { describe } from 'vitest';
 
-import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.ts';
+import { test_equal_values, test_unequal_values } from './deep_equal_test_helpers.ts';
 
 // Date objects are compared by their timestamp values using .getTime()
 
@@ -15,7 +15,7 @@ describe('dates', () => {
 			['from same string', new Date('2024-01-15'), new Date('2024-01-15')],
 			['from same timestamp number', new Date(1705315800000), new Date(1705315800000)],
 			['invalid date instances', new Date('invalid'), new Date('invalid')], // both NaN
-			['epoch date instances', new Date(0), new Date(0)],
+			['epoch date instances', new Date(0), new Date(0)]
 		]);
 	});
 
@@ -33,7 +33,7 @@ describe('dates', () => {
 
 			// dates should NOT equal empty objects/arrays (different constructors)
 			['date and empty object', new Date(), {}],
-			['date and empty array', new Date(), []],
+			['date and empty array', new Date(), []]
 		]);
 	});
 });

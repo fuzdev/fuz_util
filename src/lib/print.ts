@@ -1,7 +1,7 @@
-import type {styleText} from 'node:util';
+import type { styleText } from 'node:util';
 
-import type {Timings} from './timings.ts';
-import type {Logger} from './log.ts';
+import type { Timings } from './timings.ts';
+import type { Logger } from './log.ts';
 
 export let st: typeof styleText = (_, v) => v;
 
@@ -9,7 +9,7 @@ export let st: typeof styleText = (_, v) => v;
  * Configures the module-level styling function for colored output.
  */
 export const configure_print_colors = (
-	s: typeof styleText | null | undefined,
+	s: typeof styleText | null | undefined
 ): typeof styleText => {
 	st = s ?? ((_, v) => v);
 	return st;
@@ -91,7 +91,7 @@ export const print_value = (value: unknown): string => {
 export const print_error = (err: Error): string =>
 	st(
 		'yellow',
-		err.stack ?? ((err.message && `Error: ${err.message}`) || `Unknown error: ${err as any}`),
+		err.stack ?? ((err.message && `Error: ${err.message}`) || `Unknown error: ${err as any}`)
 	);
 
 /**
@@ -100,7 +100,7 @@ export const print_error = (err: Error): string =>
 export const print_timing = (key: string | number, timing: number | undefined): string =>
 	`${timing === undefined ? '...' : print_ms(timing, undefined)} ${st('gray', '←')} ${st(
 		'gray',
-		key + '',
+		key + ''
 	)}`;
 
 /**

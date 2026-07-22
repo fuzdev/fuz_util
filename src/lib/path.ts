@@ -1,4 +1,4 @@
-import type {Flavored} from './types.ts';
+import type { Flavored } from './types.ts';
 
 /**
  * An absolute path on the filesystem. Named "id" to be consistent with Rollup.
@@ -72,11 +72,11 @@ export type PathPiece =
 			type: 'piece';
 			path: PathId;
 			name: string;
-		}
+	  }
 	| {
 			type: 'separator';
 			path: PathId;
-		};
+	  };
 
 /**
  * Treats all paths as absolute, so the first piece is always a `'/'` with type `'separator'`.
@@ -86,15 +86,15 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
 	const pieces: Array<PathPiece> = [];
 	const path_segments = parse_path_segments(raw_path);
 	if (path_segments.length) {
-		pieces.push({type: 'separator', path: '/'});
+		pieces.push({ type: 'separator', path: '/' });
 	}
 	let path = '';
 	for (let i = 0; i < path_segments.length; i++) {
 		const path_segment = path_segments[i]!;
 		path += '/' + path_segment;
-		pieces.push({type: 'piece', name: path_segment, path});
+		pieces.push({ type: 'piece', name: path_segment, path });
 		if (i !== path_segments.length - 1) {
-			pieces.push({type: 'separator', path});
+			pieces.push({ type: 'separator', path });
 		}
 	}
 	return pieces;
@@ -112,11 +112,11 @@ export const parse_path_pieces = (raw_path: string): Array<PathPiece> => {
  */
 export const should_exclude_path = (
 	filename: string | undefined,
-	exclude: Array<string | RegExp>,
+	exclude: Array<string | RegExp>
 ): boolean => {
 	if (!filename || exclude.length === 0) return false;
 	return exclude.some((pattern) =>
-		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename),
+		typeof pattern === 'string' ? filename.includes(pattern) : pattern.test(filename)
 	);
 };
 
@@ -153,7 +153,7 @@ const get_special_char_mappers = (): Array<(s: string) => string> => {
 	special_char_mappers = [];
 	for (let i = 0, j = special_char_from.length; i < j; i++) {
 		special_char_mappers.push((s) =>
-			s.replaceAll(special_char_from.charAt(i), special_char_to.charAt(i)),
+			s.replaceAll(special_char_from.charAt(i), special_char_to.charAt(i))
 		);
 	}
 	return special_char_mappers;

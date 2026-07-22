@@ -1,14 +1,14 @@
 import {
 	spawn as node_spawn_child_process,
 	type SpawnOptions,
-	type ChildProcess,
+	type ChildProcess
 } from 'node:child_process';
-import {styleText as st} from 'node:util';
+import { styleText as st } from 'node:util';
 
-import {to_error_message} from './error.ts';
-import {Logger} from './log.ts';
-import {print_error, print_key_value} from './print.ts';
-import {noop} from './function.ts';
+import { to_error_message } from './error.ts';
+import { Logger } from './log.ts';
+import { print_error, print_key_value } from './print.ts';
+import { noop } from './function.ts';
 
 const log = new Logger('process');
 
@@ -103,8 +103,7 @@ export interface DespawnOptions {
  * Result of spawning a detached process.
  */
 export type SpawnDetachedResult =
-	| {kind: 'spawned'; child: ChildProcess}
-	| {kind: 'error'; message: string};
+	{ kind: 'spawned'; child: ChildProcess } | { kind: 'error'; message: string };
 
 //
 // Process Handle Types
@@ -150,16 +149,16 @@ const create_closed_promise = (child: ChildProcess): Promise<SpawnResult> => {
 	child.once('error', (err) => {
 		if (resolved) return;
 		resolved = true;
-		resolve({kind: 'error', ok: false, child, error: err});
+		resolve({ kind: 'error', ok: false, child, error: err });
 	});
 
 	child.once('close', (code, signal) => {
 		if (resolved) return;
 		resolved = true;
 		if (signal !== null) {
-			resolve({kind: 'signaled', ok: false, child, signal});
+			resolve({ kind: 'signaled', ok: false, child, signal });
 		} else {
-			resolve({kind: 'exited', ok: code === 0, child, code: code ?? 0});
+			resolve({ kind: 'exited', ok: code === 0, child, code: code ?? 0 });
 		}
 	});
 
@@ -176,7 +175,7 @@ const setup_abort_signal = (child: ChildProcess, signal: AbortSignal): (() => vo
 		return noop;
 	}
 	const on_abort = () => child.kill();
-	signal.addEventListener('abort', on_abort, {once: true});
+	signal.addEventListener('abort', on_abort, { once: true });
 	return () => signal.removeEventListener('abort', on_abort);
 };
 
@@ -238,7 +237,7 @@ export class ProcessRegistry {
 	spawn(
 		command: string,
 		args: ReadonlyArray<string> = [],
-		options?: SpawnProcessOptions,
+		options?: SpawnProcessOptions
 	): SpawnedProcess {
 		const {
 			signal,
@@ -247,7 +246,7 @@ export class ProcessRegistry {
 			...spawn_options
 		} = options ?? {};
 		validate_timeout_ms(timeout_ms);
-		const child = spawn_child_process(command, args, {stdio: 'inherit', ...spawn_options});
+		const child = spawn_child_process(command, args, { stdio: 'inherit', ...spawn_options });
 
 		this.processes.add(child);
 		const closed = create_closed_promise(child);
@@ -268,7 +267,7 @@ export class ProcessRegistry {
 			cleanup_timeout?.();
 		});
 
-		return {child, closed};
+		return { child, closed };
 	}
 
 	/**
@@ -284,9 +283,9 @@ export class ProcessRegistry {
 	async spawn_out(
 		command: string,
 		args: ReadonlyArray<string> = [],
-		options?: SpawnProcessOptions,
+		options?: SpawnProcessOptions
 	): Promise<SpawnedOut> {
-		const {child, closed} = this.spawn(command, args, {...options, stdio: 'pipe'});
+		const { child, closed } = this.spawn(command, args, { ...options, stdio: 'pipe' });
 		const stdout_chunks: Array<string> = [];
 		const stderr_chunks: Array<string> = [];
 		// Track whether streams were available (not null)
@@ -309,7 +308,7 @@ export class ProcessRegistry {
 		const spawn_failed = result.kind === 'error';
 		const stdout = spawn_failed || !stdout_available ? null : stdout_chunks.join('');
 		const stderr = spawn_failed || !stderr_available ? null : stderr_chunks.join('');
-		return {result, stdout, stderr};
+		return { result, stdout, stderr };
 	}
 
 	/**
@@ -319,7 +318,7 @@ export class ProcessRegistry {
 	 * @throws Error if `timeout_ms` is negative
 	 */
 	async despawn(child: ChildProcess, options?: DespawnOptions): Promise<SpawnResult> {
-		const {signal = 'SIGTERM', timeout_ms} = options ?? {};
+		const { signal = 'SIGTERM', timeout_ms } = options ?? {};
 		validate_timeout_ms(timeout_ms);
 
 		// Already exited with code
@@ -328,7 +327,7 @@ export class ProcessRegistry {
 				kind: 'exited',
 				ok: child.exitCode === 0,
 				child,
-				code: child.exitCode,
+				code: child.exitCode
 			};
 		}
 		// Already terminated by signal
@@ -337,7 +336,7 @@ export class ProcessRegistry {
 				kind: 'signaled',
 				ok: false,
 				child,
-				signal: child.signalCode,
+				signal: child.signalCode
 			};
 		}
 
@@ -400,7 +399,7 @@ export class ProcessRegistry {
 			to_error_label,
 			map_error_text,
 			handle_error = () => process.exit(1),
-			graceful_timeout_ms,
+			graceful_timeout_ms
 		} = options ?? {};
 
 		this.#error_handler = (err, origin): void => {
@@ -473,7 +472,7 @@ export const process_registry_default = new ProcessRegistry();
 export const spawn_process = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnProcessOptions,
+	options?: SpawnProcessOptions
 ): SpawnedProcess => process_registry_default.spawn(command, args, options);
 
 /**
@@ -489,7 +488,7 @@ export const spawn_process = (
 export const spawn = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnProcessOptions,
+	options?: SpawnProcessOptions
 ): Promise<SpawnResult> => spawn_process(command, args, options).closed;
 
 /**
@@ -504,7 +503,7 @@ export const spawn = (
 export const spawn_out = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnProcessOptions,
+	options?: SpawnProcessOptions
 ): Promise<SpawnedOut> => process_registry_default.spawn_out(command, args, options);
 
 /**
@@ -531,7 +530,7 @@ export const despawn_all = (options?: DespawnOptions): Promise<Array<SpawnResult
  * @see `ProcessRegistry.attach_error_handler`
  */
 export const attach_process_error_handler = (
-	options?: Parameters<ProcessRegistry['attach_error_handler']>[0],
+	options?: Parameters<ProcessRegistry['attach_error_handler']>[0]
 ): (() => void) => process_registry_default.attach_error_handler(options);
 
 /**
@@ -561,27 +560,27 @@ export const attach_process_error_handler = (
 export const spawn_detached = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnOptions,
+	options?: SpawnOptions
 ): SpawnDetachedResult => {
 	try {
 		const child = node_spawn_child_process(command, args, {
 			stdio: 'ignore',
 			...options,
-			detached: true,
+			detached: true
 		});
 
 		// Allow parent to exit independently
 		child.unref();
 
 		if (child.pid === undefined) {
-			return {kind: 'error', message: 'Failed to get child PID'};
+			return { kind: 'error', message: 'Failed to get child PID' };
 		}
 
-		return {kind: 'spawned', child};
+		return { kind: 'spawned', child };
 	} catch (error) {
 		return {
 			kind: 'error',
-			message: to_error_message(error),
+			message: to_error_message(error)
 		};
 	}
 };
@@ -601,7 +600,7 @@ export const spawn_detached = (
 export const print_child_process = (child: ChildProcess): string =>
 	`${st('gray', 'pid(')}${child.pid ?? 'none'}${st('gray', ')')} ← ${st(
 		'green',
-		child.spawnargs.join(' '),
+		child.spawnargs.join(' ')
 	)}`;
 
 /**
@@ -714,7 +713,7 @@ export interface RestartableProcess {
 export const spawn_restartable_process = (
 	command: string,
 	args: ReadonlyArray<string> = [],
-	options?: SpawnProcessOptions,
+	options?: SpawnProcessOptions
 ): RestartableProcess => {
 	let spawned_process: SpawnedProcess | null = null;
 	let pending_close: Promise<SpawnResult> | null = null;
@@ -746,7 +745,7 @@ export const spawn_restartable_process = (
 		if (pending_kill) await pending_kill;
 		if (pending_close) await pending_close;
 		if (spawned_process) await do_close();
-		spawned_process = spawn_process(command, args, {stdio: 'inherit', ...options});
+		spawned_process = spawn_process(command, args, { stdio: 'inherit', ...options });
 		// Forward the spawned process's closed promise to our exposed one
 		void spawned_process.closed.then((result) => {
 			resolve_closed(result);
@@ -798,7 +797,7 @@ export const spawn_restartable_process = (
 		},
 		get spawned() {
 			return spawned;
-		},
+		}
 	};
 };
 
@@ -825,7 +824,7 @@ export const process_is_pid_running = (pid: number): boolean => {
 		// EPERM = process exists but we lack permission to signal it
 		// Safely access .code in case of unexpected error types
 		const code =
-			err && typeof err === 'object' && 'code' in err ? (err as {code: string}).code : undefined;
+			err && typeof err === 'object' && 'code' in err ? (err as { code: string }).code : undefined;
 		return code === 'EPERM';
 	}
 };

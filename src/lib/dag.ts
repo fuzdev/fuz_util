@@ -9,8 +9,8 @@
  * @module
  */
 
-import {AsyncSemaphore, create_deferred, type Deferred} from './async.ts';
-import {topological_sort, type Sortable} from './sort.ts';
+import { AsyncSemaphore, create_deferred, type Deferred } from './async.ts';
+import { topological_sort, type Sortable } from './sort.ts';
 
 /**
  * Minimum shape for a DAG node.
@@ -92,7 +92,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 		should_skip,
 		max_concurrency = Infinity,
 		stop_on_failure = true,
-		skip_validation = false,
+		skip_validation = false
 	} = options;
 
 	const start_time = Date.now();
@@ -105,7 +105,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 			completed: 0,
 			failed: 0,
 			skipped: 0,
-			duration_ms: 0,
+			duration_ms: 0
 		};
 	}
 
@@ -120,7 +120,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 				failed: 0,
 				skipped: 0,
 				duration_ms: Date.now() - start_time,
-				error: sort_result.error,
+				error: sort_result.error
 			};
 		}
 	}
@@ -140,7 +140,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 	// Skip a node, record outcome, notify dependents
 	const skip_node = async (node: T, outcome: 'ok' | 'fail', reason: string): Promise<void> => {
 		outcomes.set(node.id, outcome);
-		results.set(node.id, {id: node.id, status: 'skipped', duration_ms: 0});
+		results.set(node.id, { id: node.id, status: 'skipped', duration_ms: 0 });
 		if (on_skip) await on_skip(node, reason);
 		deferreds.get(node.id)!.resolve();
 	};
@@ -187,7 +187,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 			results.set(node.id, {
 				id: node.id,
 				status: 'completed',
-				duration_ms: Date.now() - exec_start,
+				duration_ms: Date.now() - exec_start
 			});
 		} catch (err) {
 			const error = err instanceof Error ? err : new Error(String(err));
@@ -196,7 +196,7 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 				id: node.id,
 				status: 'failed',
 				error: error.message,
-				duration_ms: Date.now() - exec_start,
+				duration_ms: Date.now() - exec_start
 			});
 			if (stop_on_failure) stopping = true;
 			if (on_error) await on_error(node, error);
@@ -235,6 +235,6 @@ export const run_dag = async <T extends DagNode>(options: DagOptions<T>): Promis
 		failed,
 		skipped,
 		duration_ms: Date.now() - start_time,
-		error: success ? undefined : `${failed} node(s) failed`,
+		error: success ? undefined : `${failed} node(s) failed`
 	};
 };

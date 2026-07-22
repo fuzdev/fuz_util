@@ -1,5 +1,5 @@
-import {styleText} from 'node:util';
-import {DEV} from 'esm-env';
+import { styleText } from 'node:util';
+import { DEV } from 'esm-env';
 
 /**
  * Log level hierarchy from least to most verbose.
@@ -36,7 +36,7 @@ const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
 	error: 1,
 	warn: 2,
 	info: 3,
-	debug: 4,
+	debug: 4
 };
 
 /**
@@ -384,7 +384,7 @@ export class Logger {
 		// Pass parent reference and all config options
 		const internal_options: InternalLoggerOptions = {
 			...options,
-			parent: this,
+			parent: this
 		};
 		return new Logger(child_label, internal_options);
 	}

@@ -1,10 +1,10 @@
-import {z} from 'zod';
+import { z } from 'zod';
 
-import type {Flavored} from './types.ts';
-import type {Logger} from './log.ts';
-import {EMPTY_OBJECT} from './object.ts';
-import type {Result} from './result.ts';
-import {json_stringify_deterministic} from './json.ts';
+import type { Flavored } from './types.ts';
+import type { Logger } from './log.ts';
+import { EMPTY_OBJECT } from './object.ts';
+import type { Result } from './result.ts';
+import { json_stringify_deterministic } from './json.ts';
 
 const DEFAULT_GITHUB_API_ACCEPT_HEADER = 'application/vnd.github+json';
 const DEFAULT_GITHUB_API_VERSION_HEADER = '2022-11-28';
@@ -52,8 +52,8 @@ export interface FetchValueOptions<TValue, TParams = undefined> {
  */
 export const fetch_value = async <TValue = any, TParams = undefined>(
 	url: string | URL,
-	options?: FetchValueOptions<TValue, TParams>,
-): Promise<Result<{value: TValue; headers: Headers}, {status: number; message: string}>> => {
+	options?: FetchValueOptions<TValue, TParams>
+): Promise<Result<{ value: TValue; headers: Headers }, { status: number; message: string }>> => {
 	const {
 		request,
 		params,
@@ -62,7 +62,7 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 		cache,
 		return_early_from_cache,
 		log,
-		fetch = globalThis.fetch,
+		fetch = globalThis.fetch
 	} = options ?? EMPTY_OBJECT;
 
 	const url_obj = typeof url === 'string' ? new URL(url) : url;
@@ -79,7 +79,7 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 		if (return_early_from_cache && cached) {
 			log?.info('[fetch_value] cached locally and returning early', url_str);
 			log?.debug('[fetch_value] cached value', cached);
-			return {ok: true, value: cached.value, headers: to_cached_headers(cached)};
+			return { ok: true, value: cached.value, headers: to_cached_headers(cached) };
 		}
 	}
 
@@ -90,7 +90,7 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 	if (!headers.has('accept')) {
 		headers.set(
 			'accept',
-			url_obj.hostname === 'api.github.com' ? DEFAULT_GITHUB_API_ACCEPT_HEADER : 'application/json',
+			url_obj.hostname === 'api.github.com' ? DEFAULT_GITHUB_API_ACCEPT_HEADER : 'application/json'
 		);
 	}
 	if (
@@ -116,7 +116,7 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 		}
 	}
 
-	const req = new Request(url_obj, {...request, headers, method, body});
+	const req = new Request(url_obj, { ...request, headers, method, body });
 
 	log?.info('[fetch_value] fetching url with headers', url);
 	log?.debug('[fetch_value] fetching with headers', print_headers(headers));
@@ -133,11 +133,11 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 	if (res.status === 304) {
 		if (!cached) throw Error('unexpected 304 status without a cached value');
 		log?.info('[fetch_value] cache hit', url);
-		return {ok: true, value: cached.value, headers: to_cached_headers(cached)};
+		return { ok: true, value: cached.value, headers: to_cached_headers(cached) };
 	}
 
 	if (!res.ok) {
-		return {ok: false, status: res.status, message: res.statusText};
+		return { ok: false, status: res.status, message: res.statusText };
 	}
 
 	const content_type = res.headers.get('content-type');
@@ -154,12 +154,12 @@ export const fetch_value = async <TValue = any, TParams = undefined>(
 			params,
 			value: parsed,
 			etag: res.headers.get('etag'),
-			last_modified: res.headers.get('etag') ? null : res.headers.get('last-modified'), // fall back to last-modified, ignoring if there's an etag
+			last_modified: res.headers.get('etag') ? null : res.headers.get('last-modified') // fall back to last-modified, ignoring if there's an etag
 		};
 		cache!.set(key, result);
 	}
 
-	return {ok: true, value: parsed, headers: res.headers};
+	return { ok: true, value: parsed, headers: res.headers };
 };
 
 /**
@@ -197,7 +197,7 @@ export const FetchValueCacheItem = z.object({
 	params: z.any(),
 	value: z.any(),
 	etag: z.string().nullable(),
-	last_modified: z.string().nullable(),
+	last_modified: z.string().nullable()
 });
 export type FetchValueCacheItem = z.infer<typeof FetchValueCacheItem>;
 
@@ -209,7 +209,7 @@ const KEY_SEPARATOR = '::';
 export const to_fetch_value_cache_key = (
 	url: string,
 	params: any,
-	method: string,
+	method: string
 ): FetchValueCacheKey => {
 	let key = method + KEY_SEPARATOR + url;
 	if (params != null) {

@@ -1,6 +1,6 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {count_iterator} from '$lib/iterator.ts';
+import { count_iterator } from '$lib/iterator.ts';
 
 test('count_iterator', () => {
 	assert.strictEqual(count_iterator('test'), 4);

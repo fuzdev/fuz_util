@@ -4,7 +4,7 @@
  * @module
  */
 
-import {string_is_binary} from './string.ts';
+import { string_is_binary } from './string.ts';
 
 /** Line diff result */
 export interface DiffLine {
@@ -31,19 +31,19 @@ export const diff_lines = (a: string, b: string): Array<DiffLine> => {
 	while (ai < a_lines.length || bi < b_lines.length) {
 		if (li < lcs.length && ai < a_lines.length && a_lines[ai] === lcs[li]) {
 			if (bi < b_lines.length && b_lines[bi] === lcs[li]) {
-				result.push({type: 'same', line: a_lines[ai]!});
+				result.push({ type: 'same', line: a_lines[ai]! });
 				ai++;
 				bi++;
 				li++;
 			} else {
-				result.push({type: 'add', line: b_lines[bi]!});
+				result.push({ type: 'add', line: b_lines[bi]! });
 				bi++;
 			}
 		} else if (ai < a_lines.length && (li >= lcs.length || a_lines[ai] !== lcs[li])) {
-			result.push({type: 'remove', line: a_lines[ai]!});
+			result.push({ type: 'remove', line: a_lines[ai]! });
 			ai++;
 		} else if (bi < b_lines.length) {
-			result.push({type: 'add', line: b_lines[bi]!});
+			result.push({ type: 'add', line: b_lines[bi]! });
 			bi++;
 		}
 	}
@@ -59,7 +59,7 @@ export const diff_lines = (a: string, b: string): Array<DiffLine> => {
 const compute_lcs = (a: Array<string>, b: Array<string>): Array<string> => {
 	const m = a.length;
 	const n = b.length;
-	const dp: Array<Array<number>> = Array.from({length: m + 1}, () => Array(n + 1).fill(0));
+	const dp: Array<Array<number>> = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
 
 	for (let i = 1; i <= m; i++) {
 		for (let j = 1; j <= n; j++) {
@@ -129,7 +129,7 @@ export const filter_diff_context = (diff: Array<DiffLine>, context_lines = 3): A
 		if (include_indices.has(i)) {
 			// Add ellipsis if there's a gap
 			if (last_included >= 0 && i > last_included + 1) {
-				result.push({type: 'same', line: '...'});
+				result.push({ type: 'same', line: '...' });
 			}
 			result.push(diff[i]!);
 			last_included = i;
@@ -143,7 +143,7 @@ export const filter_diff_context = (diff: Array<DiffLine>, context_lines = 3): A
 const colors = {
 	red: '\x1b[31m',
 	green: '\x1b[32m',
-	reset: '\x1b[0m',
+	reset: '\x1b[0m'
 } as const;
 
 /**
@@ -168,13 +168,13 @@ export const format_diff = (
 	diff: Array<DiffLine>,
 	current_path: string,
 	desired_path: string,
-	options: FormatDiffOptions = {},
+	options: FormatDiffOptions = {}
 ): string => {
-	const {prefix = '', use_color = true, max_lines = 50} = options;
+	const { prefix = '', use_color = true, max_lines = 50 } = options;
 
 	const lines: Array<string> = [
 		`${prefix}--- ${current_path} (current)`,
-		`${prefix}+++ ${desired_path} (desired)`,
+		`${prefix}+++ ${desired_path} (desired)`
 	];
 
 	let count = 0;
@@ -212,7 +212,7 @@ export const generate_diff = (
 	current: string,
 	desired: string,
 	path: string,
-	options: FormatDiffOptions = {},
+	options: FormatDiffOptions = {}
 ): string | null => {
 	// Skip binary files
 	if (string_is_binary(current) || string_is_binary(desired)) {

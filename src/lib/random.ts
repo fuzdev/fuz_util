@@ -8,7 +8,7 @@
  * @module
  */
 
-import type {ArrayElement} from './types.ts';
+import type { ArrayElement } from './types.ts';
 
 /**
  * Generates a random `number` between `min` and `max`.
@@ -34,7 +34,7 @@ export const random_boolean = (random = Math.random): boolean => random() > 0.5;
  */
 export const random_item = <T extends ReadonlyArray<any>>(
 	arr: T,
-	random = Math.random,
+	random = Math.random
 ): ArrayElement<T> => arr[random_int(0, arr.length - 1, random)];
 
 /**
@@ -43,9 +43,9 @@ export const random_item = <T extends ReadonlyArray<any>>(
  */
 export const shuffle: <T extends Array<any>>(array: T, random?: typeof random_int) => T = (
 	array,
-	random = random_int,
+	random = random_int
 ) => {
-	const {length} = array;
+	const { length } = array;
 	const max = length - 1;
 	for (let i = 0; i < length; i++) {
 		const index = random(0, max);

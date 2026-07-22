@@ -4,9 +4,9 @@
  * @module
  */
 
-import {assert, test, describe} from 'vitest';
+import { assert, test, describe } from 'vitest';
 
-import {run_dag, type DagNode, type DagResult} from '$lib/dag.ts';
+import { run_dag, type DagNode, type DagResult } from '$lib/dag.ts';
 
 /**
  * Helper to create a simple DAG node.
@@ -18,8 +18,8 @@ const make_node = (
 		execute?: () => Promise<unknown>;
 		fail?: boolean;
 		delay_ms?: number;
-	},
-): DagNode & {execute: () => Promise<void>} => ({
+	}
+): DagNode & { execute: () => Promise<void> } => ({
 	id,
 	depends_on: options?.depends_on,
 	execute:
@@ -32,21 +32,21 @@ const make_node = (
 				? async () => {
 						await new Promise((r) => setTimeout(r, options.delay_ms));
 					}
-				: async () => {}),
+				: async () => {})
 });
 
 /**
  * Helper to run nodes with their built-in execute functions.
  */
 const run_with_execute = async (
-	nodes: Array<DagNode & {execute: () => Promise<void>}>,
+	nodes: Array<DagNode & { execute: () => Promise<void> }>,
 	options?: {
 		max_concurrency?: number;
 		stop_on_failure?: boolean;
 		should_skip?: (node: DagNode) => boolean;
 		on_skip?: (node: DagNode, reason: string) => Promise<void>;
 		on_error?: (node: DagNode, error: Error) => Promise<void>;
-	},
+	}
 ): Promise<DagResult> => {
 	const node_map = new Map(nodes.map((n) => [n.id, n]));
 	return run_dag({
@@ -54,14 +54,14 @@ const run_with_execute = async (
 		execute: async (node) => {
 			await node_map.get(node.id)!.execute();
 		},
-		...options,
+		...options
 	});
 };
 
 describe('run_dag', () => {
 	describe('graph validation', () => {
 		test('empty nodes returns success', async () => {
-			const result = await run_dag({nodes: [], execute: async () => {}});
+			const result = await run_dag({ nodes: [], execute: async () => {} });
 			assert.isTrue(result.success);
 			assert.strictEqual(result.completed, 0);
 			assert.strictEqual(result.failed, 0);
@@ -71,10 +71,10 @@ describe('run_dag', () => {
 		test('single node executes', async () => {
 			let executed = false;
 			const result = await run_dag({
-				nodes: [{id: 'a'}],
+				nodes: [{ id: 'a' }],
 				execute: async () => {
 					executed = true;
-				},
+				}
 			});
 			assert.isTrue(result.success);
 			assert.strictEqual(result.completed, 1);
@@ -83,8 +83,8 @@ describe('run_dag', () => {
 
 		test('detects duplicate IDs', async () => {
 			const result = await run_dag({
-				nodes: [{id: 'a'}, {id: 'a'}],
-				execute: async () => {},
+				nodes: [{ id: 'a' }, { id: 'a' }],
+				execute: async () => {}
 			});
 			assert.isFalse(result.success);
 			assert.include(result.error, 'duplicate');
@@ -92,8 +92,8 @@ describe('run_dag', () => {
 
 		test('detects missing dependencies', async () => {
 			const result = await run_dag({
-				nodes: [{id: 'a', depends_on: ['missing']}],
-				execute: async () => {},
+				nodes: [{ id: 'a', depends_on: ['missing'] }],
+				execute: async () => {}
 			});
 			assert.isFalse(result.success);
 			assert.include(result.error, 'unknown');
@@ -102,10 +102,10 @@ describe('run_dag', () => {
 		test('detects cycles', async () => {
 			const result = await run_dag({
 				nodes: [
-					{id: 'a', depends_on: ['b']},
-					{id: 'b', depends_on: ['a']},
+					{ id: 'a', depends_on: ['b'] },
+					{ id: 'b', depends_on: ['a'] }
 				],
-				execute: async () => {},
+				execute: async () => {}
 			});
 			assert.isFalse(result.success);
 			assert.include(result.error, 'cycle');
@@ -116,9 +116,9 @@ describe('run_dag', () => {
 		test('executes in dependency order', async () => {
 			const order: Array<string> = [];
 			const nodes = [
-				make_node('c', {depends_on: ['b'], execute: async () => order.push('c')}),
-				make_node('a', {execute: async () => order.push('a')}),
-				make_node('b', {depends_on: ['a'], execute: async () => order.push('b')}),
+				make_node('c', { depends_on: ['b'], execute: async () => order.push('c') }),
+				make_node('a', { execute: async () => order.push('a') }),
+				make_node('b', { depends_on: ['a'], execute: async () => order.push('b') })
 			];
 			const result = await run_with_execute(nodes);
 			assert.isTrue(result.success);
@@ -131,14 +131,14 @@ describe('run_dag', () => {
 			const order: Array<string> = [];
 			const skipped: Array<string> = [];
 			const nodes = [
-				make_node('a', {fail: true}),
-				make_node('b', {depends_on: ['a'], execute: async () => order.push('b')}),
-				make_node('c', {depends_on: ['b'], execute: async () => order.push('c')}),
+				make_node('a', { fail: true }),
+				make_node('b', { depends_on: ['a'], execute: async () => order.push('b') }),
+				make_node('c', { depends_on: ['b'], execute: async () => order.push('c') })
 			];
 			const result = await run_with_execute(nodes, {
 				on_skip: async (node, _reason) => {
 					skipped.push(node.id);
-				},
+				}
 			});
 			assert.isFalse(result.success);
 			assert.strictEqual(result.completed, 0);
@@ -161,8 +161,8 @@ describe('run_dag', () => {
 						if (current > max_concurrent) max_concurrent = current;
 						await new Promise((r) => setTimeout(r, 20));
 						current--;
-					},
-				}),
+					}
+				})
 			);
 			const start = Date.now();
 			const result = await run_with_execute(nodes);
@@ -177,13 +177,13 @@ describe('run_dag', () => {
 		test('diamond dependency: a -> b,c -> d', async () => {
 			const order: Array<string> = [];
 			const nodes = [
-				make_node('a', {execute: async () => order.push('a')}),
-				make_node('b', {depends_on: ['a'], execute: async () => order.push('b')}),
-				make_node('c', {depends_on: ['a'], execute: async () => order.push('c')}),
+				make_node('a', { execute: async () => order.push('a') }),
+				make_node('b', { depends_on: ['a'], execute: async () => order.push('b') }),
+				make_node('c', { depends_on: ['a'], execute: async () => order.push('c') }),
 				make_node('d', {
 					depends_on: ['b', 'c'],
-					execute: async () => order.push('d'),
-				}),
+					execute: async () => order.push('d')
+				})
 			];
 			const result = await run_with_execute(nodes);
 			assert.isTrue(result.success);
@@ -206,10 +206,10 @@ describe('run_dag', () => {
 						if (current > max_concurrent) max_concurrent = current;
 						await new Promise((r) => setTimeout(r, 20));
 						current--;
-					},
-				}),
+					}
+				})
 			);
-			const result = await run_with_execute(nodes, {max_concurrency: 2});
+			const result = await run_with_execute(nodes, { max_concurrency: 2 });
 
 			assert.isTrue(result.success);
 			assert.strictEqual(result.completed, 4);
@@ -224,10 +224,10 @@ describe('run_dag', () => {
 						order.push(`${id}-start`);
 						await new Promise((r) => setTimeout(r, 5));
 						order.push(`${id}-end`);
-					},
-				}),
+					}
+				})
 			);
-			const result = await run_with_execute(nodes, {max_concurrency: 1});
+			const result = await run_with_execute(nodes, { max_concurrency: 1 });
 
 			assert.isTrue(result.success);
 			assert.strictEqual(result.completed, 3);
@@ -246,15 +246,15 @@ describe('run_dag', () => {
 		test('true: stops all remaining nodes', async () => {
 			const executed: Array<string> = [];
 			const nodes = [
-				make_node('a', {fail: true}),
-				make_node('b', {execute: async () => executed.push('b')}),
-				make_node('c', {execute: async () => executed.push('c')}),
+				make_node('a', { fail: true }),
+				make_node('b', { execute: async () => executed.push('b') }),
+				make_node('c', { execute: async () => executed.push('c') })
 			];
 
 			// Use max_concurrency: 1 so 'a' fails before b/c start
 			const result = await run_with_execute(nodes, {
 				stop_on_failure: true,
-				max_concurrency: 1,
+				max_concurrency: 1
 			});
 
 			assert.isFalse(result.success);
@@ -265,11 +265,11 @@ describe('run_dag', () => {
 		test('false: continues independent branches', async () => {
 			const executed: Array<string> = [];
 			const nodes = [
-				make_node('a', {fail: true}),
-				make_node('b', {depends_on: ['a'], execute: async () => executed.push('b')}),
-				make_node('c', {execute: async () => executed.push('c')}), // independent
+				make_node('a', { fail: true }),
+				make_node('b', { depends_on: ['a'], execute: async () => executed.push('b') }),
+				make_node('c', { execute: async () => executed.push('c') }) // independent
 			];
-			const result = await run_with_execute(nodes, {stop_on_failure: false});
+			const result = await run_with_execute(nodes, { stop_on_failure: false });
 
 			assert.isFalse(result.success);
 			assert.strictEqual(result.failed, 1);
@@ -282,11 +282,11 @@ describe('run_dag', () => {
 		test('false: dependents of failed nodes are skipped', async () => {
 			const executed: Array<string> = [];
 			const nodes = [
-				make_node('a', {execute: async () => executed.push('a')}),
-				make_node('b', {depends_on: ['a'], fail: true}),
-				make_node('c', {depends_on: ['b'], execute: async () => executed.push('c')}),
+				make_node('a', { execute: async () => executed.push('a') }),
+				make_node('b', { depends_on: ['a'], fail: true }),
+				make_node('c', { depends_on: ['b'], execute: async () => executed.push('c') })
 			];
-			const result = await run_with_execute(nodes, {stop_on_failure: false});
+			const result = await run_with_execute(nodes, { stop_on_failure: false });
 
 			assert.isFalse(result.success);
 			assert.strictEqual(result.completed, 1); // a
@@ -300,11 +300,11 @@ describe('run_dag', () => {
 		test('pre-skipped nodes allow dependents to proceed', async () => {
 			const executed: Array<string> = [];
 			const nodes = [
-				make_node('a', {execute: async () => executed.push('a')}),
-				make_node('b', {depends_on: ['a'], execute: async () => executed.push('b')}),
+				make_node('a', { execute: async () => executed.push('a') }),
+				make_node('b', { depends_on: ['a'], execute: async () => executed.push('b') })
 			];
 			const result = await run_with_execute(nodes, {
-				should_skip: (node) => node.id === 'a',
+				should_skip: (node) => node.id === 'a'
 			});
 
 			assert.isTrue(result.success);
@@ -314,13 +314,13 @@ describe('run_dag', () => {
 		});
 
 		test('on_skip called with pre-skipped reason', async () => {
-			const skip_reasons: Array<{id: string; reason: string}> = [];
+			const skip_reasons: Array<{ id: string; reason: string }> = [];
 			const nodes = [make_node('a')];
 			await run_with_execute(nodes, {
 				should_skip: () => true,
 				on_skip: async (node, reason) => {
-					skip_reasons.push({id: node.id, reason});
-				},
+					skip_reasons.push({ id: node.id, reason });
+				}
 			});
 			assert.lengthOf(skip_reasons, 1);
 			assert.strictEqual(skip_reasons[0]!.reason, 'pre-skipped');
@@ -329,17 +329,17 @@ describe('run_dag', () => {
 
 	describe('cascading failure skip', () => {
 		test('transitive dependents are all skipped', async () => {
-			const skip_reasons: Array<{id: string; reason: string}> = [];
+			const skip_reasons: Array<{ id: string; reason: string }> = [];
 			const nodes = [
-				make_node('a', {fail: true}),
-				make_node('b', {depends_on: ['a']}),
-				make_node('c', {depends_on: ['b']}),
-				make_node('d', {depends_on: ['c']}),
+				make_node('a', { fail: true }),
+				make_node('b', { depends_on: ['a'] }),
+				make_node('c', { depends_on: ['b'] }),
+				make_node('d', { depends_on: ['c'] })
 			];
 			const result = await run_with_execute(nodes, {
 				on_skip: async (node, reason) => {
-					skip_reasons.push({id: node.id, reason});
-				},
+					skip_reasons.push({ id: node.id, reason });
+				}
 			});
 
 			assert.isFalse(result.success);
@@ -354,12 +354,12 @@ describe('run_dag', () => {
 
 	describe('on_error callback', () => {
 		test('called for failed nodes', async () => {
-			const errors: Array<{id: string; message: string}> = [];
-			const nodes = [make_node('a', {fail: true})];
+			const errors: Array<{ id: string; message: string }> = [];
+			const nodes = [make_node('a', { fail: true })];
 			await run_with_execute(nodes, {
 				on_error: async (node, error) => {
-					errors.push({id: node.id, message: error.message});
-				},
+					errors.push({ id: node.id, message: error.message });
+				}
 			});
 			assert.lengthOf(errors, 1);
 			assert.strictEqual(errors[0]!.id, 'a');
@@ -371,8 +371,8 @@ describe('run_dag', () => {
 		test('per-node results are populated', async () => {
 			const nodes = [
 				make_node('a'),
-				make_node('b', {depends_on: ['a'], fail: true}),
-				make_node('c', {depends_on: ['b']}),
+				make_node('b', { depends_on: ['a'], fail: true }),
+				make_node('c', { depends_on: ['b'] })
 			];
 			const result = await run_with_execute(nodes);
 
@@ -384,7 +384,7 @@ describe('run_dag', () => {
 		});
 
 		test('duration_ms is tracked per node', async () => {
-			const nodes = [make_node('a', {delay_ms: 20})];
+			const nodes = [make_node('a', { delay_ms: 20 })];
 			const result = await run_with_execute(nodes);
 
 			assert.isTrue(result.success);
@@ -393,7 +393,7 @@ describe('run_dag', () => {
 		});
 
 		test('total duration_ms is tracked', async () => {
-			const nodes = [make_node('a', {delay_ms: 20})];
+			const nodes = [make_node('a', { delay_ms: 20 })];
 			const result = await run_with_execute(nodes);
 			assert.isAtLeast(result.duration_ms, 10);
 		});
@@ -403,11 +403,11 @@ describe('run_dag', () => {
 		test('skips duplicate ID detection', async () => {
 			let count = 0;
 			const result = await run_dag({
-				nodes: [{id: 'a'}, {id: 'b'}],
+				nodes: [{ id: 'a' }, { id: 'b' }],
 				execute: async () => {
 					count++;
 				},
-				skip_validation: true,
+				skip_validation: true
 			});
 			assert.isTrue(result.success);
 			assert.strictEqual(count, 2);
@@ -416,15 +416,15 @@ describe('run_dag', () => {
 
 	describe('non-Error throw', () => {
 		test('string throw is wrapped in Error', async () => {
-			const errors: Array<{id: string; message: string}> = [];
+			const errors: Array<{ id: string; message: string }> = [];
 			const result = await run_dag({
-				nodes: [{id: 'a'}],
+				nodes: [{ id: 'a' }],
 				execute: async () => {
 					throw 'string error'; // eslint-disable-line @typescript-eslint/only-throw-error
 				},
 				on_error: async (_node, error) => {
-					errors.push({id: 'a', message: error.message});
-				},
+					errors.push({ id: 'a', message: error.message });
+				}
 			});
 			assert.isFalse(result.success);
 			assert.strictEqual(result.failed, 1);
@@ -436,18 +436,18 @@ describe('run_dag', () => {
 
 	describe('on_skip with stopped reason', () => {
 		test('nodes skipped due to stop_on_failure get stopped reason', async () => {
-			const skip_reasons: Array<{id: string; reason: string}> = [];
+			const skip_reasons: Array<{ id: string; reason: string }> = [];
 			const nodes = [
-				make_node('a', {fail: true}),
-				make_node('b', {delay_ms: 5}),
-				make_node('c', {delay_ms: 5}),
+				make_node('a', { fail: true }),
+				make_node('b', { delay_ms: 5 }),
+				make_node('c', { delay_ms: 5 })
 			];
 			const result = await run_with_execute(nodes, {
 				stop_on_failure: true,
 				max_concurrency: 1,
 				on_skip: async (node, reason) => {
-					skip_reasons.push({id: node.id, reason});
-				},
+					skip_reasons.push({ id: node.id, reason });
+				}
 			});
 			assert.isFalse(result.success);
 			assert.strictEqual(result.failed, 1);
@@ -460,8 +460,12 @@ describe('run_dag', () => {
 
 	describe('multiple concurrent failures', () => {
 		test('stop_on_failure false allows multiple failures', async () => {
-			const nodes = [make_node('a', {fail: true}), make_node('b', {fail: true}), make_node('c')];
-			const result = await run_with_execute(nodes, {stop_on_failure: false});
+			const nodes = [
+				make_node('a', { fail: true }),
+				make_node('b', { fail: true }),
+				make_node('c')
+			];
+			const result = await run_with_execute(nodes, { stop_on_failure: false });
 			assert.isFalse(result.success);
 			assert.strictEqual(result.failed, 2);
 			assert.strictEqual(result.completed, 1);

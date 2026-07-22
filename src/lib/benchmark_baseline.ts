@@ -5,19 +5,19 @@
  * @module
  */
 
-import {readFile, writeFile, mkdir, rm} from 'node:fs/promises';
-import {join} from 'node:path';
-import {z} from 'zod';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { z } from 'zod';
 
-import {fs_exists} from './fs.ts';
-import {git_info_get} from './git.ts';
-import type {BenchmarkResult} from './benchmark_types.ts';
+import { fs_exists } from './fs.ts';
+import { git_info_get } from './git.ts';
+import type { BenchmarkResult } from './benchmark_types.ts';
 import {
 	benchmark_stats_compare,
 	type BenchmarkComparison,
-	type BenchmarkStatsComparable,
+	type BenchmarkStatsComparable
 } from './benchmark_stats.ts';
-import {stats_confidence_interval_from_summary, stats_cv} from './stats.ts';
+import { stats_confidence_interval_from_summary, stats_cv } from './stats.ts';
 
 // Version for forward compatibility - increment when schema changes
 const BASELINE_VERSION = 3;
@@ -34,7 +34,7 @@ const BenchmarkBaselineBudget = z.object({
 	warmup_iterations: z.number(),
 	min_iterations: z.number(),
 	max_iterations: z.number(),
-	async_resolved: z.boolean(),
+	async_resolved: z.boolean()
 });
 
 /**
@@ -61,7 +61,7 @@ export const BenchmarkBaselineEntry = z.object({
 	ops_per_second: z.number(),
 	sample_size: z.number(),
 	outlier_ratio: z.number(),
-	budget: BenchmarkBaselineBudget,
+	budget: BenchmarkBaselineBudget
 });
 export type BenchmarkBaselineEntry = z.infer<typeof BenchmarkBaselineEntry>;
 
@@ -86,7 +86,7 @@ export const BenchmarkBaseline = z.object({
 	git_branch: z.string().nullable(),
 	node_version: z.string(),
 	entries: z.array(BenchmarkBaselineEntry),
-	metadata: z.record(z.string(), z.unknown()).optional(),
+	metadata: z.record(z.string(), z.unknown()).optional()
 });
 export type BenchmarkBaseline = z.infer<typeof BenchmarkBaseline>;
 
@@ -317,7 +317,7 @@ const results_to_entries = (results: Array<BenchmarkResult>): Array<BenchmarkBas
 		ops_per_second: r.stats.ops_per_second,
 		sample_size: r.stats.sample_size,
 		outlier_ratio: r.stats.outlier_ratio,
-		budget: r.budget,
+		budget: r.budget
 	}));
 };
 
@@ -332,8 +332,8 @@ export type BenchmarkBudgetDiffEntry =
 			field: 'duration_ms' | 'warmup_iterations' | 'min_iterations' | 'max_iterations';
 			baseline: number;
 			current: number;
-		}
-	| {field: 'async_resolved'; baseline: boolean; current: boolean};
+	  }
+	| { field: 'async_resolved'; baseline: boolean; current: boolean };
 
 /**
  * Compute the per-field diff between two effective budgets. Returns an empty
@@ -342,38 +342,42 @@ export type BenchmarkBudgetDiffEntry =
  */
 export const benchmark_budget_diff = (
 	baseline: BenchmarkBaselineEntry['budget'],
-	current: BenchmarkBaselineEntry['budget'],
+	current: BenchmarkBaselineEntry['budget']
 ): Array<BenchmarkBudgetDiffEntry> => {
 	const diff: Array<BenchmarkBudgetDiffEntry> = [];
 	if (baseline.duration_ms !== current.duration_ms) {
-		diff.push({field: 'duration_ms', baseline: baseline.duration_ms, current: current.duration_ms});
+		diff.push({
+			field: 'duration_ms',
+			baseline: baseline.duration_ms,
+			current: current.duration_ms
+		});
 	}
 	if (baseline.warmup_iterations !== current.warmup_iterations) {
 		diff.push({
 			field: 'warmup_iterations',
 			baseline: baseline.warmup_iterations,
-			current: current.warmup_iterations,
+			current: current.warmup_iterations
 		});
 	}
 	if (baseline.min_iterations !== current.min_iterations) {
 		diff.push({
 			field: 'min_iterations',
 			baseline: baseline.min_iterations,
-			current: current.min_iterations,
+			current: current.min_iterations
 		});
 	}
 	if (baseline.max_iterations !== current.max_iterations) {
 		diff.push({
 			field: 'max_iterations',
 			baseline: baseline.max_iterations,
-			current: current.max_iterations,
+			current: current.max_iterations
 		});
 	}
 	if (baseline.async_resolved !== current.async_resolved) {
 		diff.push({
 			field: 'async_resolved',
 			baseline: baseline.async_resolved,
-			current: current.async_resolved,
+			current: current.async_resolved
 		});
 	}
 	return diff;
@@ -402,7 +406,7 @@ export const benchmark_budget_diff = (
  */
 export const benchmark_baseline_save = async (
 	results: Array<BenchmarkResult>,
-	options: BenchmarkBaselineSaveOptions = {},
+	options: BenchmarkBaselineSaveOptions = {}
 ): Promise<void> => {
 	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
 
@@ -425,10 +429,10 @@ export const benchmark_baseline_save = async (
 		// Only write `metadata` when the caller passed something — keeps
 		// baselines that don't use the feature byte-identical to the pre-
 		// metadata schema (no spurious `"metadata": {}` field in the file).
-		...(options.metadata !== undefined ? {metadata: options.metadata} : {}),
+		...(options.metadata !== undefined ? { metadata: options.metadata } : {})
 	};
 
-	await mkdir(base_path, {recursive: true});
+	await mkdir(base_path, { recursive: true });
 	const filepath = join(base_path, BASELINE_FILENAME);
 	await writeFile(filepath, JSON.stringify(baseline, null, '\t'), 'utf-8');
 };
@@ -447,7 +451,7 @@ export const benchmark_baseline_save = async (
  * ```
  */
 export const benchmark_baseline_load = async (
-	options: BenchmarkBaselineLoadOptions = {},
+	options: BenchmarkBaselineLoadOptions = {}
 ): Promise<BenchmarkBaseline | null> => {
 	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
 	const filepath = join(base_path, BASELINE_FILENAME);
@@ -473,9 +477,9 @@ export const benchmark_baseline_load = async (
 					BASELINE_VERSION
 				}). Removing stale baseline: ${
 					filepath
-				}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
+				}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`
 			);
-			await rm(filepath, {force: true});
+			await rm(filepath, { force: true });
 			return null;
 		}
 
@@ -486,9 +490,9 @@ export const benchmark_baseline_load = async (
 			`Invalid or corrupted benchmark baseline file. Removing: ${
 				filepath
 			}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
-			error instanceof Error ? error.message : error,
+			error instanceof Error ? error.message : error
 		);
-		await rm(filepath, {force: true});
+		await rm(filepath, { force: true });
 		return null;
 	}
 };
@@ -520,7 +524,7 @@ export const benchmark_baseline_load = async (
  */
 export const benchmark_baseline_compare = async (
 	results: Array<BenchmarkResult>,
-	options: BenchmarkBaselineCompareOptions = {},
+	options: BenchmarkBaselineCompareOptions = {}
 ): Promise<BenchmarkBaselineComparisonResult> => {
 	const baseline = await benchmark_baseline_load(options);
 	const regression_threshold = options.regression_threshold ?? 1.0;
@@ -551,7 +555,7 @@ export const benchmark_baseline_compare = async (
 			unchanged: [],
 			methodology_changed: [],
 			new_tasks: results.map((r) => r.name),
-			removed_tasks: [],
+			removed_tasks: []
 		};
 	}
 
@@ -591,8 +595,8 @@ export const benchmark_baseline_compare = async (
 			confidence_interval_ns: stats_confidence_interval_from_summary(
 				baseline_entry.mean_ns,
 				baseline_entry.std_dev_ns,
-				baseline_entry.sample_size,
-			),
+				baseline_entry.sample_size
+			)
 		};
 		const current_stats: BenchmarkStatsComparable = {
 			mean_ns: current.mean_ns,
@@ -601,12 +605,12 @@ export const benchmark_baseline_compare = async (
 			confidence_interval_ns: stats_confidence_interval_from_summary(
 				current.mean_ns,
 				current.std_dev_ns,
-				current.sample_size,
-			),
+				current.sample_size
+			)
 		};
 
 		const comparison = benchmark_stats_compare(baseline_stats, current_stats, {
-			min_percent_difference: options.min_percent_difference,
+			min_percent_difference: options.min_percent_difference
 		});
 
 		const budget_diff = benchmark_budget_diff(baseline_entry.budget, current.budget);
@@ -624,7 +628,7 @@ export const benchmark_baseline_compare = async (
 		// has no measurable noise to warn about.
 		const max_cv = Math.max(
 			Number.isFinite(baseline_cv) ? baseline_cv : 0,
-			Number.isFinite(current_cv) ? current_cv : 0,
+			Number.isFinite(current_cv) ? current_cv : 0
 		);
 		const max_outlier_ratio = Math.max(baseline_entry.outlier_ratio, current.outlier_ratio);
 		// OR-gate: cleaned cv catches noisy surviving distributions; outlier
@@ -643,7 +647,7 @@ export const benchmark_baseline_compare = async (
 			methodology_changed: is_methodology_changed,
 			noise_warning,
 			max_cv,
-			max_outlier_ratio,
+			max_outlier_ratio
 		};
 
 		// Methodology-changed tasks are routed to their own bucket and excluded
@@ -690,7 +694,7 @@ export const benchmark_baseline_compare = async (
 	// Sort regressions and improvements by percentage difference (largest first)
 	const sort_by_percent_difference = (
 		a: BenchmarkBaselineTaskComparison,
-		b: BenchmarkBaselineTaskComparison,
+		b: BenchmarkBaselineTaskComparison
 	) => b.comparison.percent_difference - a.comparison.percent_difference;
 
 	regressions.sort(sort_by_percent_difference);
@@ -717,7 +721,7 @@ export const benchmark_baseline_compare = async (
 		unchanged,
 		methodology_changed,
 		new_tasks,
-		removed_tasks,
+		removed_tasks
 	};
 };
 
@@ -748,7 +752,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 	}
 	if (result.node_version_changed && result.baseline_node_version) {
 		lines.push(
-			`Baseline node: ${result.baseline_node_version} → ${result.current_node_version} (CHANGED)`,
+			`Baseline node: ${result.baseline_node_version} → ${result.current_node_version} (CHANGED)`
 		);
 	}
 	lines.push('');
@@ -773,7 +777,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 			lines.push(
 				`  ${r.name}: ${ratio}x slower (${pct}%, p=${p}, ${
 					r.comparison.effect_magnitude
-				})${noise_suffix(r)}`,
+				})${noise_suffix(r)}`
 			);
 		}
 		lines.push('');
@@ -788,7 +792,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 			lines.push(
 				`  ${r.name}: ${ratio}x faster (${pct}%, p=${p}, ${
 					r.comparison.effect_magnitude
-				})${noise_suffix(r)}`,
+				})${noise_suffix(r)}`
 			);
 		}
 		lines.push('');
@@ -819,7 +823,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 
 	if (result.removed_tasks.length > 0) {
 		lines.push(
-			`Removed tasks (${result.removed_tasks.length}): ${result.removed_tasks.join(', ')}`,
+			`Removed tasks (${result.removed_tasks.length}): ${result.removed_tasks.join(', ')}`
 		);
 	}
 
@@ -854,7 +858,7 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
  */
 export const benchmark_baseline_format_json = (
 	result: BenchmarkBaselineComparisonResult,
-	options: {pretty?: boolean} = {},
+	options: { pretty?: boolean } = {}
 ): string => {
 	const output = {
 		baseline_found: result.baseline_found,
@@ -885,7 +889,7 @@ export const benchmark_baseline_format_json = (
 				result.improvements.filter((r) => r.noise_warning).length +
 				result.unchanged.filter((r) => r.noise_warning).length,
 			new_tasks: result.new_tasks.length,
-			removed_tasks: result.removed_tasks.length,
+			removed_tasks: result.removed_tasks.length
 		},
 		regressions: result.regressions.map((r) => ({
 			name: r.name,
@@ -898,7 +902,7 @@ export const benchmark_baseline_format_json = (
 			current_mean_ns: r.current.mean_ns,
 			noise_warning: r.noise_warning,
 			max_cv: r.max_cv,
-			max_outlier_ratio: r.max_outlier_ratio,
+			max_outlier_ratio: r.max_outlier_ratio
 		})),
 		improvements: result.improvements.map((r) => ({
 			name: r.name,
@@ -911,15 +915,15 @@ export const benchmark_baseline_format_json = (
 			current_mean_ns: r.current.mean_ns,
 			noise_warning: r.noise_warning,
 			max_cv: r.max_cv,
-			max_outlier_ratio: r.max_outlier_ratio,
+			max_outlier_ratio: r.max_outlier_ratio
 		})),
 		unchanged: result.unchanged.map((r) => r.name),
 		methodology_changed: result.methodology_changed.map((r) => ({
 			name: r.name,
-			budget_diff: benchmark_budget_diff(r.baseline.budget, r.current.budget),
+			budget_diff: benchmark_budget_diff(r.baseline.budget, r.current.budget)
 		})),
 		new_tasks: result.new_tasks,
-		removed_tasks: result.removed_tasks,
+		removed_tasks: result.removed_tasks
 	};
 
 	return options.pretty ? JSON.stringify(output, null, '\t') : JSON.stringify(output);

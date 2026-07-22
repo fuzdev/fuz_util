@@ -4,7 +4,7 @@
  * @module
  */
 
-import {z} from 'zod';
+import { z } from 'zod';
 
 export const Datetime = z.iso.datetime().brand('Datetime');
 export type Datetime = z.infer<typeof Datetime>;

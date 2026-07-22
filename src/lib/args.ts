@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import { z } from 'zod';
 
 /**
  * CLI arguments container.
@@ -96,7 +96,7 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 	let obj_def = def;
 	while (!('shape' in obj_def)) {
 		const inner = unwrap_schema(obj_def);
-		if (!inner) return {aliases, canonical_keys, boolean_keys, errors};
+		if (!inner) return { aliases, canonical_keys, boolean_keys, errors };
 		obj_def = inner._zod.def;
 	}
 
@@ -125,7 +125,7 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 						type: 'alias_canonical_conflict',
 						alias,
 						canonical: key,
-						conflict_with: alias,
+						conflict_with: alias
 					});
 				}
 				// Check for duplicate alias
@@ -134,7 +134,7 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 						type: 'duplicate_alias',
 						alias,
 						canonical: key,
-						conflict_with: aliases.get(alias)!,
+						conflict_with: aliases.get(alias)!
 					});
 				} else {
 					aliases.set(alias, key);
@@ -142,7 +142,7 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 			}
 		}
 	}
-	return {aliases, canonical_keys, boolean_keys, errors};
+	return { aliases, canonical_keys, boolean_keys, errors };
 };
 
 // Internal: Convert analysis errors to ZodError for consistent API
@@ -156,8 +156,8 @@ const to_conflict_error = (errors: SchemaAnalysisResult['errors']): z.ZodError =
 					? `Alias '${err.alias}' for '${err.canonical}' conflicts with canonical key '${
 							err.conflict_with
 						}'`
-					: `Alias '${err.alias}' is used by both '${err.canonical}' and '${err.conflict_with}'`,
-		})),
+					: `Alias '${err.alias}' is used by both '${err.canonical}' and '${err.conflict_with}'`
+		}))
 	);
 };
 
@@ -170,7 +170,7 @@ const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
 			aliases: analysis.aliases,
 			canonical_keys: analysis.canonical_keys,
 			boolean_keys: analysis.boolean_keys,
-			conflict_error: analysis.errors.length > 0 ? to_conflict_error(analysis.errors) : null,
+			conflict_error: analysis.errors.length > 0 ? to_conflict_error(analysis.errors) : null
 		};
 		schema_cache.set(schema, entry);
 	}
@@ -190,13 +190,13 @@ const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
  * @returns validation result with success flag and optional error
  */
 export const args_validate_schema = (
-	schema: z.ZodType,
-): {success: true} | {success: false; error: z.ZodError} => {
+	schema: z.ZodType
+): { success: true } | { success: false; error: z.ZodError } => {
 	const cache = get_schema_cache(schema);
 	if (cache.conflict_error) {
-		return {success: false, error: cache.conflict_error};
+		return { success: false, error: cache.conflict_error };
 	}
-	return {success: true};
+	return { success: true };
 };
 
 /**
@@ -217,13 +217,13 @@ export const args_validate_schema = (
  */
 export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
 	unparsed_args: Args,
-	schema: z.ZodType<TOutput>,
+	schema: z.ZodType<TOutput>
 ): z.ZodSafeParseResult<TOutput> => {
 	const cache = get_schema_cache(schema);
 
 	// Return conflict error if schema has issues
 	if (cache.conflict_error) {
-		return {success: false, error: cache.conflict_error as z.ZodError<TOutput>};
+		return { success: false, error: cache.conflict_error as z.ZodError<TOutput> };
 	}
 
 	// Build expanded args - copy canonical, expand aliases, strip alias keys
@@ -355,7 +355,7 @@ export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
 	const cache = get_schema_cache(schema);
 	return {
 		aliases: new Map(cache.aliases),
-		canonical_keys: new Set(cache.canonical_keys),
+		canonical_keys: new Set(cache.canonical_keys)
 	};
 };
 

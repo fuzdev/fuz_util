@@ -1,12 +1,12 @@
-import {rm, readdir, access, constants} from 'node:fs/promises';
-import type {RmOptions} from 'node:fs';
-import {join, isAbsolute} from 'node:path';
+import { rm, readdir, access, constants } from 'node:fs/promises';
+import type { RmOptions } from 'node:fs';
+import { join, isAbsolute } from 'node:path';
 
-import {to_error_message} from './error.ts';
-import {EMPTY_OBJECT} from './object.ts';
-import {to_array} from './array.ts';
-import {ensure_end} from './string.ts';
-import type {FileFilter, ResolvedPath, PathFilter} from './path.ts';
+import { to_error_message } from './error.ts';
+import { EMPTY_OBJECT } from './object.ts';
+import { to_array } from './array.ts';
+import { ensure_end } from './string.ts';
+import type { FileFilter, ResolvedPath, PathFilter } from './path.ts';
 
 /**
  * Discriminated filesystem error kinds.
@@ -17,17 +17,17 @@ import type {FileFilter, ResolvedPath, PathFilter} from './path.ts';
  * needs to distinguish them.
  */
 export type FsError =
-	| {kind: 'not_found'; message: string}
-	| {kind: 'permission_denied'; message: string}
-	| {kind: 'already_exists'; message: string}
-	| {kind: 'io_error'; message: string};
+	| { kind: 'not_found'; message: string }
+	| { kind: 'permission_denied'; message: string }
+	| { kind: 'already_exists'; message: string }
+	| { kind: 'io_error'; message: string };
 
 /**
  * Extends `FsError` with `invalid_json` for `read_json`-style ops where the
  * file exists but parse fails. Callers can distinguish missing from corrupt
  * (e.g. self-healing config loads) without regex-matching `message`.
  */
-export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
+export type FsJsonError = FsError | { kind: 'invalid_json'; message: string };
 
 /**
  * Classifies a thrown filesystem error into a discriminated `FsError`.
@@ -39,17 +39,17 @@ export type FsJsonError = FsError | {kind: 'invalid_json'; message: string};
 export const fs_classify_error = (error: unknown): FsError => {
 	const message = to_error_message(error);
 	if (error && typeof error === 'object' && 'code' in error) {
-		switch ((error as {code: string}).code) {
+		switch ((error as { code: string }).code) {
 			case 'ENOENT':
-				return {kind: 'not_found', message};
+				return { kind: 'not_found', message };
 			case 'EACCES':
 			case 'EPERM':
-				return {kind: 'permission_denied', message};
+				return { kind: 'permission_denied', message };
 			case 'EEXIST':
-				return {kind: 'already_exists', message};
+				return { kind: 'already_exists', message };
 		}
 	}
-	return {kind: 'io_error', message};
+	return { kind: 'io_error', message };
 };
 
 /**
@@ -70,11 +70,11 @@ export const fs_exists = async (path: string): Promise<boolean> => {
 export const fs_empty_dir = async (
 	dir: string,
 	should_remove?: (name: string) => boolean,
-	options?: RmOptions,
+	options?: RmOptions
 ): Promise<void> => {
 	const entries = await readdir(dir);
 	const to_remove = should_remove ? entries.filter(should_remove) : entries;
-	await Promise.all(to_remove.map((name) => rm(join(dir, name), {recursive: true, ...options})));
+	await Promise.all(to_remove.map((name) => rm(join(dir, name), { recursive: true, ...options })));
 };
 
 export interface FsSearchOptions {
@@ -102,14 +102,14 @@ export interface FsSearchOptions {
 
 export const fs_search = async (
 	dir: string,
-	options: FsSearchOptions = EMPTY_OBJECT,
+	options: FsSearchOptions = EMPTY_OBJECT
 ): Promise<Array<ResolvedPath>> => {
 	const {
 		filter,
 		file_filter,
 		sort = default_sort,
 		include_directories = false,
-		cwd = process.cwd(),
+		cwd = process.cwd()
 	} = options;
 
 	const final_dir = ensure_end(cwd && !isAbsolute(dir) ? join(cwd, dir) : dir, '/');
@@ -144,12 +144,12 @@ const crawl = async (
 	filters: Array<PathFilter> | undefined,
 	file_filters: Array<FileFilter> | undefined,
 	include_directories: boolean,
-	base_dir: string | null,
+	base_dir: string | null
 ): Promise<void> => {
 	let subdirs: Array<Promise<void>> | undefined;
-	const dirents = await readdir(dir, {withFileTypes: true});
+	const dirents = await readdir(dir, { withFileTypes: true });
 	for (const dirent of dirents) {
-		const {name, parentPath} = dirent;
+		const { name, parentPath } = dirent;
 		const is_directory = dirent.isDirectory();
 		const id = parentPath + name;
 
@@ -162,11 +162,11 @@ const crawl = async (
 		if (is_directory) {
 			const dir_id = id + '/';
 			if (include_directories) {
-				paths.push({path, id: dir_id, is_directory: true});
+				paths.push({ path, id: dir_id, is_directory: true });
 			}
 			(subdirs ??= []).push(crawl(dir_id, paths, filters, file_filters, include_directories, path));
 		} else if (!file_filters || file_filters.every((f) => f(id))) {
-			paths.push({path, id, is_directory: false});
+			paths.push({ path, id, is_directory: false });
 		}
 	}
 	if (subdirs) await Promise.all(subdirs);

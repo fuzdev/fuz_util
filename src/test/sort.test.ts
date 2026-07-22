@@ -4,16 +4,16 @@
  * @module
  */
 
-import {assert, test, describe} from 'vitest';
+import { assert, test, describe } from 'vitest';
 
-import {topological_sort, type Sortable, type TopologicalSortResult} from '$lib/sort.ts';
+import { topological_sort, type Sortable, type TopologicalSortResult } from '$lib/sort.ts';
 
 /**
  * Helper to create a sortable item.
  */
 const make_item = (id: string, depends_on?: Array<string>): Sortable => ({
 	id,
-	depends_on,
+	depends_on
 });
 
 /**
@@ -53,13 +53,13 @@ describe('topological_sort', () => {
 		});
 
 		test('single item with undefined depends_on', () => {
-			const result = topological_sort([{id: 'a'}]);
+			const result = topological_sort([{ id: 'a' }]);
 			const ids = assert_sorted(result);
 			assert.deepEqual(ids, ['a']);
 		});
 
 		test('single item with empty depends_on', () => {
-			const result = topological_sort([{id: 'a', depends_on: []}]);
+			const result = topological_sort([{ id: 'a', depends_on: [] }]);
 			const ids = assert_sorted(result);
 			assert.deepEqual(ids, ['a']);
 		});
@@ -88,7 +88,7 @@ describe('topological_sort', () => {
 				make_item('d', ['c']),
 				make_item('c', ['b']),
 				make_item('b', ['a']),
-				make_item('a'),
+				make_item('a')
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -103,7 +103,7 @@ describe('topological_sort', () => {
 				make_item('a'),
 				make_item('b', ['a']),
 				make_item('c', ['a']),
-				make_item('d', ['b', 'c']),
+				make_item('d', ['b', 'c'])
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -119,7 +119,7 @@ describe('topological_sort', () => {
 				make_item('a'),
 				make_item('b', ['a']),
 				make_item('c', ['a']),
-				make_item('d', ['a']),
+				make_item('d', ['a'])
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -132,7 +132,7 @@ describe('topological_sort', () => {
 				make_item('a', ['b', 'c', 'd']),
 				make_item('b'),
 				make_item('c'),
-				make_item('d'),
+				make_item('d')
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -150,7 +150,7 @@ describe('topological_sort', () => {
 				make_item('b', ['a']),
 				make_item('c', ['a']),
 				make_item('d', ['b', 'c']),
-				make_item('e', ['b', 'd']),
+				make_item('e', ['b', 'd'])
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -171,7 +171,7 @@ describe('topological_sort', () => {
 				make_item('a1'),
 				make_item('a2', ['a1']),
 				make_item('b1'),
-				make_item('b2', ['b1']),
+				make_item('b2', ['b1'])
 			];
 			const result = topological_sort(items);
 			const ids = assert_sorted(result);
@@ -238,7 +238,7 @@ describe('topological_sort', () => {
 			const items = [
 				make_item('a', ['b']),
 				make_item('b', ['a']),
-				make_item('c'), // independent, should not prevent cycle detection
+				make_item('c') // independent, should not prevent cycle detection
 			];
 			const result = topological_sort(items);
 			assert.isFalse(result.ok);
@@ -291,8 +291,8 @@ describe('topological_sort', () => {
 				priority: number;
 			}
 			const items: Array<Task> = [
-				{id: 'b', depends_on: ['a'], priority: 2},
-				{id: 'a', priority: 1},
+				{ id: 'b', depends_on: ['a'], priority: 2 },
+				{ id: 'a', priority: 1 }
 			];
 			const result = topological_sort(items);
 			assert.isTrue(result.ok);

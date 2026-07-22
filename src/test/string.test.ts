@@ -1,4 +1,4 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
 import {
 	string_is_binary,
@@ -17,7 +17,7 @@ import {
 	stringify,
 	string_display_width,
 	pad_width,
-	levenshtein_distance,
+	levenshtein_distance
 } from '$lib/string.ts';
 
 describe('truncate', () => {
@@ -293,7 +293,7 @@ world
 - nested
 - more
 - less
-`,
+`
 		);
 	});
 
@@ -362,7 +362,7 @@ describe('strip_ansi', () => {
 		assert.strictEqual(strip_ansi('\x1B[31mred text\x1B[0m'), 'red text');
 		assert.strictEqual(
 			strip_ansi(' \x1B[1;33;40m Yellow on black \x1B[0m '),
-			'  Yellow on black  ',
+			'  Yellow on black  '
 		);
 		assert.strictEqual(strip_ansi('/[39msrc[39m/'), '/src/');
 	});
@@ -539,7 +539,7 @@ describe('stringify', () => {
 	});
 
 	test('object', () => {
-		assert.strictEqual(stringify({a: 1}), '{"a":1}');
+		assert.strictEqual(stringify({ a: 1 }), '{"a":1}');
 	});
 
 	test('array', () => {

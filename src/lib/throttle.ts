@@ -1,5 +1,5 @@
-import {create_deferred, type Deferred} from './async.ts';
-import {EMPTY_OBJECT} from './object.ts';
+import { create_deferred, type Deferred } from './async.ts';
+import { EMPTY_OBJECT } from './object.ts';
 
 export interface ThrottleOptions {
 	/**
@@ -28,7 +28,7 @@ export interface ThrottleOptions {
  */
 export const throttle = <T extends (...args: Array<any>) => Promise<void>>(
 	cb: T,
-	{delay = 0, when = 'both'}: ThrottleOptions = EMPTY_OBJECT,
+	{ delay = 0, when = 'both' }: ThrottleOptions = EMPTY_OBJECT
 ): T => {
 	let pending_promise: Promise<void> | null = null;
 	let next_args: Array<any> | null = null;
@@ -47,7 +47,7 @@ export const throttle = <T extends (...args: Array<any>) => Promise<void>>(
 		if (!next_deferred) return;
 		const result = await call(next_args!);
 		next_args = null;
-		const {resolve} = next_deferred;
+		const { resolve } = next_deferred;
 		next_deferred = null;
 		resolve(result); // resolve last to prevent synchronous call issues
 	};

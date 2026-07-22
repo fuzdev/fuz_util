@@ -82,14 +82,14 @@ const digit_index = (ch: string): number => {
 const validate_bound = (label: string, value: string): void => {
 	if (!FRACTIONAL_INDEX_REGEX.test(value)) {
 		throw new Error(
-			`fractional_index: ${label} must match alphabet (got ${JSON.stringify(value)})`,
+			`fractional_index: ${label} must match alphabet (got ${JSON.stringify(value)})`
 		);
 	}
 	if (value.length > FRACTIONAL_INDEX_LENGTH_MAX) {
 		throw new Error(
 			`fractional_index: ${label} exceeds length cap (${value.length} > ${
 				FRACTIONAL_INDEX_LENGTH_MAX
-			})`,
+			})`
 		);
 	}
 };
@@ -99,7 +99,7 @@ const validate_bracket = (a: string | null, b: string | null): void => {
 	if (b !== null) validate_bound('b', b);
 	if (a !== null && b !== null && a >= b) {
 		throw new Error(
-			`fractional_index: bracket invalid (${JSON.stringify(a)} >= ${JSON.stringify(b)})`,
+			`fractional_index: bracket invalid (${JSON.stringify(a)} >= ${JSON.stringify(b)})`
 		);
 	}
 };
@@ -163,7 +163,7 @@ const jitter_suffix = (random: () => number): string => {
 export const fractional_index_between = (
 	a: string | null,
 	b: string | null,
-	random: () => number = Math.random,
+	random: () => number = Math.random
 ): string => {
 	validate_bracket(a, b);
 	const base = mid_between(a, b);
@@ -177,7 +177,7 @@ export const fractional_index_between = (
 		throw new Error(
 			`fractional_index: generated key exceeds length cap (${result.length} > ${
 				FRACTIONAL_INDEX_LENGTH_MAX
-			}); bounds too long to fit a key under it`,
+			}); bounds too long to fit a key under it`
 		);
 	}
 	return result;
@@ -207,7 +207,7 @@ export const fractional_indices_between = (
 	a: string | null,
 	b: string | null,
 	n: number,
-	random: () => number = Math.random,
+	random: () => number = Math.random
 ): Array<string> => {
 	if (n < 0 || !Number.isInteger(n)) {
 		throw new Error(`fractional_index: n must be a non-negative integer (got ${n})`);
@@ -229,7 +229,7 @@ const emit_n = (
 	b: string | null,
 	n: number,
 	out: Array<string>,
-	random: () => number,
+	random: () => number
 ): void => {
 	if (n === 0) return;
 	const mid = fractional_index_between(a, b, random);
@@ -306,7 +306,7 @@ const smaller_than = (b: string): string => {
 	const result = step_below(b, 0);
 	if (result === null) {
 		throw new Error(
-			`fractional_index: smaller_than(${JSON.stringify(b)}) requires unbounded-prepend support`,
+			`fractional_index: smaller_than(${JSON.stringify(b)}) requires unbounded-prepend support`
 		);
 	}
 	return result;
@@ -396,7 +396,7 @@ const between_prefix_and_extension = (a: string, b: string, i: number): string =
 	const result = step_below(b, i);
 	if (result === null) {
 		throw new Error(
-			`fractional_index: strict_between(${JSON.stringify(a)}, ${JSON.stringify(b)}) gap too tight`,
+			`fractional_index: strict_between(${JSON.stringify(a)}, ${JSON.stringify(b)}) gap too tight`
 		);
 	}
 	return result;

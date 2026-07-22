@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {BenchmarkStats, benchmark_stats_compare} from '$lib/benchmark_stats.ts';
+import { BenchmarkStats, benchmark_stats_compare } from '$lib/benchmark_stats.ts';
 
 describe('BenchmarkStats', () => {
 	test('basic usage', () => {
@@ -166,7 +166,7 @@ describe('BenchmarkStats', () => {
 
 	test('percentiles (p90, p95, p99)', () => {
 		// 100 values from 1 to 100 — percentiles are predictable
-		const timings_ns = Array.from({length: 100}, (_, i) => i + 1);
+		const timings_ns = Array.from({ length: 100 }, (_, i) => i + 1);
 		const stats = new BenchmarkStats(timings_ns);
 
 		assert.isAtLeast(stats.p90_ns, 89);
@@ -243,8 +243,8 @@ describe('benchmark_stats_compare', () => {
 	test('equal means with non-zero variance go through t-test', () => {
 		// Same mean (~1000) with realistic spread — exercises Welch's t-test path
 		// rather than the zero-variance special case.
-		const a_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 5) - 2) * 50);
-		const b_data = Array.from({length: 100}, (_, i) => 1000 + ((i % 7) - 3) * 30);
+		const a_data = Array.from({ length: 100 }, (_, i) => 1000 + ((i % 5) - 2) * 50);
+		const b_data = Array.from({ length: 100 }, (_, i) => 1000 + ((i % 7) - 3) * 30);
 		const a = new BenchmarkStats(a_data);
 		const b = new BenchmarkStats(b_data);
 
@@ -267,12 +267,12 @@ describe('benchmark_stats_compare', () => {
 		const variance = 200; // Large variance relative to difference
 
 		const a_data = Array.from(
-			{length: 100},
-			(_, i) => base_a + (i % 5) * (variance / 5) - variance / 2,
+			{ length: 100 },
+			(_, i) => base_a + (i % 5) * (variance / 5) - variance / 2
 		);
 		const b_data = Array.from(
-			{length: 100},
-			(_, i) => base_b + (i % 5) * (variance / 5) - variance / 2,
+			{ length: 100 },
+			(_, i) => base_b + (i % 5) * (variance / 5) - variance / 2
 		);
 
 		const a = new BenchmarkStats(a_data);
@@ -305,7 +305,7 @@ describe('benchmark_stats_compare', () => {
 
 		// Tighten alpha below the observed p_value — significance must flip off.
 		const tight_alpha = default_comparison.p_value / 10;
-		const strict = benchmark_stats_compare(a, b, {alpha: tight_alpha});
+		const strict = benchmark_stats_compare(a, b, { alpha: tight_alpha });
 		assert.isFalse(strict.significant);
 		assert.strictEqual(strict.p_value, default_comparison.p_value);
 	});
@@ -345,7 +345,7 @@ describe('benchmark_stats_compare', () => {
 
 	test('very different sample sizes', () => {
 		// a has many samples, b has few
-		const a_values = Array.from({length: 1000}, (_, i) => 1000 + (i % 10) * 10);
+		const a_values = Array.from({ length: 1000 }, (_, i) => 1000 + (i % 10) * 10);
 		const b_values = [2000, 2100, 2050, 1950, 2000];
 
 		const a = new BenchmarkStats(a_values);
@@ -363,7 +363,7 @@ describe('benchmark_stats_compare', () => {
 		// Very small sample (minimum for stats)
 		const a = new BenchmarkStats([1000, 1100, 1050]);
 		// Large sample
-		const b_values = Array.from({length: 500}, (_, i) => 2000 + (i % 20) * 10);
+		const b_values = Array.from({ length: 500 }, (_, i) => 2000 + (i % 20) * 10);
 		const b = new BenchmarkStats(b_values);
 
 		const comparison = benchmark_stats_compare(a, b);
@@ -378,7 +378,7 @@ describe('benchmark_stats_compare', () => {
 		// a is consistent
 		const a = new BenchmarkStats(Array(100).fill(1000));
 		// b has high variance
-		const b_values = Array.from({length: 100}, (_, i) => 1000 + (i % 2 === 0 ? 500 : -500));
+		const b_values = Array.from({ length: 100 }, (_, i) => 1000 + (i % 2 === 0 ? 500 : -500));
 		const b = new BenchmarkStats(b_values);
 
 		const comparison = benchmark_stats_compare(a, b);
@@ -425,8 +425,8 @@ describe('benchmark_stats_compare', () => {
 	test('small percent difference is negligible', () => {
 		// 2% difference with realistic variance — exercises the actual large-n oversensitivity path
 		// Values cycle through offsets to produce ~3% CV, giving non-zero std_dev
-		const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
-		const b_data = Array.from({length: 1000}, (_, i) => 10200 + ((i % 11) - 5) * 100);
+		const a_data = Array.from({ length: 1000 }, (_, i) => 10000 + ((i % 11) - 5) * 100);
+		const b_data = Array.from({ length: 1000 }, (_, i) => 10200 + ((i % 11) - 5) * 100);
 		const a = new BenchmarkStats(a_data);
 		const b = new BenchmarkStats(b_data);
 
@@ -443,8 +443,8 @@ describe('benchmark_stats_compare', () => {
 
 	test('min_percent_difference option', () => {
 		// 15% difference with realistic variance
-		const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
-		const b_data = Array.from({length: 1000}, (_, i) => 11500 + ((i % 11) - 5) * 100);
+		const a_data = Array.from({ length: 1000 }, (_, i) => 10000 + ((i % 11) - 5) * 100);
+		const b_data = Array.from({ length: 1000 }, (_, i) => 11500 + ((i % 11) - 5) * 100);
 		const a = new BenchmarkStats(a_data);
 		const b = new BenchmarkStats(b_data);
 
@@ -454,7 +454,7 @@ describe('benchmark_stats_compare', () => {
 		assert.isTrue(default_comparison.significant);
 
 		// With 20% threshold, 15% is negligible and not significant
-		const strict_comparison = benchmark_stats_compare(a, b, {min_percent_difference: 0.2});
+		const strict_comparison = benchmark_stats_compare(a, b, { min_percent_difference: 0.2 });
 		assert.strictEqual(strict_comparison.effect_magnitude, 'negligible');
 		assert.isFalse(strict_comparison.significant);
 		assert.strictEqual(strict_comparison.faster, 'equal');
@@ -462,8 +462,8 @@ describe('benchmark_stats_compare', () => {
 
 	test('effect magnitude scales with min_percent_difference', () => {
 		// 30% difference
-		const a_data = Array.from({length: 100}, (_, i) => 10000 + ((i % 11) - 5) * 100);
-		const b_data = Array.from({length: 100}, (_, i) => 13000 + ((i % 11) - 5) * 100);
+		const a_data = Array.from({ length: 100 }, (_, i) => 10000 + ((i % 11) - 5) * 100);
+		const b_data = Array.from({ length: 100 }, (_, i) => 13000 + ((i % 11) - 5) * 100);
 		const a = new BenchmarkStats(a_data);
 		const b = new BenchmarkStats(b_data);
 
@@ -472,7 +472,7 @@ describe('benchmark_stats_compare', () => {
 		assert.strictEqual(comparison.effect_magnitude, 'medium');
 
 		// min_pct=0.20: 30% < 60% (3*min_pct) → small
-		const comparison2 = benchmark_stats_compare(a, b, {min_percent_difference: 0.2});
+		const comparison2 = benchmark_stats_compare(a, b, { min_percent_difference: 0.2 });
 		assert.strictEqual(comparison2.effect_magnitude, 'small');
 	});
 
@@ -481,8 +481,8 @@ describe('benchmark_stats_compare', () => {
 		// This is the core scenario that was producing false "large" regressions.
 		// Uses realistic variance (CV ~3%) so the test exercises Welch's t-test, not the
 		// zero-variance special case.
-		const a_data = Array.from({length: 1000}, (_, i) => 10000 + ((i % 11) - 5) * 100);
-		const b_data = Array.from({length: 1000}, (_, i) => 10300 + ((i % 11) - 5) * 100);
+		const a_data = Array.from({ length: 1000 }, (_, i) => 10000 + ((i % 11) - 5) * 100);
+		const b_data = Array.from({ length: 1000 }, (_, i) => 10300 + ((i % 11) - 5) * 100);
 		const a = new BenchmarkStats(a_data);
 		const b = new BenchmarkStats(b_data);
 

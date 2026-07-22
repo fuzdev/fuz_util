@@ -18,11 +18,11 @@ import type {
 	ImportDeclaration,
 	ImportDefaultSpecifier,
 	ImportSpecifier,
-	VariableDeclaration,
+	VariableDeclaration
 } from 'estree';
-import type {AST} from 'svelte/compiler';
+import type { AST } from 'svelte/compiler';
 
-import {to_error_message} from './error.ts';
+import { to_error_message } from './error.ts';
 
 /** Import metadata for a single import specifier. */
 export interface PreprocessImportInfo {
@@ -71,7 +71,7 @@ export const find_attribute = (node: AST.Component, name: string): AST.Attribute
  */
 export const evaluate_static_expr = (
 	expr: Expression,
-	bindings?: ReadonlyMap<string, string>,
+	bindings?: ReadonlyMap<string, string>
 ): string | null => {
 	if (expr.type === 'Literal' && typeof expr.value === 'string') return expr.value;
 	if (expr.type === 'TemplateLiteral') {
@@ -122,7 +122,7 @@ export const evaluate_static_expr = (
  */
 export const extract_static_string = (
 	value: AST.Attribute['value'],
-	bindings?: ReadonlyMap<string, string>,
+	bindings?: ReadonlyMap<string, string>
 ): string | null => {
 	// Boolean attribute (e.g., <Mdz inline />)
 	if (value === true) return null;
@@ -173,7 +173,7 @@ export interface ConditionalChainBranch {
 export const try_extract_conditional_chain = (
 	value: AST.Attribute['value'],
 	source: string,
-	bindings: ReadonlyMap<string, string>,
+	bindings: ReadonlyMap<string, string>
 ): Array<ConditionalChainBranch> | null => {
 	if (value === true || Array.isArray(value)) return null;
 	const expr = value.expression;
@@ -189,7 +189,7 @@ export const try_extract_conditional_chain = (
 
 		const test = current.test as any;
 		const test_source = source.slice(test.start, test.end);
-		branches.push({test_source, value: consequent});
+		branches.push({ test_source, value: consequent });
 
 		if (branches.length >= MAX_BRANCHES) return null;
 
@@ -199,7 +199,7 @@ export const try_extract_conditional_chain = (
 			// Final else branch
 			const alternate = evaluate_static_expr(current.alternate, bindings);
 			if (alternate === null) return null;
-			branches.push({test_source: null, value: alternate});
+			branches.push({ test_source: null, value: alternate });
 			break;
 		}
 	}
@@ -259,7 +259,7 @@ export const build_static_bindings = (ast: AST.Root): Map<string, string> => {
  */
 export const resolve_component_names = (
 	ast: AST.Root,
-	component_imports: Array<string>,
+	component_imports: Array<string>
 ): Map<string, ResolvedComponentImport> => {
 	const names: Map<string, ResolvedComponentImport> = new Map();
 	for (const script of [ast.instance, ast.module]) {
@@ -274,7 +274,7 @@ export const resolve_component_names = (
 				if (specifier.type === 'ImportNamespaceSpecifier') continue;
 				// Skip `import {type Foo}` specifiers
 				if ((specifier as any).importKind === 'type') continue;
-				names.set(specifier.local.name, {import_node: node, specifier});
+				names.set(specifier.local.name, { import_node: node, specifier });
 			}
 		}
 	}
@@ -313,12 +313,12 @@ export const find_import_insert_position = (script: AST.Script): number => {
  */
 export const generate_import_lines = (
 	imports: Map<string, PreprocessImportInfo>,
-	indent: string = '\t',
+	indent: string = '\t'
 ): string => {
 	const default_imports: Array<[string, string]> = [];
 	const named_by_path: Map<string, Array<string>> = new Map();
 
-	for (const [name, {path, kind}] of imports) {
+	for (const [name, { path, kind }] of imports) {
 		if (kind === 'default') {
 			default_imports.push([name, path]);
 		} else {
@@ -354,15 +354,15 @@ export const generate_import_lines = (
  */
 const NON_REFERENCE_FIELDS: Map<
 	string,
-	Array<{field: string; when_not_computed?: boolean}>
+	Array<{ field: string; when_not_computed?: boolean }>
 > = new Map([
-	['MemberExpression', [{field: 'property', when_not_computed: true}]],
-	['Property', [{field: 'key', when_not_computed: true}]],
-	['PropertyDefinition', [{field: 'key', when_not_computed: true}]],
-	['MethodDefinition', [{field: 'key', when_not_computed: true}]],
-	['LabeledStatement', [{field: 'label'}]],
-	['BreakStatement', [{field: 'label'}]],
-	['ContinueStatement', [{field: 'label'}]],
+	['MemberExpression', [{ field: 'property', when_not_computed: true }]],
+	['Property', [{ field: 'key', when_not_computed: true }]],
+	['PropertyDefinition', [{ field: 'key', when_not_computed: true }]],
+	['MethodDefinition', [{ field: 'key', when_not_computed: true }]],
+	['LabeledStatement', [{ field: 'label' }]],
+	['BreakStatement', [{ field: 'label' }]],
+	['ContinueStatement', [{ field: 'label' }]]
 ]);
 
 /**
@@ -388,7 +388,7 @@ const NON_REFERENCE_FIELDS: Map<
 export const has_identifier_in_tree = (
 	node: unknown,
 	name: string,
-	skip?: Set<unknown>,
+	skip?: Set<unknown>
 ): boolean => {
 	if (node === null || node === undefined || typeof node !== 'object') return false;
 	if (skip?.has(node)) return false;
@@ -450,9 +450,9 @@ export const escape_svelte_text = (text: string): string =>
  * @mutates s - removes the declaration's character range
  */
 export const remove_variable_declaration = (
-	s: {remove: (start: number, end: number) => unknown},
-	declaration_node: VariableDeclaration & {start: number; end: number},
-	source: string,
+	s: { remove: (start: number, end: number) => unknown },
+	declaration_node: VariableDeclaration & { start: number; end: number },
+	source: string
 ): void => {
 	remove_positioned_node(s, declaration_node, source);
 };
@@ -467,9 +467,9 @@ export const remove_variable_declaration = (
  * @mutates s - removes the declaration's character range
  */
 export const remove_import_declaration = (
-	s: {remove: (start: number, end: number) => unknown},
-	import_node: ImportDeclaration & {start: number; end: number},
-	source: string,
+	s: { remove: (start: number, end: number) => unknown },
+	import_node: ImportDeclaration & { start: number; end: number },
+	source: string
 ): void => {
 	remove_positioned_node(s, import_node, source);
 };
@@ -482,9 +482,9 @@ export const remove_import_declaration = (
  * `remove_import_declaration`.
  */
 const remove_positioned_node = (
-	s: {remove: (start: number, end: number) => unknown},
-	node: {start: number; end: number},
-	source: string,
+	s: { remove: (start: number, end: number) => unknown },
+	node: { start: number; end: number },
+	source: string
 ): void => {
 	let start: number = node.start;
 	let end: number = node.end;
@@ -520,11 +520,11 @@ const remove_positioned_node = (
  * @mutates s - overwrites the import declaration's character range
  */
 export const remove_import_specifier = (
-	s: {overwrite: (start: number, end: number, content: string) => unknown},
-	node: ImportDeclaration & {start: number; end: number},
+	s: { overwrite: (start: number, end: number, content: string) => unknown },
+	node: ImportDeclaration & { start: number; end: number },
 	specifier_to_remove: ImportDeclaration['specifiers'][number],
 	source: string,
-	additional_lines: string = '',
+	additional_lines: string = ''
 ): void => {
 	const remaining = node.specifiers.filter((spec) => spec !== specifier_to_remove);
 	if (remaining.length === 0) return;
@@ -534,7 +534,7 @@ export const remove_import_specifier = (
 	// Reconstruct the import statement
 	const default_specs = remaining.filter((sp) => sp.type === 'ImportDefaultSpecifier');
 	const named_specs = remaining.filter(
-		(sp) => sp.type === 'ImportSpecifier' || sp.type === 'ImportNamespaceSpecifier',
+		(sp) => sp.type === 'ImportSpecifier' || sp.type === 'ImportNamespaceSpecifier'
 	);
 
 	let import_clause = '';
@@ -585,13 +585,13 @@ export const handle_preprocess_error = (
 	error: unknown,
 	prefix: string,
 	filename: string | undefined,
-	on_error: 'throw' | 'log',
+	on_error: 'throw' | 'log'
 ): void => {
 	const message = `${prefix} Preprocessing failed${
 		filename ? ` in ${filename}` : ''
 	}: ${to_error_message(error)}`;
 	if (on_error === 'throw') {
-		throw new Error(message, {cause: error});
+		throw new Error(message, { cause: error });
 	}
 	// eslint-disable-next-line no-console
 	console.error(message);

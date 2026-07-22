@@ -1,7 +1,7 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Root Getter', () => {
 	test('returns self when logger has no parent', () => {
@@ -37,7 +37,7 @@ describe('Logger > Root Getter', () => {
 describe('Logger > Root Getter > Dynamic Configuration', () => {
 	test('changing root level affects all descendants without overrides', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'warn', console: ctx.console, colors: false});
+		const root = new Logger('root', { level: 'warn', console: ctx.console, colors: false });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 
@@ -60,8 +60,8 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 		assert.ok(ctx.logged_args);
 		assert.ok(
 			ctx.logged_args.some(
-				(arg) => typeof arg === 'string' && arg.includes('visible from grandchild'),
-			),
+				(arg) => typeof arg === 'string' && arg.includes('visible from grandchild')
+			)
 		);
 
 		ctx.logged_args = undefined;
@@ -69,14 +69,14 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 		const child_args = ctx.logged_args as Array<unknown> | undefined;
 		assert.ok(child_args);
 		assert.ok(
-			child_args.some((arg) => typeof arg === 'string' && arg.includes('visible from child')),
+			child_args.some((arg) => typeof arg === 'string' && arg.includes('visible from child'))
 		);
 	});
 
 	test('changing root level respects override at middle level', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'warn', console: ctx.console, colors: false});
-		const child = root.child('child', {level: 'error'}); // Override at middle level
+		const root = new Logger('root', { level: 'warn', console: ctx.console, colors: false });
+		const child = root.child('child', { level: 'error' }); // Override at middle level
 		const grandchild = child.child('grandchild');
 
 		// Grandchild inherits from child (error level)
@@ -95,7 +95,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 		root.debug('root can debug');
 		assert.ok(ctx.logged_args);
 		assert.ok(
-			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('root can debug')),
+			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('root can debug'))
 		);
 
 		ctx.warn_args = undefined;
@@ -111,7 +111,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 	});
 
 	test('changing root colors affects entire hierarchy', () => {
-		const root = new Logger('root', {colors: false});
+		const root = new Logger('root', { colors: false });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 
@@ -130,7 +130,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 	test('changing root console affects entire hierarchy', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const root = new Logger('root', {console: ctx1.console, level: 'info', colors: false});
+		const root = new Logger('root', { console: ctx1.console, level: 'info', colors: false });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 
@@ -161,9 +161,9 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 
 	test('multiple overrides at different levels', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'info', colors: false, console: ctx.console});
-		const child = root.child('child', {colors: true}); // Color override at middle
-		const grandchild = child.child('grandchild', {level: 'debug'}); // Level override at leaf
+		const root = new Logger('root', { level: 'info', colors: false, console: ctx.console });
+		const child = root.child('child', { colors: true }); // Color override at middle
+		const grandchild = child.child('grandchild', { level: 'debug' }); // Level override at leaf
 
 		// Initial state
 		assert.equal(root.level, 'info');
@@ -191,8 +191,8 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 		assert.ok(ctx.logged_args);
 		assert.ok(
 			ctx.logged_args.some(
-				(arg) => typeof arg === 'string' && arg.includes('grandchild debug works'),
-			),
+				(arg) => typeof arg === 'string' && arg.includes('grandchild debug works')
+			)
 		);
 
 		ctx.logged_args = undefined;
@@ -202,7 +202,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 
 	test('setting config on root before creating children', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {console: ctx.console, colors: false});
+		const root = new Logger('root', { console: ctx.console, colors: false });
 
 		// Set configuration on root before children exist
 		root.level = 'debug';
@@ -227,7 +227,7 @@ describe('Logger > Root Getter > Dynamic Configuration', () => {
 	test('changing multiple properties via root simultaneously', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const root = new Logger('root', {level: 'warn', colors: false, console: ctx1.console});
+		const root = new Logger('root', { level: 'warn', colors: false, console: ctx1.console });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 
@@ -268,7 +268,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 
 	test('root getter traverses 5-level hierarchy', () => {
 		const ctx = create_test_context();
-		const l0 = new Logger('l0', {level: 'warn', console: ctx.console, colors: false});
+		const l0 = new Logger('l0', { level: 'warn', console: ctx.console, colors: false });
 		const l1 = l0.child('l1');
 		const l2 = l1.child('l2');
 		const l3 = l2.child('l3');
@@ -295,7 +295,7 @@ describe('Logger > Root Getter > Edge Cases', () => {
 
 	test('multiple siblings can access and modify same root', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'info', console: ctx.console, colors: false});
+		const root = new Logger('root', { level: 'info', console: ctx.console, colors: false });
 		const child1 = root.child('child1');
 		const child2 = root.child('child2');
 		const grandchild1 = child1.child('gc1');
@@ -338,10 +338,10 @@ describe('Logger > Root Getter > Edge Cases', () => {
 
 	test('root getter with alternating overrides in 5-level hierarchy', () => {
 		const ctx = create_test_context();
-		const l0 = new Logger('l0', {level: 'info', console: ctx.console, colors: false});
-		const l1 = l0.child('l1', {level: 'warn'}); // Override at level 1
+		const l0 = new Logger('l0', { level: 'info', console: ctx.console, colors: false });
+		const l1 = l0.child('l1', { level: 'warn' }); // Override at level 1
 		const l2 = l1.child('l2'); // Inherits from l1
-		const l3 = l2.child('l3', {level: 'debug'}); // Override at level 3
+		const l3 = l2.child('l3', { level: 'debug' }); // Override at level 3
 		const l4 = l3.child('l4'); // Inherits from l3
 
 		// Verify initial state
@@ -379,11 +379,11 @@ describe('Logger > Root Getter > Edge Cases', () => {
 		const root = new Logger('root', {
 			level: 'info',
 			colors: false,
-			console: ctx1.console,
+			console: ctx1.console
 		});
-		const child = root.child('child', {level: 'warn'}); // Level override
-		const grandchild = child.child('grandchild', {colors: true}); // Color override
-		const great = grandchild.child('great', {console: ctx2.console}); // Console override
+		const child = root.child('child', { level: 'warn' }); // Level override
+		const grandchild = child.child('grandchild', { colors: true }); // Color override
+		const great = grandchild.child('great', { console: ctx2.console }); // Console override
 
 		// Verify initial state with overrides
 		assert.equal(root.level, 'info');

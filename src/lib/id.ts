@@ -1,6 +1,6 @@
-import {z} from 'zod';
+import { z } from 'zod';
 
-import {create_counter} from './counter.ts';
+import { create_counter } from './counter.ts';
 
 export const create_uuid = (): Uuid => crypto.randomUUID() as Uuid;
 
@@ -29,7 +29,7 @@ export type ClientIdCreator = () => string;
 export const create_client_id_creator = (
 	name: string,
 	count?: number,
-	separator = '_',
+	separator = '_'
 ): ClientIdCreator => {
 	const counter = create_counter(count);
 	return () => `${name}${separator}${counter()}`;

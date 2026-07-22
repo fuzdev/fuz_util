@@ -8,9 +8,9 @@
  * @module
  */
 
-import {assert, vi} from 'vitest';
+import { assert, vi } from 'vitest';
 
-import type {Logger} from './log.ts';
+import type { Logger } from './log.ts';
 
 /**
  * Narrows a discriminated union by a literal property value, failing the test
@@ -35,7 +35,7 @@ import type {Logger} from './log.ts';
 export function assert_property<R extends object, P extends keyof R, const V extends R[P]>(
 	obj: R,
 	property: P,
-	value: V,
+	value: V
 ): asserts obj is Extract<R, Record<P, V>> {
 	assert.strictEqual(obj[property], value);
 }
@@ -54,7 +54,7 @@ export function assert_property<R extends object, P extends keyof R, const V ext
  */
 export const assert_rejects = async (
 	fn: () => Promise<unknown>,
-	pattern?: RegExp,
+	pattern?: RegExp
 ): Promise<Error> => {
 	try {
 		await fn();
@@ -101,6 +101,6 @@ export const create_mock_logger = (): MockLogger => {
 		error_calls,
 		warn_calls,
 		info_calls,
-		debug_calls,
+		debug_calls
 	} as unknown as MockLogger;
 };
