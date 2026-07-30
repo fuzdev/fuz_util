@@ -64,6 +64,10 @@ fuz_util is a **foundational utility library**:
   without rebalancing (`fractional_index_between`,
   `fractional_indices_between`; base62 alphabet, helper-side jitter,
   `FRACTIONAL_INDEX_REGEX` / `_LENGTH_MAX`)
+- `diff.ts` - line + intra-line char diffs via greedy Myers (`diff_lines`
+  with 1-based line numbers and `no_newline`, `diff_hunks` context grouping,
+  `diff_segments` changed-char ranges, `format_diff`/`generate_diff`
+  unified-diff text with `@@` headers)
 
 ### Async and timing
 
