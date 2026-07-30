@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.68.0
+
+### Minor Changes
+
+- refactor: extract fact and blake3 helpers to `hash_schemas.ts` ([4c49cbf](https://github.com/fuzdev/fuz_util/commit/4c49cbf))
+
 ## 0.67.0
 
 ### Minor Changes
