@@ -47,12 +47,16 @@ fuz_util is a **foundational utility library**:
 - `iterator.ts` - iterator helpers
 - `bytes.ts` - binary data conversion (`to_bytes`)
 - `hex.ts` - hex encoding (`to_hex`)
-- `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex; `Blake3Hash` Zod schema, via
-  `@fuzdev/blake3_wasm`)
+- `hash_schemas.ts` - hash vocabulary with no hashing, so no WASM: `Blake3Hash`
+  (bare hex64), `FactHashSchema` / `FactHash` (branded `blake3:`-prefixed
+  digest), `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`, `is_fact_hash`. Client code
+  that only validates a hash imports from here — the two modules below pull the
+  WASM binary in and initialize it at module scope
+- `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex;
+  `blake3_ready`, via `@fuzdev/blake3_wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
   for non-security uses)
-- `fact_hash.ts` - `FactHash` branded `blake3:`-prefixed digest
-  (`FactHashSchema`), `fact_hash_bytes`, `fact_hash_stream`, `is_fact_hash`,
+- `fact_hash.ts` - fact-hash producers: `fact_hash_bytes`, `fact_hash_stream`,
   `fact_hash_verify`, `fact_hash_extract_refs` (depth-first scan of a JSON
   value for `blake3:` refs)
 - `fact_store.ts` - `FactStore` backend-agnostic content-addressed byte-store

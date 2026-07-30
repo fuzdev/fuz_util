@@ -1,6 +1,7 @@
 import { describe, test, assert } from 'vitest';
 
-import { hash_blake3, Blake3Hash } from '$lib/hash_blake3.ts';
+import { hash_blake3 } from '$lib/hash_blake3.ts';
+import { Blake3Hash } from '$lib/hash_schemas.ts';
 
 describe('hash_blake3', () => {
 	// Known test vectors from blake3_wasm test suite (~/dev/blake3/test/test_vectors.json)
@@ -126,95 +127,9 @@ describe('hash_blake3', () => {
 		});
 	});
 
-	describe('Blake3Hash schema', () => {
-		test('accepts valid hash output', () => {
-			const valid = hash_blake3('test');
-			assert.strictEqual(Blake3Hash.safeParse(valid).success, true);
-		});
-
-		test('accepts all-zeros', () => {
-			assert.strictEqual(Blake3Hash.safeParse('0'.repeat(64)).success, true);
-		});
-
-		test('accepts all-f', () => {
-			assert.strictEqual(Blake3Hash.safeParse('f'.repeat(64)).success, true);
-		});
-
-		test('rejects too short', () => {
-			assert.strictEqual(Blake3Hash.safeParse('abcdef').success, false);
-		});
-
-		test('rejects too long', () => {
-			assert.strictEqual(Blake3Hash.safeParse('a'.repeat(65)).success, false);
-		});
-
-		test('rejects uppercase hex', () => {
-			assert.strictEqual(Blake3Hash.safeParse('A'.repeat(64)).success, false);
-		});
-
-		test('rejects non-hex characters', () => {
-			assert.strictEqual(Blake3Hash.safeParse('g'.repeat(64)).success, false);
-		});
-
-		test('rejects empty string', () => {
-			assert.strictEqual(Blake3Hash.safeParse('').success, false);
-		});
-
-		test('rejects 63 chars (off-by-one short)', () => {
-			assert.strictEqual(Blake3Hash.safeParse('a'.repeat(63)).success, false);
-		});
-
-		test('rejects 65 chars (off-by-one long)', () => {
-			assert.strictEqual(Blake3Hash.safeParse('a'.repeat(65)).success, false);
-		});
-
-		test('rejects UUID format', () => {
-			// Regression: session IDs were validated as UUIDs but are blake3 hashes
-			assert.strictEqual(
-				Blake3Hash.safeParse('00000000-0000-4000-8000-000000000040').success,
-				false
-			);
-		});
-
-		test('rejects mixed case hex', () => {
-			const mixed = 'aAbBcCdDeEfF'.repeat(5) + 'aAbB';
-			assert.strictEqual(mixed.length, 64);
-			assert.strictEqual(Blake3Hash.safeParse(mixed).success, false);
-		});
-
-		test('rejects leading whitespace', () => {
-			assert.strictEqual(Blake3Hash.safeParse(' ' + 'a'.repeat(64)).success, false);
-		});
-
-		test('rejects trailing whitespace', () => {
-			assert.strictEqual(Blake3Hash.safeParse('a'.repeat(64) + ' ').success, false);
-		});
-
-		test('rejects embedded spaces', () => {
-			assert.strictEqual(
-				Blake3Hash.safeParse('a'.repeat(32) + ' ' + 'a'.repeat(31)).success,
-				false
-			);
-		});
-
-		test('rejects number', () => {
-			assert.strictEqual(Blake3Hash.safeParse(12345).success, false);
-		});
-
-		test('rejects null', () => {
-			assert.strictEqual(Blake3Hash.safeParse(null).success, false);
-		});
-
-		test('rejects undefined', () => {
-			assert.strictEqual(Blake3Hash.safeParse(undefined).success, false);
-		});
-
-		test('rejects boolean', () => {
-			assert.strictEqual(Blake3Hash.safeParse(true).success, false);
-		});
-
+	describe('Blake3Hash integration', () => {
 		test('hash_blake3 output always passes Blake3Hash', () => {
-			for (const input of ['', 'hello', 'test', '🎉', 'a'.repeat(1000)]) {
+			for (const input of ['', 'hello', 'test', '\u{1F389}', 'a'.repeat(1000)]) {
 				const h = hash_blake3(input);
 				assert.strictEqual(Blake3Hash.safeParse(h).success, true);
 			}

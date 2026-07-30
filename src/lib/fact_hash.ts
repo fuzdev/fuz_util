@@ -1,14 +1,19 @@
 /**
- * Fact hash utilities.
+ * Fact hash producers.
  *
  * A `FactHash` is a `blake3:`-prefixed hex64 blake3 digest. The prefix makes
  * the hash self-identifying — any text scanner can find it without prior
  * knowledge of the source.
  *
- * Branded via Zod (`FactHashSchema`), mirroring `Uuid`. Runtime validation
- * happens at construction (`fact_hash_bytes` / `fact_hash_stream` cast at
- * the source; `FactHashSchema.parse` / `is_fact_hash` validate inputs from
- * external boundaries).
+ * The vocabulary — `FactHashSchema`, `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`,
+ * `is_fact_hash` — lives in `hash_schemas.ts`, which imports no WASM. This
+ * module holds the functions that actually hash, so importing it costs the
+ * `@fuzdev/blake3_wasm` binary. Client code validating a hash it received
+ * should import from `hash_schemas.ts` instead.
+ *
+ * Runtime validation happens at construction (`fact_hash_bytes` /
+ * `fact_hash_stream` cast at the source; `FactHashSchema.parse` /
+ * `is_fact_hash` validate inputs from external boundaries).
  *
  * The hash-producing helpers carry the `fact_hash_` prefix so they namespace
  * cleanly alongside the branded `FactHash` type and the `FACT_HASH_*`
@@ -20,50 +25,11 @@
  */
 
 import { hash_stream } from '@fuzdev/blake3_wasm';
-import { z } from 'zod';
 
 import { hash_blake3 } from './hash_blake3.ts';
+import { FACT_HASH_PREFIX, FACT_HASH_PATTERN, type FactHash } from './hash_schemas.ts';
 import { to_hex } from './hex.ts';
 import type { Json } from './json.ts';
-
-/** Algorithm prefix on every fact hash. The colon is the separator. */
-export const FACT_HASH_PREFIX = 'blake3:';
-
-/**
- * Pattern for detecting a fact hash anywhere in text.
- *
- * Has the global flag because the primary use is `String.matchAll` over
- * cell data / fact bytes. Callers that only need to validate a single
- * known string should use `is_fact_hash` instead — `RegExp.test` mutates
- * `lastIndex` on global patterns.
- *
- * The trailing `(?=blake3:|[^0-9a-f]|$)` lookahead enforces a right
- * boundary so a 64-hex digest is matched only when it actually *ends*:
- * followed by a non-hex char, the end of string, or the start of another
- * `blake3:` ref. This rejects malformed over-long runs (`blake3:` + 65+
- * hex) rather than silently truncating them to a different valid-shaped
- * hash, while still matching two refs concatenated with no separator
- * (the `blake3:` alternative is needed because the prefix itself begins
- * with the hex char `b`). A bare `(?![0-9a-f])` would instead drop the
- * first of two glued refs.
- */
-export const FACT_HASH_PATTERN = /blake3:[0-9a-f]{64}(?=blake3:|[^0-9a-f]|$)/g;
-
-/** Stricter anchored variant for full-string validation. */
-const FACT_HASH_EXACT = /^blake3:[0-9a-f]{64}$/;
-
-/**
- * Wire-form schema for a `blake3:`-prefixed fact hash. Branded so the
- * type system distinguishes a fact hash from any other `string`,
- * mirroring `Uuid` (`id.ts`). Construct only via `fact_hash_bytes` /
- * `fact_hash_stream` / `FactHashSchema.parse(s)` — direct string literals
- * don't satisfy the brand.
- *
- * Both client-side (cell payloads) and server-side (DB-row hashes)
- * consumers reuse this same schema.
- */
-export const FactHashSchema = z.string().regex(FACT_HASH_EXACT).brand('FactHash');
-export type FactHash = z.infer<typeof FactHashSchema>;
 
 /**
  * Synchronously hash bytes into a fact hash.
@@ -80,12 +46,6 @@ export const fact_hash_bytes = (data: Uint8Array | string): FactHash =>
  */
 export const fact_hash_stream = async (stream: ReadableStream<Uint8Array>): Promise<FactHash> =>
 	(FACT_HASH_PREFIX + to_hex(await hash_stream(stream))) as FactHash;
-
-/**
- * Type guard. Useful when receiving a hash from an external boundary —
- * narrows `string` to `FactHash` without going through Zod.
- */
-export const is_fact_hash = (s: string): s is FactHash => FACT_HASH_EXACT.test(s);
 
 /**
  * Verify that `bytes` produce the claimed `hash`.

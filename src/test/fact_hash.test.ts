@@ -1,16 +1,18 @@
 import { describe, test, assert } from 'vitest';
 
 import {
+	fact_hash_bytes,
+	fact_hash_stream,
+	fact_hash_verify,
+	fact_hash_extract_refs
+} from '$lib/fact_hash.ts';
+import {
 	FACT_HASH_PREFIX,
 	FACT_HASH_PATTERN,
 	FactHashSchema,
-	fact_hash_bytes,
-	fact_hash_stream,
 	is_fact_hash,
-	fact_hash_verify,
-	fact_hash_extract_refs,
 	type FactHash
-} from '$lib/fact_hash.ts';
+} from '$lib/hash_schemas.ts';
 import { hash_blake3 } from '$lib/hash_blake3.ts';
 import type { Json } from '$lib/json.ts';
 
@@ -80,50 +82,6 @@ describe('fact_hash_stream', () => {
 
 	test('an empty stream hashes identically to empty bytes', async () => {
 		assert.strictEqual(await fact_hash_stream(stream_of()), fact_hash_bytes(new Uint8Array(0)));
-	});
-});
-
-describe('is_fact_hash / FactHashSchema', () => {
-	test('accepts a well-formed lowercase hex64 hash', () => {
-		assert.ok(is_fact_hash(FACT_HASH_PREFIX + 'a'.repeat(64)));
-	});
-
-	test('rejects wrong length, wrong prefix, and uppercase hex', () => {
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX + 'a'.repeat(63)), '63 chars');
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX + 'a'.repeat(65)), '65 chars');
-		assert.ok(!is_fact_hash('sha256:' + 'a'.repeat(64)), 'wrong prefix');
-		assert.ok(!is_fact_hash('a'.repeat(64)), 'no prefix');
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX + 'A'.repeat(64)), 'uppercase hex');
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX + 'g'.repeat(64)), 'non-hex letter');
-	});
-
-	test('rejects the empty string, the bare prefix, and surrounding whitespace', () => {
-		assert.ok(!is_fact_hash(''), 'empty');
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX), 'prefix only');
-		assert.ok(!is_fact_hash(' ' + FACT_HASH_PREFIX + 'a'.repeat(64)), 'leading space');
-		assert.ok(!is_fact_hash(FACT_HASH_PREFIX + 'a'.repeat(64) + '\n'), 'trailing newline');
-	});
-
-	test('FactHashSchema.parse throws on a malformed value', () => {
-		assert.throws(() => FactHashSchema.parse('blake3:nope'));
-	});
-
-	test('FactHashSchema.parse round-trips a well-formed hash unchanged', () => {
-		const raw = FACT_HASH_PREFIX + 'a'.repeat(64);
-		assert.strictEqual(FactHashSchema.parse(raw), raw);
-	});
-
-	test('a hash embedded in a longer string is not a single-string match', () => {
-		// is_fact_hash is anchored — only an exact match passes.
-		assert.ok(!is_fact_hash(`see ${HASH_A} here`));
-	});
-
-	test('is_fact_hash is stateless across repeated calls (anchored, not /g)', () => {
-		// Guards against regressing FACT_HASH_EXACT to a global pattern, whose
-		// lastIndex would make alternating `.test` calls flip-flop.
-		assert.ok(is_fact_hash(HASH_A));
-		assert.ok(is_fact_hash(HASH_A));
-		assert.ok(is_fact_hash(HASH_A));
 	});
 });
 

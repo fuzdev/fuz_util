@@ -13,7 +13,7 @@
  * @module
  */
 
-import type { FactHash } from './fact_hash.ts';
+import type { FactHash } from './hash_schemas.ts';
 
 /**
  * Optional metadata + ref declarations on a `put` / `put_ref` call.
