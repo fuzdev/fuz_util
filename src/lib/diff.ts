@@ -29,6 +29,9 @@ export interface DiffLine {
 	no_newline?: boolean;
 }
 
+/**
+ * Options for `diff_lines`.
+ */
 export interface DiffOptions {
 	/**
 	 * Maximum edit cost (Myers `D`) before the remaining changed region
@@ -69,6 +72,9 @@ export interface DiffSegments {
 	b_ranges: Array<[number, number]>;
 }
 
+/**
+ * Options for `diff_segments`.
+ */
 export interface DiffSegmentsOptions {
 	/**
 	 * See `DiffOptions.max_cost`.
@@ -412,17 +418,8 @@ export const diff_hunks = (lines: Array<DiffLine>, context_lines = 3): Array<Dif
 };
 
 /**
- * Computes intra-line changed-character ranges for one paired remove/add
- * line — char-level greedy Myers. Returns `null` when the pair reads as a
- * rewrite (below `min_similarity`) or a line exceeds `max_length`, so
- * callers skip emphasis rather than highlight noise.
- *
- * @param a - the removed line's text
- * @param b - the added line's text
- */
-/**
- * Merges ranges separated by at most `join_gap` positions, mutating and
- * returning `ranges`.
+ * Merges ranges separated by at most `join_gap` positions, reusing (and
+ * mutating) the input tuples.
  */
 const join_ranges = (
 	ranges: Array<[number, number]>,
@@ -443,6 +440,15 @@ const join_ranges = (
 	return out;
 };
 
+/**
+ * Computes intra-line changed-character ranges for one paired remove/add
+ * line — char-level greedy Myers. Returns `null` when the pair reads as a
+ * rewrite (below `min_similarity`) or a line exceeds `max_length`, so
+ * callers skip emphasis rather than highlight noise.
+ *
+ * @param a - the removed line's text
+ * @param b - the added line's text
+ */
 export const diff_segments = (
 	a: string,
 	b: string,
@@ -486,15 +492,16 @@ export const diff_segments = (
 };
 
 /**
- * Format options for diff output.
+ * Options for `format_diff`.
  */
 export interface FormatDiffOptions {
 	/**
-	 * Prefix for each line (for indentation in plan output).
+	 * Prefix prepended to every output line, e.g. for indentation.
 	 */
 	prefix?: string;
 	/**
-	 * Maximum number of content lines to show, 0 for unlimited.
+	 * Maximum number of content lines before truncating with a
+	 * `... (N more lines)` marker, 0 for unlimited.
 	 *
 	 * @default 50
 	 */
@@ -520,12 +527,10 @@ export const format_diff = (
 	for (const h of hunks) total += h.lines.length;
 	let count = 0;
 	outer: for (const h of hunks) {
+		if (max_lines > 0 && count >= max_lines) break;
 		out.push(prefix + st('cyan', `@@ -${h.a_start},${h.a_count} +${h.b_start},${h.b_count} @@`));
 		for (const line of h.lines) {
-			if (max_lines > 0 && count >= max_lines) {
-				out.push(`${prefix}... (${total - count} more lines)`);
-				break outer;
-			}
+			if (max_lines > 0 && count >= max_lines) break outer;
 			if (line.type === 'add') {
 				out.push(prefix + st('green', '+' + line.text));
 			} else if (line.type === 'remove') {
@@ -537,6 +542,7 @@ export const format_diff = (
 			count++;
 		}
 	}
+	if (count < total) out.push(`${prefix}... (${total - count} more lines)`);
 	return out.join('\n');
 };
 

@@ -235,6 +235,32 @@ describe('diff_lines', () => {
 				{type: 'same', text: 'b', a_line: 2, b_line: 2, no_newline: true},
 			]);
 		});
+
+		test('matching unterminated final lines at different positions', () => {
+			const result = diff_lines('x\na', 'a');
+			assert.deepEqual(result, [
+				{type: 'remove', text: 'x', a_line: 1, b_line: null},
+				{type: 'same', text: 'a', a_line: 2, b_line: 1, no_newline: true},
+			]);
+		});
+	});
+
+	describe('line endings', () => {
+		test('\\r stays in line text, so CRLF and LF lines differ', () => {
+			const result = diff_lines('a\r\n', 'a\n');
+			assert.deepEqual(result, [
+				{type: 'remove', text: 'a\r', a_line: 1, b_line: null},
+				{type: 'add', text: 'a', a_line: null, b_line: 1},
+			]);
+		});
+
+		test('identical CRLF content stays same with \\r in text', () => {
+			const result = diff_lines('a\r\nb\r\n', 'a\r\nb\r\n');
+			assert.deepEqual(result, [
+				{type: 'same', text: 'a\r', a_line: 1, b_line: 1},
+				{type: 'same', text: 'b\r', a_line: 2, b_line: 2},
+			]);
+		});
 	});
 
 	describe('max_cost degradation', () => {
@@ -359,6 +385,23 @@ describe('diff_hunks', () => {
 		assert.strictEqual(hunks[0]!.lines[0], diff[0]);
 	});
 
+	test('later hunks carry line numbers shifted by earlier changes', () => {
+		const a_lines = Array.from({length: 20}, (_, i) => `line ${i + 1}`);
+		const b_lines = [...a_lines];
+		b_lines.splice(2, 0, 'inserted');
+		b_lines[18] = 'y';
+		const diff = diff_lines(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n');
+		const hunks = diff_hunks(diff, 1);
+		assert.lengthOf(hunks, 2);
+		assert.deepEqual(
+			hunks.map((h) => [h.a_start, h.a_count, h.b_start, h.b_count]),
+			[
+				[2, 2, 2, 3],
+				[17, 3, 18, 3],
+			],
+		);
+	});
+
 	test('context_lines 0 includes only changed lines', () => {
 		const diff = diff_lines('before\nold\nafter\n', 'before\nnew\nafter\n');
 		const hunks = diff_hunks(diff, 0);
@@ -448,6 +491,17 @@ describe('diff_segments', () => {
 		});
 	});
 
+	test('max_cost degrades the middle to one replace range', () => {
+		assert.deepEqual(diff_segments('aWXYb', 'aXYZb', {max_cost: 1}), {
+			a_ranges: [[1, 4]],
+			b_ranges: [[1, 4]],
+		});
+		assert.deepEqual(diff_segments('aWXYb', 'aXYZb'), {
+			a_ranges: [[1, 2]],
+			b_ranges: [[3, 4]],
+		});
+	});
+
 	test('changed-char total matches the edit distance on the classic case', () => {
 		const result = diff_segments('abcabba', 'cbabac', {min_similarity: 0, join_gap: 0});
 		assert.isNotNull(result);
@@ -515,6 +569,23 @@ describe('format_diff', () => {
 		assert.include(result, '... (95 more lines)');
 	});
 
+	test('truncation at a hunk boundary omits the next hunk header', () => {
+		const a_lines = Array.from({length: 30}, (_, i) => `line ${i + 1}`);
+		const b_lines = [...a_lines];
+		b_lines[2] = 'x';
+		b_lines[27] = 'y';
+		const diff = diff_lines(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n');
+		const hunks = diff_hunks(diff, 1);
+		assert.lengthOf(hunks, 2);
+		const result = format_diff(hunks, 'a', 'b', {max_lines: hunks[0]!.lines.length});
+		const lines = result.split('\n');
+		assert.strictEqual(lines[lines.length - 1], `... (${hunks[1]!.lines.length} more lines)`);
+		assert.lengthOf(
+			lines.filter((l) => l.startsWith('@@')),
+			1,
+		);
+	});
+
 	test('max_lines 0 shows all lines', () => {
 		const diff = diff_lines('', Array.from({length: 10}, (_, i) => `line ${i}`).join('\n') + '\n');
 		const hunks = diff_hunks(diff);
@@ -574,6 +645,23 @@ describe('generate_diff', () => {
 
 	test('both empty strings produce only headers', () => {
 		assert.strictEqual(generate_diff('', '', 'file.txt'), '--- file.txt\n+++ file.txt');
+	});
+
+	test('passes context_lines through', () => {
+		const a_lines = Array.from({length: 9}, (_, i) => `line ${i + 1}`);
+		const b_lines = [...a_lines];
+		b_lines[4] = 'modified';
+		const a = a_lines.join('\n') + '\n';
+		const b = b_lines.join('\n') + '\n';
+		assert.include(generate_diff(a, b, 'f')!, 'line 4');
+		assert.notInclude(generate_diff(a, b, 'f', {context_lines: 0})!, 'line 4');
+	});
+
+	test('passes max_cost through', () => {
+		const capped = generate_diff('a\nb\n', 'b\na\n', 'f', {max_cost: 1});
+		assert.include(capped!, '-b');
+		assert.include(capped!, '+b');
+		assert.notInclude(generate_diff('a\nb\n', 'b\na\n', 'f')!, '-b');
 	});
 });
 
