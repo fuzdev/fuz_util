@@ -1,17 +1,17 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {deep_equal} from '$lib/deep_equal.ts';
+import { deep_equal } from '$lib/deep_equal.ts';
 import {
 	test_equal_values,
 	test_unequal_values,
 	assert_equal,
-	assert_not_equal,
+	assert_not_equal
 } from './deep_equal_test_helpers.ts';
 
 describe('special cases', () => {
 	describe('circular references', () => {
 		test('same object reference', () => {
-			const a: any = {x: 1};
+			const a: any = { x: 1 };
 			a.self = a;
 			assert.ok(deep_equal(a, a));
 		});
@@ -31,12 +31,12 @@ describe('special cases', () => {
 		// note: sparse arrays are equal to arrays with undefined at those positions
 		test_equal_values([
 			['with same holes', [1, , 3], [1, , 3]], // eslint-disable-line no-sparse-arrays
-			['vs array with undefined', [1, , 3], [1, undefined, 3]], // eslint-disable-line no-sparse-arrays
+			['vs array with undefined', [1, , 3], [1, undefined, 3]] // eslint-disable-line no-sparse-arrays
 		]);
 
 		test_unequal_values([
 			['different hole positions', [, 1, 2], [1, , 2]], // eslint-disable-line no-sparse-arrays
-			['sparse vs dense array', [1, , , 4], [1, 2, 3, 4]], // eslint-disable-line no-sparse-arrays
+			['sparse vs dense array', [1, , , 4], [1, 2, 3, 4]] // eslint-disable-line no-sparse-arrays
 		]);
 	});
 
@@ -45,30 +45,34 @@ describe('special cases', () => {
 		const sym2 = Symbol('test');
 
 		test('symbols are ignored by Object.keys', () => {
-			const a = {[sym1]: 'value1', regular: 'prop'};
-			const b = {[sym2]: 'value2', regular: 'prop'};
+			const a = { [sym1]: 'value1', regular: 'prop' };
+			const b = { [sym2]: 'value2', regular: 'prop' };
 			// both objects have same string keys, symbol keys ignored
 			assert.ok(deep_equal(a, b));
 		});
 
 		assert_equal(
 			'empty objects with different symbol keys',
-			{[sym1]: 'value'},
-			{[sym2]: 'different'},
+			{ [sym1]: 'value' },
+			{ [sym2]: 'different' }
 		);
-		assert_equal('string keys match, symbol keys differ', {a: 1, [sym1]: 'x'}, {a: 1, [sym2]: 'y'});
-		assert_not_equal('different string keys', {a: 1, [sym1]: 'x'}, {b: 1, [sym1]: 'x'});
+		assert_equal(
+			'string keys match, symbol keys differ',
+			{ a: 1, [sym1]: 'x' },
+			{ a: 1, [sym2]: 'y' }
+		);
+		assert_not_equal('different string keys', { a: 1, [sym1]: 'x' }, { b: 1, [sym1]: 'x' });
 	});
 
 	describe('array-like objects', () => {
 		test_unequal_values([
-			['array-like object vs array', {0: 'a', 1: 'b', length: 2}, ['a', 'b']],
-			['arguments-like vs array', {0: 1, 1: 2, length: 2}, [1, 2]],
+			['array-like object vs array', { 0: 'a', 1: 'b', length: 2 }, ['a', 'b']],
+			['arguments-like vs array', { 0: 1, 1: 2, length: 2 }, [1, 2]]
 		]);
 
 		// Constructor check prevents object/array confusion (even with matching keys)
 		test('with numeric string keys vs arrays', () => {
-			const obj = {'0': 'a', '1': 'b'};
+			const obj = { '0': 'a', '1': 'b' };
 			const arr = ['a', 'b'];
 
 			// same type comparisons work
@@ -140,16 +144,16 @@ describe('special cases', () => {
 
 		test('Error with extra enumerable properties', () => {
 			// Errors with different extra properties should NOT be equal
-			const e1 = new Error('msg') as Error & {code: string};
+			const e1 = new Error('msg') as Error & { code: string };
 			e1.code = 'A';
-			const e2 = new Error('msg') as Error & {code: string};
+			const e2 = new Error('msg') as Error & { code: string };
 			e2.code = 'B';
 			assert.ok(!deep_equal(e1, e2));
 
 			// Same extra properties should be equal
-			const e3 = new Error('msg') as Error & {code: string};
+			const e3 = new Error('msg') as Error & { code: string };
 			e3.code = 'A';
-			const e4 = new Error('msg') as Error & {code: string};
+			const e4 = new Error('msg') as Error & { code: string };
 			e4.code = 'A';
 			assert.ok(deep_equal(e3, e4));
 		});
@@ -208,13 +212,13 @@ describe('special cases', () => {
 			[
 				'different views of same buffer',
 				new Uint8Array(new ArrayBuffer(8)),
-				new Uint16Array(new ArrayBuffer(8)),
+				new Uint16Array(new ArrayBuffer(8))
 			],
 			[
 				'DataView vs Uint8Array (different constructors)',
 				new DataView(new ArrayBuffer(8)),
-				new Uint8Array(8),
-			],
+				new Uint8Array(8)
+			]
 		]);
 	});
 

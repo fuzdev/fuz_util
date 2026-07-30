@@ -1,4 +1,4 @@
-import {Logger, type LogConsole} from '$lib/log.ts';
+import { Logger, type LogConsole } from '$lib/log.ts';
 
 const log = new Logger();
 
@@ -26,8 +26,8 @@ export const create_test_context = (): TestContext => {
 			log: (...args: Array<unknown>) => {
 				ctx.logged_args = args;
 				log.debug('logged_args', args);
-			},
-		},
+			}
+		}
 	};
 	return ctx;
 };

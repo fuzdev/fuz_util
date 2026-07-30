@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.66.0
+
+### Minor Changes
+
+- feat: make fractional-index jitter opt-out via an options object ([936e61f](https://github.com/fuzdev/fuz_util/commit/936e61f))
+
 ## 0.65.2
 
 ### Patch Changes
@@ -294,6 +300,7 @@
 - refactor process spawning with `ProcessRegistry` class and improved APIs ([#65](https://github.com/fuzdev/fuz_util/pull/65))
 
   breaking changes:
+
   - remove `global_spawn` - use `default_registry.processes` instead
   - remove `register_global_spawn` - `ProcessRegistry.spawn()` handles registration automatically
   - rename `attach_process_error_handlers` to `attach_process_error_handler` (singular)
@@ -301,6 +308,7 @@
   - `spawn_out` returns `''` for empty output instead of `null` (null only for spawn failures)
 
   new features:
+
   - add `ProcessRegistry` class for testable, isolated process groups
   - add `SpawnProcessOptions` with `signal` (AbortSignal) and `timeout_ms`
   - add `DespawnOptions` with `signal` and `timeout_ms` (SIGKILL escalation)
@@ -314,6 +322,7 @@
   - `attach_error_handler` accepts `graceful_timeout_ms` option for SIGTERM before SIGKILL
 
   improvements:
+
   - fix race condition between concurrent `kill()` and `restart()` calls
   - `process_is_pid_running` rejects fractional PIDs
   - `spawn_out` explicitly cleans up stream listeners

@@ -19,8 +19,7 @@ export interface Sortable {
  * Result of topological sort.
  */
 export type TopologicalSortResult<T extends Sortable> =
-	| {ok: true; sorted: Array<T>}
-	| {ok: false; error: string; cycle?: Array<string>};
+	{ ok: true; sorted: Array<T> } | { ok: false; error: string; cycle?: Array<string> };
 
 /**
  * Sort items by their dependencies using Kahn's algorithm.
@@ -34,13 +33,13 @@ export type TopologicalSortResult<T extends Sortable> =
  */
 export const topological_sort = <T extends Sortable>(
 	items: Array<T>,
-	label: string = 'item',
+	label: string = 'item'
 ): TopologicalSortResult<T> => {
 	// Build id -> item map
 	const item_map: Map<string, T> = new Map();
 	for (const item of items) {
 		if (item_map.has(item.id)) {
-			return {ok: false, error: `duplicate ${label} id: ${item.id}`};
+			return { ok: false, error: `duplicate ${label} id: ${item.id}` };
 		}
 		item_map.set(item.id, item);
 	}
@@ -55,7 +54,7 @@ export const topological_sort = <T extends Sortable>(
 		const deps = item.depends_on ?? [];
 		for (const dep of deps) {
 			if (!item_map.has(dep)) {
-				return {ok: false, error: `${label} "${item.id}" depends on unknown ${label} "${dep}"`};
+				return { ok: false, error: `${label} "${item.id}" depends on unknown ${label} "${dep}"` };
 			}
 			dependents_count.set(dep, dependents_count.get(dep)! + 1);
 		}
@@ -98,14 +97,14 @@ export const topological_sort = <T extends Sortable>(
 		return {
 			ok: false,
 			error: `dependency cycle detected: ${cycle.join(' -> ')}`,
-			cycle,
+			cycle
 		};
 	}
 
 	// Reverse: leaves were processed first, but dependencies must come first in output
 	sorted.reverse();
 
-	return {ok: true, sorted};
+	return { ok: true, sorted };
 };
 
 /**
@@ -114,7 +113,7 @@ export const topological_sort = <T extends Sortable>(
  */
 const find_cycle = <T extends Sortable>(
 	item_map: Map<string, T>,
-	unvisited: Array<string>,
+	unvisited: Array<string>
 ): Array<string> => {
 	const unvisited_set = new Set(unvisited);
 

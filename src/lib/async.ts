@@ -31,7 +31,7 @@ export const create_deferred = <T>(): Deferred<T> => {
 		resolve = res;
 		reject = rej;
 	});
-	return {promise, resolve, reject};
+	return { promise, resolve, reject };
 };
 
 /**
@@ -55,7 +55,7 @@ export const each_concurrent = async <T>(
 	items: Iterable<T>,
 	concurrency: number,
 	fn: (item: T, index: number) => Promise<void> | void,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<void> => {
 	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
@@ -140,7 +140,7 @@ export const map_concurrent = async <T, R>(
 	items: Iterable<T>,
 	concurrency: number,
 	fn: (item: T, index: number) => Promise<R> | R,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<Array<R>> => {
 	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
@@ -234,7 +234,7 @@ export const map_concurrent_settled = async <T, R>(
 	items: Iterable<T>,
 	concurrency: number,
 	fn: (item: T, index: number) => Promise<R> | R,
-	signal?: AbortSignal,
+	signal?: AbortSignal
 ): Promise<Array<PromiseSettledResult<R>>> => {
 	if (!(concurrency >= 1)) {
 		throw new Error('concurrency must be at least 1');
@@ -262,7 +262,7 @@ export const map_concurrent_settled = async <T, R>(
 			const reason: unknown = signal!.reason;
 			for (let i = 0; i < next_index; i++) {
 				if (!(i in results)) {
-					results[i] = {status: 'rejected', reason};
+					results[i] = { status: 'rejected', reason };
 				}
 			}
 			resolve(results);
@@ -290,10 +290,10 @@ export const map_concurrent_settled = async <T, R>(
 
 				new Promise<R>((r) => r(fn(item, index)))
 					.then((value) => {
-						if (!aborted) results[index] = {status: 'fulfilled', value};
+						if (!aborted) results[index] = { status: 'fulfilled', value };
 					})
 					.catch((reason: unknown) => {
-						if (!aborted) results[index] = {status: 'rejected', reason};
+						if (!aborted) results[index] = { status: 'rejected', reason };
 					})
 					.finally(() => {
 						if (aborted) return;

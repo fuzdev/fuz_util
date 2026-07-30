@@ -1,11 +1,11 @@
-import {Benchmark} from '../lib/benchmark.ts';
-import {slugify} from '../lib/path.ts';
+import { Benchmark } from '../lib/benchmark.ts';
+import { slugify } from '../lib/path.ts';
 
 /* eslint-disable no-console */
 
 const bench = new Benchmark({
 	duration_ms: 5000,
-	warmup_iterations: 10,
+	warmup_iterations: 10
 });
 
 const title = 'this Is a Test of Things to Do';

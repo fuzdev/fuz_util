@@ -8,7 +8,7 @@
  * @module
  */
 
-import {to_hex} from './hex.ts';
+import { to_hex } from './hex.ts';
 
 const encoder = new TextEncoder();
 

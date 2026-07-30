@@ -37,10 +37,10 @@ export type KeyofUnion<T> = T extends unknown ? keyof T : never;
 // these were thrown together quickly - is there a better way to do this?
 // there are probably better names for them!
 // see `Required`, `Exclude` and `Extract` for possible leads for improvements
-export type PartialExcept<T, K extends keyof T> = {[P in K]: T[P]} & {
+export type PartialExcept<T, K extends keyof T> = { [P in K]: T[P] } & {
 	[P in Exclude<keyof T, K>]?: T[P];
 };
-export type PartialOnly<T, K extends keyof T> = {[P in K]?: T[P]} & {
+export type PartialOnly<T, K extends keyof T> = { [P in K]?: T[P] } & {
 	[P in Exclude<keyof T, K>]: T[P];
 };
 

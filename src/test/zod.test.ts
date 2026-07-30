@@ -1,5 +1,5 @@
-import {assert, test, describe} from 'vitest';
-import {z} from 'zod';
+import { assert, test, describe } from 'vitest';
+import { z } from 'zod';
 
 import {
 	zod_to_subschema,
@@ -21,7 +21,7 @@ import {
 	zod_to_schema_type_string,
 	zod_format_value,
 	zod_to_schema_properties,
-	zod_to_schema_names_with_aliases,
+	zod_to_schema_names_with_aliases
 } from '$lib/zod.ts';
 
 // -- zod_to_subschema --
@@ -31,7 +31,7 @@ describe('zod_to_subschema', () => {
 		['optional', z.string().optional()],
 		['nullable', z.string().nullable()],
 		['default', z.string().default('hi')],
-		['pipe', z.string().pipe(z.string())],
+		['pipe', z.string().pipe(z.string())]
 	];
 
 	for (const [label, schema] of unwrappable) {
@@ -46,8 +46,8 @@ describe('zod_to_subschema', () => {
 		['number', z.number()],
 		['boolean', z.boolean()],
 		['enum', z.enum(['a', 'b'])],
-		['object', z.strictObject({x: z.string()})],
-		['array', z.array(z.string())],
+		['object', z.strictObject({ x: z.string() })],
+		['array', z.array(z.string())]
 	];
 
 	for (const [label, schema] of terminal) {
@@ -97,7 +97,7 @@ describe('zod_unwrap_def', () => {
 	});
 
 	test('unwraps to object', () => {
-		const schema = z.strictObject({x: z.string()}).default({x: 'hi'});
+		const schema = z.strictObject({ x: z.string() }).default({ x: 'hi' });
 		assert.equal(zod_unwrap_def(schema).type, 'object');
 	});
 });
@@ -111,11 +111,11 @@ describe('zod_get_base_type', () => {
 		['plain boolean', z.boolean(), 'boolean'],
 		['enum', z.enum(['x']), 'enum'],
 		['array', z.array(z.number()), 'array'],
-		['object', z.strictObject({a: z.string()}), 'object'],
+		['object', z.strictObject({ a: z.string() }), 'object'],
 		['optional string', z.string().optional(), 'string'],
 		['nullable number', z.number().nullable(), 'number'],
 		['default boolean', z.boolean().default(true), 'boolean'],
-		['optional nullable default', z.string().nullable().default('x').optional(), 'string'],
+		['optional nullable default', z.string().nullable().default('x').optional(), 'string']
 	];
 
 	for (const [label, schema, expected] of cases) {
@@ -252,8 +252,8 @@ describe('zod_get_innermost_type', () => {
 	});
 
 	test('returns ZodObject for wrapped object', () => {
-		const obj = z.strictObject({a: z.string()});
-		const result = zod_get_innermost_type(obj.optional().default({a: 'hi'}));
+		const obj = z.strictObject({ a: z.string() });
+		const result = zod_get_innermost_type(obj.optional().default({ a: 'hi' }));
 		assert.equal(result.def.type, 'object');
 		assert.ok('a' in (result as z.ZodObject).shape);
 	});
@@ -268,14 +268,14 @@ describe('zod_get_innermost_type', () => {
 
 describe('zod_get_schema_keys', () => {
 	test('returns keys for plain object', () => {
-		const schema = z.strictObject({a: z.string(), b: z.number(), c: z.boolean()});
+		const schema = z.strictObject({ a: z.string(), b: z.number(), c: z.boolean() });
 		assert.deepEqual(zod_get_schema_keys(schema), ['a', 'b', 'c']);
 	});
 
 	test('returns keys through wrappers', () => {
 		const schema = z
-			.strictObject({x: z.string(), y: z.number()})
-			.default({x: 'hi', y: 1})
+			.strictObject({ x: z.string(), y: z.number() })
+			.default({ x: 'hi', y: 1 })
 			.optional();
 		assert.deepEqual(zod_get_schema_keys(schema), ['x', 'y']);
 	});
@@ -296,18 +296,18 @@ describe('zod_get_schema_keys', () => {
 describe('zod_maybe_get_field_schema', () => {
 	test('returns field schema when present', () => {
 		const inner = z.string();
-		const schema = z.strictObject({name: inner});
+		const schema = z.strictObject({ name: inner });
 		assert.equal(zod_maybe_get_field_schema(schema, 'name'), inner);
 	});
 
 	test('returns undefined for missing key', () => {
-		const schema = z.strictObject({name: z.string()});
+		const schema = z.strictObject({ name: z.string() });
 		assert.equal(zod_maybe_get_field_schema(schema, 'absent'), undefined);
 	});
 
 	test('unwraps wrappers around object', () => {
 		const inner = z.number();
-		const schema = z.strictObject({n: inner}).default({n: 0}).optional();
+		const schema = z.strictObject({ n: inner }).default({ n: 0 }).optional();
 		assert.equal(zod_maybe_get_field_schema(schema, 'n'), inner);
 	});
 
@@ -322,12 +322,12 @@ describe('zod_maybe_get_field_schema', () => {
 describe('zod_get_field_schema', () => {
 	test('returns field schema when present', () => {
 		const inner = z.string();
-		const schema = z.strictObject({name: inner});
+		const schema = z.strictObject({ name: inner });
 		assert.equal(zod_get_field_schema(schema, 'name'), inner);
 	});
 
 	test('throws for missing key', () => {
-		const schema = z.strictObject({name: z.string()});
+		const schema = z.strictObject({ name: z.string() });
 		assert.throws(() => zod_get_field_schema(schema, 'absent'), /Field "absent" not found/);
 	});
 
@@ -337,7 +337,7 @@ describe('zod_get_field_schema', () => {
 
 	test('unwraps wrappers around object', () => {
 		const inner = z.boolean();
-		const schema = z.strictObject({on: inner}).optional();
+		const schema = z.strictObject({ on: inner }).optional();
 		assert.equal(zod_get_field_schema(schema, 'on'), inner);
 	});
 });
@@ -346,33 +346,33 @@ describe('zod_get_field_schema', () => {
 
 describe('zod_unwrap_to_object', () => {
 	test('returns object schema directly', () => {
-		const schema = z.strictObject({x: z.string()});
+		const schema = z.strictObject({ x: z.string() });
 		const result = zod_unwrap_to_object(schema);
 		assert.ok(result);
 		assert.ok('x' in result.shape);
 	});
 
 	test('unwraps optional around object', () => {
-		const result = zod_unwrap_to_object(z.strictObject({x: z.string()}).optional());
+		const result = zod_unwrap_to_object(z.strictObject({ x: z.string() }).optional());
 		assert.ok(result);
 		assert.ok('x' in result.shape);
 	});
 
 	test('unwraps default around object', () => {
-		const result = zod_unwrap_to_object(z.strictObject({x: z.string()}).default({x: 'hi'}));
+		const result = zod_unwrap_to_object(z.strictObject({ x: z.string() }).default({ x: 'hi' }));
 		assert.ok(result);
 		assert.ok('x' in result.shape);
 	});
 
 	test('unwraps nullable around object', () => {
-		const result = zod_unwrap_to_object(z.strictObject({x: z.number()}).nullable());
+		const result = zod_unwrap_to_object(z.strictObject({ x: z.number() }).nullable());
 		assert.ok(result);
 		assert.ok('x' in result.shape);
 	});
 
 	test('unwraps multiple layers around object', () => {
 		const result = zod_unwrap_to_object(
-			z.strictObject({a: z.boolean()}).default({a: true}).optional(),
+			z.strictObject({ a: z.boolean() }).default({ a: true }).optional()
 		);
 		assert.ok(result);
 		assert.ok('a' in result.shape);
@@ -383,7 +383,7 @@ describe('zod_unwrap_to_object', () => {
 		['number', z.number()],
 		['array', z.array(z.string())],
 		['optional string', z.string().optional()],
-		['enum', z.enum(['a'])],
+		['enum', z.enum(['a'])]
 	];
 
 	for (const [label, schema] of non_objects) {
@@ -393,7 +393,7 @@ describe('zod_unwrap_to_object', () => {
 	}
 
 	test('works with z.object (loose)', () => {
-		const result = zod_unwrap_to_object(z.object({y: z.number()}));
+		const result = zod_unwrap_to_object(z.object({ y: z.number() }));
 		assert.ok(result);
 		assert.ok('y' in result.shape);
 	});
@@ -412,7 +412,7 @@ describe('zod_extract_fields', () => {
 		const schema = z.strictObject({
 			name: z.string(),
 			age: z.number().optional(),
-			active: z.boolean().default(true),
+			active: z.boolean().default(true)
 		});
 		const fields = zod_extract_fields(schema);
 		assert.equal(fields.length, 3);
@@ -439,7 +439,7 @@ describe('zod_extract_fields', () => {
 	test('detects nullable fields', () => {
 		const schema = z.strictObject({
 			value: z.string().nullable(),
-			wrapped: z.number().nullable().optional(),
+			wrapped: z.number().nullable().optional()
 		});
 		const fields = zod_extract_fields(schema);
 		assert.ok(fields.find((f) => f.name === 'value')!.nullable);
@@ -451,7 +451,7 @@ describe('zod_extract_fields', () => {
 	});
 
 	test('handles enum fields', () => {
-		const schema = z.strictObject({status: z.enum(['active', 'inactive'])});
+		const schema = z.strictObject({ status: z.enum(['active', 'inactive']) });
 		const fields = zod_extract_fields(schema);
 		assert.equal(fields[0]!.base_type, 'enum');
 		assert.ok(fields[0]!.required);
@@ -459,7 +459,7 @@ describe('zod_extract_fields', () => {
 
 	test('handles deeply wrapped fields', () => {
 		const schema = z.strictObject({
-			deep: z.string().nullable().default('x').optional(),
+			deep: z.string().nullable().default('x').optional()
 		});
 		const fields = zod_extract_fields(schema);
 		const f = fields[0]!;
@@ -474,7 +474,7 @@ describe('zod_extract_fields', () => {
 
 describe('zod_to_schema_description', () => {
 	test('returns description from meta', () => {
-		assert.equal(zod_to_schema_description(z.string().meta({description: 'a name'})), 'a name');
+		assert.equal(zod_to_schema_description(z.string().meta({ description: 'a name' })), 'a name');
 	});
 
 	test('returns null when no description', () => {
@@ -483,27 +483,31 @@ describe('zod_to_schema_description', () => {
 
 	test('unwraps optional to find description', () => {
 		assert.equal(
-			zod_to_schema_description(z.string().meta({description: 'inner'}).optional()),
-			'inner',
+			zod_to_schema_description(z.string().meta({ description: 'inner' }).optional()),
+			'inner'
 		);
 	});
 
 	test('unwraps default to find description', () => {
 		assert.equal(
-			zod_to_schema_description(z.string().meta({description: 'with default'}).default('hi')),
-			'with default',
+			zod_to_schema_description(z.string().meta({ description: 'with default' }).default('hi')),
+			'with default'
 		);
 	});
 
 	test('unwraps nullable to find description', () => {
 		assert.equal(
-			zod_to_schema_description(z.string().meta({description: 'nullable inner'}).nullable()),
-			'nullable inner',
+			zod_to_schema_description(z.string().meta({ description: 'nullable inner' }).nullable()),
+			'nullable inner'
 		);
 	});
 
 	test('prefers outer description over inner', () => {
-		const schema = z.string().meta({description: 'inner'}).optional().meta({description: 'outer'});
+		const schema = z
+			.string()
+			.meta({ description: 'inner' })
+			.optional()
+			.meta({ description: 'outer' });
 		assert.equal(zod_to_schema_description(schema), 'outer');
 	});
 
@@ -523,7 +527,7 @@ describe('zod_to_schema_default', () => {
 		['empty string default', z.string().default(''), ''],
 		['no default', z.string(), undefined],
 		['nested through optional', z.string().default('nested').optional(), 'nested'],
-		['nested through nullable', z.number().default(7).nullable(), 7],
+		['nested through nullable', z.number().default(7).nullable(), 7]
 	];
 
 	for (const [label, schema, expected] of cases) {
@@ -539,7 +543,7 @@ describe('zod_to_schema_default', () => {
 	});
 
 	test('object default', () => {
-		const result = zod_to_schema_default(z.strictObject({x: z.string()}).default({x: 'a'})) as {
+		const result = zod_to_schema_default(z.strictObject({ x: z.string() }).default({ x: 'a' })) as {
 			x: string;
 		};
 		assert.equal(result.x, 'a');
@@ -550,9 +554,9 @@ describe('zod_to_schema_default', () => {
 
 describe('zod_to_schema_aliases', () => {
 	test('returns aliases from meta', () => {
-		assert.deepEqual(zod_to_schema_aliases(z.string().meta({aliases: ['n', 'name']})), [
+		assert.deepEqual(zod_to_schema_aliases(z.string().meta({ aliases: ['n', 'name'] })), [
 			'n',
-			'name',
+			'name'
 		]);
 	});
 
@@ -565,10 +569,10 @@ describe('zod_to_schema_aliases', () => {
 			zod_to_schema_aliases(
 				z
 					.string()
-					.meta({aliases: ['v']})
-					.optional(),
+					.meta({ aliases: ['v'] })
+					.optional()
 			),
-			['v'],
+			['v']
 		);
 	});
 
@@ -577,10 +581,10 @@ describe('zod_to_schema_aliases', () => {
 			zod_to_schema_aliases(
 				z
 					.boolean()
-					.meta({aliases: ['h']})
-					.default(false),
+					.meta({ aliases: ['h'] })
+					.default(false)
 			),
-			['h'],
+			['h']
 		);
 	});
 
@@ -602,7 +606,7 @@ describe('zod_to_schema_type_string', () => {
 		['optional string', z.string().optional(), 'string | undefined'],
 		['default string', z.string().default('hi'), 'string'],
 		['nullable optional', z.string().nullable().optional(), 'string | null | undefined'],
-		['optional nullable', z.string().optional().nullable(), 'string | undefined | null'],
+		['optional nullable', z.string().optional().nullable(), 'string | undefined | null']
 	];
 
 	for (const [label, schema, expected] of simple_cases) {
@@ -651,8 +655,8 @@ describe('zod_format_value', () => {
 		['negative number', -1, '-1'],
 		['empty array', [], '[]'],
 		['non-empty array', [1, 2], '[]'],
-		['object', {a: 1}, '{"a":1}'],
-		['empty object', {}, '{}'],
+		['object', { a: 1 }, '{"a":1}'],
+		['empty object', {}, '{}']
 	];
 
 	for (const [label, value, expected] of cases) {
@@ -668,7 +672,7 @@ describe('zod_format_value', () => {
 	test('function returns empty string', () => {
 		assert.equal(
 			zod_format_value(() => {}),
-			'',
+			''
 		);
 	});
 });
@@ -678,11 +682,11 @@ describe('zod_format_value', () => {
 describe('zod_to_schema_properties', () => {
 	test('extracts properties with full metadata', () => {
 		const schema = z.strictObject({
-			name: z.string().meta({description: 'the name'}).default('world'),
+			name: z.string().meta({ description: 'the name' }).default('world'),
 			verbose: z
 				.boolean()
-				.meta({aliases: ['v'], description: 'verbose output'})
-				.default(false),
+				.meta({ aliases: ['v'], description: 'verbose output' })
+				.default(false)
 		});
 		const props = zod_to_schema_properties(schema);
 		assert.equal(props.length, 2);
@@ -703,7 +707,7 @@ describe('zod_to_schema_properties', () => {
 	test('skips fields that have a no- counterpart', () => {
 		const schema = z.strictObject({
 			watch: z.boolean().default(true),
-			'no-watch': z.boolean().default(false),
+			'no-watch': z.boolean().default(false)
 		});
 		const props = zod_to_schema_properties(schema);
 		assert.equal(props.length, 1);
@@ -717,7 +721,7 @@ describe('zod_to_schema_properties', () => {
 	});
 
 	test('handles fields with no metadata', () => {
-		const props = zod_to_schema_properties(z.strictObject({bare: z.string()}));
+		const props = zod_to_schema_properties(z.strictObject({ bare: z.string() }));
 		assert.equal(props.length, 1);
 		assert.equal(props[0]!.description, '');
 		assert.equal(props[0]!.default, undefined);
@@ -725,12 +729,12 @@ describe('zod_to_schema_properties', () => {
 	});
 
 	test('handles nullable fields', () => {
-		const props = zod_to_schema_properties(z.strictObject({value: z.string().nullable()}));
+		const props = zod_to_schema_properties(z.strictObject({ value: z.string().nullable() }));
 		assert.equal(props[0]!.type, 'string | null');
 	});
 
 	test('handles enum fields', () => {
-		const props = zod_to_schema_properties(z.strictObject({mode: z.enum(['fast', 'slow'])}));
+		const props = zod_to_schema_properties(z.strictObject({ mode: z.enum(['fast', 'slow']) }));
 		assert.equal(props[0]!.type, "'fast' | 'slow'");
 	});
 });
@@ -742,13 +746,13 @@ describe('zod_to_schema_names_with_aliases', () => {
 		const schema = z.strictObject({
 			help: z
 				.boolean()
-				.meta({aliases: ['h']})
+				.meta({ aliases: ['h'] })
 				.default(false),
 			version: z
 				.boolean()
-				.meta({aliases: ['v', 'V']})
+				.meta({ aliases: ['v', 'V'] })
 				.default(false),
-			name: z.string().default(''),
+			name: z.string().default('')
 		});
 		const names = zod_to_schema_names_with_aliases(schema);
 		for (const expected of ['help', 'h', 'version', 'v', 'V', 'name']) {
@@ -759,7 +763,7 @@ describe('zod_to_schema_names_with_aliases', () => {
 	test('skips _ property', () => {
 		const schema = z.strictObject({
 			_: z.array(z.string()).default([]),
-			name: z.string().default(''),
+			name: z.string().default('')
 		});
 		const names = zod_to_schema_names_with_aliases(schema);
 		assert.ok(!names.has('_'));
@@ -774,8 +778,8 @@ describe('zod_to_schema_names_with_aliases', () => {
 		const schema = z.strictObject({
 			_: z
 				.array(z.string())
-				.meta({aliases: ['positional']})
-				.default([]),
+				.meta({ aliases: ['positional'] })
+				.default([])
 		});
 		const names = zod_to_schema_names_with_aliases(schema);
 		assert.ok(!names.has('positional'));

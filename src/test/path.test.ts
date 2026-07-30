@@ -1,4 +1,4 @@
-import {test, assert, describe} from 'vitest';
+import { test, assert, describe } from 'vitest';
 
 import {
 	parse_path_parts,
@@ -6,7 +6,7 @@ import {
 	parse_path_segments,
 	should_exclude_path,
 	slugify,
-	to_file_path,
+	to_file_path
 } from '$lib/path.ts';
 
 test('to_file_path', () => {
@@ -41,20 +41,20 @@ test('parse_path_segments', () => {
 
 test('parse_path_pieces', () => {
 	assert.deepEqual(parse_path_pieces('/foo/bar/baz/'), [
-		{type: 'separator', path: '/'},
-		{type: 'piece', name: 'foo', path: '/foo'},
-		{type: 'separator', path: '/foo'},
-		{type: 'piece', name: 'bar', path: '/foo/bar'},
-		{type: 'separator', path: '/foo/bar'},
-		{type: 'piece', name: 'baz', path: '/foo/bar/baz'},
+		{ type: 'separator', path: '/' },
+		{ type: 'piece', name: 'foo', path: '/foo' },
+		{ type: 'separator', path: '/foo' },
+		{ type: 'piece', name: 'bar', path: '/foo/bar' },
+		{ type: 'separator', path: '/foo/bar' },
+		{ type: 'piece', name: 'baz', path: '/foo/bar/baz' }
 	]);
 	assert.deepEqual(parse_path_pieces('./foo'), [
-		{type: 'separator', path: '/'},
-		{type: 'piece', name: 'foo', path: '/foo'},
+		{ type: 'separator', path: '/' },
+		{ type: 'piece', name: 'foo', path: '/foo' }
 	]);
 	assert.deepEqual(parse_path_pieces('foo'), [
-		{type: 'separator', path: '/'},
-		{type: 'piece', name: 'foo', path: '/foo'},
+		{ type: 'separator', path: '/' },
+		{ type: 'piece', name: 'foo', path: '/foo' }
 	]);
 	assert.deepEqual(parse_path_pieces('/'), []);
 	assert.deepEqual(parse_path_pieces(''), []);
@@ -115,8 +115,8 @@ test('slugify', () => {
 	assert.strictEqual(slugify('ñoño', false), 'oo');
 	assert.strictEqual(
 		slugify(
-			'ÁÄÂÀÃÅÆÞČÇĆĎĐÉĚËÈÊẼĔȆĞÍÌÎÏİŇÑÓÖÒÔÕØŘŔŠŞŤÚŮÜÙÛÝŸŽáäâàãåþčçćďđéěëèêẽĕȇğíìîïıňñóöòôõøðřŕšşßťúůüùûýÿž',
+			'ÁÄÂÀÃÅÆÞČÇĆĎĐÉĚËÈÊẼĔȆĞÍÌÎÏİŇÑÓÖÒÔÕØŘŔŠŞŤÚŮÜÙÛÝŸŽáäâàãåþčçćďđéěëèêẽĕȇğíìîïıňñóöòôõøðřŕšşßťúůüùûýÿž'
 		),
-		'aaaaaabcccddeeeeeeeegiiiiinnoooooorrsstuuuuuyyzaaaaaabcccddeeeeeeeegiiiiinnooooooorrssstuuuuuyyz',
+		'aaaaaabcccddeeeeeeeegiiiiinnoooooorrsstuuuuuyyzaaaaaabcccddeeeeeeeegiiiiinnooooooorrssstuuuuuyyz'
 	);
 });

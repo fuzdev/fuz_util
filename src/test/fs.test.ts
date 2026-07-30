@@ -1,16 +1,16 @@
-import {describe, test, assert} from 'vitest';
-import {mkdir, writeFile, readdir, rm, stat, symlink} from 'node:fs/promises';
-import {join} from 'node:path';
-import {tmpdir} from 'node:os';
+import { describe, test, assert } from 'vitest';
+import { mkdir, writeFile, readdir, rm, stat, symlink } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
-import {fs_exists, fs_empty_dir, fs_search} from '$lib/fs.ts';
+import { fs_exists, fs_empty_dir, fs_search } from '$lib/fs.ts';
 
 const create_temp_dir = async (): Promise<string> => {
 	const dir = join(
 		tmpdir(),
-		`fuz-util-fs-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		`fuz-util-fs-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
 	);
-	await mkdir(dir, {recursive: true});
+	await mkdir(dir, { recursive: true });
 	return dir;
 };
 
@@ -22,7 +22,7 @@ describe('fs_exists', () => {
 
 		assert.strictEqual(await fs_exists(file), true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('returns true for existing directory', async () => {
@@ -30,7 +30,7 @@ describe('fs_exists', () => {
 
 		assert.strictEqual(await fs_exists(dir), true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('returns false for non-existent path', async () => {
@@ -46,7 +46,7 @@ describe('fs_exists', () => {
 		await rm(file);
 		assert.strictEqual(await fs_exists(file), false);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('returns true for symlink to existing file', async () => {
@@ -58,7 +58,7 @@ describe('fs_exists', () => {
 
 		assert.strictEqual(await fs_exists(link), true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('returns false for broken symlink', async () => {
@@ -71,7 +71,7 @@ describe('fs_exists', () => {
 
 		assert.strictEqual(await fs_exists(link), false);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 });
 
@@ -88,7 +88,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('removes nested directories', async () => {
@@ -104,7 +104,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('with filter keeps entries where filter returns false', async () => {
@@ -121,7 +121,7 @@ describe('fs_empty_dir', () => {
 		assert.include(remaining, '.git');
 		assert.notInclude(remaining, 'remove.txt');
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('filter receives basename not full path', async () => {
@@ -137,7 +137,7 @@ describe('fs_empty_dir', () => {
 		assert.deepEqual(received_paths, ['file.txt']);
 		assert.notInclude(received_paths[0], dir);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('on empty directory does nothing', async () => {
@@ -148,7 +148,7 @@ describe('fs_empty_dir', () => {
 		assert.strictEqual(await fs_exists(dir), true);
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('throws on non-existent directory', async () => {
@@ -170,7 +170,7 @@ describe('fs_empty_dir', () => {
 		const stats = await stat(dir);
 		assert.strictEqual(stats.isDirectory(), true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('removes hidden files', async () => {
@@ -183,7 +183,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('handles filenames with spaces and special characters', async () => {
@@ -198,13 +198,13 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('removes deeply nested structures', async () => {
 		const dir = await create_temp_dir();
 		const deep = join(dir, 'a', 'b', 'c', 'd');
-		await mkdir(deep, {recursive: true});
+		await mkdir(deep, { recursive: true });
 		await writeFile(join(deep, 'deep.txt'), 'deep');
 		await writeFile(join(dir, 'a', 'shallow.txt'), 'shallow');
 
@@ -212,7 +212,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('with filter returning false for all keeps everything', async () => {
@@ -224,7 +224,7 @@ describe('fs_empty_dir', () => {
 
 		assert.deepEqual((await readdir(dir)).sort(), ['a.txt', 'b.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('with filter returning true for all removes everything', async () => {
@@ -236,7 +236,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('removes symlinks', async () => {
@@ -252,7 +252,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('removes symlinks to directories without following them', async () => {
@@ -267,7 +267,7 @@ describe('fs_empty_dir', () => {
 
 		assert.strictEqual((await readdir(dir)).length, 0);
 
-		await rm(dir, {recursive: true, force: true});
+		await rm(dir, { recursive: true, force: true });
 	});
 });
 
@@ -277,15 +277,15 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'a.txt'), 'a');
 		await writeFile(join(dir, 'b.txt'), 'b');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['a.txt', 'b.txt']);
 		assert.strictEqual(
 			result.every((f) => !f.is_directory),
-			true,
+			true
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('finds files in nested directories', async () => {
@@ -296,30 +296,30 @@ describe('fs_search', () => {
 		await mkdir(join(dir, 'sub', 'deep'));
 		await writeFile(join(dir, 'sub', 'deep', 'deep.txt'), 'deep');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), [
 			'root.txt',
 			'sub/deep/deep.txt',
-			'sub/nested.txt',
+			'sub/nested.txt'
 		]);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('returns empty array for non-existent directory', async () => {
-		const result = await fs_search('/non/existent/directory/path', {cwd: null});
+		const result = await fs_search('/non/existent/directory/path', { cwd: null });
 		assert.deepEqual(result, []);
 	});
 
 	test('returns empty array for empty directory', async () => {
 		const dir = await create_temp_dir();
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result, []);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('filter excludes paths', async () => {
@@ -331,15 +331,15 @@ describe('fs_search', () => {
 
 		const result = await fs_search(dir, {
 			cwd: null,
-			filter: (path) => !path.includes('ignore') && !path.includes('node_modules'),
+			filter: (path) => !path.includes('ignore') && !path.includes('node_modules')
 		});
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['keep.txt'],
+			['keep.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('filter receives is_directory flag', async () => {
@@ -348,13 +348,13 @@ describe('fs_search', () => {
 		await mkdir(join(dir, 'subdir'));
 		await writeFile(join(dir, 'subdir', 'nested.txt'), 'nested');
 
-		const calls: Array<{path: string; is_directory: boolean}> = [];
+		const calls: Array<{ path: string; is_directory: boolean }> = [];
 		await fs_search(dir, {
 			cwd: null,
 			filter: (path, is_directory) => {
-				calls.push({path, is_directory});
+				calls.push({ path, is_directory });
 				return true;
-			},
+			}
 		});
 
 		const dir_call = calls.find((c) => c.path.endsWith('subdir'));
@@ -363,7 +363,7 @@ describe('fs_search', () => {
 		assert.strictEqual(dir_call?.is_directory, true);
 		assert.strictEqual(file_call?.is_directory, false);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('filter excluding directory prevents recursion into it', async () => {
@@ -379,19 +379,19 @@ describe('fs_search', () => {
 			filter: (path) => {
 				visited.push(path);
 				return !path.includes('excluded');
-			},
+			}
 		});
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['included/should_find.txt'],
+			['included/should_find.txt']
 		);
 		assert.strictEqual(
 			visited.some((p) => p.includes('should_not_find')),
-			false,
+			false
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('multiple filters all must pass', async () => {
@@ -402,15 +402,15 @@ describe('fs_search', () => {
 
 		const result = await fs_search(dir, {
 			cwd: null,
-			filter: [(path) => !path.endsWith('a.txt'), (path) => !path.endsWith('.js')],
+			filter: [(path) => !path.endsWith('a.txt'), (path) => !path.endsWith('.js')]
 		});
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['c.txt'],
+			['c.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('empty filter array is ignored', async () => {
@@ -418,11 +418,11 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'a.txt'), 'a');
 		await writeFile(join(dir, 'b.txt'), 'b');
 
-		const result = await fs_search(dir, {cwd: null, filter: []});
+		const result = await fs_search(dir, { cwd: null, filter: [] });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['a.txt', 'b.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('file_filter applies only to files', async () => {
@@ -434,12 +434,12 @@ describe('fs_search', () => {
 
 		const result = await fs_search(dir, {
 			cwd: null,
-			file_filter: (path) => path.endsWith('.txt'),
+			file_filter: (path) => path.endsWith('.txt')
 		});
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['subdir/also.txt', 'yes.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('multiple file_filters all must pass', async () => {
@@ -452,15 +452,15 @@ describe('fs_search', () => {
 		const result = await fs_search(dir, {
 			cwd: null,
 			// file_filter receives the full id path, so use basename matching
-			file_filter: [(path) => path.includes('test_file'), (path) => path.endsWith('.txt')],
+			file_filter: [(path) => path.includes('test_file'), (path) => path.endsWith('.txt')]
 		});
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['test_file.txt'],
+			['test_file.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('empty file_filter array is ignored', async () => {
@@ -468,11 +468,11 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'a.txt'), 'a');
 		await writeFile(join(dir, 'b.txt'), 'b');
 
-		const result = await fs_search(dir, {cwd: null, file_filter: []});
+		const result = await fs_search(dir, { cwd: null, file_filter: [] });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['a.txt', 'b.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('include_directories adds directories to results', async () => {
@@ -481,7 +481,7 @@ describe('fs_search', () => {
 		await mkdir(join(dir, 'subdir'));
 		await writeFile(join(dir, 'subdir', 'nested.txt'), 'nested');
 
-		const result = await fs_search(dir, {cwd: null, include_directories: true});
+		const result = await fs_search(dir, { cwd: null, include_directories: true });
 
 		const paths = result.map((f) => f.path).sort();
 		assert.deepEqual(paths, ['file.txt', 'subdir', 'subdir/nested.txt']);
@@ -489,7 +489,7 @@ describe('fs_search', () => {
 		const subdir_entry = result.find((f) => f.path === 'subdir');
 		assert.strictEqual(subdir_entry?.is_directory, true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('custom sort function', async () => {
@@ -500,15 +500,15 @@ describe('fs_search', () => {
 
 		const result = await fs_search(dir, {
 			cwd: null,
-			sort: (a, b) => b.path.localeCompare(a.path),
+			sort: (a, b) => b.path.localeCompare(a.path)
 		});
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['c.txt', 'b.txt', 'a.txt'],
+			['c.txt', 'b.txt', 'a.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('sort false disables sorting', async () => {
@@ -517,11 +517,11 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'a.txt'), 'a');
 		await writeFile(join(dir, 'm.txt'), 'm');
 
-		const result = await fs_search(dir, {cwd: null, sort: false});
+		const result = await fs_search(dir, { cwd: null, sort: false });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['a.txt', 'm.txt', 'z.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('sort null disables sorting', async () => {
@@ -529,11 +529,11 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'z.txt'), 'z');
 		await writeFile(join(dir, 'a.txt'), 'a');
 
-		const result = await fs_search(dir, {cwd: null, sort: null});
+		const result = await fs_search(dir, { cwd: null, sort: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['a.txt', 'z.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('id contains full path', async () => {
@@ -542,7 +542,7 @@ describe('fs_search', () => {
 		await mkdir(join(dir, 'sub'));
 		await writeFile(join(dir, 'sub', 'nested.txt'), 'nested');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		const file = result.find((f) => f.path === 'file.txt');
 		const nested = result.find((f) => f.path === 'sub/nested.txt');
@@ -550,7 +550,7 @@ describe('fs_search', () => {
 		assert.strictEqual(file?.id, join(dir, 'file.txt'));
 		assert.strictEqual(nested?.id, join(dir, 'sub', 'nested.txt'));
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('directory id ends with slash', async () => {
@@ -558,12 +558,12 @@ describe('fs_search', () => {
 		await mkdir(join(dir, 'subdir'));
 		await writeFile(join(dir, 'subdir', 'file.txt'), 'content');
 
-		const result = await fs_search(dir, {cwd: null, include_directories: true});
+		const result = await fs_search(dir, { cwd: null, include_directories: true });
 
 		const subdir = result.find((f) => f.path === 'subdir');
 		assert.strictEqual(subdir?.id.endsWith('/'), true);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('finds hidden files', async () => {
@@ -571,11 +571,11 @@ describe('fs_search', () => {
 		await writeFile(join(dir, '.hidden'), 'hidden');
 		await writeFile(join(dir, 'visible.txt'), 'visible');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['.hidden', 'visible.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('cwd resolves relative paths', async () => {
@@ -584,28 +584,28 @@ describe('fs_search', () => {
 		await mkdir(subdir);
 		await writeFile(join(subdir, 'file.txt'), 'content');
 
-		const result = await fs_search('mysubdir', {cwd: dir});
+		const result = await fs_search('mysubdir', { cwd: dir });
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['file.txt'],
+			['file.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('absolute path ignores cwd', async () => {
 		const dir = await create_temp_dir();
 		await writeFile(join(dir, 'file.txt'), 'content');
 
-		const result = await fs_search(dir, {cwd: '/some/other/path'});
+		const result = await fs_search(dir, { cwd: '/some/other/path' });
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['file.txt'],
+			['file.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('handles symlinks to files', async () => {
@@ -615,11 +615,11 @@ describe('fs_search', () => {
 		await writeFile(target, 'target');
 		await symlink(target, link);
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['link.txt', 'target.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('handles filenames with spaces and special characters', async () => {
@@ -627,26 +627,26 @@ describe('fs_search', () => {
 		await writeFile(join(dir, 'file with spaces.txt'), 'spaces');
 		await writeFile(join(dir, 'special@#$.txt'), 'special');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(result.map((f) => f.path).sort(), ['file with spaces.txt', 'special@#$.txt']);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 
 	test('deeply nested directories', async () => {
 		const dir = await create_temp_dir();
 		const deep = join(dir, 'a', 'b', 'c', 'd', 'e');
-		await mkdir(deep, {recursive: true});
+		await mkdir(deep, { recursive: true });
 		await writeFile(join(deep, 'deep.txt'), 'deep');
 
-		const result = await fs_search(dir, {cwd: null});
+		const result = await fs_search(dir, { cwd: null });
 
 		assert.deepEqual(
 			result.map((f) => f.path),
-			['a/b/c/d/e/deep.txt'],
+			['a/b/c/d/e/deep.txt']
 		);
 
-		await rm(dir, {recursive: true});
+		await rm(dir, { recursive: true });
 	});
 });

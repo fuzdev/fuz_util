@@ -1,4 +1,4 @@
-import type {ArrayElement} from './types.ts';
+import type { ArrayElement } from './types.ts';
 
 // TODO try to cange to readonly again, see if upstream errors are tolerably fixed
 export const EMPTY_ARRAY: Array<any> = Object.freeze([]) as any;

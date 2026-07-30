@@ -3,30 +3,30 @@
  * Tests uniformity and independence from first principles.
  */
 
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {create_random_alea} from '$lib/random_alea.ts';
-import {create_random_xoshiro} from '$lib/random_xoshiro.ts';
-import {stats_mean, stats_variance, stats_std_dev} from '$lib/stats.ts';
+import { create_random_alea } from '$lib/random_alea.ts';
+import { create_random_xoshiro } from '$lib/random_xoshiro.ts';
+import { stats_mean, stats_variance, stats_std_dev } from '$lib/stats.ts';
 
 import {
 	type Prng,
 	create_random_lcg,
 	create_random_xorshift32,
-	create_random_middle_square,
+	create_random_middle_square
 } from './random_test_helpers.ts';
 
 // sample size for most tests
 const N = 100_000;
 
 // generator factories — each returns a fresh PRNG
-const generators: Array<{name: string; create: () => Prng; expect_good: boolean}> = [
-	{name: 'Math.random', create: () => Math.random, expect_good: true},
-	{name: 'Alea', create: () => create_random_alea(42), expect_good: true},
-	{name: 'Xoshiro128**', create: () => create_random_xoshiro(42), expect_good: true},
-	{name: 'Xorshift32', create: () => create_random_xorshift32(42), expect_good: true},
-	{name: 'LCG', create: () => create_random_lcg(42), expect_good: false},
-	{name: 'Middle Square', create: () => create_random_middle_square(5678), expect_good: false},
+const generators: Array<{ name: string; create: () => Prng; expect_good: boolean }> = [
+	{ name: 'Math.random', create: () => Math.random, expect_good: true },
+	{ name: 'Alea', create: () => create_random_alea(42), expect_good: true },
+	{ name: 'Xoshiro128**', create: () => create_random_xoshiro(42), expect_good: true },
+	{ name: 'Xorshift32', create: () => create_random_xorshift32(42), expect_good: true },
+	{ name: 'LCG', create: () => create_random_lcg(42), expect_good: false },
+	{ name: 'Middle Square', create: () => create_random_middle_square(5678), expect_good: false }
 ];
 
 /** Generate N samples from a PRNG. */
@@ -42,7 +42,7 @@ describe('bucket uniformity (chi-squared)', () => {
 	const k = 100; // number of buckets
 	const expected_per_bucket = N / k;
 
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const prng = create();
 			const buckets = new Array(k).fill(0) as Array<number>;
@@ -65,7 +65,7 @@ describe('bucket uniformity (chi-squared)', () => {
 			if (expect_good) {
 				assert.ok(
 					reduced > 0.5 && reduced < 1.8,
-					`${name}: reduced χ² = ${reduced.toFixed(3)}, expected near 1.0`,
+					`${name}: reduced χ² = ${reduced.toFixed(3)}, expected near 1.0`
 				);
 			}
 			// for bad generators, just log — they may or may not fail this
@@ -78,7 +78,7 @@ describe('mean and variance', () => {
 	const expected_mean = 0.5;
 	const expected_variance = 1 / 12;
 
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 			const mean = stats_mean(samples);
@@ -87,11 +87,11 @@ describe('mean and variance', () => {
 			if (expect_good) {
 				assert.ok(
 					Math.abs(mean - expected_mean) < 0.005,
-					`${name}: mean = ${mean.toFixed(6)}, expected ~${expected_mean}`,
+					`${name}: mean = ${mean.toFixed(6)}, expected ~${expected_mean}`
 				);
 				assert.ok(
 					Math.abs(variance - expected_variance) < 0.003,
-					`${name}: variance = ${variance.toFixed(6)}, expected ~${expected_variance.toFixed(6)}`,
+					`${name}: variance = ${variance.toFixed(6)}, expected ~${expected_variance.toFixed(6)}`
 				);
 			}
 		});
@@ -99,7 +99,7 @@ describe('mean and variance', () => {
 });
 
 describe('serial correlation', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 			const mean = stats_mean(samples);
@@ -118,7 +118,7 @@ describe('serial correlation', () => {
 				// for independent samples, |r| should be ≈ 0 with SE ≈ 1/√N
 				assert.ok(
 					Math.abs(r) < 0.02,
-					`${name}: lag-1 autocorrelation r = ${r.toFixed(6)}, expected near 0`,
+					`${name}: lag-1 autocorrelation r = ${r.toFixed(6)}, expected near 0`
 				);
 			}
 		});
@@ -126,7 +126,7 @@ describe('serial correlation', () => {
 });
 
 describe('runs test', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 
@@ -151,7 +151,7 @@ describe('runs test', () => {
 });
 
 describe('gap test', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 
@@ -205,7 +205,7 @@ describe('gap test', () => {
 			if (expect_good) {
 				assert.ok(
 					reduced < 3,
-					`${name}: gap test reduced χ² = ${reduced.toFixed(3)}, expected < 3`,
+					`${name}: gap test reduced χ² = ${reduced.toFixed(3)}, expected < 3`
 				);
 			}
 		});
@@ -213,7 +213,7 @@ describe('gap test', () => {
 });
 
 describe('Kolmogorov-Smirnov test', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 			samples.sort((a, b) => a - b);
@@ -238,7 +238,7 @@ describe('Kolmogorov-Smirnov test', () => {
 });
 
 describe('bit-level frequency', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const samples = generate_samples(create(), N);
 
@@ -263,7 +263,7 @@ describe('bit-level frequency', () => {
 					// SE of proportion ≈ 0.5/√N ≈ 0.00158
 					assert.ok(
 						Math.abs(proportion - 0.5) < 0.01,
-						`${name}: bit ${bit} proportion = ${proportion.toFixed(4)}, expected ~0.5`,
+						`${name}: bit ${bit} proportion = ${proportion.toFixed(4)}, expected ~0.5`
 					);
 				}
 			}
@@ -272,7 +272,7 @@ describe('bit-level frequency', () => {
 });
 
 describe('permutation test', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const prng = create();
 			const n_triples = Math.floor(N / 3);
@@ -310,7 +310,7 @@ describe('permutation test', () => {
 			if (expect_good) {
 				assert.ok(
 					reduced < 3,
-					`${name}: permutation reduced χ² = ${reduced.toFixed(3)}, expected < 3`,
+					`${name}: permutation reduced χ² = ${reduced.toFixed(3)}, expected < 3`
 				);
 			}
 		});
@@ -324,7 +324,7 @@ describe('birthday spacings', () => {
 	const M = 1 << 24;
 	const n_samples = 1024;
 
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			const prng = create();
 			const values: Array<number> = [];
@@ -362,8 +362,8 @@ describe('birthday spacings', () => {
 				assert.ok(
 					z < 4,
 					`${name}: birthday collisions = ${collisions}, expected ≈ ${lambda.toFixed(
-						0,
-					)}, z = ${z.toFixed(2)}`,
+						0
+					)}, z = ${z.toFixed(2)}`
 				);
 			}
 		});
@@ -371,7 +371,7 @@ describe('birthday spacings', () => {
 });
 
 describe('serial pairs (2D lattice)', () => {
-	for (const {name, create, expect_good} of generators) {
+	for (const { name, create, expect_good } of generators) {
 		test(name, () => {
 			// plot consecutive pairs (x_i, x_{i+1}) on a k×k grid
 			// LCG outputs fall on hyperplanes, leaving cells non-uniform
@@ -403,7 +403,7 @@ describe('serial pairs (2D lattice)', () => {
 				const chi2_se = Math.sqrt(2 / df);
 				assert.ok(
 					Math.abs(reduced - 1) < 4 * chi2_se,
-					`${name}: 2D serial reduced χ² = ${reduced.toFixed(3)}, expected near 1.0`,
+					`${name}: 2D serial reduced χ² = ${reduced.toFixed(3)}, expected near 1.0`
 				);
 			}
 		});
@@ -427,8 +427,8 @@ describe('bad generators fail at least one test', () => {
 		assert.ok(
 			has_issues,
 			`Middle Square should show distribution issues (mean_err=${mean_error.toFixed(
-				4,
-			)}, std_err=${std_dev_error.toFixed(4)})`,
+				4
+			)}, std_err=${std_dev_error.toFixed(4)})`
 		);
 	});
 });

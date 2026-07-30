@@ -1,6 +1,6 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {UnreachableError, unreachable} from '$lib/error.ts';
+import { UnreachableError, unreachable } from '$lib/error.ts';
 
 const custom_message = 'Custom message';
 

@@ -9,15 +9,15 @@
 
 /* eslint-disable no-console */
 
-import {create_random_alea} from '../lib/random_alea.ts';
-import {create_random_xoshiro} from '../lib/random_xoshiro.ts';
-import {stats_mean, stats_variance} from '../lib/stats.ts';
-import {string_display_width, pad_width} from '../lib/string.ts';
+import { create_random_alea } from '../lib/random_alea.ts';
+import { create_random_xoshiro } from '../lib/random_xoshiro.ts';
+import { stats_mean, stats_variance } from '../lib/stats.ts';
+import { string_display_width, pad_width } from '../lib/string.ts';
 
 import {
 	type Prng,
 	create_random_lcg,
-	create_random_xorshift32,
+	create_random_xorshift32
 } from '../test/random_test_helpers.ts';
 
 const deep = process.argv.includes('--deep');
@@ -33,11 +33,11 @@ interface Generator {
 }
 
 const generators: Array<Generator> = [
-	{name: 'Math.random', create: () => Math.random},
-	{name: 'Alea', create: () => create_random_alea(42)},
-	{name: 'Xoshiro128**', create: () => create_random_xoshiro(42)},
-	{name: 'Xorshift32', create: () => create_random_xorshift32(42)},
-	{name: 'LCG', create: () => create_random_lcg(42)},
+	{ name: 'Math.random', create: () => Math.random },
+	{ name: 'Alea', create: () => create_random_alea(42) },
+	{ name: 'Xoshiro128**', create: () => create_random_xoshiro(42) },
+	{ name: 'Xorshift32', create: () => create_random_xorshift32(42) },
+	{ name: 'LCG', create: () => create_random_lcg(42) }
 ];
 
 const generate_samples = (prng: Prng, count: number): Array<number> => {
@@ -70,8 +70,8 @@ const tests: Array<TestDef> = [
 			const mean = stats_mean(samples);
 			// SE of mean for uniform = (1/√12)/√N ≈ 0.289 * se
 			const threshold = 5 * 0.289 * se; // ~5 sigma
-			return {value: mean.toFixed(4), pass: Math.abs(mean - 0.5) < threshold};
-		},
+			return { value: mean.toFixed(4), pass: Math.abs(mean - 0.5) < threshold };
+		}
 	},
 	{
 		name: 'Variance',
@@ -84,9 +84,9 @@ const tests: Array<TestDef> = [
 			const threshold = 5 * 0.05 * se * Math.sqrt(N) * (1 / Math.sqrt(N)); // ~0.005 at 100k, ~0.0016 at 1M
 			return {
 				value: variance.toFixed(4),
-				pass: Math.abs(variance - 1 / 12) < Math.max(threshold, 0.001),
+				pass: Math.abs(variance - 1 / 12) < Math.max(threshold, 0.001)
 			};
-		},
+		}
 	},
 	{
 		name: 'χ² reduced',
@@ -108,8 +108,8 @@ const tests: Array<TestDef> = [
 			const reduced = chi2 / (k - 1);
 			// std dev of reduced chi-squared ≈ √(2/(k-1)) ≈ 0.142 for k=100
 			const chi2_se = Math.sqrt(2 / (k - 1));
-			return {value: reduced.toFixed(2), pass: Math.abs(reduced - 1) < 4 * chi2_se};
-		},
+			return { value: reduced.toFixed(2), pass: Math.abs(reduced - 1) < 4 * chi2_se };
+		}
 	},
 	{
 		name: 'Correlation',
@@ -127,8 +127,8 @@ const tests: Array<TestDef> = [
 			const r = num / den;
 			// SE of correlation ≈ 1/√N
 			const threshold = 4 * se;
-			return {value: r.toFixed(5), pass: Math.abs(r) < threshold};
-		},
+			return { value: r.toFixed(5), pass: Math.abs(r) < threshold };
+		}
 	},
 	{
 		name: 'Runs z',
@@ -141,8 +141,8 @@ const tests: Array<TestDef> = [
 			}
 			const expected_runs = (N + 1) / 2;
 			const z = (runs - expected_runs) / Math.sqrt((N - 1) / 4);
-			return {value: z.toFixed(2), pass: Math.abs(z) < 3};
-		},
+			return { value: z.toFixed(2), pass: Math.abs(z) < 3 };
+		}
 	},
 	{
 		name: 'KS D',
@@ -158,8 +158,8 @@ const tests: Array<TestDef> = [
 			}
 			// KS critical value at 99% ≈ 1.63/√N
 			const threshold = 1.63 / Math.sqrt(N);
-			return {value: d_max.toFixed(5), pass: d_max < threshold};
-		},
+			return { value: d_max.toFixed(5), pass: d_max < threshold };
+		}
 	},
 	{
 		name: 'Gap χ²',
@@ -184,7 +184,7 @@ const tests: Array<TestDef> = [
 					current_gap++;
 				}
 			}
-			if (total < 100) return {value: 'n/a', pass: false};
+			if (total < 100) return { value: 'n/a', pass: false };
 			let chi2 = 0;
 			for (let k = 0; k <= max_bucket; k++) {
 				const p = k < max_bucket ? 0.5 ** (k + 1) : 0.5 ** max_bucket;
@@ -195,8 +195,8 @@ const tests: Array<TestDef> = [
 				}
 			}
 			const reduced = chi2 / max_bucket;
-			return {value: reduced.toFixed(2), pass: reduced < 3};
-		},
+			return { value: reduced.toFixed(2), pass: reduced < 3 };
+		}
 	},
 	{
 		name: 'Bit freq',
@@ -221,8 +221,8 @@ const tests: Array<TestDef> = [
 			}
 			// SE of proportion ≈ 0.5/√N, threshold at ~4 sigma
 			const threshold = 4 * (0.5 / Math.sqrt(N));
-			return {value: worst_prop.toFixed(4), pass: worst_dev < threshold};
-		},
+			return { value: worst_prop.toFixed(4), pass: worst_dev < threshold };
+		}
 	},
 	{
 		name: 'Perm χ²',
@@ -251,8 +251,8 @@ const tests: Array<TestDef> = [
 				chi2 += (d * d) / expected;
 			}
 			const reduced = chi2 / 5;
-			return {value: reduced.toFixed(2), pass: reduced < 3};
-		},
+			return { value: reduced.toFixed(2), pass: reduced < 3 };
+		}
 	},
 	{
 		name: 'Serial 2D',
@@ -282,8 +282,8 @@ const tests: Array<TestDef> = [
 			const reduced = chi2 / df;
 			// std dev of reduced chi-squared ≈ √(2/df) ≈ 0.028
 			const chi2_se = Math.sqrt(2 / df);
-			return {value: reduced.toFixed(2), pass: Math.abs(reduced - 1) < 4 * chi2_se};
-		},
+			return { value: reduced.toFixed(2), pass: Math.abs(reduced - 1) < 4 * chi2_se };
+		}
 	},
 	{
 		name: 'Birthday z',
@@ -322,9 +322,9 @@ const tests: Array<TestDef> = [
 
 			const avg_collisions = total_collisions / trials;
 			const z = (avg_collisions - lambda) / Math.sqrt(lambda / trials);
-			return {value: z.toFixed(2), pass: Math.abs(z) < 4};
-		},
-	},
+			return { value: z.toFixed(2), pass: Math.abs(z) < 4 };
+		}
+	}
 ];
 
 //
@@ -333,7 +333,7 @@ const tests: Array<TestDef> = [
 
 const render_table = (all_rows: Array<Array<string>>, left_align_cols = 1): string => {
 	const col_widths = all_rows[0]!.map((_, col) =>
-		Math.max(...all_rows.map((row) => string_display_width(row[col]!))),
+		Math.max(...all_rows.map((row) => string_display_width(row[col]!)))
 	);
 	const top = '┌' + col_widths.map((w) => '─'.repeat(w + 2)).join('┬') + '┐';
 	const mid = '├' + col_widths.map((w) => '─'.repeat(w + 2)).join('┼') + '┤';
@@ -362,10 +362,10 @@ const render_table = (all_rows: Array<Array<string>>, left_align_cols = 1): stri
 const mode = deep ? 'deep' : 'default';
 console.log(`\nPRNG Distribution Quality Report (N=${N.toLocaleString()}, ${mode})\n`);
 
-const results: Array<{test_name: string; ideal: string; outcomes: Array<TestResult>}> = [];
+const results: Array<{ test_name: string; ideal: string; outcomes: Array<TestResult> }> = [];
 for (const t of tests) {
 	const outcomes = generators.map((g) => t.run(g));
-	results.push({test_name: t.name, ideal: t.ideal, outcomes});
+	results.push({ test_name: t.name, ideal: t.ideal, outcomes });
 }
 
 // build and render main table
@@ -375,17 +375,17 @@ for (const r of results) {
 	main_rows.push([
 		r.test_name,
 		r.ideal,
-		...r.outcomes.map((o) => `${o.value} ${o.pass ? ' ok' : 'FAIL'}`),
+		...r.outcomes.map((o) => `${o.value} ${o.pass ? ' ok' : 'FAIL'}`)
 	]);
 }
 console.log(render_table(main_rows, 2));
 
 // score summary
 const pass_counts = generators.map((_, gi) =>
-	results.reduce((sum, r) => sum + (r.outcomes[gi]!.pass ? 1 : 0), 0),
+	results.reduce((sum, r) => sum + (r.outcomes[gi]!.pass ? 1 : 0), 0)
 );
 console.log(
-	'\nScore: ' + generators.map((g, i) => `${g.name} ${pass_counts[i]}/${tests.length}`).join('  '),
+	'\nScore: ' + generators.map((g, i) => `${g.name} ${pass_counts[i]}/${tests.length}`).join('  ')
 );
 
 //
@@ -464,7 +464,7 @@ console.log('\n\n── Detailed Analysis ──\n');
 	const resolutions = [25, 50, 100, 200];
 	const n_pairs = Math.min(N, 2_000_000); // need enough to fill fine grids
 	console.log(
-		`\n2D serial pairs χ² by grid resolution (N=${n_pairs.toLocaleString()}, showing reduced χ²):\n`,
+		`\n2D serial pairs χ² by grid resolution (N=${n_pairs.toLocaleString()}, showing reduced χ²):\n`
 	);
 
 	const grid_header = ['Grid', ...generators.map((g) => g.name)];
@@ -509,7 +509,7 @@ console.log('\n\n── Detailed Analysis ──\n');
 	console.log(
 		`\nBucket distribution (N=${n_buck.toLocaleString()}, ${
 			k
-		} buckets, expected=${expected.toLocaleString()}/bucket):\n`,
+		} buckets, expected=${expected.toLocaleString()}/bucket):\n`
 	);
 
 	for (const gen of generators) {

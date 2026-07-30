@@ -1,6 +1,6 @@
-import {test, describe, assert, vi} from 'vitest';
-import {EventEmitter} from 'node:events';
-import type {ChildProcess} from 'node:child_process';
+import { test, describe, assert, vi } from 'vitest';
+import { EventEmitter } from 'node:events';
+import type { ChildProcess } from 'node:child_process';
 
 import {
 	spawn,
@@ -15,9 +15,9 @@ import {
 	print_spawn_result,
 	spawn_result_to_message,
 	attach_process_error_handler,
-	type SpawnResult,
+	type SpawnResult
 } from '$lib/process.ts';
-import {assert_property} from '$lib/testing.ts';
+import { assert_property } from '$lib/testing.ts';
 
 describe('spawn', () => {
 	test('returns ok for successful command', async () => {
@@ -41,12 +41,12 @@ describe('spawn', () => {
 		assert.ok(result.error instanceof Error);
 		assert.ok(
 			result.error.message.includes('ENOENT') ||
-				(result.error as NodeJS.ErrnoException).code === 'ENOENT',
+				(result.error as NodeJS.ErrnoException).code === 'ENOENT'
 		);
 	});
 
 	test('supports timeout_ms option', async () => {
-		const result = await spawn('sleep', ['10'], {timeout_ms: 50});
+		const result = await spawn('sleep', ['10'], { timeout_ms: 50 });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
@@ -54,7 +54,7 @@ describe('spawn', () => {
 
 	test('supports AbortSignal option', async () => {
 		const controller = new AbortController();
-		const promise = spawn('sleep', ['10'], {signal: controller.signal});
+		const promise = spawn('sleep', ['10'], { signal: controller.signal });
 		// Give process time to start
 		await new Promise((r) => setTimeout(r, 20));
 		controller.abort();
@@ -67,7 +67,7 @@ describe('spawn', () => {
 	test('handles pre-aborted signal', async () => {
 		const controller = new AbortController();
 		controller.abort();
-		const result = await spawn('sleep', ['10'], {signal: controller.signal});
+		const result = await spawn('sleep', ['10'], { signal: controller.signal });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 	});
@@ -77,7 +77,7 @@ describe('spawn', () => {
 		// timeout_ms is shorter, should win
 		const result = await spawn('sleep', ['10'], {
 			signal: controller.signal,
-			timeout_ms: 50,
+			timeout_ms: 50
 		});
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
@@ -87,7 +87,7 @@ describe('spawn', () => {
 
 describe('spawn_out', () => {
 	test('captures stdout', async () => {
-		const {result, stdout, stderr} = await spawn_out('echo', ['hello']);
+		const { result, stdout, stderr } = await spawn_out('echo', ['hello']);
 		assert.ok(result.ok);
 		assert.strictEqual(stdout, 'hello\n');
 		// stderr stream available but empty
@@ -95,9 +95,9 @@ describe('spawn_out', () => {
 	});
 
 	test('captures stderr', async () => {
-		const {result, stdout, stderr} = await spawn_out('node', [
+		const { result, stdout, stderr } = await spawn_out('node', [
 			'-e',
-			'console.error("error output")',
+			'console.error("error output")'
 		]);
 		assert.ok(result.ok);
 		// stdout stream available but empty
@@ -106,9 +106,9 @@ describe('spawn_out', () => {
 	});
 
 	test('captures both stdout and stderr', async () => {
-		const {result, stdout, stderr} = await spawn_out('node', [
+		const { result, stdout, stderr } = await spawn_out('node', [
 			'-e',
-			'console.log("out"); console.error("err");',
+			'console.log("out"); console.error("err");'
 		]);
 		assert.ok(result.ok);
 		assert.strictEqual(stdout, 'out\n');
@@ -116,9 +116,9 @@ describe('spawn_out', () => {
 	});
 
 	test('captures output even on non-zero exit', async () => {
-		const {result, stdout, stderr} = await spawn_out('node', [
+		const { result, stdout, stderr } = await spawn_out('node', [
 			'-e',
-			'console.log("out"); console.error("err"); process.exit(1);',
+			'console.log("out"); console.error("err"); process.exit(1);'
 		]);
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'exited');
@@ -128,7 +128,7 @@ describe('spawn_out', () => {
 	});
 
 	test('returns null streams for non-existent command', async () => {
-		const {result, stdout, stderr} = await spawn_out('nonexistent_command_xyz_12345');
+		const { result, stdout, stderr } = await spawn_out('nonexistent_command_xyz_12345');
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'error');
 		assert.strictEqual(stdout, null);
@@ -136,7 +136,7 @@ describe('spawn_out', () => {
 	});
 
 	test('supports timeout_ms option', async () => {
-		const {result} = await spawn_out('sleep', ['10'], {timeout_ms: 50});
+		const { result } = await spawn_out('sleep', ['10'], { timeout_ms: 50 });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGTERM');
@@ -144,16 +144,16 @@ describe('spawn_out', () => {
 
 	test('supports AbortSignal option', async () => {
 		const controller = new AbortController();
-		const promise = spawn_out('sleep', ['10'], {signal: controller.signal});
+		const promise = spawn_out('sleep', ['10'], { signal: controller.signal });
 		await new Promise((r) => setTimeout(r, 20));
 		controller.abort();
-		const {result} = await promise;
+		const { result } = await promise;
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 	});
 
 	test('returns empty string for empty output', async () => {
-		const {result, stdout, stderr} = await spawn_out('node', ['-e', 'process.stdout.write("")']);
+		const { result, stdout, stderr } = await spawn_out('node', ['-e', 'process.stdout.write("")']);
 		assert.ok(result.ok);
 		// Empty write - stream available but no content
 		assert.strictEqual(stdout, '');
@@ -162,9 +162,9 @@ describe('spawn_out', () => {
 
 	test('captures multi-chunk output correctly', async () => {
 		// Generate output that will likely come in multiple chunks
-		const {result, stdout} = await spawn_out('node', [
+		const { result, stdout } = await spawn_out('node', [
 			'-e',
-			'for(let i=0;i<100;i++) console.log("line "+i);',
+			'for(let i=0;i<100;i++) console.log("line "+i);'
 		]);
 		assert.ok(result.ok);
 		assert.ok(stdout !== null);
@@ -178,7 +178,7 @@ describe('spawn_out', () => {
 
 describe('spawn_process', () => {
 	test('returns child and closed promise', async () => {
-		const {child, closed} = spawn_process('echo', ['test']);
+		const { child, closed } = spawn_process('echo', ['test']);
 		assert.ok(child);
 		assert.ok(typeof child.pid === 'number');
 		const result = await closed;
@@ -186,7 +186,7 @@ describe('spawn_process', () => {
 	});
 
 	test('child can be killed', async () => {
-		const {child, closed} = spawn_process('sleep', ['10']);
+		const { child, closed } = spawn_process('sleep', ['10']);
 		assert.ok(process_is_pid_running(child.pid!));
 		child.kill('SIGTERM');
 		const result = await closed;
@@ -198,7 +198,7 @@ describe('spawn_process', () => {
 
 describe('despawn', () => {
 	test('kills running process', async () => {
-		const {child, closed} = spawn_process('sleep', ['10']);
+		const { child, closed } = spawn_process('sleep', ['10']);
 		const result = await despawn(child);
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
@@ -208,7 +208,7 @@ describe('despawn', () => {
 	});
 
 	test('returns immediately for already exited process', async () => {
-		const {child, closed} = spawn_process('echo', ['done']);
+		const { child, closed } = spawn_process('echo', ['done']);
 		await closed;
 		const result = await despawn(child);
 		assert.ok(result.ok);
@@ -217,7 +217,7 @@ describe('despawn', () => {
 	});
 
 	test('returns signalCode for already-signaled process', async () => {
-		const {child, closed} = spawn_process('sleep', ['10']);
+		const { child, closed } = spawn_process('sleep', ['10']);
 		child.kill('SIGKILL');
 		await closed;
 		const result = await despawn(child);
@@ -227,8 +227,8 @@ describe('despawn', () => {
 	});
 
 	test('supports custom signal', async () => {
-		const {child} = spawn_process('sleep', ['10']);
-		const result = await despawn(child, {signal: 'SIGKILL'});
+		const { child } = spawn_process('sleep', ['10']);
+		const result = await despawn(child, { signal: 'SIGKILL' });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
@@ -236,17 +236,17 @@ describe('despawn', () => {
 
 	test('escalates to SIGKILL after timeout', async () => {
 		// Process that ignores SIGTERM, prints "ready" once handler is installed
-		const {child} = spawn_process(
+		const { child } = spawn_process(
 			'node',
 			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
-			{stdio: 'pipe'},
+			{ stdio: 'pipe' }
 		);
 		await new Promise<void>((resolve) => {
 			child.stdout!.on('data', (d) => {
 				if (d.toString().includes('ready')) resolve();
 			});
 		});
-		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 100});
+		const result = await despawn(child, { signal: 'SIGTERM', timeout_ms: 100 });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
@@ -254,17 +254,17 @@ describe('despawn', () => {
 
 	test('timeout_ms of 0 escalates to SIGKILL immediately', async () => {
 		// Process that ignores SIGTERM, prints "ready" once handler is installed
-		const {child} = spawn_process(
+		const { child } = spawn_process(
 			'node',
 			['-e', 'process.on("SIGTERM", () => {}); console.log("ready"); setInterval(() => {}, 1000);'],
-			{stdio: 'pipe'},
+			{ stdio: 'pipe' }
 		);
 		await new Promise<void>((resolve) => {
 			child.stdout!.on('data', (d) => {
 				if (d.toString().includes('ready')) resolve();
 			});
 		});
-		const result = await despawn(child, {signal: 'SIGTERM', timeout_ms: 0});
+		const result = await despawn(child, { signal: 'SIGTERM', timeout_ms: 0 });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 		assert.strictEqual(result.signal, 'SIGKILL');
@@ -276,7 +276,7 @@ describe('ProcessRegistry', () => {
 		const registry = new ProcessRegistry();
 		assert.strictEqual(registry.processes.size, 0);
 
-		const {child, closed} = registry.spawn('sleep', ['10']);
+		const { child, closed } = registry.spawn('sleep', ['10']);
 		assert.strictEqual(registry.processes.size, 1);
 		assert.ok(registry.processes.has(child));
 
@@ -307,7 +307,7 @@ describe('ProcessRegistry', () => {
 		const registry = new ProcessRegistry();
 		const defaultSizeBefore = process_registry_default.processes.size;
 
-		const {child, closed} = registry.spawn('sleep', ['10']);
+		const { child, closed } = registry.spawn('sleep', ['10']);
 		assert.strictEqual(process_registry_default.processes.size, defaultSizeBefore);
 		assert.strictEqual(registry.processes.size, 1);
 
@@ -319,7 +319,7 @@ describe('ProcessRegistry', () => {
 		const registry = new ProcessRegistry();
 		assert.strictEqual(registry.processes.size, 0);
 
-		const {closed} = registry.spawn('nonexistent_command_xyz_12345');
+		const { closed } = registry.spawn('nonexistent_command_xyz_12345');
 		// Process is added to registry immediately
 		assert.strictEqual(registry.processes.size, 1);
 
@@ -340,7 +340,7 @@ describe('ProcessRegistry', () => {
 			exitCode: null as number | null,
 			signalCode: null as NodeJS.Signals | null,
 			spawnargs: ['test', 'arg'],
-			kill: vi.fn(() => true),
+			kill: vi.fn(() => true)
 		}) as unknown as ChildProcess;
 
 		let captured_command: string | undefined;
@@ -352,11 +352,11 @@ describe('ProcessRegistry', () => {
 				captured_args = args;
 				captured_options = opts;
 				return mock_child;
-			},
+			}
 		);
 
-		const {child, closed} = registry.spawn('test', ['arg'], {
-			spawn_child_process: mock_spawn as unknown as typeof import('node:child_process').spawn,
+		const { child, closed } = registry.spawn('test', ['arg'], {
+			spawn_child_process: mock_spawn as unknown as typeof import('node:child_process').spawn
 		});
 
 		// Verify the mock was called with correct arguments
@@ -387,7 +387,7 @@ describe('ProcessRegistry', () => {
 			exitCode: null as number | null,
 			signalCode: null as NodeJS.Signals | null,
 			spawnargs: ['test'],
-			kill: vi.fn(() => true),
+			kill: vi.fn(() => true)
 		}) as unknown as ChildProcess;
 
 		let captured_options: Record<string, unknown> | undefined;
@@ -395,18 +395,18 @@ describe('ProcessRegistry', () => {
 			(_cmd: string, _args: ReadonlyArray<string>, opts: Record<string, unknown>) => {
 				captured_options = opts;
 				return mock_child;
-			},
+			}
 		);
 
-		const {closed} = registry.spawn('test', [], {
+		const { closed } = registry.spawn('test', [], {
 			spawn_child_process: mock_spawn as unknown as typeof import('node:child_process').spawn,
 			cwd: '/custom/path',
-			env: {FOO: 'bar'},
+			env: { FOO: 'bar' }
 		});
 
 		// Verify custom options are passed through
 		assert.strictEqual(captured_options?.cwd, '/custom/path');
-		assert.deepStrictEqual(captured_options?.env, {FOO: 'bar'});
+		assert.deepStrictEqual(captured_options?.env, { FOO: 'bar' });
 
 		emitter.emit('close', 0, null);
 		await closed;
@@ -466,7 +466,7 @@ describe('spawn_restartable_process', () => {
 
 	test('supports SpawnProcessOptions', async () => {
 		const controller = new AbortController();
-		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
+		const rp = spawn_restartable_process('sleep', ['10'], { signal: controller.signal });
 		await rp.spawned;
 		assert.ok(rp.active);
 		controller.abort();
@@ -541,7 +541,7 @@ describe('spawn_restartable_process', () => {
 	test('pre-aborted signal kills process immediately', async () => {
 		const controller = new AbortController();
 		controller.abort();
-		const rp = spawn_restartable_process('sleep', ['10'], {signal: controller.signal});
+		const rp = spawn_restartable_process('sleep', ['10'], { signal: controller.signal });
 		await rp.spawned;
 		// Process should be killed immediately due to pre-aborted signal
 		const result = await rp.closed;
@@ -580,7 +580,7 @@ describe('spawn_restartable_process', () => {
 
 describe('process_is_pid_running', () => {
 	test('returns true for running process', async () => {
-		const {child, closed} = spawn_process('sleep', ['10']);
+		const { child, closed } = spawn_process('sleep', ['10']);
 		assert.ok(process_is_pid_running(child.pid!));
 		child.kill();
 		await closed;
@@ -612,7 +612,7 @@ describe('process_is_pid_running', () => {
 
 describe('print utilities', () => {
 	test('print_child_process formats with pid', async () => {
-		const {child, closed} = spawn_process('echo', ['test']);
+		const { child, closed } = spawn_process('echo', ['test']);
 		const output = print_child_process(child);
 		assert.ok(output.includes('pid('));
 		assert.ok(output.includes('echo test'));
@@ -620,7 +620,7 @@ describe('print utilities', () => {
 	});
 
 	test('print_spawn_result returns ok for success', () => {
-		const result: SpawnResult = {kind: 'exited', ok: true, child: null!, code: 0};
+		const result: SpawnResult = { kind: 'exited', ok: true, child: null!, code: 0 };
 		assert.strictEqual(print_spawn_result(result), 'ok');
 	});
 
@@ -629,7 +629,7 @@ describe('print utilities', () => {
 			kind: 'error',
 			ok: false,
 			child: null!,
-			error: new Error('test error'),
+			error: new Error('test error')
 		};
 		assert.strictEqual(print_spawn_result(result), 'test error');
 	});
@@ -639,7 +639,7 @@ describe('print utilities', () => {
 			kind: 'signaled',
 			ok: false,
 			child: null!,
-			signal: 'SIGTERM',
+			signal: 'SIGTERM'
 		};
 		const output = print_spawn_result(result);
 		assert.ok(output.includes('signal'));
@@ -647,7 +647,7 @@ describe('print utilities', () => {
 	});
 
 	test('print_spawn_result returns code for exited', () => {
-		const result: SpawnResult = {kind: 'exited', ok: false, child: null!, code: 42};
+		const result: SpawnResult = { kind: 'exited', ok: false, child: null!, code: 42 };
 		const output = print_spawn_result(result);
 		assert.ok(output.includes('code'));
 		assert.ok(output.includes('42'));
@@ -658,7 +658,7 @@ describe('print utilities', () => {
 			kind: 'error',
 			ok: false,
 			child: null!,
-			error: new Error('test error'),
+			error: new Error('test error')
 		};
 		assert.strictEqual(spawn_result_to_message(result), 'error: test error');
 	});
@@ -668,27 +668,27 @@ describe('print utilities', () => {
 			kind: 'signaled',
 			ok: false,
 			child: null!,
-			signal: 'SIGKILL',
+			signal: 'SIGKILL'
 		};
 		assert.strictEqual(spawn_result_to_message(result), 'signal SIGKILL');
 	});
 
 	test('spawn_result_to_message formats code', () => {
-		const result: SpawnResult = {kind: 'exited', ok: false, child: null!, code: 1};
+		const result: SpawnResult = { kind: 'exited', ok: false, child: null!, code: 1 };
 		assert.strictEqual(spawn_result_to_message(result), 'code 1');
 	});
 });
 
 describe('timeout_ms validation', () => {
 	test('spawn throws for negative timeout_ms', () => {
-		assert.throws(() => spawn_process('echo', ['test'], {timeout_ms: -1}), /non-negative/);
+		assert.throws(() => spawn_process('echo', ['test'], { timeout_ms: -1 }), /non-negative/);
 	});
 
 	test('despawn throws for negative timeout_ms', async () => {
-		const {child, closed} = spawn_process('sleep', ['10']);
+		const { child, closed } = spawn_process('sleep', ['10']);
 		let threw = false;
 		try {
-			await despawn(child, {timeout_ms: -1});
+			await despawn(child, { timeout_ms: -1 });
 		} catch (err) {
 			threw = true;
 			assert.ok((err as Error).message.includes('non-negative'));
@@ -701,7 +701,7 @@ describe('timeout_ms validation', () => {
 
 	test('spawn allows timeout_ms of 0', async () => {
 		// 0 is valid but immediately sends SIGTERM
-		const result = await spawn('sleep', ['10'], {timeout_ms: 0});
+		const result = await spawn('sleep', ['10'], { timeout_ms: 0 });
 		assert.ok(!result.ok);
 		assert_property(result, 'kind', 'signaled');
 	});
@@ -739,7 +739,7 @@ describe('attach_process_error_handler', () => {
 
 	test('accepts graceful_timeout_ms option', () => {
 		const registry = new ProcessRegistry();
-		const cleanup = registry.attach_error_handler({graceful_timeout_ms: 100});
+		const cleanup = registry.attach_error_handler({ graceful_timeout_ms: 100 });
 		assert.ok(typeof cleanup === 'function');
 		cleanup();
 	});

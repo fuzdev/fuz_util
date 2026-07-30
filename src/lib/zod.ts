@@ -7,7 +7,7 @@
  * @module
  */
 
-import type {z} from 'zod';
+import type { z } from 'zod';
 
 //
 // Schema Introspection
@@ -36,7 +36,7 @@ export const ZOD_WRAPPER_TYPES = new Set([
 	'default',
 	'transform',
 	'pipe',
-	'prefault',
+	'prefault'
 ]);
 
 /**
@@ -46,7 +46,7 @@ export const ZOD_WRAPPER_TYPES = new Set([
  * @returns the innermost non-wrapper type definition
  */
 export const zod_unwrap_def = (schema: z.ZodType): z.core.$ZodTypeDef => {
-	const {def} = schema;
+	const { def } = schema;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
 		if (sub) return zod_unwrap_def(sub);
@@ -70,7 +70,7 @@ export const zod_is_optional = (schema: z.ZodType): boolean => schema.def.type =
  * Check if a schema accepts null at any wrapping level.
  */
 export const zod_is_nullable = (schema: z.ZodType): boolean => {
-	const {def} = schema;
+	const { def } = schema;
 	if (def.type === 'nullable') return true;
 	if (ZOD_WRAPPER_TYPES.has(def.type)) {
 		const sub = zod_to_subschema(def);
@@ -86,7 +86,7 @@ export const zod_is_nullable = (schema: z.ZodType): boolean => {
  * Distinguishes "no default" from "default is undefined".
  */
 export const zod_has_default = (schema: z.ZodType): boolean => {
-	const {def} = schema;
+	const { def } = schema;
 	if ('defaultValue' in def) return true;
 	const sub = zod_to_subschema(def);
 	if (sub) return zod_has_default(sub);
@@ -116,7 +116,7 @@ export const zod_get_innermost_type = (schema: z.ZodType): z.ZodType => {
  * @param schema - Zod schema (typically a `ZodObject` with possible wrappers)
  */
 export const zod_get_schema_keys = <T extends z.ZodType>(
-	schema: T,
+	schema: T
 ): Array<keyof z.infer<T> & string> => {
 	const obj = zod_unwrap_to_object(schema);
 	return obj ? (Object.keys(obj.shape) as Array<keyof z.infer<T> & string>) : [];
@@ -184,7 +184,7 @@ export const zod_extract_fields = (schema: z.ZodObject): Array<ZodFieldInfo> => 
 			base_type: zod_get_base_type(field),
 			required: !zod_is_optional(field),
 			has_default: zod_has_default(field),
-			nullable: zod_is_nullable(field),
+			nullable: zod_is_nullable(field)
 		});
 	}
 	return fields;
@@ -215,7 +215,7 @@ export const zod_to_schema_description = (schema: z.ZodType): string | null => {
  * @returns default value or undefined
  */
 export const zod_to_schema_default = (schema: z.ZodType): unknown => {
-	const {def} = schema;
+	const { def } = schema;
 	if ('defaultValue' in def) {
 		return def.defaultValue;
 	}
@@ -247,7 +247,7 @@ export const zod_to_schema_aliases = (schema: z.ZodType): Array<string> => {
  * @returns human-readable type string
  */
 export const zod_to_schema_type_string = (schema: z.ZodType): string => {
-	const {def} = schema;
+	const { def } = schema;
 	switch (def.type) {
 		case 'string':
 			return 'string';
@@ -270,11 +270,11 @@ export const zod_to_schema_type_string = (schema: z.ZodType): string => {
 		case 'array':
 			return 'Array<string>';
 		case 'enum':
-			return (schema as unknown as {options: Array<string>}).options
+			return (schema as unknown as { options: Array<string> }).options
 				.map((v) => `'${v}'`)
 				.join(' | ');
 		case 'literal':
-			return (def as unknown as {values: Array<unknown>}).values
+			return (def as unknown as { values: Array<unknown> }).values
 				.map((v) => zod_format_value(v))
 				.join(' | ');
 		case 'nullable': {
@@ -324,7 +324,7 @@ export interface ZodSchemaProperty {
  * Extract properties from a Zod object schema.
  */
 export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProperty> => {
-	const {def} = schema;
+	const { def } = schema;
 
 	if (!('shape' in def)) {
 		return [];
@@ -342,7 +342,7 @@ export const zod_to_schema_properties = (schema: z.ZodType): Array<ZodSchemaProp
 			type: zod_to_schema_type_string(field),
 			description: zod_to_schema_description(field) ?? '',
 			default: zod_to_schema_default(field),
-			aliases: zod_to_schema_aliases(field),
+			aliases: zod_to_schema_aliases(field)
 		});
 	}
 	return properties;

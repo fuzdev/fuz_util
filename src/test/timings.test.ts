@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {create_stopwatch, Timings} from '$lib/timings.ts';
+import { create_stopwatch, Timings } from '$lib/timings.ts';
 
 describe('create_stopwatch', () => {
 	test('returns elapsed time >= 0', () => {
@@ -40,7 +40,7 @@ describe('Timings', () => {
 		assert.ok((elapsed.toString().split('.')[1]?.length ?? 0) <= 4);
 		assert.deepEqual(
 			Array.from(timings.entries(), (e) => e[0]),
-			['foo', 'foo_2', 'foo_3'],
+			['foo', 'foo_2', 'foo_3']
 		);
 	});
 

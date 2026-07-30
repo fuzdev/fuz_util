@@ -1,49 +1,49 @@
-import {test, assert, describe, vi} from 'vitest';
+import { test, assert, describe, vi } from 'vitest';
 
 import {
 	assert_property,
 	assert_rejects,
 	create_mock_logger,
-	type MockLogger,
+	type MockLogger
 } from '$lib/testing.ts';
 
 describe('assert_property', () => {
 	type Shape =
-		| {kind: 'circle'; radius: number}
-		| {kind: 'square'; side: number}
-		| {kind: 'triangle'; base: number; height: number};
+		| { kind: 'circle'; radius: number }
+		| { kind: 'square'; side: number }
+		| { kind: 'triangle'; base: number; height: number };
 
 	// wrapper keeps the wide union type — direct literal assignment narrows locally
 	const make_shape = (s: Shape): Shape => s;
 
 	test('narrows a discriminated union by literal kind', () => {
-		const shape = make_shape({kind: 'circle', radius: 5});
+		const shape = make_shape({ kind: 'circle', radius: 5 });
 		assert_property(shape, 'kind', 'circle');
 		// type-level: `radius` is now accessible without cast
 		assert.strictEqual(shape.radius, 5);
 	});
 
 	test('works with `ok` discriminator', () => {
-		type Result = {ok: true; value: number} | {ok: false; message: string};
-		const result: Result = {ok: true, value: 42};
+		type Result = { ok: true; value: number } | { ok: false; message: string };
+		const result: Result = { ok: true, value: 42 };
 		assert_property(result, 'ok', true);
 		assert.strictEqual(result.value, 42);
 	});
 
 	test('works with non-`kind` discriminator key', () => {
-		type Event = {type: 'click'; x: number} | {type: 'key'; code: string};
-		const event: Event = {type: 'key', code: 'Enter'};
+		type Event = { type: 'click'; x: number } | { type: 'key'; code: string };
+		const event: Event = { type: 'key', code: 'Enter' };
 		assert_property(event, 'type', 'key');
 		assert.strictEqual(event.code, 'Enter');
 	});
 
 	test('throws when property value does not match', () => {
-		const shape = make_shape({kind: 'circle', radius: 5});
+		const shape = make_shape({ kind: 'circle', radius: 5 });
 		assert.throws(() => assert_property(shape, 'kind', 'square'));
 	});
 
 	test('throws message identifies the mismatch', () => {
-		const shape = make_shape({kind: 'circle', radius: 5});
+		const shape = make_shape({ kind: 'circle', radius: 5 });
 		try {
 			assert_property(shape, 'kind', 'square');
 			assert.fail('Expected assert_property to throw');
@@ -177,9 +177,9 @@ describe('create_mock_logger', () => {
 	test('tracks non-string first args', () => {
 		const log = create_mock_logger();
 		log.info(42);
-		log.info({key: 'value'});
+		log.info({ key: 'value' });
 		log.info(null);
-		assert.deepEqual(log.info_calls, [42, {key: 'value'}, null]);
+		assert.deepEqual(log.info_calls, [42, { key: 'value' }, null]);
 	});
 
 	test('each instance has independent tracking', () => {

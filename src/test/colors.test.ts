@@ -1,4 +1,4 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
 import {
 	hex_to_rgb,
@@ -15,7 +15,7 @@ import {
 	hex_string_to_hsl,
 	to_hex_component,
 	hue_to_rgb_component,
-	type Rgb,
+	type Rgb
 } from '$lib/colors.ts';
 
 test('hex_to_rgb and rgb_to_hex', () => {

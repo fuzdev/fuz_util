@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {hash_blake3, Blake3Hash} from '$lib/hash_blake3.ts';
+import { hash_blake3, Blake3Hash } from '$lib/hash_blake3.ts';
 
 describe('hash_blake3', () => {
 	// Known test vectors from blake3_wasm test suite (~/dev/blake3/test/test_vectors.json)
@@ -8,21 +8,21 @@ describe('hash_blake3', () => {
 		test('empty input', () => {
 			assert.strictEqual(
 				hash_blake3(''),
-				'af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262',
+				'af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262'
 			);
 		});
 
 		test('hello', () => {
 			assert.strictEqual(
 				hash_blake3('hello'),
-				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f',
+				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f'
 			);
 		});
 
 		test('single byte 0x42', () => {
 			assert.strictEqual(
 				hash_blake3(new Uint8Array([0x42])),
-				'9f9524ca18c0cc03aef1a0b84faed9375e5d19575e9328e65fea72991f0f58cf',
+				'9f9524ca18c0cc03aef1a0b84faed9375e5d19575e9328e65fea72991f0f58cf'
 			);
 		});
 	});
@@ -46,7 +46,7 @@ describe('hash_blake3', () => {
 			const buffer = new TextEncoder().encode('hello').buffer;
 			assert.strictEqual(
 				hash_blake3(buffer),
-				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f',
+				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f'
 			);
 		});
 
@@ -54,7 +54,7 @@ describe('hash_blake3', () => {
 			const array = new Uint8Array([104, 101, 108, 108, 111]); // "hello"
 			assert.strictEqual(
 				hash_blake3(array),
-				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f',
+				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f'
 			);
 		});
 
@@ -68,7 +68,7 @@ describe('hash_blake3', () => {
 		test('empty ArrayBuffer', () => {
 			assert.strictEqual(
 				hash_blake3(new ArrayBuffer(0)),
-				'af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262',
+				'af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262'
 			);
 		});
 
@@ -102,7 +102,7 @@ describe('hash_blake3', () => {
 			const make = (): Uint8Array => new Uint8Array([104, 101, 108, 108, 111]);
 			assert.strictEqual(
 				hash_blake3(make()),
-				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f',
+				'ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f'
 			);
 		});
 	});
@@ -172,7 +172,7 @@ describe('hash_blake3', () => {
 			// Regression: session IDs were validated as UUIDs but are blake3 hashes
 			assert.strictEqual(
 				Blake3Hash.safeParse('00000000-0000-4000-8000-000000000040').success,
-				false,
+				false
 			);
 		});
 
@@ -193,7 +193,7 @@ describe('hash_blake3', () => {
 		test('rejects embedded spaces', () => {
 			assert.strictEqual(
 				Blake3Hash.safeParse('a'.repeat(32) + ' ' + 'a'.repeat(31)).success,
-				false,
+				false
 			);
 		});
 

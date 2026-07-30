@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {from_hex, to_hex} from '$lib/hex.ts';
+import { from_hex, to_hex } from '$lib/hex.ts';
 
 describe('to_hex', () => {
 	test('empty Uint8Array', () => {
@@ -27,7 +27,7 @@ describe('to_hex', () => {
 	test('sequential bytes', () => {
 		assert.strictEqual(
 			to_hex(new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])),
-			'0123456789abcdef',
+			'0123456789abcdef'
 		);
 	});
 

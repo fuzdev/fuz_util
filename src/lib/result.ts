@@ -4,18 +4,17 @@
  * Catching errors is then reserved for unexpected situations.
  */
 export type Result<TValue = object, TError = object> =
-	| ({ok: true} & TValue)
-	| ({ok: false} & TError);
+	({ ok: true } & TValue) | ({ ok: false } & TError);
 
 /**
  * Frozen object representing a successful result.
  */
-export const OK = Object.freeze({ok: true} as const);
+export const OK = Object.freeze({ ok: true } as const);
 
 /**
  * Frozen object representing a failed result.
  */
-export const NOT_OK = Object.freeze({ok: false} as const);
+export const NOT_OK = Object.freeze({ ok: false } as const);
 
 /**
  * A helper that says,
@@ -24,9 +23,9 @@ export const NOT_OK = Object.freeze({ok: false} as const);
  *
  * @throws ResultError if `result.ok` is false
  */
-export const unwrap = <TValue extends {value?: unknown}, TError extends {message?: string}>(
+export const unwrap = <TValue extends { value?: unknown }, TError extends { message?: string }>(
 	result: Result<TValue, TError>,
-	message?: string,
+	message?: string
 ): TValue['value'] => {
 	if (!result.ok) throw new ResultError(result, message);
 	return result.value;
@@ -42,9 +41,9 @@ export const unwrap = <TValue extends {value?: unknown}, TError extends {message
 export class ResultError extends Error {
 	static DEFAULT_MESSAGE = 'unknown error';
 
-	readonly result: {ok: false; message?: string};
+	readonly result: { ok: false; message?: string };
 
-	constructor(result: {ok: false; message?: string}, message?: string, options?: ErrorOptions) {
+	constructor(result: { ok: false; message?: string }, message?: string, options?: ErrorOptions) {
 		super(message ?? result.message ?? ResultError.DEFAULT_MESSAGE, options);
 		this.result = result;
 	}
@@ -58,8 +57,8 @@ export class ResultError extends Error {
  */
 export const unwrap_error = <TError extends object>(
 	result: Result<object, TError>,
-	message = 'Failed to unwrap result error',
-): {ok: false} & TError => {
+	message = 'Failed to unwrap result error'
+): { ok: false } & TError => {
 	if (result.ok) throw Error(message);
 	return result;
 };

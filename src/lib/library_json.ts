@@ -4,10 +4,10 @@
  * @module
  */
 
-import type {ModuleJsonInput} from 'svelte-docinfo/types.js';
+import type { ModuleJsonInput } from 'svelte-docinfo/types.js';
 
-import {pkg_json_from_package_json, pkg_json_keys, type PkgJson} from './pkg_json.ts';
-import type {PackageJson} from './package_json.ts';
+import { pkg_json_from_package_json, pkg_json_keys, type PkgJson } from './pkg_json.ts';
+import type { PackageJson } from './package_json.ts';
 
 /**
  * A library's analyzed source: the module metadata produced by `svelte-docinfo`.
@@ -53,8 +53,8 @@ export interface LibraryJson {
 export const library_json_from_modules = (
 	package_json: PackageJson,
 	modules: SourceJson['modules'],
-	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys,
+	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys
 ): LibraryJson => ({
 	pkg_json: pkg_json_from_package_json(package_json, keys),
-	source_json: {modules},
+	source_json: { modules }
 });

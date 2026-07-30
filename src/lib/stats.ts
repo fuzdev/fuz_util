@@ -98,8 +98,8 @@ export const stats_cv = (mean: number, std_dev: number): number => {
  * Calculate min and max values.
  * NaN values are ignored.
  */
-export const stats_min_max = (values: Array<number>): {min: number; max: number} => {
-	if (values.length === 0) return {min: NaN, max: NaN};
+export const stats_min_max = (values: Array<number>): { min: number; max: number } => {
+	if (values.length === 0) return { min: NaN, max: NaN };
 	let min = Infinity;
 	let max = -Infinity;
 	for (let i = 0; i < values.length; i++) {
@@ -108,8 +108,8 @@ export const stats_min_max = (values: Array<number>): {min: number; max: number}
 		if (val < min) min = val;
 		if (val > max) max = val;
 	}
-	if (min === Infinity) return {min: NaN, max: NaN};
-	return {min, max};
+	if (min === Infinity) return { min: NaN, max: NaN };
+	return { min, max };
 };
 
 /**
@@ -138,13 +138,13 @@ export interface StatsOutliersIqrOptions {
  */
 export const stats_outliers_iqr = (
 	values: Array<number>,
-	options?: StatsOutliersIqrOptions,
+	options?: StatsOutliersIqrOptions
 ): StatsOutlierResult => {
 	const iqr_multiplier = options?.iqr_multiplier ?? DEFAULT_IQR_MULTIPLIER;
 	const min_sample_size = options?.min_sample_size ?? DEFAULT_MIN_SAMPLE_SIZE;
 
 	if (values.length < min_sample_size) {
-		return {cleaned: values, outliers: []};
+		return { cleaned: values, outliers: [] };
 	}
 
 	const sorted = [...values].sort((a, b) => a - b);
@@ -153,7 +153,7 @@ export const stats_outliers_iqr = (
 	const iqr = q3 - q1;
 
 	if (iqr === 0) {
-		return {cleaned: values, outliers: []};
+		return { cleaned: values, outliers: [] };
 	}
 
 	const lower_bound = q1 - iqr_multiplier * iqr;
@@ -170,7 +170,7 @@ export const stats_outliers_iqr = (
 		}
 	}
 
-	return {cleaned, outliers};
+	return { cleaned, outliers };
 };
 
 /**
@@ -203,7 +203,7 @@ export interface StatsOutliersMadOptions {
  */
 export const stats_outliers_mad = (
 	values: Array<number>,
-	options?: StatsOutliersMadOptions,
+	options?: StatsOutliersMadOptions
 ): StatsOutlierResult => {
 	const z_score_threshold = options?.z_score_threshold ?? DEFAULT_MAD_Z_SCORE_THRESHOLD;
 	const z_score_extreme = options?.z_score_extreme ?? DEFAULT_MAD_Z_SCORE_EXTREME;
@@ -215,7 +215,7 @@ export const stats_outliers_mad = (
 	const iqr_options = options?.iqr_options;
 
 	if (values.length < min_sample_size) {
-		return {cleaned: values, outliers: []};
+		return { cleaned: values, outliers: [] };
 	}
 
 	const sorted = [...values].sort((a, b) => a - b);
@@ -262,7 +262,7 @@ export const stats_outliers_mad = (
 		if (outliers.length > values.length * outlier_ratio_extreme) {
 			const with_distances = values.map((v) => ({
 				value: v,
-				distance: Math.abs(v - median),
+				distance: Math.abs(v - median)
 			}));
 			with_distances.sort((a, b) => a.distance - b.distance);
 
@@ -272,7 +272,7 @@ export const stats_outliers_mad = (
 		}
 	}
 
-	return {cleaned, outliers};
+	return { cleaned, outliers };
 };
 
 /**
@@ -283,7 +283,7 @@ export const STATS_CONFIDENCE_Z_SCORES: Record<number, number> = {
 	0.9: 1.645,
 	0.95: 1.96,
 	0.99: 2.576,
-	0.999: 3.291,
+	0.999: 3.291
 };
 
 /**
@@ -339,7 +339,7 @@ export interface StatsConfidenceIntervalOptions {
  */
 export const stats_confidence_interval = (
 	values: Array<number>,
-	options?: StatsConfidenceIntervalOptions,
+	options?: StatsConfidenceIntervalOptions
 ): [number, number] => {
 	if (values.length === 0) return [NaN, NaN];
 
@@ -358,7 +358,7 @@ export const stats_confidence_interval_from_summary = (
 	mean: number,
 	std_dev: number,
 	sample_size: number,
-	options?: StatsConfidenceIntervalOptions,
+	options?: StatsConfidenceIntervalOptions
 ): [number, number] => {
 	// z_score takes precedence, then confidence_level, then default
 	const z_score =
@@ -401,7 +401,7 @@ export const stats_welch_t_test = (
 	n1: number,
 	mean2: number,
 	std2: number,
-	n2: number,
+	n2: number
 ): StatsWelchTTestResult => {
 	const var1 = std1 ** 2;
 	const var2 = std2 ** 2;
@@ -416,7 +416,7 @@ export const stats_welch_t_test = (
 	const denominator = se1 ** 2 / (n1 - 1) + se2 ** 2 / (n2 - 1);
 	const degrees_of_freedom = numerator / denominator;
 
-	return {t_statistic, degrees_of_freedom};
+	return { t_statistic, degrees_of_freedom };
 };
 
 /**
@@ -438,7 +438,7 @@ export const stats_ln_gamma = (z: number): number => {
 	const c = [
 		0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
 		-176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6,
-		1.5056327351493116e-7,
+		1.5056327351493116e-7
 	];
 
 	if (z < 0.5) {

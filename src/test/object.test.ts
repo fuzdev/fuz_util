@@ -1,4 +1,4 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
 import {
 	map_record,
@@ -9,57 +9,57 @@ import {
 	traverse,
 	is_plain_object,
 	EMPTY_OBJECT,
-	transform_empty_object_to_undefined,
+	transform_empty_object_to_undefined
 } from '$lib/object.ts';
 
 describe('map_record', () => {
 	test('basic behavior', () => {
 		assert.deepStrictEqual(
-			map_record({a: 1, b: 2}, (v, k) => v + k),
-			{a: '1a', b: '2b'},
+			map_record({ a: 1, b: 2 }, (v, k) => v + k),
+			{ a: '1a', b: '2b' }
 		);
 		assert.deepStrictEqual(
 			map_record({}, (v, k) => v + k),
-			{},
+			{}
 		);
 	});
 });
 
 describe('omit', () => {
 	test('basic behavior', () => {
-		assert.deepStrictEqual(omit({a: 1, b: 2}, ['b']), {a: 1});
-		assert.deepStrictEqual(omit({a: 1, b: 2}, []), {a: 1, b: 2});
-		assert.deepStrictEqual(omit({a: 1, b: 2}, ['b', 'a']), {});
+		assert.deepStrictEqual(omit({ a: 1, b: 2 }, ['b']), { a: 1 });
+		assert.deepStrictEqual(omit({ a: 1, b: 2 }, []), { a: 1, b: 2 });
+		assert.deepStrictEqual(omit({ a: 1, b: 2 }, ['b', 'a']), {});
 	});
 });
 
 describe('pick_by', () => {
 	test('basic behavior', () => {
 		assert.deepStrictEqual(
-			pick_by({a: 1, b: 2}, (v) => v === 1),
-			{a: 1},
+			pick_by({ a: 1, b: 2 }, (v) => v === 1),
+			{ a: 1 }
 		);
 		assert.deepStrictEqual(
-			pick_by({a: 1, b: 2}, (_v, k) => k === 'a'),
-			{a: 1},
+			pick_by({ a: 1, b: 2 }, (_v, k) => k === 'a'),
+			{ a: 1 }
 		);
 		assert.deepStrictEqual(
-			pick_by({a: 1, b: 2}, () => false),
-			{},
+			pick_by({ a: 1, b: 2 }, () => false),
+			{}
 		);
 		assert.deepStrictEqual(
-			pick_by({a: 1, b: 2}, () => true),
-			{a: 1, b: 2},
+			pick_by({ a: 1, b: 2 }, () => true),
+			{ a: 1, b: 2 }
 		);
 	});
 });
 
 describe('omit_undefined', () => {
 	test('basic behavior', () => {
-		assert.deepStrictEqual(omit_undefined({a: 1, b: undefined, c: undefined}), {a: 1});
-		assert.deepStrictEqual(omit_undefined({a: undefined, b: 2, c: undefined}), {b: 2});
-		assert.deepStrictEqual(omit_undefined({a: 1, b: 2}), {a: 1, b: 2});
-		assert.deepStrictEqual(omit_undefined({a: undefined, b: undefined}), {} as any);
+		assert.deepStrictEqual(omit_undefined({ a: 1, b: undefined, c: undefined }), { a: 1 });
+		assert.deepStrictEqual(omit_undefined({ a: undefined, b: 2, c: undefined }), { b: 2 });
+		assert.deepStrictEqual(omit_undefined({ a: 1, b: 2 }), { a: 1, b: 2 });
+		assert.deepStrictEqual(omit_undefined({ a: undefined, b: undefined }), {} as any);
 		assert.deepStrictEqual(omit_undefined({}), {});
 	});
 });
@@ -67,8 +67,8 @@ describe('omit_undefined', () => {
 describe('reorder', () => {
 	test('basic behavior', () => {
 		assert.strictEqual(
-			JSON.stringify(reorder({a: 1, b: 2, c: 3, d: 4}, ['d', 'b', 'c', 'a'])),
-			JSON.stringify({d: 4, b: 2, c: 3, a: 1}),
+			JSON.stringify(reorder({ a: 1, b: 2, c: 3, d: 4 }, ['d', 'b', 'c', 'a'])),
+			JSON.stringify({ d: 4, b: 2, c: 3, a: 1 })
 		);
 	});
 });
@@ -76,14 +76,14 @@ describe('reorder', () => {
 describe('traverse', () => {
 	test('basic behavior', () => {
 		const results: Array<any> = [];
-		const obj = {a: 1, b: {c: 2, d: ['33', undefined]}, e: null};
+		const obj = { a: 1, b: { c: 2, d: ['33', undefined] }, e: null };
 		traverse(obj, (key, value, obj) => results.push(key, value, obj));
 		assert.deepStrictEqual(results, [
 			'a',
 			1,
 			obj,
 			'b',
-			{c: 2, d: ['33', undefined]},
+			{ c: 2, d: ['33', undefined] },
 			obj,
 			'c',
 			2,
@@ -99,7 +99,7 @@ describe('traverse', () => {
 			obj.b.d,
 			'e',
 			null,
-			obj,
+			obj
 		]);
 	});
 });
@@ -107,7 +107,7 @@ describe('traverse', () => {
 describe('is_plain_object', () => {
 	test('returns true for plain objects', () => {
 		assert.isTrue(is_plain_object({}));
-		assert.isTrue(is_plain_object({a: 1}));
+		assert.isTrue(is_plain_object({ a: 1 }));
 	});
 
 	test('returns true for Object.create(null)', () => {
@@ -159,7 +159,7 @@ describe('transform_empty_object_to_undefined', () => {
 	});
 
 	test('returns the object if it has properties', () => {
-		const obj = {a: 1};
+		const obj = { a: 1 };
 		assert.strictEqual(transform_empty_object_to_undefined(obj), obj);
 	});
 

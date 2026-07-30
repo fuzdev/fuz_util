@@ -13,7 +13,7 @@
  * @module
  */
 
-import type {PackageJson} from './package_json.ts';
+import type { PackageJson } from './package_json.ts';
 
 /**
  * The keys kept when stripping `package.json` down to a `PkgJson` — package
@@ -34,7 +34,7 @@ export const pkg_json_keys = [
 	'homepage',
 	'repository',
 	'funding',
-	'exports',
+	'exports'
 ] as const satisfies ReadonlyArray<keyof PackageJson>;
 
 export type PkgJsonKey = (typeof pkg_json_keys)[number];
@@ -62,7 +62,7 @@ export type PkgJson = Pick<PackageJson, PkgJsonKey>;
  */
 export const pkg_json_from_package_json = (
 	source: PackageJson,
-	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys,
+	keys: ReadonlyArray<keyof PackageJson> = pkg_json_keys
 ): PkgJson => {
 	const result: Record<string, unknown> = {};
 	for (const key of keys) {

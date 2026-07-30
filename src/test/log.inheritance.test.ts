@@ -1,7 +1,7 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Child Loggers', () => {
 	test('child() creates logger with concatenated label', () => {
@@ -29,14 +29,14 @@ describe('Logger > Child Loggers', () => {
 
 	test('child logger output includes full label path', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {console: ctx.console, colors: false, level: 'info'});
+		const parent = new Logger('parent', { console: ctx.console, colors: false, level: 'info' });
 		const child = parent.child('child');
 
 		child.info('message');
 
 		assert.ok(ctx.logged_args);
 		assert.ok(
-			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('[parent:child]')),
+			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('[parent:child]'))
 		);
 	});
 });
@@ -44,7 +44,7 @@ describe('Logger > Child Loggers', () => {
 describe('Logger > Inheritance', () => {
 	test('child inherits parent level', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'warn', console: ctx.console, colors: false});
+		const parent = new Logger('parent', { level: 'warn', console: ctx.console, colors: false });
 		const child = parent.child('child');
 
 		child.info('should be muted');
@@ -56,8 +56,8 @@ describe('Logger > Inheritance', () => {
 
 	test('child can override parent level', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'warn', console: ctx.console, colors: false});
-		const child = parent.child('child', {level: 'info'});
+		const parent = new Logger('parent', { level: 'warn', console: ctx.console, colors: false });
+		const child = parent.child('child', { level: 'info' });
 
 		child.info('should show');
 		assert.ok(ctx.logged_args);
@@ -65,7 +65,7 @@ describe('Logger > Inheritance', () => {
 
 	test('child inherits console from parent', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {console: ctx.console, colors: false, level: 'info'});
+		const parent = new Logger('parent', { console: ctx.console, colors: false, level: 'info' });
 		const child = parent.child('child');
 
 		child.info('message');
@@ -73,7 +73,7 @@ describe('Logger > Inheritance', () => {
 	});
 
 	test('child inherits colors from parent', () => {
-		const parent = new Logger('parent', {colors: true});
+		const parent = new Logger('parent', { colors: true });
 		const child = parent.child('child');
 
 		assert.equal(parent.colors, child.colors);
@@ -84,7 +84,7 @@ describe('Logger > Inheritance', () => {
 		const root = new Logger('root', {
 			level: 'info',
 			console: ctx.console,
-			colors: false,
+			colors: false
 		});
 		const parent = root.child('parent');
 		const child = parent.child('child');
@@ -104,7 +104,7 @@ describe('Logger > Inheritance', () => {
 describe('Logger > Dynamic Inheritance', () => {
 	test('child sees parent level changes', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'warn', console: ctx.console, colors: false});
+		const parent = new Logger('parent', { level: 'warn', console: ctx.console, colors: false });
 		const child = parent.child('child');
 
 		// Initially child inherits warn level
@@ -121,8 +121,8 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('child with override ignores parent changes', () => {
-		const parent = new Logger('parent', {level: 'warn'});
-		const child = parent.child('child', {level: 'info'});
+		const parent = new Logger('parent', { level: 'warn' });
+		const child = parent.child('child', { level: 'info' });
 
 		assert.equal(child.level, 'info');
 
@@ -133,7 +133,7 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('child sees parent color changes', () => {
-		const parent = new Logger('parent', {colors: true});
+		const parent = new Logger('parent', { colors: true });
 		const child = parent.child('child');
 
 		assert.equal(child.colors, true);
@@ -145,7 +145,7 @@ describe('Logger > Dynamic Inheritance', () => {
 	test('child sees parent console changes', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const parent = new Logger('parent', {console: ctx1.console, level: 'info'});
+		const parent = new Logger('parent', { console: ctx1.console, level: 'info' });
 		const child = parent.child('child');
 
 		child.info('to ctx1');
@@ -164,7 +164,7 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('grandchild sees root changes', () => {
-		const root = new Logger('root', {level: 'warn'});
+		const root = new Logger('root', { level: 'warn' });
 		const parent = root.child('parent');
 		const child = parent.child('child');
 
@@ -177,8 +177,8 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('mixed overrides in chain', () => {
-		const root = new Logger('root', {level: 'info'});
-		const parent = root.child('parent', {level: 'warn'}); // Has override
+		const root = new Logger('root', { level: 'info' });
+		const parent = root.child('parent', { level: 'warn' }); // Has override
 		const child = parent.child('child'); // Inherits from parent
 
 		assert.equal(root.level, 'info');
@@ -198,7 +198,7 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('order of setting does not matter', () => {
-		const root = new Logger('root', {level: 'info'});
+		const root = new Logger('root', { level: 'info' });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 
@@ -221,7 +221,7 @@ describe('Logger > Dynamic Inheritance', () => {
 	});
 
 	test('override in middle of chain blocks propagation', () => {
-		const root = new Logger('root', {level: 'info'});
+		const root = new Logger('root', { level: 'info' });
 		const child = root.child('child');
 		const grandchild = child.child('grandchild');
 		const great_grandchild = grandchild.child('great');

@@ -1,6 +1,6 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {EMPTY_ARRAY, to_array, remove_unordered, to_next} from '$lib/array.ts';
+import { EMPTY_ARRAY, to_array, remove_unordered, to_next } from '$lib/array.ts';
 
 describe('EMPTY_ARRAY', () => {
 	test('is an empty frozen array', () => {
@@ -31,7 +31,7 @@ describe('to_array', () => {
 
 	test('wraps non-array values in an array', () => {
 		assert.deepEqual(to_array(1), [1]);
-		assert.deepEqual(to_array({a: 1}), [{a: 1}]);
+		assert.deepEqual(to_array({ a: 1 }), [{ a: 1 }]);
 		assert.deepEqual(to_array('hello'), ['hello']);
 	});
 

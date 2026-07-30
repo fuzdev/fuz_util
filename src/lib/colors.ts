@@ -1,5 +1,5 @@
-import type {Flavored} from './types.ts';
-import {round} from './maths.ts';
+import type { Flavored } from './types.ts';
+import { round } from './maths.ts';
 
 // TODO for high-performance usecases, we may want to add variants for any that return a new array to reuse a single array
 // I've run into cases where this is a massive perceptible UX difference

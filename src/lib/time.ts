@@ -22,7 +22,7 @@ export const timer_node: Timer = {
 	now: (): number => {
 		const ns = process.hrtime.bigint();
 		return Number(ns); // Native nanoseconds
-	},
+	}
 };
 
 /**
@@ -40,7 +40,7 @@ export const timer_node: Timer = {
 export const timer_browser: Timer = {
 	now: (): number => {
 		return performance.now() * 1_000_000; // Convert ms to ns
-	},
+	}
 };
 
 /**
@@ -82,7 +82,7 @@ const get_timer_fn = (): (() => number) => {
  * The timer function is detected once and cached for performance.
  */
 export const timer_default: Timer = {
-	now: (): number => get_timer_fn()(),
+	now: (): number => get_timer_fn()()
 };
 
 /**
@@ -115,7 +115,7 @@ export type TimeUnit = 'ns' | 'us' | 'ms' | 's';
 /**
  * Display labels for time units (uses proper Unicode μ for microseconds).
  */
-export const TIME_UNIT_DISPLAY: Record<TimeUnit, string> = {ns: 'ns', us: 'μs', ms: 'ms', s: 's'};
+export const TIME_UNIT_DISPLAY: Record<TimeUnit, string> = { ns: 'ns', us: 'μs', ms: 'ms', s: 's' };
 
 /**
  * Detect the best time unit for a set of nanosecond values.
@@ -222,8 +222,8 @@ export interface TimeResult {
  */
 export const time_async = async <T>(
 	fn: () => Promise<T>,
-	timer: Timer = timer_default,
-): Promise<{result: T; timing: TimeResult}> => {
+	timer: Timer = timer_default
+): Promise<{ result: T; timing: TimeResult }> => {
 	const started_at_ns = timer.now();
 	const result = await fn();
 	const ended_at_ns = timer.now();
@@ -236,8 +236,8 @@ export const time_async = async <T>(
 			elapsed_us: time_ns_to_us(elapsed_ns),
 			elapsed_ms: time_ns_to_ms(elapsed_ns),
 			started_at_ns,
-			ended_at_ns,
-		},
+			ended_at_ns
+		}
 	};
 };
 
@@ -255,8 +255,8 @@ export const time_async = async <T>(
  */
 export const time_sync = <T>(
 	fn: () => T,
-	timer: Timer = timer_default,
-): {result: T; timing: TimeResult} => {
+	timer: Timer = timer_default
+): { result: T; timing: TimeResult } => {
 	const started_at_ns = timer.now();
 	const result = fn();
 	const ended_at_ns = timer.now();
@@ -269,8 +269,8 @@ export const time_sync = <T>(
 			elapsed_us: time_ns_to_us(elapsed_ns),
 			elapsed_ms: time_ns_to_ms(elapsed_ns),
 			started_at_ns,
-			ended_at_ns,
-		},
+			ended_at_ns
+		}
 	};
 };
 
@@ -293,7 +293,7 @@ export const time_sync = <T>(
 export const time_measure = async (
 	fn: () => unknown,
 	iterations: number,
-	timer: Timer = timer_default,
+	timer: Timer = timer_default
 ): Promise<Array<number>> => {
 	const timings: Array<number> = [];
 

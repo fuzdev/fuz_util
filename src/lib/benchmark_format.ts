@@ -1,7 +1,7 @@
-import type {BenchmarkResult, BenchmarkGroup} from './benchmark_types.ts';
-import {time_unit_detect_best, time_format, TIME_UNIT_DISPLAY} from './time.ts';
-import {string_display_width, pad_width} from './string.ts';
-import {format_number} from './maths.ts';
+import type { BenchmarkResult, BenchmarkGroup } from './benchmark_types.ts';
+import { time_unit_detect_best, time_format, TIME_UNIT_DISPLAY } from './time.ts';
+import { string_display_width, pad_width } from './string.ts';
+import { format_number } from './maths.ts';
 
 /**
  * Format results as an ASCII table with percentiles, min/max, and relative performance.
@@ -22,7 +22,7 @@ import {format_number} from './maths.ts';
  */
 export const benchmark_format_table = (
 	results: Array<BenchmarkResult>,
-	baseline?: string,
+	baseline?: string
 ): string => {
 	if (results.length === 0) return '(no results)';
 
@@ -40,7 +40,7 @@ export const benchmark_format_table = (
 		if (!baseline_result) {
 			const available = results.map((r) => r.name).join(', ');
 			throw new Error(
-				`Baseline task "${baseline}" not found in results. Available tasks: ${available}`,
+				`Baseline task "${baseline}" not found in results. Available tasks: ${available}`
 			);
 		}
 		baseline_ops = baseline_result.stats.ops_per_second;
@@ -63,7 +63,7 @@ export const benchmark_format_table = (
 		`p99 (${unit_str})`,
 		`min (${unit_str})`,
 		`max (${unit_str})`,
-		vs_column_header,
+		vs_column_header
 	]);
 
 	// Data rows - all use same unit
@@ -139,7 +139,7 @@ export const benchmark_format_table = (
  */
 export const benchmark_format_markdown = (
 	results: Array<BenchmarkResult>,
-	baseline?: string,
+	baseline?: string
 ): string => {
 	if (results.length === 0) return '(no results)';
 
@@ -157,7 +157,7 @@ export const benchmark_format_markdown = (
 		if (!baseline_result) {
 			const available = results.map((r) => r.name).join(', ');
 			throw new Error(
-				`Baseline task "${baseline}" not found in results. Available tasks: ${available}`,
+				`Baseline task "${baseline}" not found in results. Available tasks: ${available}`
 			);
 		}
 		baseline_ops = baseline_result.stats.ops_per_second;
@@ -180,7 +180,7 @@ export const benchmark_format_markdown = (
 		`p99 (${unit_str})`,
 		`min (${unit_str})`,
 		`max (${unit_str})`,
-		vs_column_header,
+		vs_column_header
 	]);
 
 	// Data rows - all use same unit
@@ -257,7 +257,7 @@ export const benchmark_format_markdown = (
  */
 export const benchmark_format_markdown_grouped = (
 	results: Array<BenchmarkResult>,
-	groups: Array<BenchmarkGroup>,
+	groups: Array<BenchmarkGroup>
 ): string => {
 	if (results.length === 0) return '(no results)';
 
@@ -312,7 +312,7 @@ export interface BenchmarkFormatJsonOptions {
  */
 export const benchmark_format_json = (
 	results: Array<BenchmarkResult>,
-	options?: BenchmarkFormatJsonOptions,
+	options?: BenchmarkFormatJsonOptions
 ): string => {
 	const pretty = options?.pretty ?? true;
 	const include_timings = options?.include_timings ?? false;
@@ -338,7 +338,7 @@ export const benchmark_format_json = (
 		sample_size: r.stats.sample_size,
 		raw_sample_size: r.stats.raw_sample_size,
 		failed_iterations: r.stats.failed_iterations,
-		...(include_timings ? {timings_ns: r.timings_ns} : {}),
+		...(include_timings ? { timings_ns: r.timings_ns } : {})
 	}));
 
 	return pretty ? JSON.stringify(flattened, null, 2) : JSON.stringify(flattened);
@@ -368,7 +368,7 @@ export const benchmark_format_json = (
  */
 export const benchmark_format_table_grouped = (
 	results: Array<BenchmarkResult>,
-	groups: Array<BenchmarkGroup>,
+	groups: Array<BenchmarkGroup>
 ): string => {
 	if (results.length === 0) return '(no results)';
 

@@ -1,12 +1,12 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger, log_level_to_number, log_level_parse} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger, log_level_to_number, log_level_parse } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Core Functionality', () => {
 	test('Logger with label formats prefix', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info('message');
 
@@ -16,7 +16,7 @@ describe('Logger > Core Functionality', () => {
 
 	test('Logger without label has no bracket prefix', () => {
 		const ctx = create_test_context();
-		const log = new Logger(undefined, {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger(undefined, { console: ctx.console, colors: false, level: 'info' });
 
 		log.info('message');
 
@@ -26,7 +26,7 @@ describe('Logger > Core Functionality', () => {
 
 	test('Log level filtering', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'warn', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'warn', console: ctx.console, colors: false });
 
 		log.info('hidden');
 		assert.equal(ctx.logged_args, undefined);
@@ -37,7 +37,7 @@ describe('Logger > Core Functionality', () => {
 
 	test('All log methods work', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'debug', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'debug', console: ctx.console, colors: false });
 
 		log.error('error message');
 		assert.ok(ctx.error_args);
@@ -62,7 +62,7 @@ describe('Logger > Core Functionality', () => {
 
 	test('raw() bypasses level filtering and formatting', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'off', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'off', console: ctx.console, colors: false });
 
 		log.info('hidden');
 		assert.equal(ctx.logged_args, undefined);
@@ -73,7 +73,7 @@ describe('Logger > Core Functionality', () => {
 
 	test('boundary level check - logging at exact threshold', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'warn', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'warn', console: ctx.console, colors: false });
 
 		// At threshold - should show
 		log.warn('shown');
@@ -108,7 +108,7 @@ describe('Logger > Label Validation', () => {
 
 	test('empty label produces no brackets in output', () => {
 		const ctx = create_test_context();
-		const log = new Logger('', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info('message');
 
@@ -128,10 +128,10 @@ describe('Logger > Configuration', () => {
 	test('colors option controls styling', () => {
 		const ctx = create_test_context();
 
-		const colored = new Logger('test', {colors: true, console: ctx.console});
+		const colored = new Logger('test', { colors: true, console: ctx.console });
 		assert.equal(colored.colors, true);
 
-		const plain = new Logger('test', {colors: false, console: ctx.console});
+		const plain = new Logger('test', { colors: false, console: ctx.console });
 		assert.equal(plain.colors, false);
 	});
 
@@ -143,14 +143,14 @@ describe('Logger > Configuration', () => {
 	});
 
 	test('custom level overrides default', () => {
-		const log = new Logger('test', {level: 'error'});
+		const log = new Logger('test', { level: 'error' });
 
 		assert.equal(log.level, 'error');
 	});
 
 	test('level off silences all logging', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'off', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'off', console: ctx.console, colors: false });
 
 		log.error('hidden');
 		assert.equal(ctx.error_args, undefined);
@@ -167,7 +167,7 @@ describe('Logger > Configuration', () => {
 
 	test('level debug shows all messages', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'debug', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'debug', console: ctx.console, colors: false });
 
 		log.debug('shown');
 		assert.ok(ctx.logged_args);
@@ -189,9 +189,9 @@ describe('Logger > Configuration', () => {
 describe('Logger > Multiple Arguments', () => {
 	test('logger passes through multiple arguments', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
-		log.info('message', 42, {foo: 'bar'}, ['array']);
+		log.info('message', 42, { foo: 'bar' }, ['array']);
 
 		assert.ok(ctx.logged_args);
 		assert.ok(ctx.logged_args.includes('message'));
@@ -199,8 +199,8 @@ describe('Logger > Multiple Arguments', () => {
 		assert.ok(
 			ctx.logged_args.some(
 				(arg) =>
-					typeof arg === 'object' && arg !== null && 'foo' in arg && (arg as any).foo === 'bar',
-			),
+					typeof arg === 'object' && arg !== null && 'foo' in arg && (arg as any).foo === 'bar'
+			)
 		);
 		assert.ok(ctx.logged_args.some((arg) => Array.isArray(arg)));
 	});

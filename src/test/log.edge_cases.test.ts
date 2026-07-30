@@ -1,7 +1,7 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Edge Cases', () => {
 	test('very long label is handled', () => {
@@ -43,10 +43,10 @@ describe('Logger > Edge Cases', () => {
 
 	test('deep inheritance chain with mixed overrides', () => {
 		const ctx = create_test_context();
-		const root = new Logger('root', {level: 'error', console: ctx.console, colors: false});
-		const level1 = root.child('l1', {level: 'warn'});
+		const root = new Logger('root', { level: 'error', console: ctx.console, colors: false });
+		const level1 = root.child('l1', { level: 'warn' });
 		const level2 = level1.child('l2'); // Inherits 'warn'
-		const level3 = level2.child('l3', {level: 'debug'}); // Override to 'debug'
+		const level3 = level2.child('l3', { level: 'debug' }); // Override to 'debug'
 		const level4 = level3.child('l4'); // Inherits 'debug'
 
 		// Check levels
@@ -80,7 +80,7 @@ describe('Logger > Edge Cases', () => {
 
 	test('single character label', () => {
 		const ctx = create_test_context();
-		const log = new Logger('x', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('x', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info('test');
 

@@ -1,50 +1,50 @@
-import {describe, test, assert} from 'vitest';
-import {mkdir, open, readFile, rm, writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
-import {tmpdir} from 'node:os';
+import { describe, test, assert } from 'vitest';
+import { mkdir, open, readFile, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
-import {fs_classify_error, type FsError} from '$lib/fs.ts';
+import { fs_classify_error, type FsError } from '$lib/fs.ts';
 
 const create_temp_dir = async (): Promise<string> => {
 	const dir = join(
 		tmpdir(),
-		`fuz-util-fs-classify-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+		`fuz-util-fs-classify-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
 	);
-	await mkdir(dir, {recursive: true});
+	await mkdir(dir, { recursive: true });
 	return dir;
 };
 
 describe('fs_classify_error', () => {
 	test('classifies ENOENT as not_found', () => {
-		const err = Object.assign(new Error('no such file'), {code: 'ENOENT'});
+		const err = Object.assign(new Error('no such file'), { code: 'ENOENT' });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'not_found');
 		assert.strictEqual(result.message, 'no such file');
 	});
 
 	test('classifies EACCES as permission_denied', () => {
-		const err = Object.assign(new Error('access denied'), {code: 'EACCES'});
+		const err = Object.assign(new Error('access denied'), { code: 'EACCES' });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'permission_denied');
 		assert.strictEqual(result.message, 'access denied');
 	});
 
 	test('classifies EPERM as permission_denied', () => {
-		const err = Object.assign(new Error('operation not permitted'), {code: 'EPERM'});
+		const err = Object.assign(new Error('operation not permitted'), { code: 'EPERM' });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'permission_denied');
 		assert.strictEqual(result.message, 'operation not permitted');
 	});
 
 	test('classifies EEXIST as already_exists', () => {
-		const err = Object.assign(new Error('file exists'), {code: 'EEXIST'});
+		const err = Object.assign(new Error('file exists'), { code: 'EEXIST' });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'already_exists');
 		assert.strictEqual(result.message, 'file exists');
 	});
 
 	test('unknown code falls through to io_error', () => {
-		const err = Object.assign(new Error('disk quota exceeded'), {code: 'EDQUOT'});
+		const err = Object.assign(new Error('disk quota exceeded'), { code: 'EDQUOT' });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'io_error');
 		assert.strictEqual(result.message, 'disk quota exceeded');
@@ -82,20 +82,20 @@ describe('fs_classify_error', () => {
 	});
 
 	test('plain object without code is io_error with String(obj) message', () => {
-		const result = fs_classify_error({some: 'thing'});
+		const result = fs_classify_error({ some: 'thing' });
 		assert.strictEqual(result.kind, 'io_error');
 		assert.strictEqual(result.message, '[object Object]');
 	});
 
 	test('non-string code falls through to io_error', () => {
-		const err = Object.assign(new Error('weird'), {code: 42});
+		const err = Object.assign(new Error('weird'), { code: 42 });
 		const result = fs_classify_error(err);
 		assert.strictEqual(result.kind, 'io_error');
 		assert.strictEqual(result.message, 'weird');
 	});
 
 	test('plain object with code property is classified', () => {
-		const result = fs_classify_error({code: 'ENOENT', message: 'not a real Error'});
+		const result = fs_classify_error({ code: 'ENOENT', message: 'not a real Error' });
 		assert.strictEqual(result.kind, 'not_found');
 		// String({code, message}) produces '[object Object]' since it's not an Error instance
 		assert.strictEqual(result.message, '[object Object]');
@@ -118,7 +118,7 @@ describe('fs_classify_error', () => {
 					return result satisfies never;
 			}
 		};
-		const err = Object.assign(new Error('nope'), {code: 'ENOENT'});
+		const err = Object.assign(new Error('nope'), { code: 'ENOENT' });
 		assert.strictEqual(label(fs_classify_error(err)), 'missing');
 	});
 
@@ -144,7 +144,7 @@ describe('fs_classify_error', () => {
 			const result = fs_classify_error(error);
 			assert.strictEqual(result.kind, 'already_exists');
 		} finally {
-			await rm(dir, {recursive: true});
+			await rm(dir, { recursive: true });
 		}
 	});
 });

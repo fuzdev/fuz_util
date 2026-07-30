@@ -10,6 +10,13 @@
  * suffix on every generated key) keeps the collision probability negligible
  * at realistic UX concurrency.
  *
+ * Jitter is on by default and opts out per call via `{jitter: false}`, which
+ * yields the bare deterministic mid-key. Turn it off for callers that must be
+ * reproducible — seeders, fixtures, conformance tests — and leave it on for
+ * anything where two clients can race the same `(prev, next)` view. The bare
+ * keys are what the Rust twin `fuz_sys::fractional_index` computes, so
+ * `{jitter: false}` output is comparable across the two languages.
+ *
  * **Alphabet**: base62 (`0`-`9`, `A`-`Z`, `a`-`z`). `'0'` is the least
  * digit; `'z'` the greatest. Keys are read as base62 fractions: lex order
  * over keys equals numeric order over fractions.
@@ -82,14 +89,14 @@ const digit_index = (ch: string): number => {
 const validate_bound = (label: string, value: string): void => {
 	if (!FRACTIONAL_INDEX_REGEX.test(value)) {
 		throw new Error(
-			`fractional_index: ${label} must match alphabet (got ${JSON.stringify(value)})`,
+			`fractional_index: ${label} must match alphabet (got ${JSON.stringify(value)})`
 		);
 	}
 	if (value.length > FRACTIONAL_INDEX_LENGTH_MAX) {
 		throw new Error(
 			`fractional_index: ${label} exceeds length cap (${value.length} > ${
 				FRACTIONAL_INDEX_LENGTH_MAX
-			})`,
+			})`
 		);
 	}
 };
@@ -99,7 +106,7 @@ const validate_bracket = (a: string | null, b: string | null): void => {
 	if (b !== null) validate_bound('b', b);
 	if (a !== null && b !== null && a >= b) {
 		throw new Error(
-			`fractional_index: bracket invalid (${JSON.stringify(a)} >= ${JSON.stringify(b)})`,
+			`fractional_index: bracket invalid (${JSON.stringify(a)} >= ${JSON.stringify(b)})`
 		);
 	}
 };
@@ -136,6 +143,33 @@ const jitter_suffix = (random: () => number): string => {
 };
 
 /**
+ * Options for the key generators.
+ */
+export interface FractionalIndexOptions {
+	/**
+	 * Append a random jitter suffix to each emitted key. Defaults to `true`.
+	 *
+	 * Leave it on wherever two clients can compute a key against the same
+	 * `(prev, next)` view — it widens the keyspace within the slot so the two
+	 * rarely land on the same string. Set `false` for reproducible output (the
+	 * bare deterministic mid), which is what seeders, fixtures, and the
+	 * cross-language conformance suite want; the Rust twin
+	 * `fuz_sys::fractional_index` emits exactly these keys.
+	 */
+	jitter?: boolean;
+
+	/**
+	 * Source of randomness for the jitter suffix. Defaults to `Math.random`.
+	 *
+	 * Inject a seeded source to make jittered output reproducible while keeping
+	 * the suffix present. Must honor the standard `[0, 1)` contract;
+	 * `jitter_suffix` clamps defensively anyway. Ignored when `jitter` is
+	 * `false`.
+	 */
+	random?: () => number;
+}
+
+/**
  * Returns a key strictly between `a` and `b` in lex order.
  *
  * Either bound may be `null` (open). Throws when the bracket is invalid
@@ -143,17 +177,12 @@ const jitter_suffix = (random: () => number): string => {
  * a key under the no-trailing-`'0'` invariant (only happens with bounds
  * shaped `(a, a + '0…0')`; the helper itself never produces those).
  *
- * Emits a deterministic mid-key, then appends a random jitter suffix.
- * The deterministic mid is what guarantees lex order; the jitter widens
- * the keyspace within the slot to defend against concurrent-insert
- * collisions on the same `(prev, next)` view.
- *
- * Pass `random` to inject a deterministic source for tests; omit for
- * production (uses `Math.random`). The callback must honor the standard
- * `[0, 1)` contract; `jitter_suffix` clamps defensively for safety. The
- * jitter is best-effort collision avoidance, not a security primitive —
- * the server's `cell_item_position_taken` error is the load-bearing
- * safety net.
+ * Emits a deterministic mid-key, then appends a random jitter suffix unless
+ * `{jitter: false}`. The deterministic mid is what guarantees lex order; the
+ * jitter widens the keyspace within the slot to defend against
+ * concurrent-insert collisions on the same `(prev, next)` view. It is
+ * best-effort collision avoidance, not a security primitive — the server's
+ * `cell_item_position_taken` error is the load-bearing safety net.
  *
  * @throws Error if the bracket is invalid (`a >= b`), a bound breaks the
  * alphabet or exceeds the length cap, the gap is structurally too tight
@@ -163,11 +192,12 @@ const jitter_suffix = (random: () => number): string => {
 export const fractional_index_between = (
 	a: string | null,
 	b: string | null,
-	random: () => number = Math.random,
+	options?: FractionalIndexOptions
 ): string => {
+	const {jitter = true, random = Math.random} = options ?? {};
 	validate_bracket(a, b);
 	const base = mid_between(a, b);
-	const suffix = jitter_suffix(random);
+	const suffix = jitter ? jitter_suffix(random) : '';
 	const result = suffix === '' ? base : base + suffix;
 	// Enforce the cap on output, not just inputs: bounds within a few digits
 	// of the cap can push a generated key one tier (plus jitter) over it.
@@ -177,7 +207,7 @@ export const fractional_index_between = (
 		throw new Error(
 			`fractional_index: generated key exceeds length cap (${result.length} > ${
 				FRACTIONAL_INDEX_LENGTH_MAX
-			}); bounds too long to fit a key under it`,
+			}); bounds too long to fit a key under it`
 		);
 	}
 	return result;
@@ -207,7 +237,7 @@ export const fractional_indices_between = (
 	a: string | null,
 	b: string | null,
 	n: number,
-	random: () => number = Math.random,
+	options?: FractionalIndexOptions
 ): Array<string> => {
 	if (n < 0 || !Number.isInteger(n)) {
 		throw new Error(`fractional_index: n must be a non-negative integer (got ${n})`);
@@ -220,7 +250,7 @@ export const fractional_indices_between = (
 	validate_bracket(a, b);
 	if (n === 0) return [];
 	const out: Array<string> = [];
-	emit_n(a, b, n, out, random);
+	emit_n(a, b, n, out, options);
 	return out;
 };
 
@@ -229,18 +259,18 @@ const emit_n = (
 	b: string | null,
 	n: number,
 	out: Array<string>,
-	random: () => number,
+	options: FractionalIndexOptions | undefined
 ): void => {
 	if (n === 0) return;
-	const mid = fractional_index_between(a, b, random);
+	const mid = fractional_index_between(a, b, options);
 	if (n === 1) {
 		out.push(mid);
 		return;
 	}
 	const left = Math.floor(n / 2);
-	emit_n(a, mid, left, out, random);
+	emit_n(a, mid, left, out, options);
 	out.push(mid);
-	emit_n(mid, b, n - left - 1, out, random);
+	emit_n(mid, b, n - left - 1, out, options);
 };
 
 /**
@@ -306,7 +336,7 @@ const smaller_than = (b: string): string => {
 	const result = step_below(b, 0);
 	if (result === null) {
 		throw new Error(
-			`fractional_index: smaller_than(${JSON.stringify(b)}) requires unbounded-prepend support`,
+			`fractional_index: smaller_than(${JSON.stringify(b)}) requires unbounded-prepend support`
 		);
 	}
 	return result;
@@ -396,7 +426,7 @@ const between_prefix_and_extension = (a: string, b: string, i: number): string =
 	const result = step_below(b, i);
 	if (result === null) {
 		throw new Error(
-			`fractional_index: strict_between(${JSON.stringify(a)}, ${JSON.stringify(b)}) gap too tight`,
+			`fractional_index: strict_between(${JSON.stringify(a)}, ${JSON.stringify(b)}) gap too tight`
 		);
 	}
 	return result;

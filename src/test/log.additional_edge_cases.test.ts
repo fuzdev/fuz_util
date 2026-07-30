@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Additional Edge Cases', () => {
 	test('invalid level string throws error', () => {
 		assert.throws(() => {
 			// eslint-disable-next-line no-new
-			new Logger('test', {level: 'invalid' as any});
+			new Logger('test', { level: 'invalid' as any });
 		});
 	});
 
@@ -24,7 +24,7 @@ describe('Logger > Additional Edge Cases', () => {
 		const log = new Logger('test\nwith\nnewlines', {
 			console: ctx.console,
 			colors: false,
-			level: 'info',
+			level: 'info'
 		});
 
 		log.info('message');
@@ -32,9 +32,7 @@ describe('Logger > Additional Edge Cases', () => {
 		assert.ok(ctx.logged_args);
 		// Label should contain the newlines as-is
 		assert.ok(
-			ctx.logged_args.some(
-				(arg) => typeof arg === 'string' && arg.includes('test\nwith\nnewlines'),
-			),
+			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('test\nwith\nnewlines'))
 		);
 	});
 
@@ -43,14 +41,14 @@ describe('Logger > Additional Edge Cases', () => {
 		const log = new Logger('test\twith\ttabs', {
 			console: ctx.console,
 			colors: false,
-			level: 'info',
+			level: 'info'
 		});
 
 		log.info('message');
 
 		assert.ok(ctx.logged_args);
 		assert.ok(
-			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('test\twith\ttabs')),
+			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('test\twith\ttabs'))
 		);
 	});
 
@@ -59,7 +57,7 @@ describe('Logger > Additional Edge Cases', () => {
 		const log = new Logger('[already][bracketed]', {
 			console: ctx.console,
 			colors: false,
-			level: 'info',
+			level: 'info'
 		});
 
 		log.info('message');
@@ -68,8 +66,8 @@ describe('Logger > Additional Edge Cases', () => {
 		// Should add outer brackets: [[already][bracketed]]
 		assert.ok(
 			ctx.logged_args.some(
-				(arg) => typeof arg === 'string' && arg.includes('[[already][bracketed]]'),
-			),
+				(arg) => typeof arg === 'string' && arg.includes('[[already][bracketed]]')
+			)
 		);
 	});
 
@@ -78,7 +76,7 @@ describe('Logger > Additional Edge Cases', () => {
 		const parent = new Logger('parent:with:colons', {
 			console: ctx.console,
 			colors: false,
-			level: 'info',
+			level: 'info'
 		});
 		const child = parent.child('child');
 
@@ -89,14 +87,14 @@ describe('Logger > Additional Edge Cases', () => {
 		assert.ok(ctx.logged_args);
 		assert.ok(
 			ctx.logged_args.some(
-				(arg) => typeof arg === 'string' && arg.includes('[parent:with:colons:child]'),
-			),
+				(arg) => typeof arg === 'string' && arg.includes('[parent:with:colons:child]')
+			)
 		);
 	});
 
 	test('very deep hierarchy (10 levels)', () => {
 		const ctx = create_test_context();
-		let current = new Logger('l0', {level: 'info', console: ctx.console, colors: false});
+		let current = new Logger('l0', { level: 'info', console: ctx.console, colors: false });
 
 		// Create 10-level deep hierarchy
 		for (let i = 1; i <= 10; i++) {
@@ -118,12 +116,12 @@ describe('Logger > Additional Edge Cases', () => {
 	});
 
 	test('very deep hierarchy with override in middle (10 levels)', () => {
-		const root = new Logger('l0', {level: 'info'});
+		const root = new Logger('l0', { level: 'info' });
 		let current = root;
 
 		// Create deep hierarchy with override at level 5
 		for (let i = 1; i <= 10; i++) {
-			const options = i === 5 ? {level: 'warn' as const} : undefined;
+			const options = i === 5 ? { level: 'warn' as const } : undefined;
 			current = current.child(`l${i}`, options);
 		}
 
@@ -140,7 +138,7 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('label with only whitespace', () => {
 		const ctx = create_test_context();
-		const log = new Logger('   ', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('   ', { console: ctx.console, colors: false, level: 'info' });
 
 		assert.equal(log.label, '   ');
 
@@ -151,7 +149,7 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('logging empty message', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info('');
 
@@ -162,7 +160,7 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('logging undefined', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info(undefined);
 
@@ -172,7 +170,7 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('logging null', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		log.info(null);
 
@@ -182,9 +180,9 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('logging multiple arguments with various types', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
-		const obj = {foo: 'bar'};
+		const obj = { foo: 'bar' };
 		const arr = [1, 2, 3];
 		log.info('string', 42, true, obj, arr, null, undefined);
 
@@ -201,14 +199,14 @@ describe('Logger > Additional Edge Cases', () => {
 
 	test('label with unicode emoji', () => {
 		const ctx = create_test_context();
-		const log = new Logger('🚀rocket🌟', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('🚀rocket🌟', { console: ctx.console, colors: false, level: 'info' });
 
 		assert.equal(log.label, '🚀rocket🌟');
 
 		log.info('message');
 		assert.ok(ctx.logged_args);
 		assert.ok(
-			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('[🚀rocket🌟]')),
+			ctx.logged_args.some((arg) => typeof arg === 'string' && arg.includes('[🚀rocket🌟]'))
 		);
 	});
 
@@ -222,7 +220,7 @@ describe('Logger > Additional Edge Cases', () => {
 	test('very long label (1000 characters)', () => {
 		const ctx = create_test_context();
 		const longLabel = 'a'.repeat(1000);
-		const log = new Logger(longLabel, {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger(longLabel, { console: ctx.console, colors: false, level: 'info' });
 
 		assert.equal(log.label, longLabel);
 

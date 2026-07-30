@@ -16,7 +16,7 @@ export class UnreachableError extends Error {
  */
 export const unreachable: (value: never, message?: string) => asserts value is never = (
 	value,
-	message,
+	message
 ) => {
 	throw new UnreachableError(value, message);
 };

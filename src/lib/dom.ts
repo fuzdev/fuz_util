@@ -4,7 +4,7 @@
  */
 export const is_editable = (el: any): boolean => {
 	if (!el) return false;
-	const {tagName} = el;
+	const { tagName } = el;
 	return (
 		(tagName === 'INPUT' && el.type !== 'hidden') ||
 		tagName === 'TEXTAREA' ||
@@ -29,7 +29,7 @@ export const inside_editable = (el: Element): boolean => {
 export const is_interactive = (el: any): boolean => {
 	if (!el) return false;
 
-	const {tagName} = el;
+	const { tagName } = el;
 	if (
 		tagName === 'BUTTON' ||
 		tagName === 'SELECT' ||
@@ -65,11 +65,11 @@ export const is_interactive = (el: any): boolean => {
  * @mutates event - calls `preventDefault()`, `stopPropagation()`, or `stopImmediatePropagation()`
  */
 export const swallow = <
-	T extends Pick<Event, 'preventDefault' | 'stopPropagation' | 'stopImmediatePropagation'>,
+	T extends Pick<Event, 'preventDefault' | 'stopPropagation' | 'stopImmediatePropagation'>
 >(
 	event: T,
 	immediate = true,
-	preventDefault = true,
+	preventDefault = true
 ): T => {
 	if (preventDefault) event.preventDefault();
 	if (immediate) {

@@ -1,12 +1,12 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Logger} from '$lib/log.ts';
-import {create_test_context} from './log_test_helpers.ts';
+import { Logger } from '$lib/log.ts';
+import { create_test_context } from './log_test_helpers.ts';
 
 describe('Logger > Runtime Configuration', () => {
 	test('can change level after construction', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {level: 'warn', console: ctx.console, colors: false});
+		const log = new Logger('test', { level: 'warn', console: ctx.console, colors: false });
 
 		log.info('hidden');
 		assert.equal(ctx.logged_args, undefined);
@@ -17,7 +17,7 @@ describe('Logger > Runtime Configuration', () => {
 	});
 
 	test('can change colors after construction', () => {
-		const log = new Logger('test', {colors: true});
+		const log = new Logger('test', { colors: true });
 		assert.equal(log.colors, true);
 
 		log.colors = false;
@@ -27,7 +27,7 @@ describe('Logger > Runtime Configuration', () => {
 	test('can change console after construction', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const log = new Logger('test', {console: ctx1.console, level: 'info'});
+		const log = new Logger('test', { console: ctx1.console, level: 'info' });
 
 		log.info('to ctx1');
 		assert.ok(ctx1.logged_args);
@@ -49,7 +49,7 @@ describe('Logger > Runtime Configuration', () => {
 
 	test('level setter recomputes cached values', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'off'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'off' });
 
 		log.error('hidden');
 		assert.equal(ctx.error_args, undefined);
@@ -60,7 +60,7 @@ describe('Logger > Runtime Configuration', () => {
 	});
 
 	test('colors setter recomputes labels', () => {
-		const log = new Logger('test', {colors: false});
+		const log = new Logger('test', { colors: false });
 
 		// Initially no colors
 		assert.equal(log.colors, false);
@@ -84,7 +84,7 @@ describe('Logger > Runtime Configuration', () => {
 
 	test('idempotent operations - setting same value multiple times', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		// Set level to same value multiple times
 		log.level = 'info';
@@ -114,7 +114,7 @@ describe('Logger > Runtime Configuration', () => {
 	});
 
 	test('can override and then reset by setting parent value', () => {
-		const parent = new Logger('parent', {level: 'info'});
+		const parent = new Logger('parent', { level: 'info' });
 		const child = parent.child('child');
 
 		// Initially inherits
@@ -137,8 +137,8 @@ describe('Logger > Runtime Configuration', () => {
 
 describe('Logger > Child Overrides', () => {
 	test('child can override parent colors', () => {
-		const parent = new Logger('parent', {colors: true});
-		const child = parent.child('child', {colors: false});
+		const parent = new Logger('parent', { colors: true });
+		const child = parent.child('child', { colors: false });
 
 		assert.equal(parent.colors, true);
 		assert.equal(child.colors, false); // Child overrides
@@ -147,8 +147,8 @@ describe('Logger > Child Overrides', () => {
 	test('child can override parent console', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const parent = new Logger('parent', {console: ctx1.console, level: 'info'});
-		const child = parent.child('child', {console: ctx2.console});
+		const parent = new Logger('parent', { console: ctx1.console, level: 'info' });
+		const child = parent.child('child', { console: ctx2.console });
 
 		parent.info('to ctx1');
 		assert.ok(ctx1.logged_args);
@@ -160,8 +160,8 @@ describe('Logger > Child Overrides', () => {
 	});
 
 	test('child colors override blocks parent changes', () => {
-		const parent = new Logger('parent', {colors: true});
-		const child = parent.child('child', {colors: false});
+		const parent = new Logger('parent', { colors: true });
+		const child = parent.child('child', { colors: false });
 
 		assert.equal(child.colors, false);
 
@@ -177,8 +177,8 @@ describe('Logger > Child Overrides', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
 		const ctx3 = create_test_context();
-		const parent = new Logger('parent', {console: ctx1.console, level: 'info'});
-		const child = parent.child('child', {console: ctx2.console});
+		const parent = new Logger('parent', { console: ctx1.console, level: 'info' });
+		const child = parent.child('child', { console: ctx2.console });
 
 		// Child uses ctx2
 		child.info('test');
@@ -197,8 +197,8 @@ describe('Logger > Child Overrides', () => {
 	test('child with all overrides is fully isolated', () => {
 		const ctx1 = create_test_context();
 		const ctx2 = create_test_context();
-		const parent = new Logger('parent', {level: 'info', colors: true, console: ctx1.console});
-		const child = parent.child('child', {level: 'debug', colors: false, console: ctx2.console});
+		const parent = new Logger('parent', { level: 'info', colors: true, console: ctx1.console });
+		const child = parent.child('child', { level: 'debug', colors: false, console: ctx2.console });
 
 		assert.equal(parent.level, 'info');
 		assert.equal(child.level, 'debug');
@@ -215,9 +215,9 @@ describe('Logger > Child Overrides', () => {
 	});
 
 	test('multiple children with different color overrides', () => {
-		const parent = new Logger('parent', {colors: true});
-		const child1 = parent.child('c1', {colors: false});
-		const child2 = parent.child('c2', {colors: true});
+		const parent = new Logger('parent', { colors: true });
+		const child1 = parent.child('c1', { colors: false });
+		const child2 = parent.child('c2', { colors: true });
 		const child3 = parent.child('c3'); // Inherits
 
 		assert.equal(parent.colors, true);
@@ -238,7 +238,7 @@ describe('Logger > Child Overrides', () => {
 describe('Logger > Cache Invalidation', () => {
 	test('prefix cache invalidates when colors change', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		// Log with colors disabled
 		log.info('test1');
@@ -261,7 +261,7 @@ describe('Logger > Cache Invalidation', () => {
 
 	test('all log methods update after color toggle', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'debug'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'debug' });
 
 		// Test all 4 methods with colors off
 		log.error('e1');
@@ -302,7 +302,7 @@ describe('Logger > Cache Invalidation', () => {
 
 	test('level cache updates when parent level changes', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {level: 'error', console: ctx.console, colors: false});
+		const parent = new Logger('parent', { level: 'error', console: ctx.console, colors: false });
 		const child = parent.child('child');
 
 		// Initially child inherits error level
@@ -323,7 +323,7 @@ describe('Logger > Cache Invalidation', () => {
 
 	test('sequential config changes maintain correctness', () => {
 		const ctx = create_test_context();
-		const log = new Logger('test', {console: ctx.console, colors: false, level: 'info'});
+		const log = new Logger('test', { console: ctx.console, colors: false, level: 'info' });
 
 		// Change colors -> level -> colors
 		log.colors = true;
@@ -347,7 +347,7 @@ describe('Logger > Cache Invalidation', () => {
 
 	test('child created before parent color change sees change', () => {
 		const ctx = create_test_context();
-		const parent = new Logger('parent', {console: ctx.console, colors: false, level: 'info'});
+		const parent = new Logger('parent', { console: ctx.console, colors: false, level: 'info' });
 		const child = parent.child('child'); // Created before change
 
 		// Verify child inherits colors=false

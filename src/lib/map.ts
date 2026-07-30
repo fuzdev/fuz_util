@@ -4,7 +4,7 @@
  */
 export const sort_map = <T extends Map<any, any>>(
 	map: T,
-	comparator = compare_simple_map_entries,
+	comparator = compare_simple_map_entries
 ): T => new Map([...map].sort(comparator)) as T;
 
 /**

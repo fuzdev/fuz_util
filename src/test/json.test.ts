@@ -1,7 +1,7 @@
-import {test, assert, describe} from 'vitest';
+import { test, assert, describe } from 'vitest';
 
-import {json_type_of, json_embed, json_stringify_deterministic} from '$lib/json.ts';
-import {noop} from '$lib/function.ts';
+import { json_type_of, json_embed, json_stringify_deterministic } from '$lib/json.ts';
+import { noop } from '$lib/function.ts';
 
 describe('json_type_of', () => {
 	test('returns correct type for strings', () => {
@@ -24,7 +24,7 @@ describe('json_type_of', () => {
 
 	test('returns correct type for objects', () => {
 		assert.strictEqual(json_type_of({}), 'object');
-		assert.strictEqual(json_type_of({a: 1}), 'object');
+		assert.strictEqual(json_type_of({ a: 1 }), 'object');
 	});
 
 	test('returns correct type for null', () => {
@@ -56,17 +56,17 @@ describe('json_embed', () => {
 	test('escapes multiple single quotes', () => {
 		assert.strictEqual(
 			json_embed("'hello'w''or'''ld'"),
-			`JSON.parse('"\\'hello\\'w\\'\\'or\\'\\'\\'ld\\'"')`,
+			`JSON.parse('"\\'hello\\'w\\'\\'or\\'\\'\\'ld\\'"')`
 		);
 	});
 
 	test('formats objects with custom serializer', () => {
 		assert.strictEqual(
-			json_embed({a: 1, b: 2}, (d) => JSON.stringify(d, null, '\t')),
+			json_embed({ a: 1, b: 2 }, (d) => JSON.stringify(d, null, '\t')),
 			`JSON.parse('{\\
 	"a": 1,\\
 	"b": 2\\
-}')`,
+}')`
 		);
 	});
 
@@ -94,9 +94,9 @@ describe('json_embed', () => {
 		assert.strictEqual(
 			json_embed([
 				[1, 2],
-				[3, 4],
+				[3, 4]
 			]),
-			`JSON.parse('[[1,2],[3,4]]')`,
+			`JSON.parse('[[1,2],[3,4]]')`
 		);
 	});
 
@@ -117,7 +117,7 @@ describe('json_embed', () => {
 	});
 
 	test('embeds complex nested structures', () => {
-		const complex = {a: [1, {b: 2}], c: {d: [3, 4]}};
+		const complex = { a: [1, { b: 2 }], c: { d: [3, 4] } };
 		assert.strictEqual(json_embed(complex), `JSON.parse('{"a":[1,{"b":2}],"c":{"d":[3,4]}}')`);
 	});
 
@@ -141,16 +141,16 @@ describe('json_embed', () => {
 
 	test('round-trip preserves data integrity', () => {
 		const testCases = [
-			{name: 'object', data: {a: 1, b: 'test', c: [1, 2, 3]}},
-			{name: 'array', data: [1, 'hello', true, null]},
-			{name: 'string', data: 'test string'},
-			{name: 'number', data: 42},
-			{name: 'boolean', data: true},
-			{name: 'null', data: null},
-			{name: 'nested', data: {a: {b: {c: [1, {d: 2}]}}}},
+			{ name: 'object', data: { a: 1, b: 'test', c: [1, 2, 3] } },
+			{ name: 'array', data: [1, 'hello', true, null] },
+			{ name: 'string', data: 'test string' },
+			{ name: 'number', data: 42 },
+			{ name: 'boolean', data: true },
+			{ name: 'null', data: null },
+			{ name: 'nested', data: { a: { b: { c: [1, { d: 2 }] } } } }
 		];
 
-		for (const {name, data} of testCases) {
+		for (const { name, data } of testCases) {
 			const embedded = json_embed(data);
 			// eslint-disable-next-line no-eval -- Testing that embedded JSON parses correctly
 			const parsed = eval(embedded);
@@ -162,8 +162,8 @@ describe('json_embed', () => {
 		const obj = {
 			value: 'test',
 			toJSON() {
-				return {custom: 'serialized', data: 123};
-			},
+				return { custom: 'serialized', data: 123 };
+			}
 		};
 		const result = json_embed(obj);
 		assert.strictEqual(result, `JSON.parse('{"custom":"serialized","data":123}')`);
@@ -172,15 +172,15 @@ describe('json_embed', () => {
 
 describe('json_stringify_deterministic', () => {
 	test('sorts object keys alphabetically', () => {
-		const obj = {z: 1, a: 2, m: 3};
+		const obj = { z: 1, a: 2, m: 3 };
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a":2,"m":3,"z":1}');
 	});
 
 	test('produces same output regardless of key order', () => {
-		const obj1 = {z: 1, a: 2, m: 3};
-		const obj2 = {a: 2, m: 3, z: 1};
-		const obj3 = {m: 3, z: 1, a: 2};
+		const obj1 = { z: 1, a: 2, m: 3 };
+		const obj2 = { a: 2, m: 3, z: 1 };
+		const obj3 = { m: 3, z: 1, a: 2 };
 
 		assert.strictEqual(json_stringify_deterministic(obj1), json_stringify_deterministic(obj2));
 		assert.strictEqual(json_stringify_deterministic(obj2), json_stringify_deterministic(obj3));
@@ -188,8 +188,8 @@ describe('json_stringify_deterministic', () => {
 
 	test('handles nested objects', () => {
 		const obj = {
-			z: {nested_z: 1, nested_a: 2},
-			a: {nested_b: 3, nested_a: 4},
+			z: { nested_z: 1, nested_a: 2 },
+			a: { nested_b: 3, nested_a: 4 }
 		};
 		const result = json_stringify_deterministic(obj);
 		// Both outer and inner keys should be sorted
@@ -197,7 +197,7 @@ describe('json_stringify_deterministic', () => {
 	});
 
 	test('preserves array order', () => {
-		const obj = {z: [3, 1, 2], a: [6, 4, 5]};
+		const obj = { z: [3, 1, 2], a: [6, 4, 5] };
 		const result = json_stringify_deterministic(obj);
 		// Keys sorted, but array elements keep their order
 		assert.strictEqual(result, '{"a":[6,4,5],"z":[3,1,2]}');
@@ -214,12 +214,12 @@ describe('json_stringify_deterministic', () => {
 		const obj = {
 			z: [
 				[3, 2],
-				[1, 0],
+				[1, 0]
 			],
 			a: [
 				[6, 5],
-				[4, 3],
-			],
+				[4, 3]
+			]
 		};
 		const result = json_stringify_deterministic(obj);
 		// All array ordering preserved, keys sorted
@@ -230,7 +230,7 @@ describe('json_stringify_deterministic', () => {
 		const arr = new Array(3);
 		arr[0] = 1;
 		arr[2] = 3;
-		const obj = {data: arr};
+		const obj = { data: arr };
 		const result = json_stringify_deterministic(obj);
 		// Empty slots become null
 		assert.strictEqual(result, '{"data":[1,null,3]}');
@@ -239,9 +239,9 @@ describe('json_stringify_deterministic', () => {
 	test('handles arrays of objects', () => {
 		const obj = {
 			items: [
-				{z: 1, a: 2},
-				{y: 3, b: 4},
-			],
+				{ z: 1, a: 2 },
+				{ y: 3, b: 4 }
+			]
 		};
 		const result = json_stringify_deterministic(obj);
 		// Objects in array should also have sorted keys
@@ -256,39 +256,39 @@ describe('json_stringify_deterministic', () => {
 	});
 
 	test('handles falsy but valid values', () => {
-		const obj = {z: false, a: 0, m: '', n: null};
+		const obj = { z: false, a: 0, m: '', n: null };
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a":0,"m":"","n":null,"z":false}');
 	});
 
 	test('handles negative numbers', () => {
-		const obj = {z: -100, a: -1, m: 0, b: 1};
+		const obj = { z: -100, a: -1, m: 0, b: 1 };
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a":-1,"b":1,"m":0,"z":-100}');
 	});
 
 	test('handles undefined in objects by omitting keys', () => {
-		const obj = {z: 1, a: undefined, m: 2};
+		const obj = { z: 1, a: undefined, m: 2 };
 		const result = json_stringify_deterministic(obj);
 		// 'a' key is omitted entirely
 		assert.strictEqual(result, '{"m":2,"z":1}');
 	});
 
 	test('handles undefined in arrays by converting to null', () => {
-		const obj = {items: [1, undefined, 3]};
+		const obj = { items: [1, undefined, 3] };
 		const result = json_stringify_deterministic(obj);
 		// undefined becomes null in arrays
 		assert.strictEqual(result, '{"items":[1,null,3]}');
 	});
 
 	test('handles NaN and Infinity as null', () => {
-		const obj = {z_nan: NaN, a_inf: Infinity, m_neginf: -Infinity};
+		const obj = { z_nan: NaN, a_inf: Infinity, m_neginf: -Infinity };
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a_inf":null,"m_neginf":null,"z_nan":null}');
 	});
 
 	test('handles functions by omitting them from objects', () => {
-		const obj = {z: 1, a: () => 'test', m: 2};
+		const obj = { z: 1, a: () => 'test', m: 2 };
 		const result = json_stringify_deterministic(obj);
 		// Function key is omitted
 		assert.strictEqual(result, '{"m":2,"z":1}');
@@ -296,7 +296,7 @@ describe('json_stringify_deterministic', () => {
 
 	test('ignores symbol keys', () => {
 		const sym = Symbol('test');
-		const obj = {z: 1, [sym]: 'ignored', a: 2} as any;
+		const obj = { z: 1, [sym]: 'ignored', a: 2 } as any;
 		const result = json_stringify_deterministic(obj);
 		// Symbols are not enumerable in JSON
 		assert.strictEqual(result, '{"a":2,"z":1}');
@@ -304,13 +304,13 @@ describe('json_stringify_deterministic', () => {
 
 	test('handles Date objects as ISO strings', () => {
 		const date = new Date('2024-01-15T12:00:00.000Z');
-		const obj = {z_date: date, a_string: 'text'};
+		const obj = { z_date: date, a_string: 'text' };
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a_string":"text","z_date":"2024-01-15T12:00:00.000Z"}');
 	});
 
 	test('handles Map and Set as empty objects', () => {
-		const obj = {z: new Map([['a', 1]]), a: new Set([1, 2]), m: 'value'};
+		const obj = { z: new Map([['a', 1]]), a: new Set([1, 2]), m: 'value' };
 		const result = json_stringify_deterministic(obj);
 		// Maps and Sets become {}
 		assert.strictEqual(result, '{"a":{},"m":"value","z":{}}');
@@ -325,35 +325,35 @@ describe('json_stringify_deterministic', () => {
 	});
 
 	test('sorts numeric keys alphabetically as strings', () => {
-		const obj = {10: 'ten', 2: 'two', 1: 'one', 20: 'twenty'};
+		const obj = { 10: 'ten', 2: 'two', 1: 'one', 20: 'twenty' };
 		const result = json_stringify_deterministic(obj);
 		// JSON.stringify outputs integer-like keys in numeric order per spec
 		assert.strictEqual(result, '{"1":"one","2":"two","10":"ten","20":"twenty"}');
 	});
 
 	test('handles mixed numeric and string keys', () => {
-		const obj = {100: 'hundred', '50': 'fifty', a: 'letter', '2': 'two', z: 'last'};
+		const obj = { 100: 'hundred', '50': 'fifty', a: 'letter', '2': 'two', z: 'last' };
 		const result = json_stringify_deterministic(obj);
 		// Numeric keys first (in numeric order), then string keys alphabetically
 		assert.strictEqual(result, '{"2":"two","50":"fifty","100":"hundred","a":"letter","z":"last"}');
 	});
 
 	test('handles empty string keys', () => {
-		const obj = {'': 'empty', z: 'z-value', a: 'a-value'};
+		const obj = { '': 'empty', z: 'z-value', a: 'a-value' };
 		const result = json_stringify_deterministic(obj);
 		// Empty string sorts first
 		assert.strictEqual(result, '{"":"empty","a":"a-value","z":"z-value"}');
 	});
 
 	test('handles keys with whitespace', () => {
-		const obj = {' z ': 1, a: 2, '  b': 3, 'c ': 4};
+		const obj = { ' z ': 1, a: 2, '  b': 3, 'c ': 4 };
 		const result = json_stringify_deterministic(obj);
 		// Whitespace affects sorting, spaces sort before letters
 		assert.strictEqual(result, '{"  b":3," z ":1,"a":2,"c ":4}');
 	});
 
 	test('handles Unicode and special characters in keys', () => {
-		const obj = {'z-key': 1, 'a key': 2, ñ: 3, 中文: 4};
+		const obj = { 'z-key': 1, 'a key': 2, ñ: 3, 中文: 4 };
 		const result = json_stringify_deterministic(obj);
 		// Sorts by Unicode code points
 		assert.strictEqual(result, '{"a key":2,"z-key":1,"ñ":3,"中文":4}');
@@ -365,11 +365,11 @@ describe('json_stringify_deterministic', () => {
 				nested: {
 					deep: {
 						z_key: 1,
-						a_key: 2,
-					},
-				},
+						a_key: 2
+					}
+				}
 			},
-			a: 'value',
+			a: 'value'
 		};
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(result, '{"a":"value","z":{"nested":{"deep":{"a_key":2,"z_key":1}}}}');
@@ -378,16 +378,16 @@ describe('json_stringify_deterministic', () => {
 	test('handles complex nested array-object structures', () => {
 		const obj = {
 			z: [
-				{nested: [1, 2, {deep_z: 'z', deep_a: 'a'}]},
-				{nested: [3, 4, {deep_m: 'm', deep_b: 'b'}]},
+				{ nested: [1, 2, { deep_z: 'z', deep_a: 'a' }] },
+				{ nested: [3, 4, { deep_m: 'm', deep_b: 'b' }] }
 			],
-			a: {items: [{z: 1, a: 2}]},
+			a: { items: [{ z: 1, a: 2 }] }
 		};
 		const result = json_stringify_deterministic(obj);
 		// All object keys sorted at every level, array order preserved
 		assert.strictEqual(
 			result,
-			'{"a":{"items":[{"a":2,"z":1}]},"z":[{"nested":[1,2,{"deep_a":"a","deep_z":"z"}]},{"nested":[3,4,{"deep_b":"b","deep_m":"m"}]}]}',
+			'{"a":{"items":[{"a":2,"z":1}]},"z":[{"nested":[1,2,{"deep_a":"a","deep_z":"z"}]},{"nested":[3,4,{"deep_b":"b","deep_m":"m"}]}]}'
 		);
 	});
 
@@ -396,15 +396,15 @@ describe('json_stringify_deterministic', () => {
 			z: 'regular',
 			a: {
 				toJSON() {
-					return {custom: 'serialized', z_field: 1, a_field: 2};
-				},
-			},
+					return { custom: 'serialized', z_field: 1, a_field: 2 };
+				}
+			}
 		};
 		const result = json_stringify_deterministic(obj);
 		// toJSON output also gets sorted
 		assert.strictEqual(
 			result,
-			'{"a":{"a_field":2,"custom":"serialized","z_field":1},"z":"regular"}',
+			'{"a":{"a_field":2,"custom":"serialized","z_field":1},"z":"regular"}'
 		);
 	});
 
@@ -415,17 +415,17 @@ describe('json_stringify_deterministic', () => {
 			m_boolean: true,
 			b_null: null,
 			y_array: [1, 2, 3],
-			d_object: {z: 1, a: 2},
+			d_object: { z: 1, a: 2 }
 		};
 		const result = json_stringify_deterministic(obj);
 		assert.strictEqual(
 			result,
-			'{"a_number":42,"b_null":null,"d_object":{"a":2,"z":1},"m_boolean":true,"y_array":[1,2,3],"z_string":"text"}',
+			'{"a_number":42,"b_null":null,"d_object":{"a":2,"z":1},"m_boolean":true,"y_array":[1,2,3],"z_string":"text"}'
 		);
 	});
 
 	test('consistent with JSON.parse roundtrip', () => {
-		const obj = {z: 1, a: 2, m: {nested_z: 3, nested_a: 4}};
+		const obj = { z: 1, a: 2, m: { nested_z: 3, nested_a: 4 } };
 		const json = json_stringify_deterministic(obj);
 		const parsed = JSON.parse(json);
 		// The parsed object should be semantically equal (though key order might differ in memory)
@@ -433,7 +433,7 @@ describe('json_stringify_deterministic', () => {
 	});
 
 	test('throws on circular references', () => {
-		const obj: any = {z: 1, a: 2};
+		const obj: any = { z: 1, a: 2 };
 		obj.circular = obj;
 		// Throws RangeError (stack overflow) due to recursion in replacer
 		assert.throws(() => json_stringify_deterministic(obj), RangeError);
@@ -444,18 +444,18 @@ describe('json_stringify_deterministic', () => {
 			platform: 'linux',
 			arch: 'x64',
 			node: 'v20.0.0',
-			features: {beta_ui: true, analytics: false},
+			features: { beta_ui: true, analytics: false }
 		};
 		const config2 = {
-			features: {analytics: false, beta_ui: true},
+			features: { analytics: false, beta_ui: true },
 			node: 'v20.0.0',
 			platform: 'linux',
-			arch: 'x64',
+			arch: 'x64'
 		};
 
 		assert.strictEqual(
 			json_stringify_deterministic(config1),
-			json_stringify_deterministic(config2),
+			json_stringify_deterministic(config2)
 		);
 	});
 });

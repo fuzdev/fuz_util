@@ -1,4 +1,4 @@
-import {round} from './maths.ts';
+import { round } from './maths.ts';
 
 export type Stopwatch = (reset?: boolean) => number;
 
@@ -80,7 +80,7 @@ export class Timings {
 		for (const [key, timing] of timings.entries()) {
 			this.#timings.set(
 				key,
-				timing === undefined ? undefined : (this.#timings.get(key) ?? 0) + timing,
+				timing === undefined ? undefined : (this.#timings.get(key) ?? 0) + timing
 			);
 		}
 	}

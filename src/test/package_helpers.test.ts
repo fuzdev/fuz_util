@@ -1,4 +1,4 @@
-import {test, assert, describe} from 'vitest';
+import { test, assert, describe } from 'vitest';
 
 import {
 	url_github_file,
@@ -7,42 +7,42 @@ import {
 	url_logo,
 	package_is_published,
 	repo_name_parse,
-	repo_url_parse,
+	repo_url_parse
 } from '$lib/package_helpers.ts';
 
 describe('url_github_file', () => {
 	test('builds basic file URL', () => {
 		assert.equal(
 			url_github_file('https://github.com/foo/bar', 'src/index.ts'),
-			'https://github.com/foo/bar/blob/main/src/index.ts',
+			'https://github.com/foo/bar/blob/main/src/index.ts'
 		);
 	});
 
 	test('strips leading ./ from file path', () => {
 		assert.equal(
 			url_github_file('https://github.com/foo/bar', './src/index.ts'),
-			'https://github.com/foo/bar/blob/main/src/index.ts',
+			'https://github.com/foo/bar/blob/main/src/index.ts'
 		);
 	});
 
 	test('includes line number when provided', () => {
 		assert.equal(
 			url_github_file('https://github.com/foo/bar', 'src/index.ts', 42),
-			'https://github.com/foo/bar/blob/main/src/index.ts#L42',
+			'https://github.com/foo/bar/blob/main/src/index.ts#L42'
 		);
 	});
 
 	test('handles nested paths', () => {
 		assert.equal(
 			url_github_file('https://github.com/foo/bar', 'src/lib/utils/helpers.ts'),
-			'https://github.com/foo/bar/blob/main/src/lib/utils/helpers.ts',
+			'https://github.com/foo/bar/blob/main/src/lib/utils/helpers.ts'
 		);
 	});
 
 	test('handles root-level files', () => {
 		assert.equal(
 			url_github_file('https://github.com/foo/bar', 'README.md'),
-			'https://github.com/foo/bar/blob/main/README.md',
+			'https://github.com/foo/bar/blob/main/README.md'
 		);
 	});
 });
@@ -107,9 +107,9 @@ describe('package_is_published', () => {
 			package_is_published({
 				name: 'my-package',
 				version: '1.0.0',
-				exports: {'.': './index.js'},
+				exports: { '.': './index.js' }
 			}),
-			true,
+			true
 		);
 	});
 
@@ -119,9 +119,9 @@ describe('package_is_published', () => {
 				name: 'my-package',
 				version: '1.0.0',
 				private: true,
-				exports: {'.': './index.js'},
+				exports: { '.': './index.js' }
 			}),
-			false,
+			false
 		);
 	});
 
@@ -129,9 +129,9 @@ describe('package_is_published', () => {
 		assert.equal(
 			package_is_published({
 				name: 'my-package',
-				version: '1.0.0',
+				version: '1.0.0'
 			}),
-			false,
+			false
 		);
 	});
 
@@ -140,9 +140,9 @@ describe('package_is_published', () => {
 			package_is_published({
 				name: 'my-package',
 				version: '0.0.1',
-				exports: {'.': './index.js'},
+				exports: { '.': './index.js' }
 			}),
-			false,
+			false
 		);
 	});
 
@@ -151,9 +151,9 @@ describe('package_is_published', () => {
 			package_is_published({
 				name: 'my-package',
 				version: '0.0.2',
-				exports: {'.': './index.js'},
+				exports: { '.': './index.js' }
 			}),
-			true,
+			true
 		);
 	});
 });
@@ -187,8 +187,8 @@ describe('repo_url_parse', () => {
 
 	test('extracts URL from object format', () => {
 		assert.equal(
-			repo_url_parse({type: 'git', url: 'https://github.com/foo/bar'}),
-			'https://github.com/foo/bar',
+			repo_url_parse({ type: 'git', url: 'https://github.com/foo/bar' }),
+			'https://github.com/foo/bar'
 		);
 	});
 
@@ -202,8 +202,8 @@ describe('repo_url_parse', () => {
 
 	test('strips both git+ prefix and .git suffix', () => {
 		assert.equal(
-			repo_url_parse({type: 'git', url: 'git+https://github.com/foo/bar.git'}),
-			'https://github.com/foo/bar',
+			repo_url_parse({ type: 'git', url: 'git+https://github.com/foo/bar.git' }),
+			'https://github.com/foo/bar'
 		);
 	});
 
@@ -216,6 +216,6 @@ describe('repo_url_parse', () => {
 	});
 
 	test('returns null for object without url', () => {
-		assert.equal(repo_url_parse({type: 'git'} as any), null);
+		assert.equal(repo_url_parse({ type: 'git' } as any), null);
 	});
 });

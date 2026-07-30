@@ -1,13 +1,13 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {deep_equal} from '$lib/deep_equal.ts';
-import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.ts';
+import { deep_equal } from '$lib/deep_equal.ts';
+import { test_equal_values, test_unequal_values } from './deep_equal_test_helpers.ts';
 
 describe('arrays', () => {
 	// note: arrays are NOT equal to objects (different type check via instanceof)
 	test('vs objects: not equal even with matching keys', () => {
-		assert.ok(!deep_equal([1, 2], {0: 1, 1: 2, length: 2}));
-		assert.ok(!deep_equal(['a', 'b'], {0: 'a', 1: 'b', length: 2}));
+		assert.ok(!deep_equal([1, 2], { 0: 1, 1: 2, length: 2 }));
+		assert.ok(!deep_equal(['a', 'b'], { 0: 'a', 1: 'b', length: 2 }));
 		// even empty arrays are not equal to empty objects (instanceof check)
 		assert.ok(!deep_equal([], {}));
 	});
@@ -25,8 +25,8 @@ describe('arrays', () => {
 			// nested arrays
 			['nested arrays', [1, [2, 3]], [1, [2, 3]]],
 			['deeply nested', [1, [[[[1, 'd'], 'c'], 'b'], 'a']], [1, [[[[1, 'd'], 'c'], 'b'], 'a']]],
-			['with nested objects', [{a: 1}, {b: 2}], [{a: 1}, {b: 2}]],
-			['mixed nesting', [1, {a: [2, 3]}, [4, {b: 5}]], [1, {a: [2, 3]}, [4, {b: 5}]]],
+			['with nested objects', [{ a: 1 }, { b: 2 }], [{ a: 1 }, { b: 2 }]],
+			['mixed nesting', [1, { a: [2, 3] }, [4, { b: 5 }]], [1, { a: [2, 3] }, [4, { b: 5 }]]],
 
 			// typed arrays
 			['Uint8Array', new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3])],
@@ -40,19 +40,19 @@ describe('arrays', () => {
 			[
 				'Uint8ClampedArray',
 				new Uint8ClampedArray([0, 128, 255]),
-				new Uint8ClampedArray([0, 128, 255]),
+				new Uint8ClampedArray([0, 128, 255])
 			],
 			['BigInt64Array', new BigInt64Array([1n, -1n, 0n]), new BigInt64Array([1n, -1n, 0n])],
 			[
 				'BigUint64Array',
 				new BigUint64Array([0n, 100n, 1000n]),
-				new BigUint64Array([0n, 100n, 1000n]),
+				new BigUint64Array([0n, 100n, 1000n])
 			],
 
 			// special values in arrays
 			['with NaN', [NaN, 1, 2], [NaN, 1, 2]],
 			['with undefined', [1, undefined, 3], [1, undefined, 3]],
-			['with null', [1, null, 3], [1, null, 3]],
+			['with null', [1, null, 3], [1, null, 3]]
 		]);
 	});
 
@@ -82,7 +82,7 @@ describe('arrays', () => {
 			[
 				'Uint8Array vs Uint8ClampedArray',
 				new Uint8Array([1, 2, 3]),
-				new Uint8ClampedArray([1, 2, 3]),
+				new Uint8ClampedArray([1, 2, 3])
 			],
 			['Float32Array vs Float64Array', new Float32Array([1.5, 2.5]), new Float64Array([1.5, 2.5])],
 			// TypedArray vs regular array (different constructors)
@@ -90,7 +90,7 @@ describe('arrays', () => {
 
 			// special value differences
 			['NaN position differences', [1, NaN, 3], [1, 3, NaN]],
-			['null vs undefined', [1, null, 3], [1, undefined, 3]],
+			['null vs undefined', [1, null, 3], [1, undefined, 3]]
 		]);
 	});
 });

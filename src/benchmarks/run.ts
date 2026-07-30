@@ -8,17 +8,17 @@
 
 /* eslint-disable no-console */
 
-import {readFile, writeFile} from 'node:fs/promises';
-import {format_file} from '@fuzdev/gro/format_file.ts';
+import { readFile, writeFile } from 'node:fs/promises';
+import { format_file } from '@fuzdev/gro/format_file.ts';
 
-import {Benchmark} from '../lib/benchmark.ts';
+import { Benchmark } from '../lib/benchmark.ts';
 import {
 	benchmark_baseline_save,
 	benchmark_baseline_compare,
-	benchmark_baseline_format,
+	benchmark_baseline_format
 } from '../lib/benchmark_baseline.ts';
-import {slugify} from '../lib/path.ts';
-import {deep_equal} from '../lib/deep_equal.ts';
+import { slugify } from '../lib/path.ts';
+import { deep_equal } from '../lib/deep_equal.ts';
 
 const save_baseline = process.argv.includes('--save');
 const BASELINE_PATH = 'src/benchmarks';
@@ -28,7 +28,7 @@ const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
 const bench = new Benchmark({
 	duration_ms: 3000,
 	warmup_iterations: 10,
-	min_iterations: 50,
+	min_iterations: 50
 });
 
 //
@@ -50,10 +50,10 @@ bench.add('slugify (no special chars)', () => {
 // Deep equal benchmarks
 //
 
-const deep_equal_small_obj = {a: 1, b: 2, c: 3};
-const deep_equal_small_obj_copy = {a: 1, b: 2, c: 3};
-const deep_equal_nested = {a: {b: {c: {d: 1}}}};
-const deep_equal_nested_copy = {a: {b: {c: {d: 1}}}};
+const deep_equal_small_obj = { a: 1, b: 2, c: 3 };
+const deep_equal_small_obj_copy = { a: 1, b: 2, c: 3 };
+const deep_equal_nested = { a: { b: { c: { d: 1 } } } };
+const deep_equal_nested_copy = { a: { b: { c: { d: 1 } } } };
 const deep_equal_array = [1, 2, 3, 4, 5];
 const deep_equal_array_copy = [1, 2, 3, 4, 5];
 let deep_equal_result = false;
@@ -91,16 +91,16 @@ console.log(bench.table());
 const comparison = await benchmark_baseline_compare(bench.results(), {
 	path: BASELINE_PATH,
 	regression_threshold: 1.05, // 5% threshold to reduce noise
-	staleness_warning_days: 30,
+	staleness_warning_days: 30
 });
 
 console.log('\n📈 Baseline Comparison\n');
 console.log(benchmark_baseline_format(comparison));
 
 if (save_baseline) {
-	await benchmark_baseline_save(bench.results(), {path: BASELINE_PATH});
+	await benchmark_baseline_save(bench.results(), { path: BASELINE_PATH });
 	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = format_file(content, {filepath: BASELINE_FILE});
+	const formatted = format_file(content, { filepath: BASELINE_FILE });
 	await writeFile(BASELINE_FILE, formatted);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 } else if (comparison.baseline_found) {
@@ -109,7 +109,7 @@ if (save_baseline) {
 	}
 	if (comparison.methodology_changed.length > 0) {
 		console.log(
-			'\n⚠️  Methodology changed on some tasks. Re-run with --save to update the baseline and surface any drift masked by the budget change.',
+			'\n⚠️  Methodology changed on some tasks. Re-run with --save to update the baseline and surface any drift masked by the budget change.'
 		);
 	}
 	// Tally noise warnings across the three Welch-eligible buckets — a
@@ -122,7 +122,7 @@ if (save_baseline) {
 		console.log(
 			`\n⚠️  ${
 				noise_count
-			} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`,
+			} task(s) flagged with high measurement noise. Treat their significance calls with skepticism; consider rerunning on quieter hardware.`
 		);
 	}
 }

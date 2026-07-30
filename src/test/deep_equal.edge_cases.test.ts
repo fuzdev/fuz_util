@@ -1,7 +1,7 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {deep_equal} from '$lib/deep_equal.ts';
-import {test_equal_values, test_unequal_values} from './deep_equal_test_helpers.ts';
+import { deep_equal } from '$lib/deep_equal.ts';
+import { test_equal_values, test_unequal_values } from './deep_equal_test_helpers.ts';
 
 /* eslint-disable no-new-wrappers */
 
@@ -23,13 +23,13 @@ describe('edge cases', () => {
 		test('class instance vs plain object', () => {
 			// Constructor check prevents type confusion (security)
 			// Class instance ≠ plain object, even with same properties
-			assert.ok(!deep_equal(new ClassA(), {x: 1}));
+			assert.ok(!deep_equal(new ClassA(), { x: 1 }));
 		});
 	});
 
 	describe('inherited properties', () => {
 		test('with inherited properties', () => {
-			const proto = {inherited: 'value'};
+			const proto = { inherited: 'value' };
 			const a = Object.create(proto);
 			a.own = 'property';
 			const b = Object.create(proto);
@@ -39,10 +39,10 @@ describe('edge cases', () => {
 		});
 
 		test('with inherited vs without', () => {
-			const proto = {inherited: 'value'};
+			const proto = { inherited: 'value' };
 			const a = Object.create(proto);
 			a.own = 'property';
-			const b = {own: 'property'};
+			const b = { own: 'property' };
 			// same own properties, inheritance ignored
 			assert.ok(deep_equal(a, b));
 		});
@@ -50,21 +50,21 @@ describe('edge cases', () => {
 
 	describe('non-enumerable properties', () => {
 		test('with non-enumerable properties', () => {
-			const a = {visible: 1};
-			Object.defineProperty(a, 'hidden', {value: 2, enumerable: false});
+			const a = { visible: 1 };
+			Object.defineProperty(a, 'hidden', { value: 2, enumerable: false });
 
-			const b = {visible: 1};
-			Object.defineProperty(b, 'hidden', {value: 999, enumerable: false});
+			const b = { visible: 1 };
+			Object.defineProperty(b, 'hidden', { value: 999, enumerable: false });
 
 			// non-enumerable properties ignored
 			assert.ok(deep_equal(a, b));
 		});
 
 		test('with non-enumerable vs without', () => {
-			const a = {visible: 1};
-			Object.defineProperty(a, 'hidden', {value: 2, enumerable: false});
+			const a = { visible: 1 };
+			Object.defineProperty(a, 'hidden', { value: 2, enumerable: false });
 
-			const b = {visible: 1};
+			const b = { visible: 1 };
 
 			assert.ok(deep_equal(a, b));
 		});
@@ -76,7 +76,7 @@ describe('edge cases', () => {
 			const a = {
 				get value() {
 					return counter++;
-				},
+				}
 			};
 
 			// getter called twice during comparison, but Object.is on same reference is checked first
@@ -86,7 +86,7 @@ describe('edge cases', () => {
 			const b = {
 				get value() {
 					return counter++;
-				},
+				}
 			};
 			// these would be unequal because getter returns different values on each call
 			assert.ok(!deep_equal(a, b));
@@ -96,12 +96,12 @@ describe('edge cases', () => {
 			const a = {
 				get value() {
 					return 42;
-				},
+				}
 			};
 			const b = {
 				get value() {
 					return 42;
-				},
+				}
 			};
 
 			// compares the returned values, not the getter functions
@@ -111,24 +111,24 @@ describe('edge cases', () => {
 
 	describe('frozen, sealed, and non-extensible', () => {
 		test_equal_values([
-			['frozen objects', Object.freeze({a: 1}), Object.freeze({a: 1})],
-			['sealed objects', Object.seal({a: 1}), Object.seal({a: 1})],
+			['frozen objects', Object.freeze({ a: 1 }), Object.freeze({ a: 1 })],
+			['sealed objects', Object.seal({ a: 1 }), Object.seal({ a: 1 })],
 			[
 				'non-extensible objects',
-				Object.preventExtensions({a: 1}),
-				Object.preventExtensions({a: 1}),
+				Object.preventExtensions({ a: 1 }),
+				Object.preventExtensions({ a: 1 })
 			],
-			['frozen vs non-frozen', Object.freeze({a: 1}), {a: 1}],
+			['frozen vs non-frozen', Object.freeze({ a: 1 }), { a: 1 }]
 		]);
 	});
 
 	describe('property descriptors', () => {
 		test('different descriptors but same values', () => {
 			const a = {};
-			Object.defineProperty(a, 'prop', {value: 1, writable: true, enumerable: true});
+			Object.defineProperty(a, 'prop', { value: 1, writable: true, enumerable: true });
 
 			const b = {};
-			Object.defineProperty(b, 'prop', {value: 1, writable: false, enumerable: true});
+			Object.defineProperty(b, 'prop', { value: 1, writable: false, enumerable: true });
 
 			// descriptor attributes ignored, only values compared
 			assert.ok(deep_equal(a, b));
@@ -137,8 +137,8 @@ describe('edge cases', () => {
 
 	describe('symbols', () => {
 		test('with custom toString tags', () => {
-			const a = {[Symbol.toStringTag]: 'CustomA', value: 1};
-			const b = {[Symbol.toStringTag]: 'CustomB', value: 1};
+			const a = { [Symbol.toStringTag]: 'CustomA', value: 1 };
+			const b = { [Symbol.toStringTag]: 'CustomB', value: 1 };
 
 			// symbol keys ignored
 			assert.ok(deep_equal(a, b));
@@ -149,13 +149,13 @@ describe('edge cases', () => {
 				data: [1, 2, 3],
 				*[Symbol.iterator]() {
 					yield* this.data;
-				},
+				}
 			};
 			const b = {
 				data: [1, 2, 3],
 				*[Symbol.iterator]() {
 					yield* this.data;
-				},
+				}
 			};
 
 			// only enumerable string-keyed properties compared
@@ -193,7 +193,7 @@ describe('edge cases', () => {
 			['boxed number vs primitive', new Number(42), 42],
 			['boxed string vs primitive', new String('hello'), 'hello'],
 			['boxed boolean vs primitive', new Boolean(true), true],
-			['boxed number vs null', new Number(42), null],
+			['boxed number vs null', new Number(42), null]
 		]);
 	});
 
@@ -203,13 +203,13 @@ describe('edge cases', () => {
 				value: 42,
 				valueOf() {
 					return this.value;
-				},
+				}
 			};
 			const b = {
 				value: 42,
 				valueOf() {
 					return this.value;
-				},
+				}
 			};
 
 			// valueOf not called, objects compared by enumerable properties
@@ -220,25 +220,25 @@ describe('edge cases', () => {
 			const valueOf_fn = function () {
 				return 42;
 			};
-			const c = {value: 42, valueOf: valueOf_fn};
-			const d = {value: 42, valueOf: valueOf_fn};
+			const c = { value: 42, valueOf: valueOf_fn };
+			const d = { value: 42, valueOf: valueOf_fn };
 			assert.ok(deep_equal(c, d));
 		});
 	});
 
 	describe('mixed type edge cases', () => {
 		test_unequal_values([
-			['Map vs object with size property', new Map([['a', 1]]), {size: 1}],
-			['Set vs object with size property', new Set([1, 2]), {size: 2}],
-			['Array vs object with only length property', [1, 2, 3], {length: 3}],
-			['RegExp vs object', /test/, {source: 'test', flags: ''}],
+			['Map vs object with size property', new Map([['a', 1]]), { size: 1 }],
+			['Set vs object with size property', new Set([1, 2]), { size: 2 }],
+			['Array vs object with only length property', [1, 2, 3], { length: 3 }],
+			['RegExp vs object', /test/, { source: 'test', flags: '' }]
 		]);
 	});
 
 	describe('array vs object', () => {
 		test('with numeric keys', () => {
-			assert.ok(!deep_equal([1, 2, 3], {0: 1, 1: 2, 2: 3}));
-			assert.ok(!deep_equal(['a', 'b'], {'0': 'a', '1': 'b'}));
+			assert.ok(!deep_equal([1, 2, 3], { 0: 1, 1: 2, 2: 3 }));
+			assert.ok(!deep_equal(['a', 'b'], { '0': 'a', '1': 'b' }));
 		});
 	});
 
@@ -267,7 +267,7 @@ describe('edge cases', () => {
 
 		test_unequal_values([
 			['empty string vs empty array', '', []],
-			['empty string vs empty object', '', {}],
+			['empty string vs empty object', '', {}]
 		]);
 	});
 });

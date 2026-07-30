@@ -1,4 +1,4 @@
-import {test, assert, describe} from 'vitest';
+import { test, assert, describe } from 'vitest';
 
 import {
 	wait,
@@ -7,7 +7,7 @@ import {
 	AsyncSemaphore,
 	each_concurrent,
 	map_concurrent,
-	map_concurrent_settled,
+	map_concurrent_settled
 } from '$lib/async.ts';
 
 const make_concurrency_tracker = () => {
@@ -23,7 +23,7 @@ const make_concurrency_tracker = () => {
 		},
 		get max(): number {
 			return max;
-		},
+		}
 	};
 };
 
@@ -48,7 +48,7 @@ describe('is_promise', () => {
 	});
 
 	test('thenable object returns true', () => {
-		assert.isTrue(is_promise({then: () => {}}));
+		assert.isTrue(is_promise({ then: () => {} }));
 	});
 
 	test('null returns false', () => {
@@ -69,13 +69,13 @@ describe('is_promise', () => {
 
 	test('plain object returns false', () => {
 		assert.isFalse(is_promise({}));
-		assert.isFalse(is_promise({value: 42}));
+		assert.isFalse(is_promise({ value: 42 }));
 	});
 
 	test('object with non-function then returns false', () => {
-		assert.isFalse(is_promise({then: 'not a function'}));
-		assert.isFalse(is_promise({then: 42}));
-		assert.isFalse(is_promise({then: true}));
+		assert.isFalse(is_promise({ then: 'not a function' }));
+		assert.isFalse(is_promise({ then: 42 }));
+		assert.isFalse(is_promise({ then: true }));
 	});
 
 	test('boolean returns false', () => {
@@ -160,7 +160,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			processed.sort((a, b) => a - b),
-			[1, 2, 3, 4, 5],
+			[1, 2, 3, 4, 5]
 		);
 	});
 
@@ -267,7 +267,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			indices.sort((a, b) => a - b),
-			[0, 1, 2],
+			[0, 1, 2]
 		);
 	});
 
@@ -279,7 +279,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			processed.sort((a, b) => a - b),
-			[1, 2, 3],
+			[1, 2, 3]
 		);
 	});
 
@@ -345,7 +345,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			processed.sort((a, b) => a - b),
-			[1, 2, 3],
+			[1, 2, 3]
 		);
 	});
 
@@ -355,20 +355,20 @@ describe('each_concurrent', () => {
 			new Map([
 				['a', 1],
 				['b', 2],
-				['c', 3],
+				['c', 3]
 			]),
 			2,
 			async (entry) => {
 				processed.push(entry);
-			},
+			}
 		);
 		assert.deepEqual(
 			processed.sort((a, b) => a[0].localeCompare(b[0])),
 			[
 				['a', 1],
 				['b', 2],
-				['c', 3],
-			],
+				['c', 3]
+			]
 		);
 	});
 
@@ -384,7 +384,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			processed.sort((a, b) => a - b),
-			[10, 20, 30],
+			[10, 20, 30]
 		);
 	});
 
@@ -395,7 +395,7 @@ describe('each_concurrent', () => {
 		});
 		assert.deepEqual(
 			processed.sort((a, b) => a - b),
-			[1, 2, 3],
+			[1, 2, 3]
 		);
 	});
 
@@ -422,7 +422,7 @@ describe('each_concurrent', () => {
 				async (x) => {
 					processed.push(x);
 				},
-				controller.signal,
+				controller.signal
 			);
 			assert.fail('Expected to reject');
 		} catch (e) {
@@ -443,7 +443,7 @@ describe('each_concurrent', () => {
 					processed.push(x);
 					if (x === 3) controller.abort('stop now');
 				},
-				controller.signal,
+				controller.signal
 			);
 			assert.fail('Expected to reject');
 		} catch (e) {
@@ -659,7 +659,7 @@ describe('map_concurrent', () => {
 		});
 		assert.deepEqual(results, [
 			[10, 20],
-			[20, 40],
+			[20, 40]
 		]);
 	});
 
@@ -673,10 +673,10 @@ describe('map_concurrent', () => {
 			new Map([
 				['a', 1],
 				['b', 2],
-				['c', 3],
+				['c', 3]
 			]),
 			3,
-			async ([key, value]) => `${key}=${value}`,
+			async ([key, value]) => `${key}=${value}`
 		);
 		assert.deepEqual(results, ['a=1', 'b=2', 'c=3']);
 	});
@@ -733,7 +733,7 @@ describe('map_concurrent', () => {
 					if (x === 3) controller.abort('stop now');
 					return x;
 				},
-				controller.signal,
+				controller.signal
 			);
 			assert.fail('Expected to reject');
 		} catch (e) {
@@ -749,11 +749,11 @@ describe('map_concurrent_settled', () => {
 		const items = [1, 2, 3, 4, 5];
 		const results = await map_concurrent_settled(items, 3, async (x) => x * 2);
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 2},
-			{status: 'fulfilled', value: 4},
-			{status: 'fulfilled', value: 6},
-			{status: 'fulfilled', value: 8},
-			{status: 'fulfilled', value: 10},
+			{ status: 'fulfilled', value: 2 },
+			{ status: 'fulfilled', value: 4 },
+			{ status: 'fulfilled', value: 6 },
+			{ status: 'fulfilled', value: 8 },
+			{ status: 'fulfilled', value: 10 }
 		]);
 	});
 
@@ -764,15 +764,15 @@ describe('map_concurrent_settled', () => {
 		});
 
 		assert.strictEqual(results.length, 5);
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 2});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 2 });
 		assert.strictEqual(results[1]!.status, 'rejected');
 		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'error 2');
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 6});
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 6 });
 		assert.strictEqual(results[3]!.status, 'rejected');
 		assert.instanceOf((results[3] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[3] as PromiseRejectedResult).reason.message, 'error 4');
-		assert.deepEqual(results[4], {status: 'fulfilled', value: 10});
+		assert.deepEqual(results[4], { status: 'fulfilled', value: 10 });
 	});
 
 	test('preserves order with varying delays', async () => {
@@ -782,11 +782,11 @@ describe('map_concurrent_settled', () => {
 			return index;
 		});
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 0},
-			{status: 'fulfilled', value: 1},
-			{status: 'fulfilled', value: 2},
-			{status: 'fulfilled', value: 3},
-			{status: 'fulfilled', value: 4},
+			{ status: 'fulfilled', value: 0 },
+			{ status: 'fulfilled', value: 1 },
+			{ status: 'fulfilled', value: 2 },
+			{ status: 'fulfilled', value: 3 },
+			{ status: 'fulfilled', value: 4 }
 		]);
 	});
 
@@ -865,13 +865,13 @@ describe('map_concurrent_settled', () => {
 
 		assert.strictEqual(results.length, 5);
 		// Error indices should reflect original array positions, not completion order
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 1 });
 		assert.strictEqual(results[1]!.status, 'rejected'); // index 1 = item 2
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'error 2');
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 3 });
 		assert.strictEqual(results[3]!.status, 'rejected'); // index 3 = item 4
 		assert.strictEqual((results[3] as PromiseRejectedResult).reason.message, 'error 4');
-		assert.deepEqual(results[4], {status: 'fulfilled', value: 5});
+		assert.deepEqual(results[4], { status: 'fulfilled', value: 5 });
 	});
 
 	test('respects concurrency limit', async () => {
@@ -905,8 +905,8 @@ describe('map_concurrent_settled', () => {
 		assert.strictEqual(results[0]!.status, 'rejected');
 		assert.instanceOf((results[0] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[0] as PromiseRejectedResult).reason.message, 'first fails');
-		assert.deepEqual(results[1], {status: 'fulfilled', value: 4});
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 6});
+		assert.deepEqual(results[1], { status: 'fulfilled', value: 4 });
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 6 });
 	});
 
 	test('last item fails, rest succeed', async () => {
@@ -916,8 +916,8 @@ describe('map_concurrent_settled', () => {
 		});
 
 		assert.strictEqual(results.length, 3);
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 2});
-		assert.deepEqual(results[1], {status: 'fulfilled', value: 4});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 2 });
+		assert.deepEqual(results[1], { status: 'fulfilled', value: 4 });
 		assert.strictEqual(results[2]!.status, 'rejected');
 		assert.instanceOf((results[2] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[2] as PromiseRejectedResult).reason.message, 'last fails');
@@ -932,19 +932,19 @@ describe('map_concurrent_settled', () => {
 
 		assert.strictEqual(results.length, 3);
 		// undefined return is fulfilled, not rejected
-		assert.deepEqual(results[0], {status: 'fulfilled', value: undefined});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: undefined });
 		assert.strictEqual(results[1]!.status, 'rejected');
 		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'fail');
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 3 });
 	});
 
 	test('accepts a Set', async () => {
 		const results = await map_concurrent_settled(new Set([1, 2, 3]), 3, async (x) => x * 2);
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 2},
-			{status: 'fulfilled', value: 4},
-			{status: 'fulfilled', value: 6},
+			{ status: 'fulfilled', value: 2 },
+			{ status: 'fulfilled', value: 4 },
+			{ status: 'fulfilled', value: 6 }
 		]);
 	});
 
@@ -952,14 +952,14 @@ describe('map_concurrent_settled', () => {
 		const results = await map_concurrent_settled(
 			new Map([
 				['a', 1],
-				['b', 2],
+				['b', 2]
 			]),
 			2,
-			async ([key, value]) => `${key}=${value}`,
+			async ([key, value]) => `${key}=${value}`
 		);
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 'a=1'},
-			{status: 'fulfilled', value: 'b=2'},
+			{ status: 'fulfilled', value: 'a=1' },
+			{ status: 'fulfilled', value: 'b=2' }
 		]);
 	});
 
@@ -971,18 +971,18 @@ describe('map_concurrent_settled', () => {
 		}
 		const results = await map_concurrent_settled(gen(), 2, async (x) => x * 2);
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 20},
-			{status: 'fulfilled', value: 40},
-			{status: 'fulfilled', value: 60},
+			{ status: 'fulfilled', value: 20 },
+			{ status: 'fulfilled', value: 40 },
+			{ status: 'fulfilled', value: 60 }
 		]);
 	});
 
 	test('accepts a sync callback', async () => {
 		const results = await map_concurrent_settled([1, 2, 3], 3, (x) => x * 2);
 		assert.deepEqual(results, [
-			{status: 'fulfilled', value: 2},
-			{status: 'fulfilled', value: 4},
-			{status: 'fulfilled', value: 6},
+			{ status: 'fulfilled', value: 2 },
+			{ status: 'fulfilled', value: 4 },
+			{ status: 'fulfilled', value: 6 }
 		]);
 	});
 
@@ -993,11 +993,11 @@ describe('map_concurrent_settled', () => {
 		});
 
 		assert.strictEqual(results.length, 3);
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 1 });
 		assert.strictEqual(results[1]!.status, 'rejected');
 		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'sync cb throw');
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 3});
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 3 });
 	});
 
 	test('resolves immediately with already-aborted signal', async () => {
@@ -1024,13 +1024,13 @@ describe('map_concurrent_settled', () => {
 				if (x === 3) controller.abort('stop');
 				return x;
 			},
-			controller.signal,
+			controller.signal
 		);
 
 		assert.strictEqual(results.length, 3);
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 1});
-		assert.deepEqual(results[1], {status: 'fulfilled', value: 2});
-		assert.deepEqual(results[2], {status: 'rejected', reason: 'stop'});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 1 });
+		assert.deepEqual(results[1], { status: 'fulfilled', value: 2 });
+		assert.deepEqual(results[2], { status: 'rejected', reason: 'stop' });
 	});
 
 	test('abort preserves completed settlements', async () => {
@@ -1045,17 +1045,17 @@ describe('map_concurrent_settled', () => {
 				if (x === 4) controller.abort('cancel');
 				return x * 10;
 			},
-			controller.signal,
+			controller.signal
 		);
 
 		// Items 1, 2, 3 completed before abort — keep their real settlements
-		assert.deepEqual(results[0], {status: 'fulfilled', value: 10});
+		assert.deepEqual(results[0], { status: 'fulfilled', value: 10 });
 		assert.strictEqual(results[1]!.status, 'rejected');
 		assert.instanceOf((results[1] as PromiseRejectedResult).reason, Error);
 		assert.strictEqual((results[1] as PromiseRejectedResult).reason.message, 'item error');
-		assert.deepEqual(results[2], {status: 'fulfilled', value: 30});
+		assert.deepEqual(results[2], { status: 'fulfilled', value: 30 });
 		// Item 4 triggered abort synchronously within its fn — settled as rejected with abort reason
-		assert.deepEqual(results[3], {status: 'rejected', reason: 'cancel'});
+		assert.deepEqual(results[3], { status: 'rejected', reason: 'cancel' });
 		// Item 5 was never started
 		assert.strictEqual(results.length, 4);
 	});
@@ -1080,12 +1080,12 @@ describe('map_concurrent_settled', () => {
 				await new Promise((r) => setTimeout(r, 100));
 				return x;
 			},
-			controller.signal,
+			controller.signal
 		);
 
 		assert.strictEqual(results.length, 2);
-		assert.deepEqual(results[0], {status: 'rejected', reason: 'stop'});
-		assert.deepEqual(results[1], {status: 'rejected', reason: 'stop'});
+		assert.deepEqual(results[0], { status: 'rejected', reason: 'stop' });
+		assert.deepEqual(results[1], { status: 'rejected', reason: 'stop' });
 	});
 });
 

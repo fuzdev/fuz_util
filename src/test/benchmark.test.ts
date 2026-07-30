@@ -1,8 +1,8 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
-import {Benchmark} from '$lib/benchmark.ts';
-import {wait} from '$lib/async.ts';
-import type {Timer} from '$lib/time.ts';
+import { Benchmark } from '$lib/benchmark.ts';
+import { wait } from '$lib/async.ts';
+import type { Timer } from '$lib/time.ts';
 
 describe('Benchmark', () => {
 	describe('basic usage', () => {
@@ -10,7 +10,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 100,
 				min_iterations: 5,
-				warmup_iterations: 2,
+				warmup_iterations: 2
 			});
 
 			let count = 0;
@@ -32,7 +32,7 @@ describe('Benchmark', () => {
 		test('chaining multiple tasks', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench
@@ -45,21 +45,21 @@ describe('Benchmark', () => {
 			assert.lengthOf(results, 3);
 			assert.deepEqual(
 				results.map((r) => r.name),
-				['task 1', 'task 2', 'task 3'],
+				['task 1', 'task 2', 'task 3']
 			);
 		});
 
 		test('with task object', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add({
 				name: 'object task',
 				fn: () => {
 					return 42;
-				},
+				}
 			});
 
 			const results = await bench.run();
@@ -72,7 +72,7 @@ describe('Benchmark', () => {
 		test('sync vs async detection', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			let sync_count = 0;
@@ -97,11 +97,11 @@ describe('Benchmark', () => {
 		test('handles function that returns a value', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('returns number', () => 42);
-			bench.add('returns object', () => ({foo: 'bar'}));
+			bench.add('returns object', () => ({ foo: 'bar' }));
 			bench.add('returns promise', () => Promise.resolve('result'));
 
 			const results = await bench.run();
@@ -116,14 +116,14 @@ describe('Benchmark', () => {
 		test('async hint skips detection', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			// Explicit async: false hint
 			bench.add({
 				name: 'sync with hint',
 				fn: () => 1 + 1,
-				async: false,
+				async: false
 			});
 
 			// Explicit async: true hint
@@ -133,7 +133,7 @@ describe('Benchmark', () => {
 					await Promise.resolve();
 					return 1;
 				},
-				async: true,
+				async: true
 			});
 
 			const results = await bench.run();
@@ -150,7 +150,7 @@ describe('Benchmark', () => {
 		test('with setup and teardown', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			let setup_called = false;
@@ -169,7 +169,7 @@ describe('Benchmark', () => {
 				teardown: () => {
 					teardown_called = true;
 					value = 0;
-				},
+				}
 			});
 
 			await bench.run();
@@ -182,7 +182,7 @@ describe('Benchmark', () => {
 		test('async setup/teardown', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			let data: string | null = null;
@@ -200,7 +200,7 @@ describe('Benchmark', () => {
 				teardown: async () => {
 					await wait(5);
 					data = null;
-				},
+				}
 			});
 
 			await bench.run();
@@ -212,7 +212,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 1,
-				warmup_iterations: 1,
+				warmup_iterations: 1
 			});
 
 			let teardown_called = false;
@@ -225,7 +225,7 @@ describe('Benchmark', () => {
 				},
 				teardown: () => {
 					teardown_called = true;
-				},
+				}
 			});
 
 			try {
@@ -257,7 +257,7 @@ describe('Benchmark', () => {
 				cooldown_ms: 0,
 				on_iteration: (name) => {
 					observed_names.push(name);
-				},
+				}
 			});
 
 			const task = {
@@ -269,7 +269,7 @@ describe('Benchmark', () => {
 				setup: () => {
 					task.fn = real_fn;
 					task.name = 'real';
-				},
+				}
 			};
 
 			bench.add(task);
@@ -281,12 +281,12 @@ describe('Benchmark', () => {
 			assert.strictEqual(
 				observed_names.filter((n) => n === 'real').length,
 				3,
-				'on_iteration should receive the mutated name',
+				'on_iteration should receive the mutated name'
 			);
 			assert.strictEqual(
 				observed_names.filter((n) => n === 'placeholder').length,
 				0,
-				'on_iteration should not see the pre-setup name',
+				'on_iteration should not see the pre-setup name'
 			);
 			// The returned result also reflects the mutated name
 			assert.strictEqual(results[0].name, 'real');
@@ -299,15 +299,15 @@ describe('Benchmark', () => {
 
 	describe('callbacks', () => {
 		test('on_iteration callback', async () => {
-			const cycles: Array<{name: string; iteration: number}> = [];
+			const cycles: Array<{ name: string; iteration: number }> = [];
 
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 5,
 				warmup_iterations: 1,
 				on_iteration: (name, iteration) => {
-					cycles.push({name, iteration});
-				},
+					cycles.push({ name, iteration });
+				}
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -332,7 +332,7 @@ describe('Benchmark', () => {
 				on_iteration: (_name, iteration, abort) => {
 					iteration_count = iteration;
 					if (iteration >= 50) abort();
-				},
+				}
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -355,7 +355,7 @@ describe('Benchmark', () => {
 				on_iteration: (_name, iteration, abort) => {
 					iteration_count = iteration;
 					if (iteration >= 10) abort();
-				},
+				}
 			});
 
 			bench.add('async test', async () => {
@@ -370,15 +370,15 @@ describe('Benchmark', () => {
 		});
 
 		test('on_task_complete callback', async () => {
-			const completed: Array<{name: string; index: number; total: number}> = [];
+			const completed: Array<{ name: string; index: number; total: number }> = [];
 
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 3,
 				cooldown_ms: 10,
 				on_task_complete: (result, index, total) => {
-					completed.push({name: result.name, index, total});
-				},
+					completed.push({ name: result.name, index, total });
+				}
 			});
 
 			bench.add('task1', () => 1 + 1);
@@ -387,8 +387,8 @@ describe('Benchmark', () => {
 			await bench.run();
 
 			assert.lengthOf(completed, 2);
-			assert.deepEqual(completed[0], {name: 'task1', index: 0, total: 2});
-			assert.deepEqual(completed[1], {name: 'task2', index: 1, total: 2});
+			assert.deepEqual(completed[0], { name: 'task1', index: 0, total: 2 });
+			assert.deepEqual(completed[1], { name: 'task2', index: 1, total: 2 });
 		});
 	});
 
@@ -399,7 +399,7 @@ describe('Benchmark', () => {
 				now: () => {
 					counter += 10_000_000; // 10ms in ns
 					return counter;
-				},
+				}
 			};
 
 			const bench = new Benchmark({
@@ -407,7 +407,7 @@ describe('Benchmark', () => {
 				duration_ms: 100,
 				min_iterations: 5,
 				warmup_iterations: 1,
-				cooldown_ms: 0,
+				cooldown_ms: 0
 			});
 
 			bench.add('test', () => {});
@@ -422,7 +422,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 1,
 				min_iterations: 20,
-				warmup_iterations: 1,
+				warmup_iterations: 1
 			});
 
 			bench.add('test', () => {});
@@ -438,7 +438,7 @@ describe('Benchmark', () => {
 				duration_ms: 10000,
 				min_iterations: 5,
 				max_iterations: 10,
-				warmup_iterations: 1,
+				warmup_iterations: 1
 			});
 
 			bench.add('test', () => {});
@@ -453,7 +453,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 3,
-				cooldown_ms: 20,
+				cooldown_ms: 20
 			});
 
 			bench.add('task 1', () => {}).add('task 2', () => {});
@@ -471,7 +471,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 5,
-				warmup_iterations: 10,
+				warmup_iterations: 10
 			});
 
 			bench.add('test', () => {
@@ -487,7 +487,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 5,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -506,15 +506,15 @@ describe('Benchmark', () => {
 			// fn() has fully awaited so the count matches; in the buggy sync path
 			// the post-await body hasn't run yet so the count lags.
 			let resolved_count = 0;
-			const observations: Array<{iter: number; resolved: number}> = [];
+			const observations: Array<{ iter: number; resolved: number }> = [];
 
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 5,
 				warmup_iterations: 0,
 				on_iteration: (_name, iteration) => {
-					observations.push({iter: iteration, resolved: resolved_count});
-				},
+					observations.push({ iter: iteration, resolved: resolved_count });
+				}
 			});
 
 			bench.add('async', async () => {
@@ -542,14 +542,14 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 1, // tiny — suite tasks would stop at min
 				min_iterations: 5,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add('uses suite', () => {});
 			bench.add({
 				name: 'higher floor',
 				fn: () => {},
-				min_iterations: 25,
+				min_iterations: 25
 			});
 
 			const results = await bench.run();
@@ -566,13 +566,13 @@ describe('Benchmark', () => {
 				duration_ms: 10000,
 				min_iterations: 1,
 				max_iterations: 1000,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add({
 				name: 'capped',
 				fn: () => {},
-				max_iterations: 7,
+				max_iterations: 7
 			});
 
 			const results = await bench.run();
@@ -586,7 +586,7 @@ describe('Benchmark', () => {
 
 			const bench = new Benchmark({
 				duration_ms: 50,
-				warmup_iterations: 5, // suite default — overridden below
+				warmup_iterations: 5 // suite default — overridden below
 			});
 
 			bench.add({
@@ -596,7 +596,7 @@ describe('Benchmark', () => {
 				},
 				warmup_iterations: 20,
 				min_iterations: 3,
-				max_iterations: 3, // cap measurement so total is deterministic
+				max_iterations: 3 // cap measurement so total is deterministic
 			});
 
 			await bench.run();
@@ -612,7 +612,7 @@ describe('Benchmark', () => {
 				now: () => {
 					counter += 5_000_000; // 5ms per call in ns
 					return counter;
-				},
+				}
 			};
 
 			const bench = new Benchmark({
@@ -621,13 +621,13 @@ describe('Benchmark', () => {
 				min_iterations: 1,
 				max_iterations: 1000,
 				cooldown_ms: 0,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add({
 				name: 'short window',
 				fn: () => {},
-				duration_ms: 20, // task override
+				duration_ms: 20 // task override
 			});
 
 			const results = await bench.run();
@@ -642,7 +642,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 1,
 				min_iterations: 12,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add('plain', () => {});
@@ -657,12 +657,12 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 1,
 				min_iterations: 4,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add('a', () => {});
-			bench.add({name: 'b', fn: () => {}, min_iterations: 30});
-			bench.add({name: 'c', fn: () => {}, min_iterations: 15});
+			bench.add({ name: 'b', fn: () => {}, min_iterations: 30 });
+			bench.add({ name: 'c', fn: () => {}, min_iterations: 15 });
 
 			const results = await bench.run();
 
@@ -686,7 +686,7 @@ describe('Benchmark', () => {
 				warmup_iterations: 1,
 				min_iterations: 1,
 				max_iterations: 2,
-				cooldown_ms: 0,
+				cooldown_ms: 0
 			});
 
 			bench.add({
@@ -697,7 +697,7 @@ describe('Benchmark', () => {
 				duration_ms: 100, // generous so min_iterations is the stopper
 				warmup_iterations: 4,
 				min_iterations: 6,
-				max_iterations: 6, // cap == floor → exactly 6 measurement iters
+				max_iterations: 6 // cap == floor → exactly 6 measurement iters
 			});
 
 			const results = await bench.run();
@@ -719,7 +719,7 @@ describe('Benchmark', () => {
 				warmup_iterations: 1,
 				min_iterations: 1,
 				max_iterations: 1000,
-				cooldown_ms: 0,
+				cooldown_ms: 0
 			});
 
 			bench.add('all suite', () => {});
@@ -729,12 +729,12 @@ describe('Benchmark', () => {
 				duration_ms: 100,
 				warmup_iterations: 4,
 				min_iterations: 6,
-				max_iterations: 6,
+				max_iterations: 6
 			});
 			bench.add({
 				name: 'partial override',
 				fn: () => {},
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			const results = await bench.run();
@@ -744,21 +744,21 @@ describe('Benchmark', () => {
 				warmup_iterations: 1,
 				min_iterations: 1,
 				max_iterations: 1000,
-				async_resolved: false,
+				async_resolved: false
 			});
 			assert.deepEqual(results[1]?.budget, {
 				duration_ms: 100,
 				warmup_iterations: 4,
 				min_iterations: 6,
 				max_iterations: 6,
-				async_resolved: false,
+				async_resolved: false
 			});
 			assert.deepEqual(results[2]?.budget, {
 				duration_ms: 50,
 				warmup_iterations: 1,
 				min_iterations: 3, // overridden
 				max_iterations: 1000,
-				async_resolved: false,
+				async_resolved: false
 			});
 		});
 
@@ -772,7 +772,7 @@ describe('Benchmark', () => {
 				warmup_iterations: 1,
 				min_iterations: 1,
 				max_iterations: 2,
-				cooldown_ms: 0,
+				cooldown_ms: 0
 			});
 
 			bench.add({
@@ -785,7 +785,7 @@ describe('Benchmark', () => {
 				duration_ms: 100,
 				warmup_iterations: 4,
 				min_iterations: 6,
-				max_iterations: 6,
+				max_iterations: 6
 			});
 
 			const results = await bench.run();
@@ -802,14 +802,14 @@ describe('Benchmark', () => {
 				duration_ms: 1,
 				max_iterations: 5,
 				min_iterations: 1,
-				warmup_iterations: 0,
+				warmup_iterations: 0
 			});
 
 			bench.add({
 				name: 'raised cap',
 				fn: () => {},
 				min_iterations: 40,
-				max_iterations: 40,
+				max_iterations: 40
 			});
 
 			const results = await bench.run();
@@ -821,41 +821,41 @@ describe('Benchmark', () => {
 		test('throws on non-positive task duration_ms', () => {
 			const bench = new Benchmark();
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, duration_ms: 0}),
-				'task "bad" duration_ms must be positive',
+				() => bench.add({ name: 'bad', fn: () => {}, duration_ms: 0 }),
+				'task "bad" duration_ms must be positive'
 			);
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, duration_ms: -1}),
-				'task "bad" duration_ms must be positive',
+				() => bench.add({ name: 'bad', fn: () => {}, duration_ms: -1 }),
+				'task "bad" duration_ms must be positive'
 			);
 		});
 
 		test('throws on negative task warmup_iterations', () => {
 			const bench = new Benchmark();
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, warmup_iterations: -1}),
-				'task "bad" warmup_iterations must be non-negative',
+				() => bench.add({ name: 'bad', fn: () => {}, warmup_iterations: -1 }),
+				'task "bad" warmup_iterations must be non-negative'
 			);
 		});
 
 		test('task warmup_iterations of 0 is allowed', () => {
 			const bench = new Benchmark();
-			assert.doesNotThrow(() => bench.add({name: 'ok', fn: () => {}, warmup_iterations: 0}));
+			assert.doesNotThrow(() => bench.add({ name: 'ok', fn: () => {}, warmup_iterations: 0 }));
 		});
 
 		test('throws on task min_iterations below 1', () => {
 			const bench = new Benchmark();
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, min_iterations: 0}),
-				'task "bad" min_iterations must be at least 1',
+				() => bench.add({ name: 'bad', fn: () => {}, min_iterations: 0 }),
+				'task "bad" min_iterations must be at least 1'
 			);
 		});
 
 		test('throws on task max_iterations below 1', () => {
 			const bench = new Benchmark();
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, max_iterations: 0}),
-				'task "bad" max_iterations must be at least 1',
+				() => bench.add({ name: 'bad', fn: () => {}, max_iterations: 0 }),
+				'task "bad" max_iterations must be at least 1'
 			);
 		});
 
@@ -867,69 +867,75 @@ describe('Benchmark', () => {
 						name: 'bad',
 						fn: () => {},
 						min_iterations: 100,
-						max_iterations: 10,
+						max_iterations: 10
 					}),
-				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (10)',
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (10)'
 			);
 		});
 
 		test('throws when task min exceeds suite max', () => {
-			const bench = new Benchmark({max_iterations: 50});
+			const bench = new Benchmark({ max_iterations: 50 });
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, min_iterations: 100}),
-				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)',
+				() => bench.add({ name: 'bad', fn: () => {}, min_iterations: 100 }),
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)'
 			);
 		});
 
 		test('throws when suite min exceeds task max', () => {
-			const bench = new Benchmark({min_iterations: 100});
+			const bench = new Benchmark({ min_iterations: 100 });
 			assert.throws(
-				() => bench.add({name: 'bad', fn: () => {}, max_iterations: 50}),
-				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)',
+				() => bench.add({ name: 'bad', fn: () => {}, max_iterations: 50 }),
+				'task "bad" effective min_iterations (100) cannot exceed effective max_iterations (50)'
 			);
 		});
 	});
 
 	describe('configuration validation', () => {
 		test('throws on negative duration_ms', () => {
-			assert.throws(() => new Benchmark({duration_ms: -1}), 'duration_ms must be positive');
+			assert.throws(() => new Benchmark({ duration_ms: -1 }), 'duration_ms must be positive');
 		});
 
 		test('throws on zero duration_ms', () => {
-			assert.throws(() => new Benchmark({duration_ms: 0}), 'duration_ms must be positive');
+			assert.throws(() => new Benchmark({ duration_ms: 0 }), 'duration_ms must be positive');
 		});
 
 		test('throws on negative warmup_iterations', () => {
 			assert.throws(
-				() => new Benchmark({warmup_iterations: -1}),
-				'warmup_iterations must be non-negative',
+				() => new Benchmark({ warmup_iterations: -1 }),
+				'warmup_iterations must be non-negative'
 			);
 		});
 
 		test('warmup_iterations can be 0 (skips warmup)', () => {
-			assert.doesNotThrow(() => new Benchmark({warmup_iterations: 0}));
+			assert.doesNotThrow(() => new Benchmark({ warmup_iterations: 0 }));
 		});
 
 		test('throws on negative cooldown_ms', () => {
-			assert.throws(() => new Benchmark({cooldown_ms: -1}), 'cooldown_ms must be non-negative');
+			assert.throws(() => new Benchmark({ cooldown_ms: -1 }), 'cooldown_ms must be non-negative');
 		});
 
 		test('allows cooldown_ms of 0', () => {
-			assert.doesNotThrow(() => new Benchmark({cooldown_ms: 0}));
+			assert.doesNotThrow(() => new Benchmark({ cooldown_ms: 0 }));
 		});
 
 		test('throws on zero min_iterations', () => {
-			assert.throws(() => new Benchmark({min_iterations: 0}), 'min_iterations must be at least 1');
+			assert.throws(
+				() => new Benchmark({ min_iterations: 0 }),
+				'min_iterations must be at least 1'
+			);
 		});
 
 		test('throws on zero max_iterations', () => {
-			assert.throws(() => new Benchmark({max_iterations: 0}), 'max_iterations must be at least 1');
+			assert.throws(
+				() => new Benchmark({ max_iterations: 0 }),
+				'max_iterations must be at least 1'
+			);
 		});
 
 		test('throws on min > max iterations', () => {
 			assert.throws(
-				() => new Benchmark({min_iterations: 100, max_iterations: 10}),
-				'min_iterations (100) cannot exceed max_iterations (10)',
+				() => new Benchmark({ min_iterations: 100, max_iterations: 10 }),
+				'min_iterations (100) cannot exceed max_iterations (10)'
 			);
 		});
 	});
@@ -938,7 +944,7 @@ describe('Benchmark', () => {
 		test('table() output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('task 1', () => 1 + 1).add('task 2', () => 2 + 2);
@@ -961,7 +967,7 @@ describe('Benchmark', () => {
 		test('markdown() output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('task 1', () => 1 + 1);
@@ -982,7 +988,7 @@ describe('Benchmark', () => {
 		test('json() output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('task 1', () => 1 + 1);
@@ -1002,13 +1008,13 @@ describe('Benchmark', () => {
 		test('json() compact output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('task', () => 1 + 1);
 
 			await bench.run();
-			const compact = bench.json({pretty: false});
+			const compact = bench.json({ pretty: false });
 
 			// Compact JSON has no newlines or indentation
 			assert.notInclude(compact, '\n');
@@ -1018,7 +1024,7 @@ describe('Benchmark', () => {
 		test('json() with include_timings', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 10,
+				min_iterations: 10
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -1030,7 +1036,7 @@ describe('Benchmark', () => {
 			assert.notInclude(json_without, 'timings_ns');
 
 			// With include_timings
-			const json_with = bench.json({include_timings: true});
+			const json_with = bench.json({ include_timings: true });
 			assert.include(json_with, 'timings_ns');
 
 			const parsed = JSON.parse(json_with);
@@ -1041,7 +1047,7 @@ describe('Benchmark', () => {
 		test('p75 percentile in output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -1061,7 +1067,7 @@ describe('Benchmark', () => {
 		test('summary() output', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench
@@ -1089,7 +1095,7 @@ describe('Benchmark', () => {
 		test('summary() with single task', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('only task', () => 1 + 1);
@@ -1107,7 +1113,7 @@ describe('Benchmark', () => {
 		test('table() with groups', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench
@@ -1122,11 +1128,11 @@ describe('Benchmark', () => {
 			await bench.run();
 
 			const groups = [
-				{name: 'FAST', filter: (r: {name: string}) => r.name.includes('[fast]')},
-				{name: 'SLOW', filter: (r: {name: string}) => r.name.includes('[slow]')},
+				{ name: 'FAST', filter: (r: { name: string }) => r.name.includes('[fast]') },
+				{ name: 'SLOW', filter: (r: { name: string }) => r.name.includes('[slow]') }
 			];
 
-			const table = bench.table({groups});
+			const table = bench.table({ groups });
 
 			assert.include(table, 'FAST');
 			assert.include(table, 'SLOW');
@@ -1137,7 +1143,7 @@ describe('Benchmark', () => {
 		test('table() with groups shows percentiles', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add('[a] task', () => 1 + 1).add('[b] task', () => 2 + 2);
@@ -1145,11 +1151,11 @@ describe('Benchmark', () => {
 			await bench.run();
 
 			const groups = [
-				{name: 'GROUP A', filter: (r: {name: string}) => r.name.includes('[a]')},
-				{name: 'GROUP B', filter: (r: {name: string}) => r.name.includes('[b]')},
+				{ name: 'GROUP A', filter: (r: { name: string }) => r.name.includes('[a]') },
+				{ name: 'GROUP B', filter: (r: { name: string }) => r.name.includes('[b]') }
 			];
 
-			const table = bench.table({groups});
+			const table = bench.table({ groups });
 
 			assert.include(table, 'GROUP A');
 			assert.include(table, 'GROUP B');
@@ -1160,7 +1166,7 @@ describe('Benchmark', () => {
 		test('groups with description', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add('test task', () => 1 + 1);
@@ -1171,11 +1177,11 @@ describe('Benchmark', () => {
 				{
 					name: 'TEST GROUP',
 					description: 'This is a test description',
-					filter: () => true,
-				},
+					filter: () => true
+				}
 			];
 
-			const table = bench.table({groups});
+			const table = bench.table({ groups });
 
 			assert.include(table, 'TEST GROUP');
 			assert.include(table, 'This is a test description');
@@ -1184,7 +1190,7 @@ describe('Benchmark', () => {
 		test('ungrouped results appear in Other', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add('[grouped] task', () => 1 + 1);
@@ -1195,11 +1201,11 @@ describe('Benchmark', () => {
 			const groups = [
 				{
 					name: 'GROUPED',
-					filter: (r: {name: string}) => r.name.includes('[grouped]'),
-				},
+					filter: (r: { name: string }) => r.name.includes('[grouped]')
+				}
 			];
 
-			const table = bench.table({groups});
+			const table = bench.table({ groups });
 
 			assert.include(table, 'GROUPED');
 			assert.include(table, 'Other');
@@ -1209,7 +1215,7 @@ describe('Benchmark', () => {
 		test('markdown with groups uses baseline', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 			bench.add('format/prettier', () => {});
 			bench.add('format/tsv', () => {});
@@ -1221,9 +1227,9 @@ describe('Benchmark', () => {
 					{
 						name: 'Format',
 						filter: (r) => r.name.startsWith('format/'),
-						baseline: 'format/prettier',
-					},
-				],
+						baseline: 'format/prettier'
+					}
+				]
 			});
 
 			assert.include(markdown, '### Format');
@@ -1268,10 +1274,10 @@ describe('Benchmark', () => {
 		test('skip via task object', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
-			bench.add({name: 'task1', fn: () => 1 + 1, skip: true});
+			bench.add({ name: 'task1', fn: () => 1 + 1, skip: true });
 			bench.add('task2', () => 2 + 2);
 
 			const results = await bench.run();
@@ -1284,29 +1290,29 @@ describe('Benchmark', () => {
 		test('multiple tasks with only run together', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
-			bench.add({name: 'task1', fn: () => 1 + 1, only: true});
+			bench.add({ name: 'task1', fn: () => 1 + 1, only: true });
 			bench.add('task2', () => 2 + 2);
-			bench.add({name: 'task3', fn: () => 3 + 3, only: true});
+			bench.add({ name: 'task3', fn: () => 3 + 3, only: true });
 
 			const results = await bench.run();
 
 			assert.lengthOf(results, 2);
 			assert.deepEqual(
 				results.map((r) => r.name),
-				['task1', 'task3'],
+				['task1', 'task3']
 			);
 		});
 
 		test('only via task object', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
-			bench.add({name: 'task1', fn: () => 1 + 1, only: true});
+			bench.add({ name: 'task1', fn: () => 1 + 1, only: true });
 			bench.add('task2', () => 2 + 2);
 
 			const results = await bench.run();
@@ -1319,11 +1325,11 @@ describe('Benchmark', () => {
 		test('skip takes precedence over only', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
-			bench.add({name: 'task1', fn: () => 1 + 1, only: true, skip: true});
-			bench.add({name: 'task2', fn: () => 2 + 2, only: true});
+			bench.add({ name: 'task1', fn: () => 1 + 1, only: true, skip: true });
+			bench.add({ name: 'task2', fn: () => 2 + 2, only: true });
 
 			const results = await bench.run();
 
@@ -1335,7 +1341,7 @@ describe('Benchmark', () => {
 		test('reset() clears results but keeps tasks', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -1354,7 +1360,7 @@ describe('Benchmark', () => {
 		test('clear() clears results and tasks', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -1373,7 +1379,7 @@ describe('Benchmark', () => {
 		test('run with no tasks produces empty results', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			const results = await bench.run();
@@ -1404,7 +1410,7 @@ describe('Benchmark', () => {
 
 			// Also works with task object
 			assert.throws(() => {
-				bench.add({name: 'test', fn: () => {}});
+				bench.add({ name: 'test', fn: () => {} });
 			}, 'Task "test" already exists');
 		});
 
@@ -1412,7 +1418,7 @@ describe('Benchmark', () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
 				min_iterations: 3,
-				warmup_iterations: 1,
+				warmup_iterations: 1
 			});
 
 			bench.add('fails', () => {
@@ -1430,7 +1436,7 @@ describe('Benchmark', () => {
 		test('error in setup throws', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 
 			let teardown_called = false;
@@ -1443,7 +1449,7 @@ describe('Benchmark', () => {
 				fn: () => 1 + 1,
 				teardown: () => {
 					teardown_called = true;
-				},
+				}
 			});
 
 			try {
@@ -1461,7 +1467,7 @@ describe('Benchmark', () => {
 		test('results() returns a copy', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 5,
+				min_iterations: 5
 			});
 
 			bench.add('test', () => {});
@@ -1483,7 +1489,7 @@ describe('Benchmark', () => {
 		test('timings_ns exposed on result', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 10,
+				min_iterations: 10
 			});
 
 			bench.add('test', () => 1 + 1);
@@ -1510,7 +1516,7 @@ describe('Benchmark', () => {
 		test('has_results is true after run', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 			bench.add('test', () => {});
 
@@ -1522,7 +1528,7 @@ describe('Benchmark', () => {
 		test('has_results is false after reset', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 			bench.add('test', () => {});
 
@@ -1545,7 +1551,7 @@ describe('Benchmark', () => {
 		test('results_by_name returns map with results after run', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 			bench.add('task1', () => {});
 			bench.add('task2', () => {});
@@ -1567,7 +1573,7 @@ describe('Benchmark', () => {
 		test('results_by_name returns new map each call', async () => {
 			const bench = new Benchmark({
 				duration_ms: 50,
-				min_iterations: 3,
+				min_iterations: 3
 			});
 			bench.add('test', () => {});
 

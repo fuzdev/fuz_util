@@ -1,4 +1,4 @@
-import {describe, test, assert} from 'vitest';
+import { describe, test, assert } from 'vitest';
 
 import {
 	git_check_clean_workspace,
@@ -12,7 +12,7 @@ import {
 	git_workspace_status_message,
 	git_workspace_is_clean,
 	git_workspace_is_fully_staged,
-	type GitWorkspaceStatus,
+	type GitWorkspaceStatus
 } from '$lib/git.ts';
 
 describe('git_workspace_is_clean', () => {
@@ -20,7 +20,7 @@ describe('git_workspace_is_clean', () => {
 		const clean_status: GitWorkspaceStatus = {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		};
 		assert.strictEqual(git_workspace_is_clean(clean_status), true);
 	});
@@ -30,25 +30,25 @@ describe('git_workspace_is_clean', () => {
 			git_workspace_is_clean({
 				unstaged_changes: true,
 				staged_changes: false,
-				untracked_files: false,
+				untracked_files: false
 			}),
-			false,
+			false
 		);
 		assert.strictEqual(
 			git_workspace_is_clean({
 				unstaged_changes: false,
 				staged_changes: true,
-				untracked_files: false,
+				untracked_files: false
 			}),
-			false,
+			false
 		);
 		assert.strictEqual(
 			git_workspace_is_clean({
 				unstaged_changes: false,
 				staged_changes: false,
-				untracked_files: true,
+				untracked_files: true
 			}),
-			false,
+			false
 		);
 	});
 });
@@ -58,7 +58,7 @@ describe('git_workspace_is_fully_staged', () => {
 		const staged_status: GitWorkspaceStatus = {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		};
 		assert.strictEqual(git_workspace_is_fully_staged(staged_status), true);
 	});
@@ -67,7 +67,7 @@ describe('git_workspace_is_fully_staged', () => {
 		const clean_status: GitWorkspaceStatus = {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		};
 		assert.strictEqual(git_workspace_is_fully_staged(clean_status), true);
 	});
@@ -77,9 +77,9 @@ describe('git_workspace_is_fully_staged', () => {
 			git_workspace_is_fully_staged({
 				unstaged_changes: true,
 				staged_changes: false,
-				untracked_files: false,
+				untracked_files: false
 			}),
-			false,
+			false
 		);
 	});
 
@@ -88,9 +88,9 @@ describe('git_workspace_is_fully_staged', () => {
 			git_workspace_is_fully_staged({
 				unstaged_changes: false,
 				staged_changes: false,
-				untracked_files: true,
+				untracked_files: true
 			}),
-			false,
+			false
 		);
 	});
 });
@@ -100,7 +100,7 @@ describe('git_workspace_status_message', () => {
 		const clean_status: GitWorkspaceStatus = {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		};
 		assert.strictEqual(git_workspace_status_message(clean_status), 'workspace is clean');
 	});
@@ -109,7 +109,7 @@ describe('git_workspace_status_message', () => {
 		const dirty_status: GitWorkspaceStatus = {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: true,
+			untracked_files: true
 		};
 		const message = git_workspace_status_message(dirty_status);
 		assert.ok(message.includes('unstaged changes'));
@@ -121,7 +121,7 @@ describe('git_workspace_status_message', () => {
 		const message = git_workspace_status_message({
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 		assert.strictEqual(message, 'git has unstaged changes');
 	});
@@ -130,7 +130,7 @@ describe('git_workspace_status_message', () => {
 		const message = git_workspace_status_message({
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 		assert.strictEqual(message, 'git has staged but uncommitted changes');
 	});
@@ -139,7 +139,7 @@ describe('git_workspace_status_message', () => {
 		const message = git_workspace_status_message({
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: true,
+			untracked_files: true
 		});
 		assert.strictEqual(message, 'git has untracked files');
 	});
@@ -162,7 +162,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -171,7 +171,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -180,7 +180,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -189,7 +189,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -198,7 +198,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -207,7 +207,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: true,
+			untracked_files: true
 		});
 	});
 
@@ -216,7 +216,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -226,7 +226,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: true,
+			untracked_files: true
 		});
 	});
 
@@ -235,7 +235,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -244,7 +244,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -253,7 +253,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -262,7 +262,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -271,7 +271,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -280,7 +280,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -289,7 +289,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -298,7 +298,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -307,7 +307,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -316,7 +316,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -325,7 +325,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -334,7 +334,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -343,7 +343,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -352,7 +352,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -361,7 +361,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -370,7 +370,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -379,7 +379,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -389,7 +389,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -399,7 +399,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -409,7 +409,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -419,7 +419,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true,
 			staged_changes: false,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -429,7 +429,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -439,7 +439,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -449,7 +449,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -459,7 +459,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -469,7 +469,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: false,
 			staged_changes: true,
-			untracked_files: false,
+			untracked_files: false
 		});
 	});
 
@@ -485,7 +485,7 @@ describe('git_parse_workspace_status', () => {
 		assert.deepEqual(status, {
 			unstaged_changes: true, // From RM
 			staged_changes: true, // From R, C, M, and RM
-			untracked_files: true, // From ??
+			untracked_files: true // From ??
 		});
 	});
 });

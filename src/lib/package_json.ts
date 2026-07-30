@@ -1,16 +1,16 @@
-import {z} from 'zod';
+import { z } from 'zod';
 
-import {count_graphemes} from './string.ts';
-import {transform_empty_object_to_undefined} from './object.ts';
-import {Url} from './url.ts';
+import { count_graphemes } from './string.ts';
+import { transform_empty_object_to_undefined } from './object.ts';
+import { Url } from './url.ts';
 
 export const PackageJsonRepository = z.union([
 	z.string(),
 	z.looseObject({
 		type: z.string(),
 		url: Url,
-		directory: z.string().optional(),
-	}),
+		directory: z.string().optional()
+	})
 ]);
 export type PackageJsonRepository = z.infer<typeof PackageJsonRepository>;
 
@@ -19,8 +19,8 @@ export const PackageJsonAuthor = z.union([
 	z.looseObject({
 		name: z.string(),
 		email: z.email().optional(),
-		url: Url.optional(),
-	}),
+		url: Url.optional()
+	})
 ]);
 export type PackageJsonAuthor = z.infer<typeof PackageJsonAuthor>;
 
@@ -28,8 +28,8 @@ export const PackageJsonFunding = z.union([
 	z.string(),
 	z.looseObject({
 		type: z.string(),
-		url: Url,
-	}),
+		url: Url
+	})
 ]);
 export type PackageJsonFunding = z.infer<typeof PackageJsonFunding>;
 
@@ -40,9 +40,9 @@ const export_value_schema: z.ZodType = z.lazy(() =>
 		z.null(),
 		z.record(
 			z.string(),
-			z.lazy(() => export_value_schema),
-		),
-	]),
+			z.lazy(() => export_value_schema)
+		)
+	])
 );
 export const ExportValue = export_value_schema;
 export type ExportValue = z.infer<typeof ExportValue>;
@@ -56,7 +56,7 @@ export type ExportValue = z.infer<typeof ExportValue>;
 export const PackageJsonExports = z.union([
 	z.string(),
 	z.null(),
-	z.record(z.string(), export_value_schema),
+	z.record(z.string(), export_value_schema)
 ]);
 export type PackageJsonExports = z.infer<typeof PackageJsonExports>;
 
@@ -69,17 +69,17 @@ export const PackageJson = z.looseObject({
 	version: z.string().optional(),
 	private: z
 		.boolean()
-		.meta({description: 'disallow publishing to the configured registry'})
+		.meta({ description: 'disallow publishing to the configured registry' })
 		.optional(),
 	description: z.string().optional(),
 	tagline: z
 		.string()
-		.meta({description: "a Fuz extension that's a short phrase that represents this project"})
+		.meta({ description: "a Fuz extension that's a short phrase that represents this project" })
 		.optional(),
 	glyph: z
 		.string()
 		.meta({
-			description: "a Fuz extension that's a single unicode character that represents this project",
+			description: "a Fuz extension that's a single unicode character that represents this project"
 		})
 		.refine((v) => count_graphemes(v) === 1, 'must be a single unicode character')
 		.optional(),
@@ -87,12 +87,12 @@ export const PackageJson = z.looseObject({
 		.string()
 		.meta({
 			description:
-				"a Fuz extension that's a link relative to the `homepage` to an image that represents this project",
+				"a Fuz extension that's a link relative to the `homepage` to an image that represents this project"
 		})
 		.optional(),
 	logo_alt: z
 		.string()
-		.meta({description: "a Fuz extension that's the alt text for the `logo`"})
+		.meta({ description: "a Fuz extension that's the alt text for the `logo`" })
 		.optional(),
 	license: z.string().optional(),
 	scripts: z.record(z.string(), z.string()).optional(),
@@ -101,7 +101,7 @@ export const PackageJson = z.looseObject({
 	repository: z.union([z.string(), Url, PackageJsonRepository]).optional(),
 	contributors: z.array(z.union([z.string(), PackageJsonAuthor])).optional(),
 	bugs: z
-		.union([z.string(), z.looseObject({url: Url.optional(), email: z.email().optional()})])
+		.union([z.string(), z.looseObject({ url: Url.optional(), email: z.email().optional() })])
 		.optional(),
 	funding: z
 		.union([Url, PackageJsonFunding, z.array(z.union([Url, PackageJsonFunding]))])
@@ -116,13 +116,13 @@ export const PackageJson = z.looseObject({
 	dependencies: z.record(z.string(), z.string()).optional(),
 	devDependencies: z.record(z.string(), z.string()).optional(),
 	peerDependencies: z.record(z.string(), z.string()).optional(),
-	peerDependenciesMeta: z.record(z.string(), z.looseObject({optional: z.boolean()})).optional(),
+	peerDependenciesMeta: z.record(z.string(), z.looseObject({ optional: z.boolean() })).optional(),
 	optionalDependencies: z.record(z.string(), z.string()).optional(),
 
 	bin: z.record(z.string(), z.string()).optional(),
 	sideEffects: z.array(z.string()).optional(),
 	files: z.array(z.string()).optional(),
 	main: z.string().optional(),
-	exports: PackageJsonExports.transform(transform_empty_object_to_undefined).optional(),
+	exports: PackageJsonExports.transform(transform_empty_object_to_undefined).optional()
 });
 export type PackageJson = z.infer<typeof PackageJson>;

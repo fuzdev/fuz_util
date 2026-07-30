@@ -1,4 +1,4 @@
-import {describe, test, assert, beforeAll, afterAll} from 'vitest';
+import { describe, test, assert, beforeAll, afterAll } from 'vitest';
 
 import {
 	print_ms,
@@ -11,7 +11,7 @@ import {
 	print_boolean,
 	print_value,
 	print_error,
-	print_timing,
+	print_timing
 } from '$lib/print.ts';
 
 let original_st: typeof st;
@@ -135,7 +135,7 @@ describe('print_value', () => {
 	});
 
 	test('formats objects via JSON.stringify', () => {
-		assert.strictEqual(print_value({a: 1}), '{"a":1}');
+		assert.strictEqual(print_value({ a: 1 }), '{"a":1}');
 	});
 
 	test('formats undefined', () => {
@@ -161,7 +161,7 @@ describe('print_error', () => {
 	});
 
 	test('handles error with no message or stack', () => {
-		const err = {message: '', stack: undefined} as Error;
+		const err = { message: '', stack: undefined } as Error;
 		const result = print_error(err);
 		assert.include(result, 'Unknown error');
 	});

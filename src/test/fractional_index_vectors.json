@@ -1,0 +1,43 @@
+{
+	"_doc": [
+		"Cross-language conformance vectors for fractional indexing. This file is duplicated",
+		"byte-for-byte in fuz_util (src/test/) and fuz_sys (src/) — the two implementations of",
+		"the same algorithm. It is the contract that keeps them emitting identical keys.",
+		"`key` / `keys` are BARE deterministic output: TS must pass {jitter: false}; Rust has",
+		"no jitter layer. If a change makes one side fail, the other side is now wrong too —",
+		"fix the implementation, do not edit these values. Changing them is a deliberate",
+		"redefinition of the wire order and must land in both repos together."
+	],
+	"between": [
+		{"a": null, "b": null, "key": "V"},
+		{"a": "V", "b": null, "key": "W"},
+		{"a": null, "b": "V", "key": "U"},
+		{"a": "a", "b": "b", "key": "aV"},
+		{"a": "a", "b": "z", "key": "m"},
+		{"a": "0", "b": "1", "key": "0V"},
+		{"a": null, "b": "1", "key": "0V"},
+		{"a": "z", "b": null, "key": "zV"},
+		{"a": "zz", "b": null, "key": "zzV"},
+		{"a": "A", "b": "B", "key": "AV"},
+		{"a": "V", "b": "W", "key": "VV"},
+		{"a": "Vz", "b": "W", "key": "VzV"},
+		{"a": "a", "b": "a1", "key": "a0V"},
+		{"a": "abc", "b": "abd", "key": "abcV"},
+		{"a": "0", "b": "z", "key": "U"},
+		{"a": "zzz", "b": null, "key": "zzzV"},
+		{"a": null, "b": "01", "key": "00V"},
+		{"a": "Az", "b": "B", "key": "AzV"},
+		{"a": "m", "b": "m1", "key": "m0V"},
+		{"a": "9", "b": "A", "key": "9V"}
+	],
+	"indices": [
+		{"a": null, "b": null, "n": 1, "keys": ["V"]},
+		{"a": null, "b": null, "n": 3, "keys": ["U","V","W"]},
+		{"a": null, "b": null, "n": 5, "keys": ["T","U","V","VV","W"]},
+		{"a": null, "b": null, "n": 25, "keys": ["R","S","SV","T","TU","TV","U","UT","UU","UV","UVV","UW","V","VT","VU","VUV","VV","VVV","VW","W","WU","WV","X","XV","Y"]},
+		{"a": "a", "b": "z", "n": 7, "keys": ["d","g","j","m","p","s","v"]},
+		{"a": "a", "b": "z", "n": 16, "keys": ["aV","b","d","e","g","h","j","k","m","n","p","q","s","t","v","x"]},
+		{"a": "V", "b": null, "n": 4, "keys": ["VU","VV","W","X"]},
+		{"a": null, "b": "V", "n": 4, "keys": ["S","T","U","UV"]}
+	]
+}

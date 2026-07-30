@@ -1,6 +1,6 @@
-import {test, assert} from 'vitest';
+import { test, assert } from 'vitest';
 
-import {sort_map} from '$lib/map.ts';
+import { sort_map } from '$lib/map.ts';
 
 test('basic behavior', () => {
 	assert.deepEqual(
@@ -13,9 +13,9 @@ test('basic behavior', () => {
 					['d', 1],
 					['a', 1],
 					['c', 1],
-					['b', 1],
-				]),
-			).keys(),
+					['b', 1]
+				])
+			).keys()
 		),
 		Array.from(
 			new Map([
@@ -25,9 +25,9 @@ test('basic behavior', () => {
 				['B', 1],
 				['c', 1],
 				['C', 1],
-				['d', 1],
-			]).keys(),
-		),
+				['d', 1]
+			]).keys()
+		)
 	);
 });
 
@@ -38,15 +38,15 @@ test('custom comparator', () => {
 				['d', 1],
 				['a', 1],
 				['c', 1],
-				['b', 1],
+				['b', 1]
 			]),
-			(a, b) => (a[0] > b[0] ? -1 : 1),
+			(a, b) => (a[0] > b[0] ? -1 : 1)
 		),
 		new Map([
 			['d', 1],
 			['c', 1],
 			['b', 1],
-			['a', 1],
-		]),
+			['a', 1]
+		])
 	);
 });
