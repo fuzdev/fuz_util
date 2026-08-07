@@ -15,7 +15,7 @@ export type UuidWithDefault = z.infer<typeof UuidWithDefault>;
 export const is_uuid = (str: string): boolean => UUID_MATCHER.test(str);
 
 /**
- * Postgres doesn't support the namespace prefix, so neither does Felt.
+ * Postgres doesn't support the namespace prefix, so neither does fuz_app.
  * For more see the UUID RFC - https://tools.ietf.org/html/rfc4122
  * The Ajv validator does support the namespace, hence this custom implementation.
  */

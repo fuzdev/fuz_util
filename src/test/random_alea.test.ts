@@ -1,33 +1,16 @@
-/*
-
-This is the Alea pseudo-random number generator by Johannes Baagøe
-
-Security disclaimer: Felt cannot vouch for the cryotographic security of this code.
-Use Node/browser/platform crypto APIs instead of this when security matters.
-
-From https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
-
-Copyright (C) 2010 by Johannes Baagøe <baagoe@baagoe.org>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
+/**
+ * Pins `create_random_alea` against the reference implementation's published
+ * output — the expected values are Baagøe's own, so a refactor that changes
+ * the stream fails here rather than silently breaking every seeded consumer.
+ *
+ * Attribution and the MIT permission notice live with the code they cover, in
+ * `random_alea.ts`, which is also where the "not a CSPRNG" warning belongs —
+ * nobody reaches for a test module as a source of randomness.
+ *
+ * @see https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
+ *
+ * @module
+ */
 
 import { test, assert } from 'vitest';
 
