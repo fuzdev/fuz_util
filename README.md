@@ -21,7 +21,7 @@ design:
 - kinda minimal in many ways but also not, treeshakes well
 - includes a benchmarking library with rich statistical analysis
 
-## usage
+## Usage
 
 Install from [npm](https://www.npmjs.com/package/@fuzdev/fuz_util):
 
@@ -44,13 +44,13 @@ import {deep_equal} from '@fuzdev/fuz_util/deep_equal.ts';
 
 Docs at [util.fuz.dev/docs](https://util.fuz.dev/docs).
 
-## features
+## Features
 
 ### Benchmarking
 
 See [`docs/benchmark.md`](docs/benchmark.md).
 
-## build
+## Build
 
 ```bash
 npm run build
@@ -58,7 +58,7 @@ npm run build
 gro build
 ```
 
-## test
+## Test
 
 For more see [Vitest](https://github.com/vitest-dev/vitest)
 and [Gro's test docs](https://github.com/feltjs/gro/blob/main/src/docs/test.md).
@@ -69,7 +69,7 @@ gro test filepattern1 filepatternB
 gro test -- --forwarded-args 'to vitest'
 ```
 
-## deploy
+## Deploy
 
 [Deploy](https://github.com/feltjs/gro/blob/main/src/docs/deploy.md)
 (build, commit, and push) to the `deploy` branch, e.g. for GitHub Pages:
@@ -80,12 +80,16 @@ npm run deploy
 gro deploy
 ```
 
-## credits 🐢<sub>🐢</sub><sub><sub>🐢</sub></sub>
+## Credits 🐢<sub>🐢</sub><sub><sub>🐢</sub></sub>
 
 My sister Lisa helped me with the logo -
 [instagram.com/lisaeatkinson](https://www.instagram.com/lisaeatkinson/) -
 she's a designer and currently looking for work
 
-## license [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
+## Contributing
+
+[fuz.dev/contributing](https://www.fuz.dev/contributing)
+
+## License [🐦](https://wikipedia.org/wiki/Free_and_open-source_software)
 
 [MIT](LICENSE)
