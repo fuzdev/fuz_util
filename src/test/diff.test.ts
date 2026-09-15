@@ -4,8 +4,8 @@
  * @module
  */
 
-import {assert, test, describe} from 'vitest';
-import {styleText} from 'node:util';
+import { assert, test, describe } from 'vitest';
+import { styleText } from 'node:util';
 
 import {
 	diff_lines,
@@ -13,10 +13,10 @@ import {
 	diff_segments,
 	format_diff,
 	generate_diff,
-	type DiffLine,
+	type DiffLine
 } from '$lib/diff.ts';
-import {configure_print_colors} from '$lib/print.ts';
-import {create_random_alea} from '$lib/random_alea.ts';
+import { configure_print_colors } from '$lib/print.ts';
+import { create_random_alea } from '$lib/random_alea.ts';
 
 /**
  * Rebuilds the `a` text from a diff — `same` + `remove` lines, terminated
@@ -94,7 +94,7 @@ describe('diff_lines', () => {
 		test('identical single unterminated line', () => {
 			const result = diff_lines('hello', 'hello');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'hello', a_line: 1, b_line: 1, no_newline: true},
+				{ type: 'same', text: 'hello', a_line: 1, b_line: 1, no_newline: true }
 			]);
 		});
 
@@ -118,22 +118,22 @@ describe('diff_lines', () => {
 	describe('additions', () => {
 		test('add to empty', () => {
 			const result = diff_lines('', 'new line\n');
-			assert.deepEqual(result, [{type: 'add', text: 'new line', a_line: null, b_line: 1}]);
+			assert.deepEqual(result, [{ type: 'add', text: 'new line', a_line: null, b_line: 1 }]);
 		});
 
 		test('add line at end', () => {
 			const result = diff_lines('line 1\n', 'line 1\nline 2\n');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'line 1', a_line: 1, b_line: 1},
-				{type: 'add', text: 'line 2', a_line: null, b_line: 2},
+				{ type: 'same', text: 'line 1', a_line: 1, b_line: 1 },
+				{ type: 'add', text: 'line 2', a_line: null, b_line: 2 }
 			]);
 		});
 
 		test('add line at beginning', () => {
 			const result = diff_lines('line 2\n', 'line 1\nline 2\n');
 			assert.deepEqual(result, [
-				{type: 'add', text: 'line 1', a_line: null, b_line: 1},
-				{type: 'same', text: 'line 2', a_line: 1, b_line: 2},
+				{ type: 'add', text: 'line 1', a_line: null, b_line: 1 },
+				{ type: 'same', text: 'line 2', a_line: 1, b_line: 2 }
 			]);
 		});
 
@@ -142,7 +142,7 @@ describe('diff_lines', () => {
 			const adds = result.filter((d) => d.type === 'add');
 			assert.deepEqual(
 				adds.map((d) => d.text),
-				['b1', 'b2'],
+				['b1', 'b2']
 			);
 			assert_line_numbers(result);
 		});
@@ -151,15 +151,15 @@ describe('diff_lines', () => {
 	describe('removals', () => {
 		test('remove all content', () => {
 			const result = diff_lines('old line\n', '');
-			assert.deepEqual(result, [{type: 'remove', text: 'old line', a_line: 1, b_line: null}]);
+			assert.deepEqual(result, [{ type: 'remove', text: 'old line', a_line: 1, b_line: null }]);
 		});
 
 		test('remove line from middle', () => {
 			const result = diff_lines('a\nb\nc\n', 'a\nc\n');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'a', a_line: 1, b_line: 1},
-				{type: 'remove', text: 'b', a_line: 2, b_line: null},
-				{type: 'same', text: 'c', a_line: 3, b_line: 2},
+				{ type: 'same', text: 'a', a_line: 1, b_line: 1 },
+				{ type: 'remove', text: 'b', a_line: 2, b_line: null },
+				{ type: 'same', text: 'c', a_line: 3, b_line: 2 }
 			]);
 		});
 
@@ -168,7 +168,7 @@ describe('diff_lines', () => {
 			const removes = result.filter((d) => d.type === 'remove');
 			assert.deepEqual(
 				removes.map((d) => d.text),
-				['b1', 'b2'],
+				['b1', 'b2']
 			);
 		});
 	});
@@ -177,10 +177,10 @@ describe('diff_lines', () => {
 		test('change in middle emits remove before add with correct numbers', () => {
 			const result = diff_lines('a\nold\nc\n', 'a\nnew\nc\n');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'a', a_line: 1, b_line: 1},
-				{type: 'remove', text: 'old', a_line: 2, b_line: null},
-				{type: 'add', text: 'new', a_line: null, b_line: 2},
-				{type: 'same', text: 'c', a_line: 3, b_line: 3},
+				{ type: 'same', text: 'a', a_line: 1, b_line: 1 },
+				{ type: 'remove', text: 'old', a_line: 2, b_line: null },
+				{ type: 'add', text: 'new', a_line: null, b_line: 2 },
+				{ type: 'same', text: 'c', a_line: 3, b_line: 3 }
 			]);
 		});
 
@@ -188,11 +188,11 @@ describe('diff_lines', () => {
 			const result = diff_lines('a\nb\nc\n', 'x\ny\nz\n');
 			assert.lengthOf(
 				result.filter((d) => d.type === 'remove'),
-				3,
+				3
 			);
 			assert.lengthOf(
 				result.filter((d) => d.type === 'add'),
-				3,
+				3
 			);
 			assert_normalized(result);
 		});
@@ -204,7 +204,7 @@ describe('diff_lines', () => {
 			const result = diff_lines(a, b);
 			assert.lengthOf(
 				result.filter((d) => d.type !== 'same'),
-				5,
+				5
 			);
 			assert.strictEqual(reconstruct_a(result), a);
 			assert.strictEqual(reconstruct_b(result), b);
@@ -215,32 +215,32 @@ describe('diff_lines', () => {
 		test('newline-only change shows as remove+add of the final line', () => {
 			const result = diff_lines('a', 'a\n');
 			assert.deepEqual(result, [
-				{type: 'remove', text: 'a', a_line: 1, b_line: null, no_newline: true},
-				{type: 'add', text: 'a', a_line: null, b_line: 1},
+				{ type: 'remove', text: 'a', a_line: 1, b_line: null, no_newline: true },
+				{ type: 'add', text: 'a', a_line: null, b_line: 1 }
 			]);
 		});
 
 		test('removing the trailing newline', () => {
 			const result = diff_lines('a\n', 'a');
 			assert.deepEqual(result, [
-				{type: 'remove', text: 'a', a_line: 1, b_line: null},
-				{type: 'add', text: 'a', a_line: null, b_line: 1, no_newline: true},
+				{ type: 'remove', text: 'a', a_line: 1, b_line: null },
+				{ type: 'add', text: 'a', a_line: null, b_line: 1, no_newline: true }
 			]);
 		});
 
 		test('matching unterminated final lines stay same', () => {
 			const result = diff_lines('a\nb', 'a\nb');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'a', a_line: 1, b_line: 1},
-				{type: 'same', text: 'b', a_line: 2, b_line: 2, no_newline: true},
+				{ type: 'same', text: 'a', a_line: 1, b_line: 1 },
+				{ type: 'same', text: 'b', a_line: 2, b_line: 2, no_newline: true }
 			]);
 		});
 
 		test('matching unterminated final lines at different positions', () => {
 			const result = diff_lines('x\na', 'a');
 			assert.deepEqual(result, [
-				{type: 'remove', text: 'x', a_line: 1, b_line: null},
-				{type: 'same', text: 'a', a_line: 2, b_line: 1, no_newline: true},
+				{ type: 'remove', text: 'x', a_line: 1, b_line: null },
+				{ type: 'same', text: 'a', a_line: 2, b_line: 1, no_newline: true }
 			]);
 		});
 	});
@@ -249,16 +249,16 @@ describe('diff_lines', () => {
 		test('\\r stays in line text, so CRLF and LF lines differ', () => {
 			const result = diff_lines('a\r\n', 'a\n');
 			assert.deepEqual(result, [
-				{type: 'remove', text: 'a\r', a_line: 1, b_line: null},
-				{type: 'add', text: 'a', a_line: null, b_line: 1},
+				{ type: 'remove', text: 'a\r', a_line: 1, b_line: null },
+				{ type: 'add', text: 'a', a_line: null, b_line: 1 }
 			]);
 		});
 
 		test('identical CRLF content stays same with \\r in text', () => {
 			const result = diff_lines('a\r\nb\r\n', 'a\r\nb\r\n');
 			assert.deepEqual(result, [
-				{type: 'same', text: 'a\r', a_line: 1, b_line: 1},
-				{type: 'same', text: 'b\r', a_line: 2, b_line: 2},
+				{ type: 'same', text: 'a\r', a_line: 1, b_line: 1 },
+				{ type: 'same', text: 'b\r', a_line: 2, b_line: 2 }
 			]);
 		});
 	});
@@ -267,17 +267,17 @@ describe('diff_lines', () => {
 		test('disjoint content degrades to a replace block that still round-trips', () => {
 			const a = 'a\nb\nc\nd\n';
 			const b = 'w\nx\ny\nz\n';
-			const result = diff_lines(a, b, {max_cost: 1});
+			const result = diff_lines(a, b, { max_cost: 1 });
 			assert.deepEqual(
 				result.map((d) => d.type),
-				['remove', 'remove', 'remove', 'remove', 'add', 'add', 'add', 'add'],
+				['remove', 'remove', 'remove', 'remove', 'add', 'add', 'add', 'add']
 			);
 			assert.strictEqual(reconstruct_a(result), a);
 			assert.strictEqual(reconstruct_b(result), b);
 		});
 
 		test('common prefix and suffix survive the cap', () => {
-			const result = diff_lines('p\nx\ny\nq\n', 'p\nz\nw\nq\n', {max_cost: 1});
+			const result = diff_lines('p\nx\ny\nq\n', 'p\nz\nw\nq\n', { max_cost: 1 });
 			assert.strictEqual(result[0]!.type, 'same');
 			assert.strictEqual(result[0]!.text, 'p');
 			assert.strictEqual(result[result.length - 1]!.type, 'same');
@@ -314,7 +314,7 @@ describe('diff_hunks', () => {
 	});
 
 	test('single change gets context on both sides', () => {
-		const a_lines = Array.from({length: 21}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 21 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines[10] = 'modified';
 		const diff = diff_lines(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n');
@@ -339,7 +339,7 @@ describe('diff_hunks', () => {
 	});
 
 	test('nearby changes merge into one hunk, distant ones split', () => {
-		const a_lines = Array.from({length: 20}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines[2] = 'x';
 		b_lines[17] = 'y';
@@ -386,7 +386,7 @@ describe('diff_hunks', () => {
 	});
 
 	test('later hunks carry line numbers shifted by earlier changes', () => {
-		const a_lines = Array.from({length: 20}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines.splice(2, 0, 'inserted');
 		b_lines[18] = 'y';
@@ -397,8 +397,8 @@ describe('diff_hunks', () => {
 			hunks.map((h) => [h.a_start, h.a_count, h.b_start, h.b_count]),
 			[
 				[2, 2, 2, 3],
-				[17, 3, 18, 3],
-			],
+				[17, 3, 18, 3]
+			]
 		);
 	});
 
@@ -408,33 +408,33 @@ describe('diff_hunks', () => {
 		assert.lengthOf(hunks, 1);
 		assert.deepEqual(
 			hunks[0]!.lines.map((l) => l.type),
-			['remove', 'add'],
+			['remove', 'add']
 		);
 	});
 });
 
 describe('diff_segments', () => {
 	test('identical lines produce empty ranges', () => {
-		assert.deepEqual(diff_segments('same', 'same'), {a_ranges: [], b_ranges: []});
+		assert.deepEqual(diff_segments('same', 'same'), { a_ranges: [], b_ranges: [] });
 	});
 
 	test('both empty produce empty ranges', () => {
-		assert.deepEqual(diff_segments('', ''), {a_ranges: [], b_ranges: []});
+		assert.deepEqual(diff_segments('', ''), { a_ranges: [], b_ranges: [] });
 	});
 
 	test('single char substitution', () => {
 		assert.deepEqual(diff_segments('const x = 1;', 'const y = 1;'), {
 			a_ranges: [[6, 7]],
-			b_ranges: [[6, 7]],
+			b_ranges: [[6, 7]]
 		});
 	});
 
 	test('insertion only', () => {
-		assert.deepEqual(diff_segments('ab', 'axb'), {a_ranges: [], b_ranges: [[1, 2]]});
+		assert.deepEqual(diff_segments('ab', 'axb'), { a_ranges: [], b_ranges: [[1, 2]] });
 	});
 
 	test('deletion only', () => {
-		assert.deepEqual(diff_segments('axb', 'ab'), {a_ranges: [[1, 2]], b_ranges: []});
+		assert.deepEqual(diff_segments('axb', 'ab'), { a_ranges: [[1, 2]], b_ranges: [] });
 	});
 
 	test('dissimilar lines return null', () => {
@@ -446,34 +446,34 @@ describe('diff_segments', () => {
 	});
 
 	test('min_similarity 0 accepts a full rewrite', () => {
-		assert.deepEqual(diff_segments('abc', 'xyz', {min_similarity: 0}), {
+		assert.deepEqual(diff_segments('abc', 'xyz', { min_similarity: 0 }), {
 			a_ranges: [[0, 3]],
-			b_ranges: [[0, 3]],
+			b_ranges: [[0, 3]]
 		});
 	});
 
 	test('max_length returns null for long lines', () => {
 		const long = 'x'.repeat(50);
-		assert.isNull(diff_segments(long, long + 'y', {max_length: 10}));
+		assert.isNull(diff_segments(long, long + 'y', { max_length: 10 }));
 	});
 
 	test('join_gap merges ranges across tiny matched gaps by default', () => {
 		assert.deepEqual(diff_segments('abcdef', 'aXcYef'), {
 			a_ranges: [[1, 4]],
-			b_ranges: [[1, 4]],
+			b_ranges: [[1, 4]]
 		});
 	});
 
 	test('join_gap 0 keeps exact ranges', () => {
-		assert.deepEqual(diff_segments('abcdef', 'aXcYef', {join_gap: 0}), {
+		assert.deepEqual(diff_segments('abcdef', 'aXcYef', { join_gap: 0 }), {
 			a_ranges: [
 				[1, 2],
-				[3, 4],
+				[3, 4]
 			],
 			b_ranges: [
 				[1, 2],
-				[3, 4],
-			],
+				[3, 4]
+			]
 		});
 	});
 
@@ -482,28 +482,28 @@ describe('diff_segments', () => {
 		assert.deepEqual(result, {
 			a_ranges: [
 				[4, 5],
-				[12, 13],
+				[12, 13]
 			],
 			b_ranges: [
 				[4, 5],
-				[12, 13],
-			],
+				[12, 13]
+			]
 		});
 	});
 
 	test('max_cost degrades the middle to one replace range', () => {
-		assert.deepEqual(diff_segments('aWXYb', 'aXYZb', {max_cost: 1}), {
+		assert.deepEqual(diff_segments('aWXYb', 'aXYZb', { max_cost: 1 }), {
 			a_ranges: [[1, 4]],
-			b_ranges: [[1, 4]],
+			b_ranges: [[1, 4]]
 		});
 		assert.deepEqual(diff_segments('aWXYb', 'aXYZb'), {
 			a_ranges: [[1, 2]],
-			b_ranges: [[3, 4]],
+			b_ranges: [[3, 4]]
 		});
 	});
 
 	test('changed-char total matches the edit distance on the classic case', () => {
-		const result = diff_segments('abcabba', 'cbabac', {min_similarity: 0, join_gap: 0});
+		const result = diff_segments('abcabba', 'cbabac', { min_similarity: 0, join_gap: 0 });
 		assert.isNotNull(result);
 		const total =
 			result.a_ranges.reduce((sum, [s, e]) => sum + e - s, 0) +
@@ -514,7 +514,7 @@ describe('diff_segments', () => {
 
 describe('format_diff', () => {
 	const single_change_hunks = () => {
-		const a_lines = Array.from({length: 21}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 21 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines[10] = 'modified';
 		const diff = diff_lines(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n');
@@ -556,40 +556,46 @@ describe('format_diff', () => {
 	});
 
 	test('respects prefix option', () => {
-		const result = format_diff(single_change_hunks(), 'a', 'b', {prefix: '  '});
+		const result = format_diff(single_change_hunks(), 'a', 'b', { prefix: '  ' });
 		for (const line of result.split('\n')) {
 			assert.isTrue(line.startsWith('  '));
 		}
 	});
 
 	test('respects max_lines option', () => {
-		const diff = diff_lines('', Array.from({length: 100}, (_, i) => `line ${i}`).join('\n') + '\n');
+		const diff = diff_lines(
+			'',
+			Array.from({ length: 100 }, (_, i) => `line ${i}`).join('\n') + '\n'
+		);
 		const hunks = diff_hunks(diff);
-		const result = format_diff(hunks, 'a', 'b', {max_lines: 5});
+		const result = format_diff(hunks, 'a', 'b', { max_lines: 5 });
 		assert.include(result, '... (95 more lines)');
 	});
 
 	test('truncation at a hunk boundary omits the next hunk header', () => {
-		const a_lines = Array.from({length: 30}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 30 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines[2] = 'x';
 		b_lines[27] = 'y';
 		const diff = diff_lines(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n');
 		const hunks = diff_hunks(diff, 1);
 		assert.lengthOf(hunks, 2);
-		const result = format_diff(hunks, 'a', 'b', {max_lines: hunks[0]!.lines.length});
+		const result = format_diff(hunks, 'a', 'b', { max_lines: hunks[0]!.lines.length });
 		const lines = result.split('\n');
 		assert.strictEqual(lines[lines.length - 1], `... (${hunks[1]!.lines.length} more lines)`);
 		assert.lengthOf(
 			lines.filter((l) => l.startsWith('@@')),
-			1,
+			1
 		);
 	});
 
 	test('max_lines 0 shows all lines', () => {
-		const diff = diff_lines('', Array.from({length: 10}, (_, i) => `line ${i}`).join('\n') + '\n');
+		const diff = diff_lines(
+			'',
+			Array.from({ length: 10 }, (_, i) => `line ${i}`).join('\n') + '\n'
+		);
 		const hunks = diff_hunks(diff);
-		const result = format_diff(hunks, 'a', 'b', {max_lines: 0});
+		const result = format_diff(hunks, 'a', 'b', { max_lines: 0 });
 		assert.notInclude(result, 'more lines');
 		// 2 headers + 1 @@ + 10 content lines
 		assert.lengthOf(result.split('\n'), 13);
@@ -625,7 +631,7 @@ describe('generate_diff', () => {
 	});
 
 	test('context filtering keeps distant lines out', () => {
-		const a_lines = Array.from({length: 20}, (_, i) => `line ${i}`);
+		const a_lines = Array.from({ length: 20 }, (_, i) => `line ${i}`);
 		const b_lines = [...a_lines];
 		b_lines[10] = 'modified line 10';
 		const result = generate_diff(a_lines.join('\n') + '\n', b_lines.join('\n') + '\n', 'file.txt');
@@ -636,7 +642,7 @@ describe('generate_diff', () => {
 	});
 
 	test('passes format options through', () => {
-		const result = generate_diff('a\n', 'b\n', 'file.txt', {prefix: '> '});
+		const result = generate_diff('a\n', 'b\n', 'file.txt', { prefix: '> ' });
 		assert.isString(result);
 		for (const line of result!.split('\n')) {
 			assert.isTrue(line.startsWith('> '));
@@ -648,17 +654,17 @@ describe('generate_diff', () => {
 	});
 
 	test('passes context_lines through', () => {
-		const a_lines = Array.from({length: 9}, (_, i) => `line ${i + 1}`);
+		const a_lines = Array.from({ length: 9 }, (_, i) => `line ${i + 1}`);
 		const b_lines = [...a_lines];
 		b_lines[4] = 'modified';
 		const a = a_lines.join('\n') + '\n';
 		const b = b_lines.join('\n') + '\n';
 		assert.include(generate_diff(a, b, 'f')!, 'line 4');
-		assert.notInclude(generate_diff(a, b, 'f', {context_lines: 0})!, 'line 4');
+		assert.notInclude(generate_diff(a, b, 'f', { context_lines: 0 })!, 'line 4');
 	});
 
 	test('passes max_cost through', () => {
-		const capped = generate_diff('a\nb\n', 'b\na\n', 'f', {max_cost: 1});
+		const capped = generate_diff('a\nb\n', 'b\na\n', 'f', { max_cost: 1 });
 		assert.include(capped!, '-b');
 		assert.include(capped!, '+b');
 		assert.notInclude(generate_diff('a\nb\n', 'b\na\n', 'f')!, '-b');
@@ -670,7 +676,7 @@ describe('round-trip property', () => {
 	const random_int = (max: number): number => Math.floor(random() * max);
 	const alphabet = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', ''];
 
-	const random_case = (): {a: string; b: string} => {
+	const random_case = (): { a: string; b: string } => {
 		const a_lines: Array<string> = [];
 		const a_len = random_int(40);
 		for (let i = 0; i < a_len; i++) a_lines.push(alphabet[random_int(alphabet.length)]!);
@@ -695,12 +701,12 @@ describe('round-trip property', () => {
 			if (lines[lines.length - 1] === '' || random_int(2) === 0) return lines.join('\n') + '\n';
 			return lines.join('\n');
 		};
-		return {a: terminate(a_lines), b: terminate(b_lines)};
+		return { a: terminate(a_lines), b: terminate(b_lines) };
 	};
 
 	test('diffs reconstruct both sides exactly', () => {
 		for (let i = 0; i < 100; i++) {
-			const {a, b} = random_case();
+			const { a, b } = random_case();
 			const result = diff_lines(a, b);
 			assert.strictEqual(reconstruct_a(result), a, `a mismatch for case ${i}`);
 			assert.strictEqual(reconstruct_b(result), b, `b mismatch for case ${i}`);
@@ -711,8 +717,8 @@ describe('round-trip property', () => {
 
 	test('capped diffs still reconstruct both sides exactly', () => {
 		for (let i = 0; i < 100; i++) {
-			const {a, b} = random_case();
-			const result = diff_lines(a, b, {max_cost: 3});
+			const { a, b } = random_case();
+			const result = diff_lines(a, b, { max_cost: 3 });
 			assert.strictEqual(reconstruct_a(result), a, `a mismatch for case ${i}`);
 			assert.strictEqual(reconstruct_b(result), b, `b mismatch for case ${i}`);
 			assert_line_numbers(result);

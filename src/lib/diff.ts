@@ -5,8 +5,8 @@
  * @module
  */
 
-import {string_is_binary} from './string.ts';
-import {st} from './print.ts';
+import { string_is_binary } from './string.ts';
+import { st } from './print.ts';
 
 /**
  * One line of a line diff. Line numbers are 1-based; the absent side of an
@@ -124,11 +124,11 @@ const normalize_ops = (ops: Array<DiffEditOp>): Array<DiffEditOp> => {
 	let adds = 0;
 	const flush = (): void => {
 		if (removes > 0) {
-			out.push({type: 'remove', count: removes});
+			out.push({ type: 'remove', count: removes });
 			removes = 0;
 		}
 		if (adds > 0) {
-			out.push({type: 'add', count: adds});
+			out.push({ type: 'add', count: adds });
 			adds = 0;
 		}
 	};
@@ -139,7 +139,7 @@ const normalize_ops = (ops: Array<DiffEditOp>): Array<DiffEditOp> => {
 			if (last && last.type === 'same') {
 				last.count += op.count;
 			} else {
-				out.push({type: 'same', count: op.count});
+				out.push({ type: 'same', count: op.count });
 			}
 		} else if (op.type === 'remove') {
 			removes += op.count;
@@ -163,7 +163,7 @@ const myers_middle = (
 	b: ArrayLike<number>,
 	b_off: number,
 	m: number,
-	max_cost: number,
+	max_cost: number
 ): Array<DiffEditOp> => {
 	const cap = Math.min(n + m, max_cost);
 	// endpoints indexed by k + cap; per-round compact copies for the backtrack
@@ -196,8 +196,8 @@ const myers_middle = (
 	}
 	if (found_d === -1) {
 		return [
-			{type: 'remove', count: n},
-			{type: 'add', count: m},
+			{ type: 'remove', count: n },
+			{ type: 'add', count: m }
 		];
 	}
 	const rev: Array<DiffEditOp> = [];
@@ -212,12 +212,12 @@ const myers_middle = (
 		const prev_x = prev_of(prev_k);
 		const after_x = from_down ? prev_x : prev_x + 1;
 		const snake = x - after_x;
-		if (snake > 0) rev.push({type: 'same', count: snake});
-		rev.push(from_down ? {type: 'add', count: 1} : {type: 'remove', count: 1});
+		if (snake > 0) rev.push({ type: 'same', count: snake });
+		rev.push(from_down ? { type: 'add', count: 1 } : { type: 'remove', count: 1 });
 		x = prev_x;
 		y = prev_x - prev_k;
 	}
-	if (x > 0) rev.push({type: 'same', count: x});
+	if (x > 0) rev.push({ type: 'same', count: x });
 	rev.reverse();
 	return rev;
 };
@@ -230,7 +230,7 @@ const myers_middle = (
 const diff_ops = (
 	a: ArrayLike<number>,
 	b: ArrayLike<number>,
-	max_cost: number,
+	max_cost: number
 ): Array<DiffEditOp> => {
 	const n_total = a.length;
 	const m_total = b.length;
@@ -247,16 +247,16 @@ const diff_ops = (
 	const n = n_total - pre - suf;
 	const m = m_total - pre - suf;
 	const ops: Array<DiffEditOp> = [];
-	if (pre > 0) ops.push({type: 'same', count: pre});
+	if (pre > 0) ops.push({ type: 'same', count: pre });
 	if (n === 0) {
-		if (m > 0) ops.push({type: 'add', count: m});
+		if (m > 0) ops.push({ type: 'add', count: m });
 	} else if (m === 0) {
-		ops.push({type: 'remove', count: n});
+		ops.push({ type: 'remove', count: n });
 	} else {
 		const middle = myers_middle(a, pre, n, b, pre, m, max_cost);
 		for (const op of middle) ops.push(op);
 	}
-	if (suf > 0) ops.push({type: 'same', count: suf});
+	if (suf > 0) ops.push({ type: 'same', count: suf });
 	return normalize_ops(ops);
 };
 
@@ -265,14 +265,14 @@ const diff_ops = (
  * exactly its terminated lines (no phantom empty final line), one not ending
  * in `\n` has an unterminated final line, and `''` has no lines at all.
  */
-const split_lines = (text: string): {lines: Array<string>; ends_newline: boolean} => {
-	if (text === '') return {lines: [], ends_newline: true};
+const split_lines = (text: string): { lines: Array<string>; ends_newline: boolean } => {
+	if (text === '') return { lines: [], ends_newline: true };
 	const lines = text.split('\n');
 	if (lines[lines.length - 1] === '') {
 		lines.pop();
-		return {lines, ends_newline: true};
+		return { lines, ends_newline: true };
 	}
-	return {lines, ends_newline: false};
+	return { lines, ends_newline: false };
 };
 
 /**
@@ -283,7 +283,7 @@ const split_lines = (text: string): {lines: Array<string>; ends_newline: boolean
 const intern_lines = (
 	lines: Array<string>,
 	ends_newline: boolean,
-	ids: Map<string, number>,
+	ids: Map<string, number>
 ): Int32Array => {
 	const out = new Int32Array(lines.length);
 	const last = lines.length - 1;
@@ -308,7 +308,7 @@ const intern_lines = (
  * @param b - the updated content
  */
 export const diff_lines = (a: string, b: string, options: DiffOptions = {}): Array<DiffLine> => {
-	const {max_cost = MAX_COST_DEFAULT} = options;
+	const { max_cost = MAX_COST_DEFAULT } = options;
 	const a_split = split_lines(a);
 	const b_split = split_lines(b);
 	const a_lines = a_split.lines;
@@ -325,18 +325,18 @@ export const diff_lines = (a: string, b: string, options: DiffOptions = {}): Arr
 	for (const op of ops) {
 		for (let i = 0; i < op.count; i++) {
 			if (op.type === 'same') {
-				const line: DiffLine = {type: 'same', text: a_lines[ai]!, a_line: ai + 1, b_line: bi + 1};
+				const line: DiffLine = { type: 'same', text: a_lines[ai]!, a_line: ai + 1, b_line: bi + 1 };
 				if (ai === a_last_unterminated) line.no_newline = true;
 				result.push(line);
 				ai++;
 				bi++;
 			} else if (op.type === 'remove') {
-				const line: DiffLine = {type: 'remove', text: a_lines[ai]!, a_line: ai + 1, b_line: null};
+				const line: DiffLine = { type: 'remove', text: a_lines[ai]!, a_line: ai + 1, b_line: null };
 				if (ai === a_last_unterminated) line.no_newline = true;
 				result.push(line);
 				ai++;
 			} else {
-				const line: DiffLine = {type: 'add', text: b_lines[bi]!, a_line: null, b_line: bi + 1};
+				const line: DiffLine = { type: 'add', text: b_lines[bi]!, a_line: null, b_line: bi + 1 };
 				if (bi === b_last_unterminated) line.no_newline = true;
 				result.push(line);
 				bi++;
@@ -394,7 +394,7 @@ export const diff_hunks = (lines: Array<DiffLine>, context_lines = 3): Array<Dif
 				}
 			}
 		}
-		hunks.push({a_start, a_count, b_start, b_count, lines: hunk_lines});
+		hunks.push({ a_start, a_count, b_start, b_count, lines: hunk_lines });
 		window_start = -1;
 		window_end = -1;
 	};
@@ -423,7 +423,7 @@ export const diff_hunks = (lines: Array<DiffLine>, context_lines = 3): Array<Dif
  */
 const join_ranges = (
 	ranges: Array<[number, number]>,
-	join_gap: number,
+	join_gap: number
 ): Array<[number, number]> => {
 	if (join_gap <= 0 || ranges.length < 2) return ranges;
 	let last = ranges[0]!;
@@ -452,16 +452,16 @@ const join_ranges = (
 export const diff_segments = (
 	a: string,
 	b: string,
-	options: DiffSegmentsOptions = {},
+	options: DiffSegmentsOptions = {}
 ): DiffSegments | null => {
 	const {
 		max_cost = MAX_COST_DEFAULT,
 		max_length = 1000,
 		min_similarity = 0.3,
-		join_gap = 2,
+		join_gap = 2
 	} = options;
 	if (a.length > max_length || b.length > max_length) return null;
-	if (a === b) return {a_ranges: [], b_ranges: []};
+	if (a === b) return { a_ranges: [], b_ranges: [] };
 	const a_codes = new Int32Array(a.length);
 	for (let i = 0; i < a.length; i++) a_codes[i] = a.charCodeAt(i);
 	const b_codes = new Int32Array(b.length);
@@ -488,7 +488,7 @@ export const diff_segments = (
 			bi += op.count;
 		}
 	}
-	return {a_ranges: join_ranges(a_ranges, join_gap), b_ranges: join_ranges(b_ranges, join_gap)};
+	return { a_ranges: join_ranges(a_ranges, join_gap), b_ranges: join_ranges(b_ranges, join_gap) };
 };
 
 /**
@@ -519,9 +519,9 @@ export const format_diff = (
 	hunks: Array<DiffHunk>,
 	a_path: string,
 	b_path: string,
-	options: FormatDiffOptions = {},
+	options: FormatDiffOptions = {}
 ): string => {
-	const {prefix = '', max_lines = 50} = options;
+	const { prefix = '', max_lines = 50 } = options;
 	const out: Array<string> = [`${prefix}--- ${a_path}`, `${prefix}+++ ${b_path}`];
 	let total = 0;
 	for (const h of hunks) total += h.lines.length;
@@ -574,11 +574,11 @@ export const generate_diff = (
 	a: string,
 	b: string,
 	path: string,
-	options: GenerateDiffOptions = {},
+	options: GenerateDiffOptions = {}
 ): string | null => {
 	if (string_is_binary(a) || string_is_binary(b)) return null;
-	const {context_lines, max_cost, ...format_options} = options;
-	const lines = diff_lines(a, b, {max_cost});
+	const { context_lines, max_cost, ...format_options } = options;
+	const lines = diff_lines(a, b, { max_cost });
 	const hunks = diff_hunks(lines, context_lines);
 	return format_diff(hunks, path, path, format_options);
 };

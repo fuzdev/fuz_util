@@ -194,7 +194,7 @@ export const fractional_index_between = (
 	b: string | null,
 	options?: FractionalIndexOptions
 ): string => {
-	const {jitter = true, random = Math.random} = options ?? {};
+	const { jitter = true, random = Math.random } = options ?? {};
 	validate_bracket(a, b);
 	const base = mid_between(a, b);
 	const suffix = jitter ? jitter_suffix(random) : '';
