@@ -8,7 +8,7 @@
  * The vocabulary — `FactHashSchema`, `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`,
  * `is_fact_hash` — lives in `hash_schemas.ts`, which imports no WASM. This
  * module holds the functions that actually hash, so importing it costs the
- * `@fuzdev/blake3_wasm` binary. Client code validating a hash it received
+ * `@fuzdev/blake3-wasm` binary. Client code validating a hash it received
  * should import from `hash_schemas.ts` instead.
  *
  * Runtime validation happens at construction (`fact_hash_bytes` /
@@ -24,7 +24,7 @@
  * @module
  */
 
-import { hash_stream } from '@fuzdev/blake3_wasm';
+import { hash_stream } from '@fuzdev/blake3-wasm';
 
 import { hash_blake3 } from './hash_blake3.ts';
 import { FACT_HASH_PREFIX, FACT_HASH_PATTERN, type FactHash } from './hash_schemas.ts';
@@ -34,7 +34,7 @@ import type { Json } from './json.ts';
 /**
  * Synchronously hash bytes into a fact hash.
  *
- * Delegates to `hash_blake3` (the fuz_util wrapper around `@fuzdev/blake3_wasm`)
+ * Delegates to `hash_blake3` (the fuz_util wrapper around `@fuzdev/blake3-wasm`)
  * and prefixes the result with `blake3:`. Strings are UTF-8 encoded.
  */
 export const fact_hash_bytes = (data: Uint8Array | string): FactHash =>

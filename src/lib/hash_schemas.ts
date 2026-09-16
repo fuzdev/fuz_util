@@ -2,7 +2,7 @@
  * Hash vocabulary — schemas, patterns, and guards, with no hashing.
  *
  * This module is deliberately WASM-free. `hash_blake3.ts` and `fact_hash.ts`
- * import `@fuzdev/blake3_wasm` and kick off its initialization at module
+ * import `@fuzdev/blake3-wasm` and kick off its initialization at module
  * scope, so importing either one to reach a validator drags the WASM binary
  * into the bundle and fetches it at page load. Client code that only needs to
  * *validate* a hash — action specs, wire schemas, cell payload shapes —

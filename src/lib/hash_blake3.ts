@@ -1,5 +1,5 @@
 /**
- * BLAKE3 cryptographic hashing via `@fuzdev/blake3_wasm`.
+ * BLAKE3 cryptographic hashing via `@fuzdev/blake3-wasm`.
  *
  * Synchronous and fast. Returns hex-encoded 256-bit (32-byte) digests.
  * WASM initialization starts eagerly on import. Await `blake3_ready` before first use
@@ -12,7 +12,7 @@
  * @module
  */
 
-import { hash, init } from '@fuzdev/blake3_wasm';
+import { hash, init } from '@fuzdev/blake3-wasm';
 
 import { to_hex } from './hex.ts';
 import { to_bytes } from './bytes.ts';

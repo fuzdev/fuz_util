@@ -53,7 +53,7 @@ fuz_util is a **foundational utility library**:
   that only validates a hash imports from here — the two modules below pull the
   WASM binary in and initialize it at module scope
 - `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex;
-  `blake3_ready`, via `@fuzdev/blake3_wasm`)
+  `blake3_ready`, via `@fuzdev/blake3-wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
   for non-security uses)
 - `fact_hash.ts` - fact-hash producers: `fact_hash_bytes`, `fact_hash_stream`,
