@@ -1,10 +1,16 @@
 # @fuzdev/fuz_util
 
+## 0.69.0
+
+### Minor Changes
+
+- **breaking** chore: the optional peer dep `@fuzdev/blake3_wasm` is renamed to `@fuzdev/blake3-wasm` (`^0.2.0`) — swap the dependency and any `optimizeDeps.exclude` entry ([ef67d3a](https://github.com/fuzdev/fuz_util/commit/ef67d3a))
+
 ## 0.68.0
 
 ### Minor Changes
 
-- refactor: extract fact and blake3 helpers to `hash_schemas.ts` ([4c49cbf](https://github.com/fuzdev/fuz_util/commit/4c49cbf))
+- extract fact and blake3 helpers to `hash_schemas.ts` ([4c49cbf](https://github.com/fuzdev/fuz_util/commit/4c49cbf)) ([refactor](https://github.com/fuzdev/fuz_util/commit/refactor))
 
 ## 0.67.0
 
