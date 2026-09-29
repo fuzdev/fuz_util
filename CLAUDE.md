@@ -17,9 +17,6 @@ gro test      # run tests with vitest
 gro build     # build the package for production
 ```
 
-IMPORTANT for AI agents: Do NOT run `gro dev` - the developer will manage the
-dev server.
-
 ## Scope
 
 fuz_util is a **foundational utility library**:
