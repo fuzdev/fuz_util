@@ -52,7 +52,7 @@ fuz_util is a **foundational utility library**:
   `fact_hash_verify`, `fact_hash_extract_refs` (depth-first scan of a JSON
   value for `blake3:` refs)
 - `fact_store.ts` - `FactStore` backend-agnostic content-addressed byte-store
-  interface (`put` / `put_stream` / `get` / `put_ref` / `delete` / `has` /
+  interface (`put` / `put_stream` / `get` / `delete` / `has` /
   `get_meta` / `get_refs`), `FactMeta`, `FactPutOptions`, `PutStreamOutcome`
   (the bounded-memory `put_stream` digests + size). Interface only — backend
   implementations live downstream (zero backend deps here)

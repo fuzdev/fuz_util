@@ -42,7 +42,7 @@ export const fact_hash_bytes = (data: Uint8Array | string): FactHash =>
 
 /**
  * Hash a `ReadableStream<Uint8Array>` into a fact hash without buffering
- * the full content. Used by `FactStore.put_ref` for large external content.
+ * the full content.
  */
 export const fact_hash_stream = async (stream: ReadableStream<Uint8Array>): Promise<FactHash> =>
 	(FACT_HASH_PREFIX + to_hex(await hash_stream(stream))) as FactHash;

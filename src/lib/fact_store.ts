@@ -7,7 +7,7 @@
  * (zero backend deps) so build tools can use it; backend implementations
  * live downstream.
  *
- * Idempotent writes, verifiable reads, embedded vs referenced storage
+ * Idempotent writes, verifiable reads, embedded vs external storage
  * abstracted — see the per-method contracts below.
  *
  * @module
@@ -16,7 +16,7 @@
 import type { FactHash } from './hash_schemas.ts';
 
 /**
- * Optional metadata + ref declarations on a `put` / `put_ref` call.
+ * Optional metadata + ref declarations on a `put` / `put_stream` call.
  *
  * `content_type` is advisory and not part of the hash. Omitting it
  * (`undefined`) reads back from `get_meta` as `null` — `undefined` means
@@ -48,13 +48,11 @@ export interface PutStreamOutcome {
 /**
  * Per-fact metadata returned by `FactStore.get_meta`.
  *
- * `external` is `true` when the fact is stored as a URL reference rather
- * than embedded bytes — callers may use this to decide whether to stream
- * vs load fully. The external URL itself is intentionally *not* exposed
- * here: reads go through `get`, which fetches and verifies hash↔bytes
- * internally, so handing out a live URL would bypass the verifiable-reads
- * contract. The URL surfaces only from `delete`, where the caller must
- * unlink the external resource.
+ * `external` is `true` when the bytes are stored outside the row rather
+ * than embedded — callers may use this to decide whether to stream vs load
+ * fully. The storage location is intentionally *not* exposed here: reads go
+ * through `get`, which verifies hash↔bytes, so handing out a location would
+ * bypass the verifiable-reads contract. It surfaces only from `delete`.
  */
 export interface FactMeta {
 	content_type: string | null;
@@ -102,21 +100,9 @@ export interface FactStore {
 	) => Promise<PutStreamOutcome>;
 
 	/**
-	 * Store a reference to external content (large files). Hashes the content
-	 * at the URL (streaming) and records hash + URL + size.
-	 *
-	 * `size` is supplied by the caller (typically from the upload's
-	 * Content-Length); implementations may verify by counting bytes during
-	 * streaming and rejecting on mismatch. Implementations decide how to
-	 * fetch — production typically a signed URL into object storage, tests
-	 * inject a stub.
-	 */
-	put_ref: (url: string, size: number, options?: FactPutOptions) => Promise<FactHash>;
-
-	/**
-	 * Retrieve bytes by hash. Returns `null` when not found OR when fetching
-	 * external content failed integrity verification — both are treated as
-	 * unavailable from the caller's perspective.
+	 * Retrieve bytes by hash. Returns `null` when not found OR when externally
+	 * stored bytes could not be read or failed integrity verification — all
+	 * are treated as unavailable from the caller's perspective.
 	 */
 	get: (hash: FactHash) => Promise<Uint8Array | null>;
 
@@ -137,9 +123,9 @@ export interface FactStore {
 	/**
 	 * Drop a fact. Idempotent — deleting an absent hash returns `null`.
 	 * Returns the deleted fact's `size` and `external_url` so callers can
-	 * tally freed bytes and unlink any external resource (the store
-	 * doesn't know how to resolve `file:` / `s3:` / etc. URLs to a
-	 * deletable handle, mirroring the read-side fetcher split).
+	 * tally freed bytes and remove the externally stored bytes; the store
+	 * does not remove them itself. `external_url` is whatever the row held —
+	 * validate its shape before using it to address anything.
 	 *
 	 * Implementations do NOT verify the hash is unreferenced — that
 	 * policy lives one layer up (orphan-fact admin, GC walker).
