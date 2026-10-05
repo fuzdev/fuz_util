@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.70.0
+
+### Minor Changes
+
+- **breaking** refactor: `FactStore.put_ref` is removed from the interface — an implementation stores bytes it is handed (`put` / `put_stream`) and no longer registers bytes held at an external URL; a caller holding such bytes reads them and calls `put` or `put_stream` ([8b3c39a](https://github.com/fuzdev/fuz_util/commit/8b3c39a))
+
 ## 0.69.0
 
 ### Minor Changes
