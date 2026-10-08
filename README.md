@@ -21,6 +21,8 @@ design:
 - kinda minimal in many ways but also not, treeshakes well
 - includes a benchmarking library with rich statistical analysis
 
+This library has no AI features by design, for that see [zzz](https://github.com/fuzdev/zzz).
+
 ## Usage
 
 Install from [npm](https://www.npmjs.com/package/@fuzdev/fuz_util):
