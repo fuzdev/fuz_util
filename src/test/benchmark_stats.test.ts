@@ -406,11 +406,23 @@ describe('benchmark_stats_compare', () => {
 
 		const comparison = benchmark_stats_compare(a, b);
 
-		// With single samples, std_dev is 0
 		assert.strictEqual(comparison.faster, 'a');
 		assert.strictEqual(comparison.speedup_ratio, 2);
-		// Zero variance case should still work
 		assert.strictEqual(comparison.effect_magnitude, 'large');
+		// no variance estimate from one sample, so no p-value and no significance
+		assert.isNaN(comparison.p_value);
+		assert.strictEqual(comparison.significant, false);
+		assert.strictEqual(comparison.effect_size, Infinity);
+	});
+
+	test('one sample against many identical is never significant', () => {
+		const a = new BenchmarkStats([1000]);
+		const b = new BenchmarkStats(Array(50).fill(2000));
+
+		const comparison = benchmark_stats_compare(a, b);
+
+		assert.isNaN(comparison.p_value);
+		assert.strictEqual(comparison.significant, false);
 	});
 
 	test('one sample against many is never significant', () => {

@@ -1,6 +1,6 @@
 import { afterEach, assert, beforeEach, describe, test } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { platform, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -42,6 +42,14 @@ describe('benchmark_lock_acquire', () => {
 		assert.strictEqual(holder.label, 'test run');
 		assert.strictEqual(holder.cwd, process.cwd());
 		assert.ok(!Number.isNaN(Date.parse(holder.started_at)));
+	});
+
+	test('leaves only the lock file behind, taken or refused', () => {
+		const first = benchmark_lock_acquire('first', { path });
+		assert.ok(first.ok);
+		const second = benchmark_lock_acquire('second', { path });
+		assert.ok(!second.ok);
+		assert.deepEqual(readdirSync(dir), ['benchmark.lock']);
 	});
 
 	test('refuses while a live process holds it, and names that process', () => {

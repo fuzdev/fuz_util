@@ -313,7 +313,10 @@ export const benchmark_stats_compare = (
 	// Welch's t-test (handles unequal variances)
 	// Special case: if both have zero variance, t-test is undefined
 	let p_value: number;
-	if (a.std_dev_ns === 0 && b.std_dev_ns === 0) {
+	if (a.sample_size < 2 || b.sample_size < 2) {
+		// one sample has no variance estimate, so the Welch df is undefined
+		p_value = NaN;
+	} else if (a.std_dev_ns === 0 && b.std_dev_ns === 0) {
 		// When there's no variance, any difference is 100% reliable (p=0) or identical (p=1)
 		p_value = a.mean_ns === b.mean_ns ? 1 : 0;
 	} else {
@@ -330,10 +333,14 @@ export const benchmark_stats_compare = (
 	}
 
 	// Cohen's d effect size (informational only — not used for classification)
-	const pooled_std_dev = Math.sqrt(
-		((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
-			(a.sample_size + b.sample_size - 2)
-	);
+	const pooled_df = a.sample_size + b.sample_size - 2;
+	const pooled_std_dev =
+		pooled_df === 0
+			? 0
+			: Math.sqrt(
+					((a.sample_size - 1) * a.std_dev_ns ** 2 + (b.sample_size - 1) * b.std_dev_ns ** 2) /
+						pooled_df
+				);
 	let effect_size: number;
 	if (pooled_std_dev === 0) {
 		effect_size = a.mean_ns === b.mean_ns ? 0 : Infinity;

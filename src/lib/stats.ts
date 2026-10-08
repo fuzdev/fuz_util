@@ -184,8 +184,9 @@ export const stats_pairwise_deviation = (
 			for (let j = i + 1; j < usable.length; j++) {
 				const a = usable[i]!;
 				const b = usable[j]!;
-				// larger over smaller, so the ratio can't underflow to 0
-				const deviation = stats_ratio_deviation(a > b ? a / b : b / a);
+				// larger over smaller, so the ratio can't underflow to 0 and is at least 1,
+				// making its `stats_ratio_deviation` just `ratio - 1`
+				const deviation = (a > b ? a / b : b / a) - 1;
 				if (Number.isFinite(deviation)) deviations.push(deviation);
 			}
 		}

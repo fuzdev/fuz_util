@@ -26,7 +26,7 @@
  * @module
  */
 
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { linkSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { platform, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -136,13 +136,20 @@ const pid_is_alive = (pid: number): boolean => {
 	}
 };
 
+// writes the holder beside the lock, then hard-links it into place: the link
+// fails with EEXIST like an exclusive create, but the lock never exists empty,
+// so a concurrent reader always finds its holder
 const try_create = (path: string, holder: BenchmarkLockHolder): boolean => {
+	const staged = `${path}.${holder.pid}.tmp`;
 	try {
-		writeFileSync(path, JSON.stringify(holder), { flag: 'wx' });
+		writeFileSync(staged, JSON.stringify(holder));
+		linkSync(staged, path);
 		return true;
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === 'EEXIST') return false;
 		throw error;
+	} finally {
+		rmSync(staged, { force: true });
 	}
 };
 
