@@ -94,6 +94,11 @@ npm run benchmark:deep_equal   # Run individual benchmark
 
 Baseline stored in `src/benchmarks/baseline.json` (gitignored — local-only).
 
+`benchmark_lock.ts` (Node-only) is a machine-wide lock so two benchmark runs
+never measure at once: `benchmark_lock_acquire` never waits, takes over a lock
+whose process is gone, and its `release()` reports whether the lock was still
+this process's.
+
 See `docs/benchmark.md` for full documentation.
 
 ### Types and validation
@@ -145,8 +150,10 @@ See `docs/benchmark.md` for full documentation.
 
 ### Statistics
 
-- `stats.ts` - statistical functions (mean, median, std_dev, percentiles, outlier
-  detection)
+- `stats.ts` - statistical functions (mean, median, population and sample
+  std_dev, percentiles, outlier detection, t-based confidence intervals via
+  `stats_t_critical_95`, spread, and the A/A noise figure
+  `stats_pairwise_deviation`)
 
 ### Testing helpers
 

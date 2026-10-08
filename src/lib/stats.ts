@@ -13,13 +13,12 @@ const DEFAULT_MAD_CONSTANT = 0.6745; // For normal distribution approximation
 const DEFAULT_OUTLIER_RATIO_HIGH = 0.3;
 const DEFAULT_OUTLIER_RATIO_EXTREME = 0.4;
 const DEFAULT_OUTLIER_KEEP_RATIO = 0.8;
-const DEFAULT_CONFIDENCE_Z = 1.96; // 95% confidence
 const DEFAULT_MIN_SAMPLE_SIZE = 3;
 
 /**
  * Calculate the mean (average) of an array of numbers.
  */
-export const stats_mean = (values: Array<number>): number => {
+export const stats_mean = (values: ReadonlyArray<number>): number => {
 	if (values.length === 0) return NaN;
 	return values.reduce((sum, val) => sum + val, 0) / values.length;
 };
@@ -28,7 +27,7 @@ export const stats_mean = (values: Array<number>): number => {
  * Calculate the median of an array of numbers.
  * NaN values are filtered out before computing.
  */
-export const stats_median = (values: Array<number>): number => {
+export const stats_median = (values: ReadonlyArray<number>): number => {
 	const valid = values.filter((v) => !Number.isNaN(v));
 	if (valid.length === 0) return NaN;
 	const sorted = valid.sort((a, b) => a - b);
@@ -37,11 +36,11 @@ export const stats_median = (values: Array<number>): number => {
 };
 
 /**
- * Calculate the standard deviation of an array of numbers.
- * Uses population standard deviation (divides by n, not n-1).
- * For benchmarks with many samples, this is typically appropriate.
+ * Calculate the population standard deviation of an array of numbers
+ * (divides by n). For a sample standing in for a larger population, as with
+ * timings, use `stats_std_dev_sample`.
  */
-export const stats_std_dev = (values: Array<number>, mean?: number): number => {
+export const stats_std_dev = (values: ReadonlyArray<number>, mean?: number): number => {
 	if (values.length === 0) return NaN;
 	const m = mean ?? stats_mean(values);
 	const variance = values.reduce((sum, val) => sum + (val - m) ** 2, 0) / values.length;
@@ -49,9 +48,25 @@ export const stats_std_dev = (values: Array<number>, mean?: number): number => {
 };
 
 /**
+ * Calculate the sample standard deviation of an array of numbers, with Bessel's
+ * correction (divides by n - 1). This is the estimator a t-based confidence
+ * interval and Welch's t-test expect.
+ *
+ * @param values - the sample
+ * @param mean - the sample's mean, when already computed
+ * @returns the sample standard deviation, or NaN for fewer than two values
+ */
+export const stats_std_dev_sample = (values: ReadonlyArray<number>, mean?: number): number => {
+	if (values.length < 2) return NaN;
+	const m = mean ?? stats_mean(values);
+	const sum = values.reduce((acc, val) => acc + (val - m) ** 2, 0);
+	return Math.sqrt(sum / (values.length - 1));
+};
+
+/**
  * Calculate the variance of an array of numbers.
  */
-export const stats_variance = (values: Array<number>, mean?: number): number => {
+export const stats_variance = (values: ReadonlyArray<number>, mean?: number): number => {
 	if (values.length === 0) return NaN;
 	const m = mean ?? stats_mean(values);
 	return values.reduce((sum, val) => sum + (val - m) ** 2, 0) / values.length;
@@ -63,7 +78,7 @@ export const stats_variance = (values: Array<number>, mean?: number): number => 
  * data points for more accurate percentile estimates, especially with smaller samples.
  * @param p - percentile (0-1, e.g., 0.95 for 95th percentile)
  */
-export const stats_percentile = (values: Array<number>, p: number): number => {
+export const stats_percentile = (values: ReadonlyArray<number>, p: number): number => {
 	if (values.length === 0) return NaN;
 	if (values.length === 1) return values[0]!;
 
@@ -98,7 +113,7 @@ export const stats_cv = (mean: number, std_dev: number): number => {
  * Calculate min and max values.
  * NaN values are ignored.
  */
-export const stats_min_max = (values: Array<number>): { min: number; max: number } => {
+export const stats_min_max = (values: ReadonlyArray<number>): { min: number; max: number } => {
 	if (values.length === 0) return { min: NaN, max: NaN };
 	let min = Infinity;
 	let max = -Infinity;
@@ -110,6 +125,78 @@ export const stats_min_max = (values: Array<number>): { min: number; max: number
 	}
 	if (min === Infinity) return { min: NaN, max: NaN };
 	return { min, max };
+};
+
+/**
+ * Calculate the spread of an array of numbers: the largest over the smallest,
+ * so 1 when all agree. NaN values are ignored, as `stats_min_max` does.
+ *
+ * @returns the ratio of max to min, or NaN when there is no value or the smallest is not positive
+ */
+export const stats_spread = (values: ReadonlyArray<number>): number => {
+	const { min, max } = stats_min_max(values);
+	if (!(min > 0)) return NaN;
+	return max / min;
+};
+
+/**
+ * Calculate how far a ratio is from 1, the same in either direction:
+ * `max(ratio, 1 / ratio) - 1`, so 1.1 and 1 / 1.1 both give 0.1.
+ *
+ * @returns the deviation, or NaN when `ratio` is not positive
+ */
+export const stats_ratio_deviation = (ratio: number): number => {
+	if (!(ratio > 0)) return NaN;
+	return Math.max(ratio, 1 / ratio) - 1;
+};
+
+/**
+ * Deviation figures over pairs of values that measure the same thing.
+ */
+export interface StatsPairwiseDeviation {
+	/** How many pairs the figures are taken over. */
+	pairs: number;
+	/** The median deviation. */
+	median: number;
+	/** The 95th percentile deviation. */
+	p95: number;
+	/** The largest deviation. */
+	max: number;
+}
+
+/**
+ * Calculate how much values that should agree disagree, as an A/A noise figure.
+ * Each group holds repeated measurements of one thing, and every pair within a
+ * group contributes the `stats_ratio_deviation` of its ratio. Groups are never
+ * compared with each other. A value that is not a positive finite number is
+ * skipped, and so is a pair whose ratio overflows.
+ *
+ * @param groups - each group's repeated measurements
+ * @returns the figures over every pair, or null when there is no usable pair
+ */
+export const stats_pairwise_deviation = (
+	groups: ReadonlyArray<ReadonlyArray<number>>
+): StatsPairwiseDeviation | null => {
+	const deviations: Array<number> = [];
+	for (const group of groups) {
+		const usable = group.filter((v) => Number.isFinite(v) && v > 0);
+		for (let i = 0; i < usable.length; i++) {
+			for (let j = i + 1; j < usable.length; j++) {
+				const a = usable[i]!;
+				const b = usable[j]!;
+				// larger over smaller, so the ratio can't underflow to 0
+				const deviation = stats_ratio_deviation(a > b ? a / b : b / a);
+				if (Number.isFinite(deviation)) deviations.push(deviation);
+			}
+		}
+	}
+	if (deviations.length === 0) return null;
+	return {
+		pairs: deviations.length,
+		median: stats_median(deviations),
+		p95: stats_percentile(deviations, 0.95),
+		max: stats_min_max(deviations).max
+	};
 };
 
 /**
@@ -275,84 +362,91 @@ export const stats_outliers_mad = (
 	return { cleaned, outliers };
 };
 
-/**
- * Common z-scores for confidence intervals.
- */
-export const STATS_CONFIDENCE_Z_SCORES: Record<number, number> = {
-	0.8: 1.282,
-	0.9: 1.645,
-	0.95: 1.96,
-	0.99: 2.576,
-	0.999: 3.291
-};
+// two-sided 95% Student's t critical values for df 1-30, rounded up to three decimals
+const T_CRITICAL_95_LOW = [
+	12.707, 4.303, 3.183, 2.777, 2.571, 2.447, 2.365, 2.307, 2.263, 2.229, 2.201, 2.179, 2.161, 2.145,
+	2.132, 2.12, 2.11, 2.101, 2.094, 2.086, 2.08, 2.074, 2.069, 2.064, 2.06, 2.056, 2.052, 2.049,
+	2.046, 2.043
+];
+// [df, t] beyond the low table, rounded up likewise, ending at the normal limit
+const T_CRITICAL_95_HIGH: ReadonlyArray<readonly [number, number]> = [
+	[30, 2.043],
+	[40, 2.022],
+	[60, 2.001],
+	[120, 1.98],
+	[Infinity, 1.96]
+];
 
 /**
- * Convert a confidence level (0-1) to a z-score.
- * Uses a lookup table for common values, approximates others.
+ * Two-sided 95% critical value of Student's t distribution: the multiple of the
+ * standard error a 95% confidence interval spans on each side of the mean.
+ * A table gives whole df up to 30 and 40, 60, and 120, each rounded up to three
+ * decimals. Between table points, and for fractional df such as Welch's, it
+ * interpolates linearly in 1 / df. t is convex in 1 / df, so the interpolation
+ * lands above the true value, well above it under df 3. The value is never
+ * below the true one, so an interval is never narrower than it should be.
  *
- * @throws Error if `level` is not in the open interval (0, 1)
- *
- * @example
- * ```ts
- * stats_confidence_level_to_z_score(0.95); // 1.96
- * stats_confidence_level_to_z_score(0.99); // 2.576
- * ```
+ * @param df - degrees of freedom, at least 1
+ * @returns the critical value, 1.96 for infinite df, or NaN when `df` is below 1 or NaN
  */
-export const stats_confidence_level_to_z_score = (level: number): number => {
-	if (level <= 0 || level >= 1) {
-		throw new Error('Confidence level must be between 0 and 1 (exclusive)');
+export const stats_t_critical_95 = (df: number): number => {
+	if (!(df >= 1)) return NaN;
+	if (Number.isInteger(df) && df <= T_CRITICAL_95_LOW.length) return T_CRITICAL_95_LOW[df - 1]!;
+	let lo_df: number, lo_t: number, hi_df: number, hi_t: number;
+	if (df < T_CRITICAL_95_LOW.length) {
+		lo_df = Math.floor(df);
+		hi_df = lo_df + 1;
+		lo_t = T_CRITICAL_95_LOW[lo_df - 1]!;
+		hi_t = T_CRITICAL_95_LOW[hi_df - 1]!;
+	} else {
+		let i = 1;
+		while (T_CRITICAL_95_HIGH[i]![0] < df) i++;
+		[lo_df, lo_t] = T_CRITICAL_95_HIGH[i - 1]!;
+		[hi_df, hi_t] = T_CRITICAL_95_HIGH[i]!;
+		if (df === hi_df) return hi_t;
 	}
-
-	// Check lookup table first
-	if (level in STATS_CONFIDENCE_Z_SCORES) {
-		return STATS_CONFIDENCE_Z_SCORES[level]!;
-	}
-
-	// For confidence level c, we want z such that P(-z < Z < z) = c
-	// This means Φ(z) = (1 + c) / 2, so z = Φ⁻¹((1 + c) / 2)
-	// Using Φ⁻¹(p) = √2 * erfinv(2p - 1)
-	const p = (1 + level) / 2; // e.g., 0.95 -> 0.975
-	const x = 2 * p - 1; // Argument for erfinv, e.g., 0.975 -> 0.95
-
-	// Winitzki approximation for erfinv
-	const a = 0.147;
-	const ln_term = Math.log(1 - x * x);
-	const term1 = 2 / (Math.PI * a) + ln_term / 2;
-	const erfinv = Math.sign(x) * Math.sqrt(Math.sqrt(term1 * term1 - ln_term / a) - term1);
-
-	return Math.SQRT2 * erfinv;
+	// fraction of the way from the upper point back to the lower one, in 1 / df
+	const fraction = (1 / df - 1 / hi_df) / (1 / lo_df - 1 / hi_df);
+	return hi_t + fraction * (lo_t - hi_t);
 };
 
 /**
  * Configuration options for confidence interval calculation.
  */
 export interface StatsConfidenceIntervalOptions {
-	/** Z-score for confidence level (default: 1.96 for 95% CI) */
-	z_score?: number;
-	/** Confidence level (0-1), alternative to z_score. If both provided, z_score takes precedence. */
-	confidence_level?: number;
+	/**
+	 * The multiple of the standard error on each side of the mean.
+	 * Defaults to `stats_t_critical_95` at n - 1 degrees of freedom.
+	 */
+	critical?: number;
 }
 
 /**
- * Calculate confidence interval for the mean.
- * @returns `[lower_bound, upper_bound]`
+ * Calculate a confidence interval for the mean, from the sample standard
+ * deviation and, by default, the 95% Student's t critical value.
+ *
+ * @returns `[lower_bound, upper_bound]`, both NaN for fewer than two values
  */
 export const stats_confidence_interval = (
-	values: Array<number>,
+	values: ReadonlyArray<number>,
 	options?: StatsConfidenceIntervalOptions
 ): [number, number] => {
-	if (values.length === 0) return [NaN, NaN];
+	if (values.length < 2) return [NaN, NaN];
 
 	const mean = stats_mean(values);
-	const std_dev = stats_std_dev(values, mean);
+	const std_dev = stats_std_dev_sample(values, mean);
 
 	return stats_confidence_interval_from_summary(mean, std_dev, values.length, options);
 };
 
 /**
- * Calculate confidence interval from summary statistics (mean, std_dev, sample_size).
+ * Calculate a confidence interval for the mean from summary statistics.
  * Useful when raw data is not available.
- * @returns `[lower_bound, upper_bound]`
+ *
+ * @param mean - the sample mean
+ * @param std_dev - the sample standard deviation (`stats_std_dev_sample`)
+ * @param sample_size - how many values the summary covers
+ * @returns `[lower_bound, upper_bound]`, both NaN when `sample_size` is below 2
  */
 export const stats_confidence_interval_from_summary = (
 	mean: number,
@@ -360,18 +454,10 @@ export const stats_confidence_interval_from_summary = (
 	sample_size: number,
 	options?: StatsConfidenceIntervalOptions
 ): [number, number] => {
-	// z_score takes precedence, then confidence_level, then default
-	const z_score =
-		options?.z_score ??
-		(options?.confidence_level
-			? stats_confidence_level_to_z_score(options.confidence_level)
-			: null) ??
-		DEFAULT_CONFIDENCE_Z;
+	if (!(sample_size >= 2)) return [NaN, NaN];
 
-	if (sample_size === 0) return [NaN, NaN];
-
-	const se = std_dev / Math.sqrt(sample_size);
-	const margin = z_score * se;
+	const critical = options?.critical ?? stats_t_critical_95(sample_size - 1);
+	const margin = (critical * std_dev) / Math.sqrt(sample_size);
 
 	return [mean - margin, mean + margin];
 };
@@ -455,77 +541,81 @@ export const stats_ln_gamma = (z: number): number => {
 };
 
 /**
- * Approximate regularized incomplete beta function for p-value calculation.
- * Uses continued fraction expansion for reasonable accuracy.
+ * Regularized incomplete beta function `I_x(a, b)`, by the continued fraction
+ * of Numerical Recipes' `betai`/`betacf` (modified Lentz), using the symmetry
+ * `I_x(a, b) = 1 - I_(1-x)(b, a)` where that converges faster. Accurate to
+ * about 1e-8 for the t p-value (b = 0.5). For large a and b both, precision
+ * falls with √max(a, b), and the value after the iteration cap is returned as is.
+ *
+ * @param x - the upper limit of integration, in [0, 1]
+ * @param a - the first shape parameter, positive
+ * @param b - the second shape parameter, positive
+ * @returns `I_x(a, b)`, in [0, 1]
  */
 export const stats_incomplete_beta = (x: number, a: number, b: number): number => {
-	// Simple approximation using the relationship between beta and normal distributions
-	// For our use case (t-distribution p-values), this provides sufficient accuracy
 	if (x <= 0) return 0;
 	if (x >= 1) return 1;
 
-	// Use symmetry if needed
+	// the continued fraction converges fast below this point
 	if (x > (a + 1) / (a + b + 2)) {
 		return 1 - stats_incomplete_beta(1 - x, b, a);
 	}
 
-	// Continued fraction approximation (first few terms)
-	const lnBeta = stats_ln_gamma(a) + stats_ln_gamma(b) - stats_ln_gamma(a + b);
-	const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+	const ln_beta = stats_ln_gamma(a) + stats_ln_gamma(b) - stats_ln_gamma(a + b);
+	const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - ln_beta) / a;
 
-	// Simple continued fraction (limited iterations for speed)
-	let f = 1;
+	const tiny = 1e-30;
 	let c = 1;
-	let d = 0;
+	let d = 1 - ((a + b) * x) / (a + 1);
+	if (Math.abs(d) < tiny) d = tiny;
+	d = 1 / d;
+	let f = d;
 
-	for (let m = 1; m <= 100; m++) {
+	for (let m = 1; m <= 300; m++) {
 		const m2 = 2 * m;
 
-		// Even step
+		// even step
 		let aa = (m * (b - m) * x) / ((a + m2 - 1) * (a + m2));
 		d = 1 + aa * d;
-		if (Math.abs(d) < 1e-30) d = 1e-30;
+		if (Math.abs(d) < tiny) d = tiny;
 		c = 1 + aa / c;
-		if (Math.abs(c) < 1e-30) c = 1e-30;
+		if (Math.abs(c) < tiny) c = tiny;
 		d = 1 / d;
 		f *= d * c;
 
-		// Odd step
+		// odd step
 		aa = (-(a + m) * (a + b + m) * x) / ((a + m2) * (a + m2 + 1));
 		d = 1 + aa * d;
-		if (Math.abs(d) < 1e-30) d = 1e-30;
+		if (Math.abs(d) < tiny) d = tiny;
 		c = 1 + aa / c;
-		if (Math.abs(c) < 1e-30) c = 1e-30;
+		if (Math.abs(c) < tiny) c = tiny;
 		d = 1 / d;
 		const delta = d * c;
 		f *= delta;
 
-		if (Math.abs(delta - 1) < 1e-8) break;
+		if (Math.abs(delta - 1) < 1e-14) break;
 	}
 
 	return front * f;
 };
 
+// above this df the t p-value is the normal's, see `stats_t_distribution_p_value`
+const T_DISTRIBUTION_NORMAL_ABOVE_DF = 1e7;
+
 /**
- * Approximate two-tailed p-value from t-distribution.
- * For large df (>100), uses normal approximation.
- * For smaller df, uses incomplete beta function.
+ * Two-tailed p-value of Student's t distribution, through the regularized
+ * incomplete beta function. Above df 1e7 it is the normal limit: `df / (df + t²)`
+ * loses precision as df grows, and from there t and the normal differ by less
+ * than the normal approximation's own error, so the switch moves the value by less
+ * than 1e-6.
  *
  * @param t - absolute value of t-statistic
  * @param df - degrees of freedom
- * @returns two-tailed p-value
+ * @returns two-tailed p-value, or NaN when `df` is not positive
  */
 export const stats_t_distribution_p_value = (t: number, df: number): number => {
-	// Use normal approximation for large df
-	if (df > 100) {
-		return 2 * (1 - stats_normal_cdf(t));
-	}
-
-	// For smaller df, use a more accurate approximation
-	// Based on the incomplete beta function relationship
-	const x = df / (df + t * t);
-	const a = df / 2;
-	const b = 0.5;
-
-	return stats_incomplete_beta(x, a, b);
+	if (!(df > 0)) return NaN;
+	if (df > T_DISTRIBUTION_NORMAL_ABOVE_DF)
+		return Math.min(1, 2 * (1 - stats_normal_cdf(Math.abs(t))));
+	return stats_incomplete_beta(df / (df + t * t), df / 2, 0.5);
 };

@@ -334,16 +334,13 @@ suite-level so cross-task comparisons remain meaningful.
    allocator-bound or I/O-bound workloads where outliers are expected.
 
 6. **Statistical conventions.** `std_dev_ns` is the *sample* standard
-   deviation (Bessel's correction applied) — divides by n-1, not n. This
-   is what Welch's t-test consumes when inferring from the sample to the
-   hypothetical population of all possible runs. Without the correction,
-   the t-statistic is biased upward at small n (~1.7% at the n=30 floor,
-   ~5% at n=10), producing slightly anti-conservative p-values. The
-   correction is applied inline in `BenchmarkStats` and propagated to
-   `confidence_interval_ns` so CI width stays consistent with the
-   sample-corrected std_dev. (CIs still use z=1.96 rather than the strict
-   t-score; residual narrowness at n=30 is ~2-3%, documented as a known
-   limitation.)
+   deviation (`stats_std_dev_sample`, Bessel's correction) — divides by
+   n-1, not n. This is what Welch's t-test consumes when inferring from
+   the sample to the hypothetical population of all possible runs.
+   `confidence_interval_ns` is the matching t-based interval: the
+   sample std_dev with the 95% Student's t critical value at n-1
+   degrees of freedom (`stats_t_critical_95`), so it is slightly wider
+   than a z=1.96 interval at small n.
 
 7. **Run-level metadata is an opt-in passthrough, not part of the
    comparison math.** Pass `options.metadata` to `benchmark_baseline_save`
@@ -634,11 +631,15 @@ import {
 	stats_mean,
 	stats_median,
 	stats_std_dev,
+	stats_std_dev_sample,
 	stats_variance,
 	stats_percentile,
 	stats_cv,
 	stats_min_max,
+	stats_spread,
+	stats_t_critical_95,
 	stats_confidence_interval,
+	stats_pairwise_deviation,
 	stats_outliers_iqr,
 	stats_outliers_mad,
 } from '@fuzdev/fuz_util/stats.ts';
@@ -650,6 +651,14 @@ const mean = stats_mean(values); // 2.83
 const median = stats_median(values); // 1.45
 const {cleaned, outliers} = stats_outliers_mad(values); // removes 10.0
 const p95 = stats_percentile(cleaned, 0.95); // 95th percentile
+const ci = stats_confidence_interval(cleaned); // t-based 95% CI for the mean
+const spread = stats_spread(cleaned); // max / min
+
+// A/A noise: how much repeated measurements of the same thing disagree
+const noise = stats_pairwise_deviation([
+	[100, 103, 99], // one thing, measured three times
+	[250, 248], // another, measured twice
+]); // {pairs, median, p95, max}, or null with nothing to pair
 ```
 
 These are pure functions with zero dependencies, useful for any statistical analysis.
@@ -896,6 +905,37 @@ console.log(benchmark_baseline_format_json(result, {pretty?: boolean}));
 7. **Avoid side effects**: Don't modify external state in benchmarks
 8. **Test realistic workloads**: Use real data, not just toy examples
 9. **Avoid allocations in `on_iteration`**: The callback runs between measurements, but allocations can trigger GC before the next iteration
+
+### One Benchmark at a Time
+
+Two benchmarks running at once on one machine change each other's caches,
+CPU frequency, and scheduling, so both read wrong. `benchmark_lock.ts`
+(Node-only) is a machine-wide lock a harness can hold while it measures:
+
+```ts
+import {benchmark_lock_acquire, benchmark_lock_format_refusal} from '@fuzdev/fuz_util/benchmark_lock.ts';
+
+const acquired = benchmark_lock_acquire('slugify benchmarks');
+if (!acquired.ok) {
+	console.error(benchmark_lock_format_refusal(acquired));
+	process.exit(2);
+}
+try {
+	await bench.run();
+} finally {
+	// false when another process took the lock over: discard what was measured
+	if (!acquired.lock.release()) console.warn('lost the benchmark lock');
+}
+```
+
+Acquiring never waits: a second run is refused and told who holds the lock.
+A lock whose process is gone is taken over, and an unreadable one is refused
+rather than broken. The default path, `BENCHMARK_LOCK_PATH`, is fixed
+(`/tmp/fuz_benchmark.lock` on POSIX) rather than under `TMPDIR`, so every
+process on the machine sees the same lock; tests pass their own `path`. On
+Windows the temp directory is per user, so the lock is per user there. A
+shared path means any local user can block benchmarks by creating the file,
+and the refusal names it.
 
 ### Browser Timing Precision
 

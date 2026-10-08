@@ -137,6 +137,7 @@ describe('BenchmarkStats', () => {
 		assert.strictEqual(stats.max_ns, 5000);
 		assert.strictEqual(stats.std_dev_ns, 0);
 		assert.strictEqual(stats.cv, 0);
+		assert.deepEqual(stats.confidence_interval_ns, [NaN, NaN]);
 	});
 
 	test('all same values (zero variance)', () => {
@@ -410,6 +411,21 @@ describe('benchmark_stats_compare', () => {
 		assert.strictEqual(comparison.speedup_ratio, 2);
 		// Zero variance case should still work
 		assert.strictEqual(comparison.effect_magnitude, 'large');
+	});
+
+	test('one sample against many is never significant', () => {
+		const a = new BenchmarkStats([1000]);
+		const b = new BenchmarkStats(Array.from({ length: 50 }, (_, i) => 2000 + (i % 5) * 10));
+
+		const comparison = benchmark_stats_compare(a, b);
+
+		// the Welch df is undefined with one sample, so the p-value is NaN
+		assert.isNaN(comparison.p_value);
+		assert.strictEqual(comparison.significant, false);
+		assert.include(
+			comparison.recommendation,
+			'not statistically significant (no p-value: too few samples)'
+		);
 	});
 
 	test('percent_difference is computed', () => {

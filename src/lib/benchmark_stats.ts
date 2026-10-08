@@ -10,7 +10,7 @@ import { TIME_NS_PER_SEC, time_format_adaptive } from './time.ts';
 import {
 	stats_mean,
 	stats_median,
-	stats_std_dev,
+	stats_std_dev_sample,
 	stats_percentile,
 	stats_cv,
 	stats_min_max,
@@ -46,7 +46,10 @@ export interface BenchmarkComparison {
 	speedup_ratio: number;
 	/** Whether the difference is both statistically and practically significant */
 	significant: boolean;
-	/** P-value from Welch's t-test (lower = more confident the difference is real) */
+	/**
+	 * P-value from Welch's t-test (lower = more confident the difference is real).
+	 * NaN when the Welch df is undefined (a single sample).
+	 */
 	p_value: number;
 	/** Percentage difference between means as a ratio (0.05 = 5%, 1.0 = 100%) */
 	percent_difference: number;
@@ -65,11 +68,6 @@ export interface BenchmarkComparison {
 	 * Use `significant` and `p_value` for classification. This field is
 	 * exposed for consumers who want to render CIs side-by-side and need
 	 * the visual overlap check.
-	 *
-	 * Note: the underlying CIs are computed with a z-score (1.96) rather
-	 * than the strict t-score, so at small n the CIs are slightly narrow
-	 * — overlap is reported less often than a t-based CI would. Effect is
-	 * ~2-3% at the n=30 floor after Bessel's correction on `std_dev_ns`.
 	 */
 	ci_overlap: boolean;
 	/** Human-readable interpretation of the comparison */
@@ -129,7 +127,7 @@ export class BenchmarkStats {
 	readonly mean_ns: number;
 	/** 50th percentile (median) time in nanoseconds (over raw samples) */
 	readonly p50_ns: number;
-	/** Standard deviation in nanoseconds (over MAD-cleaned samples) */
+	/** Sample standard deviation in nanoseconds (over MAD-cleaned samples), 0 for one sample */
 	readonly std_dev_ns: number;
 	/** Minimum time in nanoseconds (over MAD-cleaned samples) */
 	readonly min_ns: number;
@@ -145,7 +143,7 @@ export class BenchmarkStats {
 	readonly p99_ns: number;
 	/** Coefficient of variation (std_dev / mean) */
 	readonly cv: number;
-	/** 95% confidence interval for the mean in nanoseconds */
+	/** t-based 95% confidence interval for the mean in nanoseconds, NaN for one sample */
 	readonly confidence_interval_ns: [number, number];
 	/** Array of detected outlier values in nanoseconds */
 	readonly outliers_ns: Array<number>;
@@ -226,18 +224,12 @@ export class BenchmarkStats {
 		// pre-sort here; `outlier_ratio` reports how heavy the tail was either
 		// way.
 
-		// `stats_std_dev` returns the *population* std_dev (divides by n). For
-		// benchmark use we need the *sample* std_dev (Bessel's correction,
-		// divides by n-1): Welch's t-test in `benchmark_stats_compare` treats
-		// `std_dev_ns` as the sample-variance estimator of a hypothetical
-		// population of all possible runs. The general utility stays
-		// population-style so non-benchmark callers aren't surprised; we apply
-		// the correction once here and use the result for std_dev_ns, cv, and
-		// the CI margin.
+		// the sample std_dev (Bessel's correction): Welch's t-test in
+		// `benchmark_stats_compare` treats `std_dev_ns` as the estimator for the
+		// hypothetical population of all possible runs. One sample reports 0,
+		// not the estimator's NaN, so a baseline entry stays valid JSON
 		this.mean_ns = stats_mean(cleaned);
-		const std_dev_population = stats_std_dev(cleaned, this.mean_ns);
-		const bessel = cleaned.length >= 2 ? Math.sqrt(cleaned.length / (cleaned.length - 1)) : 1;
-		this.std_dev_ns = std_dev_population * bessel;
+		this.std_dev_ns = cleaned.length < 2 ? 0 : stats_std_dev_sample(cleaned, this.mean_ns);
 
 		this.min_ns = stats_min_max(cleaned).min;
 		this.max_ns = stats_min_max(valid_timings).max;
@@ -249,17 +241,7 @@ export class BenchmarkStats {
 		this.p99_ns = stats_percentile(valid_timings, 0.99);
 
 		this.cv = stats_cv(this.mean_ns, this.std_dev_ns);
-		// `stats_confidence_interval` internally uses the same population
-		// std_dev, so scale the half-width by the Bessel factor to keep CI
-		// consistent with the sample-corrected std_dev_ns. (Note: z-score is
-		// still used here, not t-score — at the n=30 floor the residual
-		// narrowness vs. t is ~2-3% after this correction; documented in
-		// docs/benchmark.md.)
-		const ci_raw = stats_confidence_interval(cleaned);
-		this.confidence_interval_ns = [
-			this.mean_ns - (this.mean_ns - ci_raw[0]) * bessel,
-			this.mean_ns + (ci_raw[1] - this.mean_ns) * bessel
-		];
+		this.confidence_interval_ns = stats_confidence_interval(cleaned);
 
 		// Calculate throughput (operations per second)
 		this.ops_per_second = this.mean_ns > 0 ? TIME_NS_PER_SEC / this.mean_ns : 0;
@@ -343,7 +325,7 @@ export const benchmark_stats_compare = (
 			b.std_dev_ns,
 			b.sample_size
 		);
-		// Calculate two-tailed p-value using t-distribution approximation
+		// two-tailed p-value of Student's t at the Welch df
 		p_value = stats_t_distribution_p_value(Math.abs(t_statistic), degrees_of_freedom);
 	}
 
@@ -392,6 +374,10 @@ export const benchmark_stats_compare = (
 	let recommendation: string;
 	if (percent_difference < min_pct) {
 		recommendation = 'No meaningful difference detected';
+	} else if (Number.isNaN(p_value)) {
+		recommendation = `${(percent_difference * 100).toFixed(
+			1
+		)}% difference observed but not statistically significant (no p-value: too few samples)`;
 	} else if (!significant) {
 		recommendation = `${(percent_difference * 100).toFixed(
 			1
