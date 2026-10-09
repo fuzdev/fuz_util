@@ -172,7 +172,11 @@ See `docs/benchmark.md` for full documentation.
 ### Other
 
 - `random.ts`, `random_alea.ts` - random number generation
-- `colors.ts` - color utilities
+- `colors.ts` - RGB/HSL/hex conversions and `parse_hue`; `Hue` is degrees
+  [0, 360), shared with `oklch.ts`
+- `oklch.ts` - OKLCH/OKLab ↔ sRGB conversions, sRGB gamut checks and safe
+  max-chroma search, `oklch()` string helpers; tuple-returning by default,
+  with allocation-free `oklch_to_srgb_into` and gamut helpers for hot loops
 - `maths.ts` - math helpers
 - `id.ts` - ID generation
 - `counter.ts` - counter utilities

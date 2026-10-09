@@ -1,4 +1,4 @@
-import { test, assert } from 'vitest';
+import { describe, test, assert } from 'vitest';
 
 import {
 	hex_to_rgb,
@@ -15,6 +15,7 @@ import {
 	hex_string_to_hsl,
 	to_hex_component,
 	hue_to_rgb_component,
+	parse_hue,
 	type Rgb
 } from '$lib/colors.ts';
 
@@ -33,7 +34,7 @@ test('rgb_to_hex_string and hex_string_to_rgb', () => {
 });
 
 test('parse_hsl_string', () => {
-	const parsed: Hsl = [210 / 360, 0.55, 0.62];
+	const parsed: Hsl = [210, 0.55, 0.62];
 	assert.deepEqual(parse_hsl_string('hsl(210 55% 62%)'), parsed);
 	assert.deepEqual(parse_hsl_string('hsl(210, 55%, 62%)'), parsed); // older form with commas
 	assert.deepEqual(parse_hsl_string('hsl(210,55%,62%)'), parsed); // older form with commas
@@ -110,7 +111,7 @@ test('boundary colors', () => {
 });
 
 test('conversions between hsl, rgb, and hex', () => {
-	const hsl: Hsl = [210 / 360, 0.55, 0.62];
+	const hsl: Hsl = [210, 0.55, 0.62];
 	assert.strictEqual(hsl_to_string(...hsl), 'hsl(210 55% 62%)');
 	const hex_string = hsl_to_hex_string(...hsl);
 	assert.strictEqual(hex_string, '#699ed3');
@@ -123,4 +124,74 @@ test('conversions between hsl, rgb, and hex', () => {
 	assert.deepEqual(hex_string_to_rgb(hex_string), rgb);
 	assert.deepEqual(hex_string_to_hsl(hex_string), hsl);
 	assert.deepEqual(rgb_to_hsl(...rgb), hsl);
+});
+
+test('hsl hues are degrees across the primaries', () => {
+	assert.deepEqual(rgb_to_hsl(255, 0, 0), [0, 1, 0.5]);
+	assert.deepEqual(rgb_to_hsl(0, 255, 0), [120, 1, 0.5]);
+	assert.deepEqual(rgb_to_hsl(0, 0, 255), [240, 1, 0.5]);
+	assert.deepEqual(hsl_to_rgb(120, 1, 0.5), [0, 255, 0]);
+	assert.deepEqual(hsl_to_rgb(240, 1, 0.5), [0, 0, 255]);
+	assert.deepEqual(hsl_to_rgb(360, 1, 0.5), [255, 0, 0]); // a full turn wraps to red
+});
+
+test('hsl_to_rgb wraps any hue angle', () => {
+	for (const h of [0, 45, 120, 210, 300]) {
+		const expected = hsl_to_rgb(h, 0.6, 0.4);
+		assert.deepEqual(hsl_to_rgb(h + 360, 0.6, 0.4), expected, `${h} + 360`);
+		assert.deepEqual(hsl_to_rgb(h + 720, 0.6, 0.4), expected, `${h} + 720`);
+		assert.deepEqual(hsl_to_rgb(h - 360, 0.6, 0.4), expected, `${h} - 360`);
+	}
+});
+
+test('rgb_to_hsl and hsl_to_rgb round-trip hues in degrees', () => {
+	for (const rgb of [
+		[255, 128, 0],
+		[64, 200, 160],
+		[90, 30, 220],
+		[240, 20, 120]
+	] satisfies Array<Rgb>) {
+		const [h, s, l] = rgb_to_hsl(...rgb);
+		assert(h >= 0 && h < 360, `hue ${h} of ${rgb}`);
+		// s/l are rounded to 2 decimals, so allow a few units of drift
+		const back = hsl_to_rgb(h, s, l);
+		for (let i = 0; i < 3; i++) assert.closeTo(back[i]!, rgb[i]!, 4, `${rgb} [${i}]`);
+	}
+});
+
+describe('parse_hue', () => {
+	test('accepts finite numbers as-is', () => {
+		assert.strictEqual(parse_hue(0), 0);
+		assert.strictEqual(parse_hue(250.5), 250.5);
+		assert.strictEqual(parse_hue(-30), -30); // not normalized
+		assert.strictEqual(parse_hue(400), 400);
+	});
+
+	test('accepts numeric strings with an optional deg unit', () => {
+		assert.strictEqual(parse_hue('250'), 250);
+		assert.strictEqual(parse_hue('  250  '), 250);
+		assert.strictEqual(parse_hue('250deg'), 250);
+		assert.strictEqual(parse_hue('250DEG'), 250);
+		assert.strictEqual(parse_hue('1e2'), 100);
+		assert.strictEqual(parse_hue('.5'), 0.5);
+		assert.strictEqual(parse_hue('-30'), -30);
+	});
+
+	test('rejects empty, non-numeric, and non-finite input', () => {
+		assert.strictEqual(parse_hue(''), null);
+		assert.strictEqual(parse_hue('   '), null);
+		assert.strictEqual(parse_hue('deg'), null);
+		assert.strictEqual(parse_hue('red'), null);
+		assert.strictEqual(parse_hue('0x10'), null); // no hex/binary/octal via `Number`
+		assert.strictEqual(parse_hue('0b1'), null);
+		assert.strictEqual(parse_hue('250 deg'), null);
+		assert.strictEqual(parse_hue('250turn'), null);
+		assert.strictEqual(parse_hue('1e400'), null); // overflows to Infinity
+		assert.strictEqual(parse_hue(NaN), null);
+		assert.strictEqual(parse_hue(Infinity), null);
+		assert.strictEqual(parse_hue('Infinity'), null);
+		assert.strictEqual(parse_hue(null), null);
+		assert.strictEqual(parse_hue(undefined), null);
+		assert.strictEqual(parse_hue({}), null);
+	});
 });

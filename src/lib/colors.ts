@@ -6,12 +6,16 @@ import { round } from './maths.ts';
 
 // https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
 
-export type Hsl = readonly [Hue, Saturation, Lightness];
-export type Hue = Flavored<number, 'Hue'>; // [0, 1]
+export type Hsl = [Hue, Saturation, Lightness];
+/**
+ * A hue angle in degrees, the unit CSS uses for both `hsl()` and `oklch()`.
+ * Conversions return hues in [0, 360) and accept any angle.
+ */
+export type Hue = Flavored<number, 'Hue'>;
 export type Saturation = Flavored<number, 'Saturation'>; // [0, 1]
 export type Lightness = Flavored<number, 'Lightness'>; // [0, 1]
 
-export type Rgb = readonly [Red, Green, Blue];
+export type Rgb = [Red, Green, Blue];
 export type Red = Flavored<number, 'Red'>; // [0, 255]
 export type Green = Flavored<number, 'Green'>; // [0, 255]
 export type Blue = Flavored<number, 'Blue'>; // [0, 255]
@@ -44,7 +48,7 @@ export const to_hex_component = (v: number): string => {
  * Converts an RGB color value to HSL. Conversion formula
  * adapted from http://wikipedia.org/wiki/HSL_color_space.
  * Values r/g/b are in the range [0,255] and
- * returns h/s/l in the range [0,1].
+ * returns h in degrees [0,360) and s/l in the range [0,1].
  */
 export const rgb_to_hsl = (r: number, g: number, b: number): Hsl => {
 	var r2 = r / 255;
@@ -70,7 +74,7 @@ export const rgb_to_hsl = (r: number, g: number, b: number): Hsl => {
 				h = (r2 - g2) / d + 4;
 				break;
 		}
-		h /= 6;
+		h *= 60;
 	}
 	return [h, round(s, 2), round(l, 2)];
 };
@@ -78,8 +82,8 @@ export const rgb_to_hsl = (r: number, g: number, b: number): Hsl => {
 /**
  * Converts an HSL color value to RGB. Conversion formula
  * adapted from http://wikipedia.org/wiki/HSL_color_space.
- * Values h/s/l are in the range [0,1] and
- * returns r/g/b in the range [0,255].
+ * Value h is in degrees (any angle, wrapped), s/l are in the range [0,1],
+ * and returns r/g/b in the range [0,255].
  */
 export const hsl_to_rgb = (h: Hue, s: Saturation, l: Lightness): Rgb => {
 	var r: number, g: number, b: number;
@@ -88,13 +92,17 @@ export const hsl_to_rgb = (h: Hue, s: Saturation, l: Lightness): Rgb => {
 	} else {
 		var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
 		var p = 2 * l - q;
-		r = hue_to_rgb_component(p, q, h + 1 / 3);
-		g = hue_to_rgb_component(p, q, h);
-		b = hue_to_rgb_component(p, q, h - 1 / 3);
+		var t = (((h / 360) % 1) + 1) % 1; // any angle wraps to a fraction of a turn in [0, 1)
+		r = hue_to_rgb_component(p, q, t + 1 / 3);
+		g = hue_to_rgb_component(p, q, t);
+		b = hue_to_rgb_component(p, q, t - 1 / 3);
 	}
 	return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 };
 
+/**
+ * The HSL-to-RGB channel helper, with the hue `t` as a fraction of a turn.
+ */
 export const hue_to_rgb_component = (p: number, q: number, t: number): number => {
 	var t2 = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
 	if (t2 < 1 / 6) return p + (q - p) * 6 * t2;
@@ -114,7 +122,7 @@ export const hsl_to_hex_string = (h: Hue, s: Saturation, l: Lightness): string =
 };
 
 export const hsl_to_string = (h: Hue, s: Saturation, l: Lightness): string =>
-	`hsl(${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
+	`hsl(${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
 
 export const hex_string_to_hsl = (hex: string): Hsl => {
 	var rgb = hex_string_to_rgb(hex); // TODO could safely use the optimized variant
@@ -126,7 +134,25 @@ const HSL_STRING_MATCHER = /^(hsl\()?\s*(\d+),?\s*(\d+)%,?\s*(\d+)%/;
 export const parse_hsl_string = (hsl: string): Hsl => {
 	var match = HSL_STRING_MATCHER.exec(hsl);
 	if (!match) throw new Error('invalid HSL string');
-	return [Number(match[2]) / 360, Number(match[3]) / 100, Number(match[4]) / 100];
+	return [Number(match[2]), Number(match[3]) / 100, Number(match[4]) / 100];
+};
+
+// decimal only, so `Number`'s hex/binary/octal forms like `0x10` are rejected
+const HUE_STRING_MATCHER = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:deg)?\s*$/iu;
+
+/**
+ * Parses a hue in degrees from a number or a numeric string, with an optional
+ * `deg` unit. The value is returned as-is, not normalized to [0, 360).
+ *
+ * @returns the hue, or `null` for empty, non-numeric, or non-finite input
+ */
+export const parse_hue = (value: unknown): Hue | null => {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+	if (typeof value !== 'string') return null;
+	var match = HUE_STRING_MATCHER.exec(value);
+	if (!match) return null;
+	var parsed = Number(match[1]);
+	return Number.isFinite(parsed) ? parsed : null;
 };
 
 // TODO either add an hsla variant or support alpha in the hsl variant
