@@ -16,10 +16,7 @@
 		<div class="logo"><Svg data={logo_fuz_util} /></div>
 	</section>
 	<section class="box">
-		<Card href={resolve('/docs')}>
-			docs
-			{#snippet icon()}{/snippet}
-		</Card>
+		<Card href={resolve('/docs')}>docs</Card>
 	</section>
 	<section>
 		<DocsFooter repo_url={site.repo_url} root_url={FUZ_DEV_URL} />
