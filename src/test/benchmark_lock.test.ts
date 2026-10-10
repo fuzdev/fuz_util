@@ -9,7 +9,7 @@ import {
 	benchmark_lock_acquire,
 	benchmark_lock_format_refusal,
 	type BenchmarkLockHolder
-} from '$lib/benchmark_lock.ts';
+} from '#lib/benchmark_lock.ts';
 
 let dir: string;
 let path: string;

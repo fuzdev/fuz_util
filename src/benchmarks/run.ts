@@ -128,5 +128,5 @@ if (save_baseline) {
 }
 
 // Prevent optimization
-void slugify_results.length;
-void deep_equal_result;
+slugify_results.length;
+deep_equal_result;

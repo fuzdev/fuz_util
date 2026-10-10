@@ -1,7 +1,7 @@
 import { describe, test, assert } from 'vitest';
 
-import { hash_blake3 } from '$lib/hash_blake3.ts';
-import { Blake3Hash } from '$lib/hash_schemas.ts';
+import { hash_blake3 } from '#lib/hash_blake3.ts';
+import { Blake3Hash } from '#lib/hash_schemas.ts';
 
 describe('hash_blake3', () => {
 	// Known test vectors from blake3_wasm test suite (~/dev/blake3/test/test_vectors.json)

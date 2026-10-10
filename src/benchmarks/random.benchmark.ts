@@ -45,4 +45,4 @@ console.log(bench.table());
 console.log('\n📈 Summary\n');
 console.log(bench.summary());
 
-void sink;
+sink;

@@ -17,7 +17,7 @@ import {
 	handle_preprocess_error,
 	escape_svelte_text,
 	type PreprocessImportInfo
-} from '$lib/svelte_preprocess_helpers.ts';
+} from '#lib/svelte_preprocess_helpers.ts';
 
 describe('evaluate_static_expr', () => {
 	test('returns value for string literal', () => {
@@ -801,11 +801,11 @@ describe('resolve_component_names', () => {
 		const ast = parse(
 			`<script lang="ts">
 	import Mdz from '@fuzdev/fuz_ui/Mdz.svelte';
-	import Markdown from '$lib/Mdz.svelte';
+	import Markdown from '#lib/Mdz.svelte';
 </script>`,
 			{ modern: true }
 		);
-		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte', '$lib/Mdz.svelte']);
+		const names = resolve_component_names(ast, ['@fuzdev/fuz_ui/Mdz.svelte', '#lib/Mdz.svelte']);
 		assert.ok(names.has('Mdz'));
 		assert.ok(names.has('Markdown'));
 		assert.equal(names.size, 2);

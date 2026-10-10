@@ -18,7 +18,7 @@ import {
 	type Oklab,
 	type Oklch,
 	type RgbUnit
-} from '$lib/oklch.ts';
+} from '#lib/oklch.ts';
 
 describe('srgb_to_oklch', () => {
 	// reference values from the css-color-4 sample code / Ottosson's reference implementation

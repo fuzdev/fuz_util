@@ -10,7 +10,7 @@ import {
 	is_plain_object,
 	EMPTY_OBJECT,
 	transform_empty_object_to_undefined
-} from '$lib/object.ts';
+} from '#lib/object.ts';
 
 describe('map_record', () => {
 	test('basic behavior', () => {
@@ -56,8 +56,19 @@ describe('pick_by', () => {
 
 describe('omit_undefined', () => {
 	test('basic behavior', () => {
-		assert.deepStrictEqual(omit_undefined({ a: 1, b: undefined, c: undefined }), { a: 1 });
-		assert.deepStrictEqual(omit_undefined({ a: undefined, b: 2, c: undefined }), { b: 2 });
+		// `omit_undefined` returns `T`, which still claims the omitted keys
+		const omitted_b_c: Record<string, unknown> = omit_undefined({
+			a: 1,
+			b: undefined,
+			c: undefined
+		});
+		assert.deepStrictEqual(omitted_b_c, { a: 1 });
+		const omitted_a_c: Record<string, unknown> = omit_undefined({
+			a: undefined,
+			b: 2,
+			c: undefined
+		});
+		assert.deepStrictEqual(omitted_a_c, { b: 2 });
 		assert.deepStrictEqual(omit_undefined({ a: 1, b: 2 }), { a: 1, b: 2 });
 		assert.deepStrictEqual(omit_undefined({ a: undefined, b: undefined }), {} as any);
 		assert.deepStrictEqual(omit_undefined({}), {});

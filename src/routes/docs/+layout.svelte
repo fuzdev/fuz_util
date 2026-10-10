@@ -4,7 +4,7 @@
 	import { Library, library_context } from '@fuzdev/fuz_ui/library.svelte.ts';
 
 	import { tomes } from './tomes.ts';
-	import { library_json } from '$routes/library.ts';
+	import { library_json } from '#routes/library.ts';
 
 	const {
 		children

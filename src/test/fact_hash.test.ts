@@ -5,16 +5,16 @@ import {
 	fact_hash_stream,
 	fact_hash_verify,
 	fact_hash_extract_refs
-} from '$lib/fact_hash.ts';
+} from '#lib/fact_hash.ts';
 import {
 	FACT_HASH_PREFIX,
 	FACT_HASH_PATTERN,
 	FactHashSchema,
 	is_fact_hash,
 	type FactHash
-} from '$lib/hash_schemas.ts';
-import { hash_blake3 } from '$lib/hash_blake3.ts';
-import type { Json } from '$lib/json.ts';
+} from '#lib/hash_schemas.ts';
+import { hash_blake3 } from '#lib/hash_blake3.ts';
+import type { Json } from '#lib/json.ts';
 
 /** A syntactically valid (if not content-derived) fact hash literal. */
 const HASH_A = (FACT_HASH_PREFIX + 'a'.repeat(64)) as FactHash;

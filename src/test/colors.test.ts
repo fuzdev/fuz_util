@@ -17,7 +17,7 @@ import {
 	hue_to_rgb_component,
 	parse_hue,
 	type Rgb
-} from '$lib/colors.ts';
+} from '#lib/colors.ts';
 
 test('hex_to_rgb and rgb_to_hex', () => {
 	const rgb: Rgb = [157, 100, 50];

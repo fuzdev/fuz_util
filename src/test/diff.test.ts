@@ -14,9 +14,9 @@ import {
 	format_diff,
 	generate_diff,
 	type DiffLine
-} from '$lib/diff.ts';
-import { configure_print_colors } from '$lib/print.ts';
-import { create_random_alea } from '$lib/random_alea.ts';
+} from '#lib/diff.ts';
+import { configure_print_colors } from '#lib/print.ts';
+import { create_random_alea } from '#lib/random_alea.ts';
 
 /**
  * Rebuilds the `a` text from a diff — `same` + `remove` lines, terminated

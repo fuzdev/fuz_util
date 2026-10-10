@@ -6,7 +6,7 @@ import {
 	FactHashSchema,
 	is_fact_hash,
 	type FactHash
-} from '$lib/hash_schemas.ts';
+} from '#lib/hash_schemas.ts';
 
 /** A syntactically valid (if not content-derived) fact hash literal. */
 const HASH_A = (FACT_HASH_PREFIX + 'a'.repeat(64)) as FactHash;

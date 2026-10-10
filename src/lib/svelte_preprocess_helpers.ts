@@ -209,7 +209,7 @@ export const try_extract_conditional_chain = (
 
 // TODO cross-import tracing: resolve `import {x} from './constants.ts'` by reading
 // and parsing the imported module, extracting `export const` values. Would need path
-// resolution ($lib, tsconfig paths), a Program-node variant of this function, and
+// resolution (`#lib` subpath imports, tsconfig paths), a Program-node variant of this function, and
 // cache invalidation when the imported file changes. Start with relative .ts/.js only.
 
 /**

@@ -6,7 +6,7 @@ import {
 	FRACTIONAL_INDEX_LENGTH_MAX,
 	fractional_index_between,
 	fractional_indices_between
-} from '$lib/fractional_index.ts';
+} from '#lib/fractional_index.ts';
 import vectors from './fractional_index_vectors.json' with { type: 'json' };
 
 /** Assert a generated key obeys the generator's emitted invariants. */

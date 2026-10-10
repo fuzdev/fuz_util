@@ -7,7 +7,7 @@
 	import Breadcrumb from '@fuzdev/fuz_ui/Breadcrumb.svelte';
 	import { Library, library_context } from '@fuzdev/fuz_ui/library.svelte.ts';
 
-	import { library_json } from '$routes/library.ts';
+	import { library_json } from '#routes/library.ts';
 
 	const library = new Library(library_json);
 	library_context.set(() => library);
