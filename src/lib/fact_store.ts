@@ -86,10 +86,11 @@ export interface FactStore {
 	 * then spills to the disk CAS — so a multi-GB upload never buffers in RAM.
 	 *
 	 * Enforces `max_bytes` mid-stream: a body whose running byte count passes the
-	 * cap throws `PayloadTooLargeError` (the backstop for a chunked or
-	 * mis-declared `Content-Length`). A disk-full (`ENOSPC`) mid-stream throws
-	 * `StorageFullError`. Idempotent like `put` — identical bytes land on the same
-	 * content-addressed path and the underlying insert is `ON CONFLICT DO NOTHING`.
+	 * cap throws the implementation's payload-too-large error (the backstop for a
+	 * chunked or mis-declared `Content-Length`), and a disk-full (`ENOSPC`)
+	 * mid-stream throws its storage-full error. Idempotent like `put` — identical
+	 * bytes land on the same content-addressed path and the underlying insert is
+	 * `ON CONFLICT DO NOTHING`.
 	 *
 	 * The streaming twin of `put`; mirrors the Rust `FactStore::put_stream`.
 	 */
