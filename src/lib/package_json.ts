@@ -120,7 +120,13 @@ export const PackageJson = z.looseObject({
 	optionalDependencies: z.record(z.string(), z.string()).optional(),
 
 	bin: z.record(z.string(), z.string()).optional(),
-	sideEffects: z.array(z.string()).optional(),
+	sideEffects: z
+		.union([z.boolean(), z.array(z.string())])
+		.meta({
+			description:
+				'whether the package has side effects, `false` if none, or the list of files that do'
+		})
+		.optional(),
 	files: z.array(z.string()).optional(),
 	main: z.string().optional(),
 	exports: PackageJsonExports.transform(transform_empty_object_to_undefined).optional()

@@ -16,6 +16,38 @@ test('PackageJson.parse fails with bad data', () => {
 	assert.ok(err);
 });
 
+test('`PackageJson` parses `sideEffects` as a boolean or an array of strings', () => {
+	const values = [false, true, ['./src/polyfill.js', '*.css'], []];
+
+	for (const value of values) {
+		const parsed = PackageJson.safeParse({ name: 'abc', sideEffects: value });
+		assert.ok(parsed.success);
+		assert.deepEqual(parsed.data.sideEffects, value);
+	}
+});
+
+test('`PackageJson` parses an absent `sideEffects`', () => {
+	const parsed = PackageJson.safeParse({ name: 'abc' });
+	assert.ok(parsed.success);
+	assert.strictEqual(parsed.data.sideEffects, undefined);
+	assert.ok(!('sideEffects' in parsed.data));
+});
+
+test('`PackageJson` rejects invalid `sideEffects`', () => {
+	const invalid_values = [
+		'./src/polyfill.js', // a bare string is not a valid value
+		1,
+		null,
+		['./src/polyfill.js', 1] // array items must be strings
+	];
+
+	for (const invalid_value of invalid_values) {
+		const parsed = PackageJson.safeParse({ name: 'abc', sideEffects: invalid_value });
+		assert.ok(!parsed.success);
+		assert.deepEqual(parsed.error.issues[0]!.path, ['sideEffects']);
+	}
+});
+
 test('`PackageJsonExports` parses simple string exports', () => {
 	const exports = {
 		'.': './index.js',
