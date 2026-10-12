@@ -9,10 +9,12 @@
 design:
 
 - kitchen-sink utilities library - sorry, I wish it weren't so, JS made me do it
-- all dependencies are optional ([`zod`](https://github.com/colinhacks/zod),
+- dependencies are optional ([`zod`](https://github.com/colinhacks/zod),
   [`svelte`](https://github.com/sveltejs/svelte),
   [`@fuzdev/blake3-wasm`](https://github.com/fuzdev/blake3),
   [`esm-env`](https://github.com/benmccann/esm-env), `@types/node`, `@types/estree`)
+  except [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema),
+  a required peer with no dependencies of its own that defines the `Flavored` and `Branded` types
 - mix of JS module environments - browser-only, Node-only, universal
 - mostly small pure functions
 - all TypeScript, for styles and Svelte and SvelteKit

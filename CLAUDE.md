@@ -103,7 +103,8 @@ See `docs/benchmark.md` for full documentation.
 
 ### Types and validation
 
-- `types.ts` - TypeScript utility types (Flavored, Branded, union helpers)
+- `types.ts` - TypeScript utility types (union helpers, and `Flavored` / `Branded`
+  re-exported from `@fuzdev/fuz_schema`, where they are defined)
 - `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
   logo, tagline, etc.)
 - `pkg_json.ts` - `PkgJson`, the curated publish-safe subset of `PackageJson`

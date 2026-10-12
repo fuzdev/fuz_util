@@ -61,7 +61,9 @@ export type ArrayElement<T> = T extends ReadonlyArray<infer U> ? U : never;
  * The `Flavored` and `Branded` type helpers add varying degrees of nominal typing to other types.
  * This is especially useful with primitives like strings and numbers.
  *
- * @see https://spin.atomicobject.com/typescript-flexible-nominal-typing/
+ * They are defined in `@fuzdev/fuz_schema`, whose `flavor` and `brand` schema
+ * helpers produce the same types, and re-exported here so a flavored or
+ * branded type is one type wherever it was declared.
  *
  * `Flavored` is a looser form of `Branded` that trades
  * explicitness and a little safety in some cases for ergonomics.
@@ -82,18 +84,6 @@ export type ArrayElement<T> = T extends ReadonlyArray<infer U> ? U : never;
  * const phone2: PhoneNumber = 'foo' as PhoneNumber; // ok
  * ```
  *
- * See also Zod's `.brand` schema helper:
- *
- * @see https://github.com/colinhacks/zod#brand
- *
+ * @see https://spin.atomicobject.com/typescript-flexible-nominal-typing/
  */
-export type Flavored<TValue, TName> = TValue & Flavor<TName>;
-declare const FlavoredSymbol: unique symbol;
-export interface Flavor<T> {
-	readonly [FlavoredSymbol]?: T;
-}
-export type Branded<TValue, TName> = TValue & Brand<TName>;
-declare const BrandedSymbol: unique symbol;
-export interface Brand<T> {
-	readonly [BrandedSymbol]: T;
-}
+export type { Flavored, Flavor, Branded, Brand } from '@fuzdev/fuz_schema/schema.ts';
