@@ -1,4 +1,5 @@
 import { describe, test, assert } from 'vitest';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
 
 import {
 	git_check_clean_workspace,
@@ -12,6 +13,8 @@ import {
 	git_workspace_status_message,
 	git_workspace_is_clean,
 	git_workspace_is_fully_staged,
+	GitBranch,
+	GitOrigin,
 	type GitWorkspaceStatus
 } from '#lib/git.ts';
 
@@ -551,6 +554,23 @@ describe('git_info_get', () => {
 		if (info.branch) {
 			// Branch name should be a non-empty string
 			assert.ok(info.branch.length > 0);
+		}
+	});
+});
+
+describe('GitOrigin and GitBranch', () => {
+	test('parse a string as it is', () => {
+		const origin = s.parse(GitOrigin, 'origin');
+		const branch = s.parse(GitBranch, 'main');
+		assert.deepEqual(origin, { ok: true, value: 'origin' });
+		assert.deepEqual(branch, { ok: true, value: 'main' });
+	});
+
+	test('refuse a non-string', () => {
+		const result = s.parse(GitBranch, 1);
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.strictEqual(result.issues[0]?.kind, 'string');
 		}
 	});
 });

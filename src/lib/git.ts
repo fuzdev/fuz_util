@@ -1,8 +1,7 @@
 import type { SpawnOptions } from 'node:child_process';
-import { z } from 'zod';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
 
 import { spawn, spawn_out, spawn_result_to_message } from './process.ts';
-import type { Flavored } from './types.ts';
 import { to_file_path } from './path.ts';
 import { fs_exists } from './fs.ts';
 
@@ -30,11 +29,17 @@ export const git_info_get = async (options?: SpawnOptions): Promise<GitInfo> => 
 	};
 };
 
-export const GitOrigin = z.string();
-export type GitOrigin = Flavored<string, 'GitOrigin'>;
+/**
+ * A git remote's name, such as `origin`.
+ */
+export const GitOrigin = s.flavor(s.string, 'GitOrigin');
+export type GitOrigin = s.Infer<typeof GitOrigin>;
 
-export const GitBranch = z.string();
-export type GitBranch = Flavored<string, 'GitBranch'>;
+/**
+ * A git branch's name.
+ */
+export const GitBranch = s.flavor(s.string, 'GitBranch');
+export type GitBranch = s.Infer<typeof GitBranch>;
 
 /**
  * Returns the current git branch name.

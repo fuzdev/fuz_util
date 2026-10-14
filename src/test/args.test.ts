@@ -1,5 +1,6 @@
 import { describe, test, assert } from 'vitest';
-import { z } from 'zod';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
+import { meta } from '@fuzdev/fuz_schema/meta.ts';
 
 import {
 	args_validate_schema,
@@ -12,92 +13,108 @@ import {
 
 describe('args_validate_schema', () => {
 	test('valid schema with no aliases', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(false)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, false)
 		});
 		const result = args_validate_schema(schema);
-		assert.strictEqual(result.success, true);
-		assert.strictEqual('error' in result, false);
+		assert.strictEqual(result.ok, true);
+		assert.strictEqual('issues' in result, false);
 	});
 
 	test('valid schema with aliases', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] }),
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o', 'out'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'out'] })
 		});
 		const result = args_validate_schema(schema);
-		assert.strictEqual(result.success, true);
+		assert.strictEqual(result.ok, true);
 	});
 
 	test('detects alias-canonical conflict', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o'] }),
-			o: z.boolean().default(false)
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o'] }),
+			o: s.with_default(s.boolean, false)
 		});
 		const result = args_validate_schema(schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			assert.isDefined(result.error);
-			assert.include(result.error.issues[0]?.message, 'conflicts with canonical key');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.isDefined(result.issues);
+			assert.include(result.issues[0]?.message, 'conflicts with canonical key');
 		}
 	});
 
 	test('detects duplicate alias', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] }),
-			version: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			version: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result = args_validate_schema(schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			assert.isDefined(result.error);
-			assert.include(result.error.issues[0]?.message, 'is used by both');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.isDefined(result.issues);
+			assert.include(result.issues[0]?.message, 'is used by both');
 		}
 	});
 
 	test('caches schema analysis (multiple calls use same cached data)', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(false)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, false)
 		});
 		const result1 = args_validate_schema(schema);
 		const result2 = args_validate_schema(schema);
 		// Both calls should succeed and use cached analysis
-		assert.strictEqual(result1.success, true);
-		assert.strictEqual(result2.success, true);
-		// The cached error object should be the same reference when there are conflicts
-		const bad_schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o'] }),
-			o: z.boolean().default(false)
+		assert.strictEqual(result1.ok, true);
+		assert.strictEqual(result2.ok, true);
+		// The cached issues should be the same array when there are conflicts
+		const bad_schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o'] }),
+			o: s.with_default(s.boolean, false)
 		});
 		const bad1 = args_validate_schema(bad_schema);
 		const bad2 = args_validate_schema(bad_schema);
-		if (!bad1.success && !bad2.success) {
-			assert.strictEqual(bad1.error, bad2.error); // Same cached error object
+		assert.strictEqual(bad1.ok, false);
+		assert.strictEqual(bad2.ok, false);
+		if (!bad1.ok && !bad2.ok) {
+			assert.strictEqual(bad1.issues, bad2.issues); // Same cached issues array
 		}
 	});
 
 	test('handles non-object schema gracefully', () => {
-		const schema = z.string();
+		const schema = s.string;
 		const result = args_validate_schema(schema);
-		assert.strictEqual(result.success, true); // No conflicts possible
+		assert.strictEqual(result.ok, true); // No conflicts possible
+	});
+
+	test('conflicts are schema issues', () => {
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'v'] }),
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			o: s.with_default(s.boolean, false)
+		});
+		const result = args_validate_schema(schema);
+		assert.strictEqual(result.ok, false);
+		if (result.ok) return;
+		assert.strictEqual(result.issues.length, 2);
+		const [conflict, duplicate] = result.issues;
+		assert.deepEqual(conflict, {
+			kind: 'alias_canonical_conflict',
+			expected: 'a unique alias',
+			received: 'string',
+			path: ['o'],
+			message: "Alias 'o' for 'output' conflicts with canonical key 'o'"
+		});
+		assert.deepEqual(duplicate, {
+			kind: 'duplicate_alias',
+			expected: 'a unique alias',
+			received: 'string',
+			path: ['v'],
+			message: "Alias 'v' is used by both 'verbose' and 'output'"
+		});
+		// the key order every `SchemaIssue` has
+		for (const issue of result.issues) {
+			assert.deepEqual(Object.keys(issue), ['kind', 'expected', 'received', 'path', 'message']);
+			assert.strictEqual(s.format_issue(issue), `${issue.path[0] as string}: ${issue.message}`);
+		}
 	});
 });
 
@@ -143,21 +160,15 @@ describe('args_serialize', () => {
 	});
 
 	test('prefers shortest alias when schema provided', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v', 'verb'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v', 'verb'] })
 		});
 		assert.deepEqual(args_serialize({ verbose: true }, schema), ['-v']);
 	});
 
 	test('prefers shortest alias for values', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o', 'out'] })
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'out'] })
 		});
 		assert.deepEqual(args_serialize({ output: 'dist' }, schema), ['-o', 'dist']);
 	});
@@ -172,295 +183,371 @@ describe('args_serialize', () => {
 });
 
 describe('args_parse', () => {
-	test('validates with zod schema', () => {
-		const schema = z.strictObject({ watch: z.boolean().default(false) });
+	test('validates with the schema', () => {
+		const schema = s.object({ watch: s.with_default(s.boolean, false) });
 		const result = args_parse({ watch: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: true });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: true });
 		}
 	});
 
 	test('applies defaults', () => {
-		const schema = z.strictObject({ watch: z.boolean().default(false) });
+		const schema = s.object({ watch: s.with_default(s.boolean, false) });
 		const result = args_parse({}, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: false });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: false });
 		}
 	});
 
 	test('expands aliases', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result = args_parse({ v: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.strictEqual(result.data.verbose, true);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.strictEqual(result.value.verbose, true);
 		}
 	});
 
-	test('strips alias keys for strictObject', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+	test('strips alias keys for object', () => {
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result = args_parse({ v: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { verbose: true });
-			assert.strictEqual('v' in result.data, false);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { verbose: true });
+			assert.strictEqual('v' in result.value, false);
 		}
 	});
 
 	test('multiple aliases', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o', 'out'] })
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'out'] })
 		});
 		const result1 = args_parse({ o: 'dist' }, schema);
 		const result2 = args_parse({ out: 'dist' }, schema);
-		assert.strictEqual(result1.success, true);
-		assert.strictEqual(result2.success, true);
-		if (result1.success) assert.strictEqual(result1.data.output, 'dist');
-		if (result2.success) assert.strictEqual(result2.data.output, 'dist');
+		assert.strictEqual(result1.ok, true);
+		assert.strictEqual(result2.ok, true);
+		if (result1.ok) assert.strictEqual(result1.value.output, 'dist');
+		if (result2.ok) assert.strictEqual(result2.value.output, 'dist');
 	});
 
 	test('canonical takes precedence over alias', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result = args_parse({ v: true, verbose: false }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.strictEqual(result.data.verbose, false);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.strictEqual(result.value.verbose, false);
 		}
 	});
 
 	test('syncs no- prefix from base', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(true),
-			'no-watch': z.boolean().default(false)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, true),
+			'no-watch': s.with_default(s.boolean, false)
 		});
 		const result = args_parse({ watch: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: true, 'no-watch': false });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: true, 'no-watch': false });
 		}
 	});
 
 	test('syncs base from no- prefix', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(true),
-			'no-watch': z.boolean().default(false)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, true),
+			'no-watch': s.with_default(s.boolean, false)
 		});
 		const result = args_parse({ 'no-watch': true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: false, 'no-watch': true });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: false, 'no-watch': true });
 		}
 	});
 
 	test('both present - no sync needed', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(true),
-			'no-watch': z.boolean().default(false)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, true),
+			'no-watch': s.with_default(s.boolean, false)
 		});
 		const result = args_parse({ watch: false, 'no-watch': true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: false, 'no-watch': true });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: false, 'no-watch': true });
 		}
 	});
 
 	test('no- sync only for booleans', () => {
-		const schema = z.strictObject({
-			count: z.number().default(0),
-			'no-count': z.number().default(0) // weird but valid
+		const schema = s.object({
+			count: s.with_default(s.number, 0),
+			'no-count': s.with_default(s.number, 0) // weird but valid
 		});
 		const result = args_parse({ count: 5 }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
 			// Should NOT sync because no-count is not boolean
-			assert.deepEqual(result.data, { count: 5, 'no-count': 0 });
+			assert.deepEqual(result.value, { count: 5, 'no-count': 0 });
 		}
 	});
 
 	test('no- sync requires both keys in schema', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(true)
+		const schema = s.object({
+			watch: s.with_default(s.boolean, true)
 			// no 'no-watch' in schema
 		});
 		const result = args_parse({ watch: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
 			// Should NOT add 'no-watch' since it's not in schema
-			assert.deepEqual(result.data, { watch: true });
+			assert.deepEqual(result.value, { watch: true });
 		}
 	});
 
 	test('positionals in schema', () => {
-		const schema = z.strictObject({
-			_: z.array(z.string()).default([]),
-			watch: z.boolean().default(false)
+		const schema = s.object({
+			_: s.with_default_fn(s.array(s.string), () => []),
+			watch: s.with_default(s.boolean, false)
 		});
 		const result = args_parse({ _: ['foo', 'bar'], watch: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { _: ['foo', 'bar'], watch: true });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { _: ['foo', 'bar'], watch: true });
 		}
 	});
 
 	test('alias conflict with canonical key errors', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o'] }),
-			o: z.boolean().default(false) // conflicts with alias
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o'] }),
+			o: s.with_default(s.boolean, false) // conflicts with alias
 		});
 		const result = args_parse({}, schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			assert.include(result.error.issues[0]?.message, 'conflicts with canonical key');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.include(result.issues[0]?.message, 'conflicts with canonical key');
 		}
 	});
 
 	test('duplicate alias errors', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] }),
-			version: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			version: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result = args_parse({}, schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			assert.include(result.error.issues[0]?.message, 'is used by both');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.include(result.issues[0]?.message, 'is used by both');
 		}
 	});
 
 	test('schema validation is cached', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		// Multiple parses with same schema should use cached analysis
 		const result1 = args_parse({ v: true }, schema);
 		const result2 = args_parse({ verbose: true }, schema);
-		assert.strictEqual(result1.success, true);
-		assert.strictEqual(result2.success, true);
+		assert.strictEqual(result1.ok, true);
+		assert.strictEqual(result2.ok, true);
 	});
 
 	test('handles optional fields', () => {
-		const schema = z.strictObject({
-			name: z.string().optional()
+		const schema = s.object({
+			name: s.optional(s.string)
 		});
 		const result = args_parse({}, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, {});
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, {});
 		}
 	});
 
-	test('returns zod validation error for invalid values', () => {
-		const schema = z.strictObject({
-			count: z.number().min(0)
+	test('returns schema validation issues for invalid values', () => {
+		const schema = s.object({
+			count: s.pipe(s.number, s.min_value(0))
 		});
 		const result = args_parse({ count: -5 }, schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			// This is a zod validation error, not a schema conflict
-			assert.notInclude(result.error.issues[0]?.message, 'conflicts');
-			assert.notInclude(result.error.issues[0]?.message, 'is used by both');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			// This is a validation issue, not a schema conflict
+			assert.strictEqual(result.issues.length, 1);
+			assert.strictEqual(result.issues[0]?.kind, 'min_value');
+			assert.deepEqual(result.issues[0]?.path, ['count']);
 		}
 	});
 
 	test('first alias in input wins when multiple aliases provided', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o', 'out'] })
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'out'] })
 		});
 		// When both aliases are in input, first one processed wins
 		// (object iteration order is insertion order in modern JS)
 		const result = args_parse({ o: 'first', out: 'second' }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
 			// 'o' is processed first, so 'first' is used
-			assert.strictEqual(result.data.output, 'first');
+			assert.strictEqual(result.value.output, 'first');
 		}
 	});
 
 	test('handles wrapped object schema', () => {
-		const schema = z
-			.strictObject({
-				verbose: z
-					.boolean()
-					.default(false)
-					.meta({ aliases: ['v'] })
-			})
-			.default({ verbose: false });
+		const schema = s.with_default_fn(
+			s.object({
+				verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
+			}),
+			() => ({ verbose: false })
+		);
 		const result = args_parse({ v: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.strictEqual(result.data.verbose, true);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.strictEqual(result.value.verbose, true);
 		}
 	});
 
 	test('no- sync works with alias expansion', () => {
-		const schema = z.strictObject({
-			watch: z
-				.boolean()
-				.default(true)
-				.meta({ aliases: ['w'] }),
-			'no-watch': z.boolean().default(false)
+		const schema = s.object({
+			watch: meta(s.with_default(s.boolean, true), { aliases: ['w'] }),
+			'no-watch': s.with_default(s.boolean, false)
 		});
 		// Use alias 'w' to set watch=true, no-watch should sync
 		const result = args_parse({ w: true }, schema);
-		assert.strictEqual(result.success, true);
-		if (result.success) {
-			assert.deepEqual(result.data, { watch: true, 'no-watch': false });
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: true, 'no-watch': false });
 		}
 	});
 
-	test('rejects unknown keys with strictObject', () => {
-		const schema = z.strictObject({
-			watch: z.boolean().default(false)
+	test('rejects unknown keys with object', () => {
+		const schema = s.object({
+			watch: s.with_default(s.boolean, false)
 		});
 		const result = args_parse({ watch: true, unknown: 'key' }, schema);
-		assert.strictEqual(result.success, false);
-		if (!result.success) {
-			assert.include(result.error.issues[0]?.message, 'Unrecognized key');
+		assert.strictEqual(result.ok, false);
+		if (!result.ok) {
+			assert.strictEqual(result.issues.length, 1);
+			assert.strictEqual(result.issues[0]?.kind, 'unknown_key');
+			assert.deepEqual(result.issues[0]?.path, ['unknown']);
+		}
+	});
+
+	test('positionals default is a new array on each parse', () => {
+		const schema = s.object({
+			_: s.with_default_fn(s.array(s.string), () => [])
+		});
+		const result1 = args_parse({}, schema);
+		assert.strictEqual(result1.ok, true);
+		if (!result1.ok) return;
+		result1.value._.push('mutated');
+		const result2 = args_parse({}, schema);
+		assert.strictEqual(result2.ok, true);
+		if (!result2.ok) return;
+		assert.deepEqual(result2.value._, []);
+		assert.notStrictEqual(result2.value._, result1.value._);
+	});
+
+	test('does not mutate the input args', () => {
+		const schema = s.object({
+			watch: meta(s.with_default(s.boolean, true), { aliases: ['w'] }),
+			'no-watch': s.with_default(s.boolean, false)
+		});
+		const unparsed_args = { w: false };
+		const result = args_parse(unparsed_args, schema);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: false, 'no-watch': true });
+		}
+		assert.deepEqual(unparsed_args, { w: false });
+	});
+
+	test('output is a different object from the input args', () => {
+		const schema = s.object({ watch: s.boolean });
+		const unparsed_args = { watch: true };
+		const result = args_parse(unparsed_args, schema);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: true });
+			assert.notStrictEqual(result.value, unparsed_args);
+		}
+	});
+
+	test('output arrays are copies of the input arrays', () => {
+		const schema = s.object({
+			_: s.with_default_fn(s.array(s.string), () => []),
+			include: meta(s.optional(s.array(s.string)), { aliases: ['i'] }),
+			tag: s.optional(s.array(s.string))
+		});
+		const unparsed_args = argv_parse(['a', 'b', '-i', 'x', '-i', 'y', '--tag', 'p', '--tag', 'q']);
+		const result = args_parse(unparsed_args, schema);
+		assert.strictEqual(result.ok, true);
+		if (!result.ok) return;
+		const { _, include, tag } = result.value;
+		assert.deepEqual(_, ['a', 'b']);
+		assert.deepEqual(include, ['x', 'y']);
+		assert.deepEqual(tag, ['p', 'q']);
+		assert.notStrictEqual(_, unparsed_args._);
+		assert.notStrictEqual(include, unparsed_args.i);
+		assert.notStrictEqual(tag, unparsed_args.tag);
+		_.shift();
+		include!.push('z');
+		tag!.length = 0;
+		assert.deepEqual(unparsed_args._, ['a', 'b']);
+		assert.deepEqual(unparsed_args.i, ['x', 'y']);
+		assert.deepEqual(unparsed_args.tag, ['p', 'q']);
+	});
+
+	test('expands an alias set on an inner layer of the entry', () => {
+		const schema = s.object({
+			verbose: s.with_default(meta(s.boolean, { aliases: ['v'] }), false)
+		});
+		const result = args_parse({ v: true }, schema);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { verbose: true });
+		}
+	});
+
+	test('no- sync finds booleans under wrappers', () => {
+		const schema = s.object({
+			watch: s.with_default(s.optional(s.boolean), true),
+			'no-watch': s.with_default(
+				s.pipe(
+					s.boolean,
+					s.check<boolean>(() => true)
+				),
+				false
+			)
+		});
+		const result = args_parse({ 'no-watch': true }, schema);
+		assert.strictEqual(result.ok, true);
+		if (result.ok) {
+			assert.deepEqual(result.value, { watch: false, 'no-watch': true });
+		}
+	});
+
+	test('conflict issues are those of args_validate_schema', () => {
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o'] }),
+			o: s.with_default(s.boolean, false)
+		});
+		const result = args_parse({}, schema);
+		const validated = args_validate_schema(schema);
+		assert.strictEqual(result.ok, false);
+		assert.strictEqual(validated.ok, false);
+		if (!result.ok && !validated.ok) {
+			assert.strictEqual(result.issues, validated.issues);
 		}
 	});
 });
 
 describe('args_extract_aliases', () => {
 	test('extracts single alias and canonical keys', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.get('v'), 'verbose');
@@ -470,11 +557,8 @@ describe('args_extract_aliases', () => {
 	});
 
 	test('extracts multiple aliases for same key', () => {
-		const schema = z.strictObject({
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o', 'out'] })
+		const schema = s.object({
+			output: meta(s.with_default(s.string, ''), { aliases: ['o', 'out'] })
 		});
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.get('o'), 'output');
@@ -484,15 +568,9 @@ describe('args_extract_aliases', () => {
 	});
 
 	test('extracts aliases from multiple keys', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] }),
-			output: z
-				.string()
-				.default('')
-				.meta({ aliases: ['o'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			output: meta(s.with_default(s.string, ''), { aliases: ['o'] })
 		});
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.get('v'), 'verbose');
@@ -502,9 +580,9 @@ describe('args_extract_aliases', () => {
 	});
 
 	test('returns empty map when no aliases', () => {
-		const schema = z.strictObject({
-			verbose: z.boolean().default(false),
-			output: z.string().default('')
+		const schema = s.object({
+			verbose: s.with_default(s.boolean, false),
+			output: s.with_default(s.string, '')
 		});
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.size, 0);
@@ -512,36 +590,64 @@ describe('args_extract_aliases', () => {
 	});
 
 	test('handles wrapped schemas (optional, default)', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.optional()
-				.meta({ aliases: ['v'] }),
-			output: z
-				.string()
-				.default('dist')
-				.meta({ aliases: ['o'] })
+		const schema = s.object({
+			verbose: meta(s.optional(s.boolean), { aliases: ['v'] }),
+			output: meta(s.with_default(s.string, 'dist'), { aliases: ['o'] })
 		});
 		const { aliases } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.get('v'), 'verbose');
 		assert.strictEqual(aliases.get('o'), 'output');
 	});
 
+	test('reads aliases on any wrapper layer, the outermost first', () => {
+		const schema = s.object({
+			verbose: s.optional(meta(s.boolean, { aliases: ['v'] })),
+			output: meta(s.with_default(meta(s.string, { aliases: ['inner'] }), ''), {
+				aliases: ['o']
+			}),
+			watch: s.with_default(
+				s.pipe(
+					meta(s.boolean, { aliases: ['w'] }),
+					s.check<boolean>(() => true)
+				),
+				false
+			)
+		});
+		const { aliases } = args_extract_aliases(schema);
+		assert.deepEqual(
+			[...aliases],
+			[
+				['v', 'verbose'],
+				['o', 'output'],
+				['w', 'watch']
+			]
+		);
+	});
+
+	test('reads entries under wrappers of the object schema', () => {
+		const schema = s.optional(
+			s.pipe(
+				s.object({ verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }) }),
+				s.check<{ verbose: boolean }>(() => true)
+			)
+		);
+		const { aliases, canonical_keys } = args_extract_aliases(schema);
+		assert.strictEqual(aliases.get('v'), 'verbose');
+		assert.deepEqual([...canonical_keys], ['verbose']);
+	});
+
 	test('handles non-object schema gracefully', () => {
-		const schema = z.string();
+		const schema = s.string;
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.size, 0);
 		assert.strictEqual(canonical_keys.size, 0);
 	});
 
 	test('canonical_keys includes keys without aliases', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] }),
-			watch: z.boolean().default(false), // no alias
-			output: z.string().default('') // no alias
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] }),
+			watch: s.with_default(s.boolean, false), // no alias
+			output: s.with_default(s.string, '') // no alias
 		});
 		const { aliases, canonical_keys } = args_extract_aliases(schema);
 		assert.strictEqual(aliases.size, 1);
@@ -552,11 +658,8 @@ describe('args_extract_aliases', () => {
 	});
 
 	test('returns copies that are safe to mutate', () => {
-		const schema = z.strictObject({
-			verbose: z
-				.boolean()
-				.default(false)
-				.meta({ aliases: ['v'] })
+		const schema = s.object({
+			verbose: meta(s.with_default(s.boolean, false), { aliases: ['v'] })
 		});
 		const result1 = args_extract_aliases(schema);
 		// Mutate the returned collections

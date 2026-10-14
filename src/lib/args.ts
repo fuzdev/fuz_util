@@ -1,4 +1,26 @@
-import { z } from 'zod';
+import {
+	parse,
+	type AnySchema,
+	type Schema,
+	type SchemaIssue,
+	type SchemaResult
+} from '@fuzdev/fuz_schema/schema.ts';
+import {
+	get_schema_entries,
+	get_schema_meta,
+	unwrap_schema
+} from '@fuzdev/fuz_schema/introspect.ts';
+
+declare module '@fuzdev/fuz_schema/meta.ts' {
+	interface SchemaMeta {
+		/**
+		 * Other names a CLI arg can be given by, on an entry of an args schema:
+		 * `meta(s.with_default(s.boolean, false), {aliases: ['v']})`.
+		 * Read by `args_parse`, `args_serialize`, `args_validate_schema`, and `args_extract_aliases`.
+		 */
+		aliases?: Array<string>;
+	}
+}
 
 /**
  * CLI arguments container.
@@ -48,28 +70,11 @@ interface SchemaCacheEntry {
 	aliases: Map<string, string>; // alias → canonical
 	canonical_keys: Set<string>; // all canonical key names
 	boolean_keys: Set<string>; // keys with boolean type (for no- sync)
-	conflict_error: z.ZodError | null; // null if schema is valid
+	conflict_issues: Array<SchemaIssue> | null; // null if schema is valid
 }
 
 // WeakMap cache for schema analysis - avoids redundant reflection
-const schema_cache: WeakMap<z.ZodType, SchemaCacheEntry> = new WeakMap();
-
-// Internal: Unwrap nested schema types (Optional, Default, Transform, Pipe)
-const unwrap_schema = (def: z.core.$ZodTypeDef): z.ZodType | undefined => {
-	if ('innerType' in def) return def.innerType as z.ZodType; // Optional, Nullable
-	if ('in' in def) return def.in as z.ZodType; // Pipe
-	if ('schema' in def) return def.schema as z.ZodType; // Default, Transform
-	return undefined;
-};
-
-// Internal: Check if schema type is boolean (recursing through wrappers)
-const is_boolean_field = (schema: z.ZodType): boolean => {
-	const def = schema._zod.def;
-	if (def.type === 'boolean') return true;
-	const inner = unwrap_schema(def);
-	if (inner) return is_boolean_field(inner);
-	return false;
-};
+const schema_cache: WeakMap<AnySchema, SchemaCacheEntry> = new WeakMap();
 
 // Internal: Schema analysis result
 interface SchemaAnalysisResult {
@@ -85,40 +90,32 @@ interface SchemaAnalysisResult {
 }
 
 // Internal: Analyze schema for aliases, canonical keys, boolean keys, and conflicts
-const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
+const analyze_schema = (schema: AnySchema): SchemaAnalysisResult => {
 	const aliases: Map<string, string> = new Map();
 	const canonical_keys: Set<string> = new Set();
 	const boolean_keys: Set<string> = new Set();
 	const errors: SchemaAnalysisResult['errors'] = [];
-	const def = schema._zod.def;
 
-	// Unwrap to get object def (handle wrapped types like optional, default, etc.)
-	let obj_def = def;
-	while (!('shape' in obj_def)) {
-		const inner = unwrap_schema(obj_def);
-		if (!inner) return { aliases, canonical_keys, boolean_keys, errors };
-		obj_def = inner._zod.def;
-	}
-
-	const shape = (obj_def as z.core.$ZodObjectDef).shape;
+	// the object's entries under any wrappers (optional, with_default, pipe, etc.)
+	const entries = get_schema_entries(schema);
+	if (!entries) return { aliases, canonical_keys, boolean_keys, errors };
 
 	// First pass: collect all canonical keys
-	for (const key of Object.keys(shape)) {
+	for (const key of Object.keys(entries)) {
 		canonical_keys.add(key);
 	}
 
 	// Second pass: process fields for aliases and booleans
-	for (const [key, field] of Object.entries(shape)) {
-		const field_schema = field as z.ZodType;
-
+	for (const [key, field_schema] of Object.entries(entries)) {
 		// Track boolean fields for no- prefix sync
-		if (is_boolean_field(field_schema)) {
+		if (unwrap_schema(field_schema).kind === 'boolean') {
 			boolean_keys.add(key);
 		}
 
-		const meta = field_schema.meta();
-		if (meta?.aliases) {
-			for (const alias of meta.aliases as Array<string>) {
+		// found on any wrapper layer of the entry, the outermost that has it
+		const field_aliases = get_schema_meta(field_schema, 'aliases');
+		if (field_aliases) {
+			for (const alias of field_aliases) {
 				// Check for alias-canonical conflict
 				if (canonical_keys.has(alias)) {
 					errors.push({
@@ -145,24 +142,23 @@ const analyze_schema = (schema: z.ZodType): SchemaAnalysisResult => {
 	return { aliases, canonical_keys, boolean_keys, errors };
 };
 
-// Internal: Convert analysis errors to ZodError for consistent API
-const to_conflict_error = (errors: SchemaAnalysisResult['errors']): z.ZodError => {
-	return new z.ZodError(
-		errors.map((err) => ({
-			code: 'custom' as const,
-			path: [err.alias],
-			message:
-				err.type === 'alias_canonical_conflict'
-					? `Alias '${err.alias}' for '${err.canonical}' conflicts with canonical key '${
-							err.conflict_with
-						}'`
-					: `Alias '${err.alias}' is used by both '${err.canonical}' and '${err.conflict_with}'`
-		}))
-	);
-};
+// Internal: Convert analysis errors to schema issues, the shape `parse` reports
+const to_conflict_issues = (errors: SchemaAnalysisResult['errors']): Array<SchemaIssue> =>
+	errors.map((err) => ({
+		kind: err.type,
+		expected: 'a unique alias',
+		received: 'string',
+		path: [err.alias],
+		message:
+			err.type === 'alias_canonical_conflict'
+				? `Alias '${err.alias}' for '${err.canonical}' conflicts with canonical key '${
+						err.conflict_with
+					}'`
+				: `Alias '${err.alias}' is used by both '${err.canonical}' and '${err.conflict_with}'`
+	}));
 
 // Internal: Get or create cache entry for schema
-const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
+const get_schema_cache = (schema: AnySchema): SchemaCacheEntry => {
 	let entry = schema_cache.get(schema);
 	if (!entry) {
 		const analysis = analyze_schema(schema);
@@ -170,7 +166,7 @@ const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
 			aliases: analysis.aliases,
 			canonical_keys: analysis.canonical_keys,
 			boolean_keys: analysis.boolean_keys,
-			conflict_error: analysis.errors.length > 0 ? to_conflict_error(analysis.errors) : null
+			conflict_issues: analysis.errors.length > 0 ? to_conflict_issues(analysis.errors) : null
 		};
 		schema_cache.set(schema, entry);
 	}
@@ -178,75 +174,84 @@ const get_schema_cache = (schema: z.ZodType): SchemaCacheEntry => {
 };
 
 /**
- * Validates a zod schema for CLI arg usage.
+ * Validates a fuz_schema schema for CLI arg usage.
  *
  * Checks for:
  * - Alias conflicts with canonical keys
  * - Duplicate aliases across different keys
  *
+ * Each conflict is a `SchemaIssue` whose `kind` is `'alias_canonical_conflict'`
+ * or `'duplicate_alias'`, whose `path` is the alias, and whose `message` says
+ * what it conflicts with.
+ *
  * Results are cached per schema (WeakMap). Safe to call multiple times.
  *
- * @param schema - zod object schema with optional alias metadata
- * @returns validation result with success flag and optional error
+ * @param schema - object schema with optional `aliases` metadata on its entries
+ * @returns `ok`, or not `ok` with the conflicts as `issues`, the same array on every call
  */
 export const args_validate_schema = (
-	schema: z.ZodType
-): { success: true } | { success: false; error: z.ZodError } => {
+	schema: AnySchema
+): { ok: true } | { ok: false; issues: Array<SchemaIssue> } => {
 	const cache = get_schema_cache(schema);
-	if (cache.conflict_error) {
-		return { success: false, error: cache.conflict_error };
+	if (cache.conflict_issues) {
+		return { ok: false, issues: cache.conflict_issues };
 	}
-	return { success: true };
+	return { ok: true };
 };
 
 /**
- * Validates parsed CLI args against a zod schema.
+ * Validates parsed CLI args against a fuz_schema schema.
  *
  * Handles CLI-specific concerns before validation:
- * 1. Validates schema (cached) - returns error if alias conflicts exist
- * 2. Expands aliases defined in schema `.meta({aliases: ['v']})`
- * 3. Strips alias keys (required for strictObject schemas)
- * 4. Validates with zod
+ * 1. Validates schema (cached) - returns its conflict issues if aliases conflict
+ * 2. Expands aliases defined with `meta(entry, {aliases: ['v']})`
+ * 3. Strips alias keys (required for `object` schemas, which refuse unknown keys)
+ * 4. Validates with `parse`
  * 5. After validation, syncs `no-` prefixed boolean flags with their base keys
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
+ * No array of the output is one of `unparsed_args`: those are copied. A `with_default`
+ * value is the same object on every parse: give an array or object entry its
+ * default with `with_default_fn`, as `_: s.with_default_fn(s.array(s.string), () => [])`.
+ *
  * @param unparsed_args - args object from CLI parser (mri, minimist, etc.)
- * @param schema - zod object schema with optional alias metadata
- * @returns `z.ZodSafeParseResult` with expanded/synced data on success
+ * @param schema - object schema with optional `aliases` metadata on its entries
+ * @returns `SchemaResult` with expanded/synced `value` on success
  */
 export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
 	unparsed_args: Args,
-	schema: z.ZodType<TOutput>
-): z.ZodSafeParseResult<TOutput> => {
+	schema: Schema<TOutput, any>
+): SchemaResult<TOutput> => {
 	const cache = get_schema_cache(schema);
 
-	// Return conflict error if schema has issues
-	if (cache.conflict_error) {
-		return { success: false, error: cache.conflict_error as z.ZodError<TOutput> };
+	// Return conflict issues if schema has them
+	if (cache.conflict_issues) {
+		return { ok: false, issues: cache.conflict_issues };
 	}
 
-	// Build expanded args - copy canonical, expand aliases, strip alias keys
+	// Build expanded args - copy canonical, expand aliases, strip alias keys,
+	// copying arrays so the output never shares one with the caller's args
 	const expanded: Record<string, ArgValue> = {};
 	for (const [key, value] of Object.entries(unparsed_args)) {
 		if (cache.aliases.has(key)) {
 			const canonical = cache.aliases.get(key)!;
 			// Only expand if canonical not already present (canonical takes precedence)
 			if (!(canonical in expanded) && !(canonical in unparsed_args)) {
-				expanded[canonical] = value;
+				expanded[canonical] = Array.isArray(value) ? [...value] : value;
 			}
 			// Don't copy alias key (strip it)
 		} else {
-			expanded[key] = value;
+			expanded[key] = Array.isArray(value) ? [...value] : value;
 		}
 	}
 
-	// Validate with zod
-	const parsed = schema.safeParse(expanded);
+	const parsed = parse(schema, expanded);
 
-	if (parsed.success) {
-		// Mutate data with the correct source of truth for no- prefixed args
-		const data = parsed.data as Record<string, ArgValue>;
+	if (parsed.ok) {
+		// Mutate data with the correct source of truth for no- prefixed args,
+		// the output being `expanded` itself or a copy of it, never the caller's object
+		const data = parsed.value as Record<string, ArgValue>;
 		for (const key in data) {
 			if (key.startsWith('no-')) {
 				const base_key = key.substring(3);
@@ -278,9 +283,9 @@ export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
- * @param schema - optional zod schema to extract aliases for short form preference
+ * @param schema - optional object schema whose `aliases` metadata gives the short forms
  */
-export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> => {
+export const args_serialize = (args: Args, schema?: AnySchema): Array<string> => {
 	const result: Array<string> = [];
 
 	// Build reverse map (canonical → shortest alias) if schema provided
@@ -342,16 +347,16 @@ export const args_serialize = (args: Args, schema?: z.ZodType): Array<string> =>
 };
 
 /**
- * Extracts alias mappings and canonical keys from a zod schema's metadata.
+ * Extracts alias mappings and canonical keys from a schema's metadata.
  *
  * Useful for consumers building custom tooling (help generators, conflict detection, etc.).
  * Results are cached per schema (WeakMap).
  *
  * Note: Returns copies of the cached data to prevent mutation of internal cache.
  *
- * @param schema - zod object schema with optional `.meta({aliases})` on fields
+ * @param schema - object schema with optional `aliases` metadata on its entries
  */
-export const args_extract_aliases = (schema: z.ZodType): ArgsAliasesResult => {
+export const args_extract_aliases = (schema: AnySchema): ArgsAliasesResult => {
 	const cache = get_schema_cache(schema);
 	return {
 		aliases: new Map(cache.aliases),

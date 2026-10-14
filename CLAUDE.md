@@ -122,13 +122,15 @@ See `docs/benchmark.md` for full documentation.
   (consumed by fuz_ui's `Library` and by build-time tooling)
 - `result.ts` - Result type pattern
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion, `to_error_message` thrown-value → string)
-- `args.ts` - CLI argument parsing with Zod validation
+- `args.ts` - CLI argument parsing validated by `@fuzdev/fuz_schema` schemas
 
 - `types.ts` - `Flavored` (loose nominal typing, no cast needed) and `Branded`
   (strict, requires cast) for type-safe IDs
 - `result.ts` - `Result<T, E>` discriminated union with `unwrap()` helper
-- `args.ts` - `args_parse()` for CLI arguments with Zod schemas, supports
-  aliases, `--no-flag` negation, boolean coercion
+- `args.ts` - `args_parse()` for CLI arguments with `@fuzdev/fuz_schema` object
+  schemas, returning its `SchemaResult` (issues on failure); supports aliases
+  (`meta(entry, {aliases: ['v']})`, declared on `SchemaMeta` here),
+  `--no-flag` negation, boolean coercion
 
 ### Schema introspection
 
@@ -141,7 +143,8 @@ See `docs/benchmark.md` for full documentation.
 - `fetch.ts` - fetch utilities with caching, rate limit detection, ETag support
 - `fs.ts` - file system utilities (`fs_exists`, `fs_empty_dir`, `fs_search`)
 - `path.ts` - path utilities
-- `git.ts` - git operations
+- `git.ts` - git operations; `GitOrigin` and `GitBranch` are flavored
+  `@fuzdev/fuz_schema` string schemas
 - `log.ts` - hierarchical logging system
 
 - `process.ts` - `spawn()` with `kind`-discriminated results (`SpawnResultExited`,
