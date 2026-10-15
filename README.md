@@ -10,11 +10,12 @@ design:
 
 - kitchen-sink utilities library - sorry, I wish it weren't so, JS made me do it
 - dependencies are optional ([`svelte`](https://github.com/sveltejs/svelte),
-  [`@fuzdev/blake3-wasm`](https://github.com/fuzdev/blake3),
-  [`esm-env`](https://github.com/benmccann/esm-env), `@types/node`, `@types/estree`)
-  except [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema),
-  a required peer with no dependencies of its own, whose schemas back `PackageJson`, `Url`,
-  `fetch.ts`, `args.ts`, and `git.ts`
+  [`@fuzdev/blake3-wasm`](https://github.com/fuzdev/blake3), `@types/node`,
+  `@types/estree`) except two required peers:
+  [`esm-env`](https://github.com/benmccann/esm-env) and
+  [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema), which has no
+  dependencies of its own; its schemas back `PackageJson`, `Url`, `fetch.ts`,
+  `args.ts`, `git.ts`, and `benchmark_baseline.ts`, and brand `FactHash`
 - mix of JS module environments - browser-only, Node-only, universal
 - mostly small pure functions
 - all TypeScript, for styles and Svelte and SvelteKit
