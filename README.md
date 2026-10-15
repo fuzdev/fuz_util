@@ -14,7 +14,8 @@ design:
   [`@fuzdev/blake3-wasm`](https://github.com/fuzdev/blake3),
   [`esm-env`](https://github.com/benmccann/esm-env), `@types/node`, `@types/estree`)
   except [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema),
-  a required peer with no dependencies of its own that defines the `Flavored` and `Branded` types
+  a required peer with no dependencies of its own, whose schemas back `PackageJson`, `Url`,
+  `fetch.ts`, `args.ts`, and `git.ts`
 - mix of JS module environments - browser-only, Node-only, universal
 - mostly small pure functions
 - all TypeScript, for styles and Svelte and SvelteKit

@@ -12,7 +12,7 @@
  * @module
  */
 
-import type { Flavored } from './types.ts';
+import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 import type { Hue, Lightness } from './colors.ts';
 import { round } from './maths.ts';
 

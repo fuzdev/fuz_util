@@ -56,34 +56,3 @@ export type Defined<T> = T extends undefined ? never : T;
 export type NotNull<T> = T extends null ? never : T;
 
 export type ArrayElement<T> = T extends ReadonlyArray<infer U> ? U : never;
-
-/**
- * The `Flavored` and `Branded` type helpers add varying degrees of nominal typing to other types.
- * This is especially useful with primitives like strings and numbers.
- *
- * They are defined in `@fuzdev/fuz_schema`, whose `flavor` and `brand` schema
- * helpers produce the same types, and re-exported here so a flavored or
- * branded type is one type wherever it was declared.
- *
- * `Flavored` is a looser form of `Branded` that trades
- * explicitness and a little safety in some cases for ergonomics.
- * With `Flavored` you don't need to cast unflavored types:
- *
- * ```ts
- * type Email = Flavored<string, 'Email'>;
- * const email1: Email = 'foo'; // ok
- * type Address = Flavored<string, 'Address'>;
- * const email2: Email = 'foo' as Address; // error!
- * ```
- *
- * `Branded` requires casting:
- *
- * ```ts
- * type PhoneNumber = Branded<string, 'PhoneNumber'>;
- * const phone1: PhoneNumber = 'foo'; // error!
- * const phone2: PhoneNumber = 'foo' as PhoneNumber; // ok
- * ```
- *
- * @see https://spin.atomicobject.com/typescript-flexible-nominal-typing/
- */
-export type { Flavored, Flavor, Branded, Brand } from '@fuzdev/fuz_schema/schema.ts';

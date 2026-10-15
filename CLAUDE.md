@@ -22,7 +22,7 @@ gro build     # build the package for production
 fuz_util is a **foundational utility library**:
 
 - Pure TypeScript utilities (string, array, object, async, etc.)
-- Zod schemas for common data structures (`PackageJson`)
+- `@fuzdev/fuz_schema` schemas for common data structures (`PackageJson`)
 - Svelte preprocessor helpers (type-only Svelte dependency, no runtime dep)
 - No UI components
 - Used by gro (build tools) and fuz (UI/stack)
@@ -103,10 +103,13 @@ See `docs/benchmark.md` for full documentation.
 
 ### Types and validation
 
-- `types.ts` - TypeScript utility types (union helpers, and `Flavored` / `Branded`
-  re-exported from `@fuzdev/fuz_schema`, where they are defined)
-- `package_json.ts` - `PackageJson` Zod schema with gro extensions (glyph,
-  logo, tagline, etc.)
+- `types.ts` - TypeScript utility types (union helpers, `OmitStrict`, `ArrayElement`);
+  `Flavored` / `Branded` are imported from `@fuzdev/fuz_schema/schema.ts`, where they
+  are defined
+- `package_json.ts` - `PackageJson` `@fuzdev/fuz_schema` schema with gro extensions
+  (glyph, logo, tagline, etc.); a loose object, so unknown keys pass through and
+  the output is the input itself when nothing changed; `ExportValue` is a
+  recursive type
 - `pkg_json.ts` - `PkgJson`, the curated publish-safe subset of `PackageJson`
   (`Pick`ed from `pkg_json_keys`), plus `pkg_json_from_package_json` (the runtime
   strip keyed off the same `pkg_json_keys`, so the type and the strip can't drift)
@@ -124,8 +127,6 @@ See `docs/benchmark.md` for full documentation.
 - `error.ts` - error utilities (`UnreachableError`, `unreachable` assertion, `to_error_message` thrown-value → string)
 - `args.ts` - CLI argument parsing validated by `@fuzdev/fuz_schema` schemas
 
-- `types.ts` - `Flavored` (loose nominal typing, no cast needed) and `Branded`
-  (strict, requires cast) for type-safe IDs
 - `result.ts` - `Result<T, E>` discriminated union with `unwrap()` helper
 - `args.ts` - `args_parse()` for CLI arguments with `@fuzdev/fuz_schema` object
   schemas, returning its `SchemaResult` (issues on failure); supports aliases
@@ -134,13 +135,15 @@ See `docs/benchmark.md` for full documentation.
 
 ### Schema introspection
 
-- `zod.ts` - Zod schema introspection for CLI help generation (extracting
-  descriptions, defaults, aliases, type strings, properties from Zod schemas)
+- `zod.ts` - Zod schema walkers: unwrapping wrappers, base types, object keys and
+  field schemas, field info (`zod_extract_fields`) for adversarial-input and
+  test-data generation
 
 ### System utilities
 
 - `process.ts` - process/spawn helpers with typed results
-- `fetch.ts` - fetch utilities with caching, rate limit detection, ETag support
+- `fetch.ts` - fetch utilities with caching, rate limit detection, ETag support;
+  `deserialize_cache` validates the cache with `@fuzdev/fuz_schema`
 - `fs.ts` - file system utilities (`fs_exists`, `fs_empty_dir`, `fs_search`)
 - `path.ts` - path utilities
 - `git.ts` - git operations; `GitOrigin` and `GitBranch` are flavored
@@ -189,7 +192,8 @@ See `docs/benchmark.md` for full documentation.
   prototype pollution protection)
 - `function.ts` - function utilities (`noop`, `identity`, Thunk pattern)
 - `regexp.ts` - regex helpers
-- `url.ts` - URL utilities
+- `url.ts` - URL utilities; `Url` is a `@fuzdev/fuz_schema` schema that checks the
+  text with `URL.canParse` and returns it unchanged
 - `print.ts` - formatted output with colors
 
 - `function.ts` - `Thunk<T>` type and `unthunk()` for lazy evaluation

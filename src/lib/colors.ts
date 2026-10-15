@@ -1,4 +1,4 @@
-import type { Flavored } from './types.ts';
+import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 import { round } from './maths.ts';
 
 // TODO for high-performance usecases, we may want to add variants for any that return a new array to reuse a single array

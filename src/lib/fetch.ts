@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
+import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 
-import type { Flavored } from './types.ts';
 import type { Logger } from './log.ts';
 import { EMPTY_OBJECT } from './object.ts';
 import type { Result } from './result.ts';
@@ -188,21 +188,36 @@ const print_ratelimit_headers = (headers: Headers): string => {
 	return limit || remaining ? `ratelimit ${remaining} of ${limit}` : '';
 };
 
-export const FetchValueCacheKey = z.string();
-export type FetchValueCacheKey = Flavored<z.infer<typeof FetchValueCacheKey>, 'FetchValueCacheKey'>;
+export const FetchValueCacheKey = s.string;
+export type FetchValueCacheKey = Flavored<s.Infer<typeof FetchValueCacheKey>, 'FetchValueCacheKey'>;
 
-export const FetchValueCacheItem = z.object({
-	key: FetchValueCacheKey,
-	url: z.string(),
-	params: z.any(),
-	value: z.any(),
-	etag: z.string().nullable(),
-	last_modified: z.string().nullable()
-});
-export type FetchValueCacheItem = z.infer<typeof FetchValueCacheItem>;
+/**
+ * A cached `fetch_value` response. `params` is absent when the request had none,
+ * and `value` when `parse` returned `undefined`, because `serialize_cache` drops them.
+ */
+export interface FetchValueCacheItem {
+	key: string;
+	url: string;
+	params?: any;
+	value?: any;
+	etag: string | null;
+	last_modified: string | null;
+}
 
-export const FetchValueCache = z.map(FetchValueCacheKey, FetchValueCacheItem);
-export type FetchValueCache = z.infer<typeof FetchValueCache>;
+/**
+ * Drops unknown keys, as `deserialize_cache` reads them.
+ */
+export const FetchValueCacheItem: s.Schema<FetchValueCacheItem, FetchValueCacheItem> =
+	s.strip_object({
+		key: FetchValueCacheKey,
+		url: s.string,
+		params: s.optional(s.unknown),
+		value: s.optional(s.unknown),
+		etag: s.nullable(s.string),
+		last_modified: s.nullable(s.string)
+	});
+
+export type FetchValueCache = Map<string, FetchValueCacheItem>;
 
 const KEY_SEPARATOR = '::';
 
@@ -225,7 +240,25 @@ export const serialize_cache = (cache: FetchValueCache): string =>
 	JSON.stringify(Array.from(cache.entries()));
 
 /**
- * Converts a serialized cache string to a `FetchValueCache`.
+ * Converts a serialized cache string to a `FetchValueCache`,
+ * validating each key and item.
+ *
+ * @throws SchemaError - when a key or an item doesn't match; the path of each issue
+ * starts with the entry's cache key, or with the entry's index when the key itself is invalid
  */
-export const deserialize_cache = (serialized: string): FetchValueCache =>
-	FetchValueCache.parse(new Map(JSON.parse(serialized)));
+export const deserialize_cache = (serialized: string): FetchValueCache => {
+	const cache: FetchValueCache = new Map();
+	let index = 0;
+	for (const [key, item] of new Map<unknown, unknown>(JSON.parse(serialized))) {
+		const parsed_key = s.parse(FetchValueCacheKey, key);
+		if (!parsed_key.ok) throw to_entry_error(index, parsed_key.issues);
+		const parsed_item = s.parse(FetchValueCacheItem, item);
+		if (!parsed_item.ok) throw to_entry_error(parsed_key.value, parsed_item.issues);
+		cache.set(parsed_key.value, parsed_item.value);
+		index++;
+	}
+	return cache;
+};
+
+const to_entry_error = (at: string | number, issues: Array<s.SchemaIssue>): s.SchemaError =>
+	new s.SchemaError(issues.map((issue) => ({ ...issue, path: [at, ...issue.path] })));

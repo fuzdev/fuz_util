@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
+import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 
 import { strip_end, strip_start } from './string.ts';
-import type { Flavored } from './types.ts';
 
 /**
  * Formats a URL by removing 'https://', 'www.', and trailing slashes.
@@ -10,5 +10,12 @@ import type { Flavored } from './types.ts';
 export const format_url = (url: string): string =>
 	strip_end(strip_start(strip_start(url, 'https://'), 'www.'), '/');
 
-export const Url = z.url();
-export type Url = Flavored<z.infer<typeof Url>, 'Url'>; // TODO brand is too annoying to use, but this doesn't work for schema composition
+/**
+ * A string that parses as an absolute URL, by `URL.canParse`.
+ * The output is the input unchanged: the text is not trimmed or normalized.
+ */
+export const Url = s.pipe(
+	s.string,
+	s.check((v: string) => URL.canParse(v), 'a URL')
+);
+export type Url = Flavored<s.Infer<typeof Url>, 'Url'>; // TODO brand is too annoying to use, but this doesn't work for schema composition

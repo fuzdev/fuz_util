@@ -1,4 +1,4 @@
-import type { Flavored } from './types.ts';
+import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 
 /**
  * An absolute path on the filesystem. Named "id" to be consistent with Rollup.
