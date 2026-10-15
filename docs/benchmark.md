@@ -850,7 +850,7 @@ console.log(benchmark_baseline_format_json(comparison, {pretty: true}));
 **Features:**
 
 - Auto-detects git commit and branch
-- Validates with Zod schemas (warns and auto-cleans corrupted/version-mismatched files; the warning tells the caller to re-run with `--save`)
+- Validates with `@fuzdev/fuz_schema` schemas (warns and auto-cleans corrupted/version-mismatched files; the warning tells the caller to re-run with `--save`)
 - Categorizes results: regressions, improvements, unchanged, methodology_changed, new, removed
 - Welch's t-test for statistical significance (sample-corrected std_dev), not raw ratios
 - Per-row `noise_warning` when cv or outlier ratio is high enough to undermine the significance call (see Caveats §5)

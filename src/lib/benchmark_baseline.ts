@@ -7,7 +7,7 @@
 
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { z } from 'zod';
+import * as s from '@fuzdev/fuz_schema/schema.ts';
 
 import { fs_exists } from './fs.ts';
 import { git_info_get } from './git.ts';
@@ -29,12 +29,12 @@ const BASELINE_VERSION = 3;
  * `BenchmarkBaselineEntry['budget']` or `BenchmarkBudget` from
  * `benchmark_types.ts`.
  */
-const BenchmarkBaselineBudget = z.object({
-	duration_ms: z.number(),
-	warmup_iterations: z.number(),
-	min_iterations: z.number(),
-	max_iterations: z.number(),
-	async_resolved: z.boolean()
+const BenchmarkBaselineBudget = s.strip_object({
+	duration_ms: s.number,
+	warmup_iterations: s.number,
+	min_iterations: s.number,
+	max_iterations: s.number,
+	async_resolved: s.boolean
 });
 
 /**
@@ -47,23 +47,23 @@ const BenchmarkBaselineBudget = z.object({
  * `benchmark_baseline_compare` OR-gates `noise_warning` on this field so
  * a noisy raw distribution gets flagged even when the cleaned cv looks tight.
  */
-export const BenchmarkBaselineEntry = z.object({
-	name: z.string(),
-	mean_ns: z.number(),
-	p50_ns: z.number(),
-	std_dev_ns: z.number(),
-	min_ns: z.number(),
-	max_ns: z.number(),
-	p75_ns: z.number(),
-	p90_ns: z.number(),
-	p95_ns: z.number(),
-	p99_ns: z.number(),
-	ops_per_second: z.number(),
-	sample_size: z.number(),
-	outlier_ratio: z.number(),
+export const BenchmarkBaselineEntry = s.strip_object({
+	name: s.string,
+	mean_ns: s.number,
+	p50_ns: s.number,
+	std_dev_ns: s.number,
+	min_ns: s.number,
+	max_ns: s.number,
+	p75_ns: s.number,
+	p90_ns: s.number,
+	p95_ns: s.number,
+	p99_ns: s.number,
+	ops_per_second: s.number,
+	sample_size: s.number,
+	outlier_ratio: s.number,
 	budget: BenchmarkBaselineBudget
 });
-export type BenchmarkBaselineEntry = z.infer<typeof BenchmarkBaselineEntry>;
+export type BenchmarkBaselineEntry = s.Infer<typeof BenchmarkBaselineEntry>;
 
 /**
  * Schema for the complete baseline file.
@@ -79,16 +79,16 @@ export type BenchmarkBaselineEntry = z.infer<typeof BenchmarkBaselineEntry>;
  * has no shape — consumers know what their metadata means and how to display
  * the diff.
  */
-export const BenchmarkBaseline = z.object({
-	version: z.number(),
-	timestamp: z.string(),
-	git_commit: z.string().nullable(),
-	git_branch: z.string().nullable(),
-	node_version: z.string(),
-	entries: z.array(BenchmarkBaselineEntry),
-	metadata: z.record(z.string(), z.unknown()).optional()
+export const BenchmarkBaseline = s.strip_object({
+	version: s.number,
+	timestamp: s.string,
+	git_commit: s.nullable(s.string),
+	git_branch: s.nullable(s.string),
+	node_version: s.string,
+	entries: s.array(BenchmarkBaselineEntry),
+	metadata: s.optional(s.record(s.unknown))
 });
-export type BenchmarkBaseline = z.infer<typeof BenchmarkBaseline>;
+export type BenchmarkBaseline = s.Infer<typeof BenchmarkBaseline>;
 
 /**
  * Options for saving a baseline.
@@ -463,7 +463,7 @@ export const benchmark_baseline_load = async (
 	try {
 		const contents = await readFile(filepath, 'utf-8');
 		const parsed = JSON.parse(contents);
-		const baseline = BenchmarkBaseline.parse(parsed);
+		const baseline = s.parse_or_throw(BenchmarkBaseline, parsed);
 
 		// Check version compatibility. Auto-delete on mismatch because the schema
 		// shift (new required fields like `budget` / `outlier_ratio`) means we

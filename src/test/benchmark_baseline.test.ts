@@ -192,6 +192,33 @@ describe('benchmark_baseline_load', () => {
 		assert.isNull(loaded);
 	});
 
+	test('strips unknown keys and rejects a missing required key', async () => {
+		const { writeFile, readFile } = await import('node:fs/promises');
+		await benchmark_baseline_save([create_synthetic_result('t', 1000)], { path: test_dir });
+		const file = join(test_dir, 'baseline.json');
+		const saved = JSON.parse(await readFile(file, 'utf-8'));
+		const [entry] = saved.entries;
+
+		await writeFile(
+			file,
+			JSON.stringify({
+				...saved,
+				extra: 1,
+				entries: [{ ...entry, extra: 1, budget: { ...entry.budget, extra: 1 } }]
+			}),
+			'utf-8'
+		);
+		const loaded = await benchmark_baseline_load({ path: test_dir });
+		assert.isNotNull(loaded);
+		assert.notProperty(loaded, 'extra');
+		assert.notProperty(loaded.entries[0], 'extra');
+		assert.notProperty(loaded.entries[0]!.budget, 'extra');
+
+		const { node_version: _, ...missing } = saved;
+		await writeFile(file, JSON.stringify(missing), 'utf-8');
+		assert.isNull(await benchmark_baseline_load({ path: test_dir }));
+	});
+
 	test('handles version mismatch', async () => {
 		const { writeFile } = await import('node:fs/promises');
 		const { fs_exists } = await import('#lib/fs.ts');
