@@ -1,5 +1,24 @@
 # @fuzdev/fuz_util
 
+## 0.75.0
+
+### Minor Changes
+
+- **breaking** feat: `benchmark_baseline.ts` takes '@fuzdev/fuz_schema' schemas instead of Zod's ([bc6a416](https://github.com/fuzdev/fuz_util/commit/bc6a416))
+
+  - `BenchmarkBaseline` and `BenchmarkBaselineEntry` are fuz_schema `strip_object` schemas with no `.parse`, `.safeParse`, `.shape`, or `.extend`: call `s.parse(BenchmarkBaseline, value)` for `{ok: true, value}` or `{ok: false, issues}` in place of `.safeParse`, and `s.parse_or_throw` (throwing `SchemaError`) in place of `.parse`; unknown keys are still stripped and the persisted shape and `BASELINE_VERSION` are unchanged, and the warning for an invalid file prints fuz_schema's issue text in place of Zod's issue list
+  - the output is the input itself when no unknown key is dropped, where Zod always copied: a valid baseline, its `entries`, and its `metadata` come back as the same objects in the input's key order (Zod rewrote keys into the schema's order), so mutating the output of `s.parse` mutates its input; `benchmark_baseline_load` parses a fresh object, so it shares nothing with its caller
+  - `benchmark_baseline.ts` no longer imports Zod, so benchmark consumers no longer need the optional `zod` peer
+
+- **breaking** feat: drop Zod: remove `id.ts`, `datetime.ts`, and `zod.ts`, and make `FactHash` a fuz_schema brand ([56d8bf1](https://github.com/fuzdev/fuz_util/commit/56d8bf1))
+
+  - removes `id.ts` (`Uuid`, `UuidWithDefault`, `create_uuid`, `is_uuid`, `UUID_MATCHER`, `create_client_id_creator`, `ClientIdCreator`), `datetime.ts` (`Datetime`, `DatetimeNow`, `get_datetime_now`), and `zod.ts` (`zod_to_subschema`, `ZOD_WRAPPER_TYPES`, `zod_unwrap_def`, `zod_get_base_type`, `zod_is_optional`, `zod_is_nullable`, `zod_has_default`, `zod_get_innermost_type`, `zod_get_schema_keys`, `zod_maybe_get_field_schema`, `zod_get_field_schema`, `zod_unwrap_to_object`, `ZodFieldInfo`, `zod_extract_fields`): they move to '@fuzdev/fuz_app', which has not released them yet, so depend on a fuz_app release that has them or copy them from '@fuzdev/fuz_util' 0.74.0
+  - removes the Zod schemas `Blake3Hash` (bare 64-char hex) and `FactHashSchema` from `hash_schemas.ts`; a fact-hash schema builds on the new `FACT_HASH_EXACT` export, e.g. `z.string().regex(FACT_HASH_EXACT) as z.ZodString & z.ZodType<FactHash, string>`
+  - '@fuzdev/fuz_app' 0.137 and earlier don't start with this version: they import the removed modules and schemas; upgrade fuz_app with it
+  - `FactHash` is now '@fuzdev/fuz_schema''s `Branded<string, 'FactHash'>` in place of Zod's `.brand('FactHash')`, and `fact_hash_verify`, `fact_hash_extract_refs`, and `FactStore` take or return it: a value branded by Zod's `.brand('FactHash')` no longer fits, but one parsed by a schema whose output is typed `FactHash`, or narrowed by `is_fact_hash`, does; the runtime of `fact_hash_bytes`, `fact_hash_stream`, `is_fact_hash`, and `FACT_HASH_PATTERN` is unchanged
+  - adds the `FACT_HASH_EXACT` export, the anchored `/^blake3:[0-9a-f]{64}$/` pattern that was module-private
+  - `zod` is no longer an optional peer dependency
+
 ## 0.74.0
 
 ### Minor Changes
