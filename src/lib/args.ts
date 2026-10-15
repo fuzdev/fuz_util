@@ -209,6 +209,18 @@ export const args_validate_schema = (
  * 4. Validates with `parse`
  * 5. After validation, syncs `no-` prefixed boolean flags with their base keys
  *
+ * A boolean `x` and `no-x` given both ways, as by `-C --color` with `C` an alias of
+ * `no-color`, resolve to the side whose key comes later in `unparsed_args` (`argv_parse` orders
+ * keys by their last appearance in argv, so the side given last), and the other is set to its
+ * negation. An alias given with its canonical key gives way to it, and of two aliases of one key
+ * the earlier key wins; a key that gives way counts for neither value nor order, so
+ * `--color -C -c` with `c` an alias of `color` resolves to `no-color`. Only a `no-x` pair
+ * resolves by order.
+ *
+ * Every arg key is an own key of what `schema` parses, `__proto__`, `constructor`, and
+ * `toString` included, so an `object` schema refuses them as unknown keys, and an entry
+ * named like an `Object.prototype` member reads as absent when it isn't given.
+ *
  * Schema analysis is cached per schema (WeakMap) for performance.
  *
  * No array of the output is one of `unparsed_args`: those are copied. A `with_default`
@@ -231,40 +243,52 @@ export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
 	}
 
 	// Build expanded args - copy canonical, expand aliases, strip alias keys,
-	// copying arrays so the output never shares one with the caller's args
-	const expanded: Record<string, ArgValue> = {};
+	// copying arrays so the output never shares one with the caller's args.
+	// A null prototype makes every key an own key, `__proto__` included,
+	// and keeps `Object.prototype` members from reading as given args.
+	const expanded: Record<string, ArgValue> = Object.create(null);
+	// each given key's position in `unparsed_args`, for the `no-` sync to find the later one
+	const positions: Map<string, number> = new Map();
+	let position = 0;
 	for (const [key, value] of Object.entries(unparsed_args)) {
-		if (cache.aliases.has(key)) {
-			const canonical = cache.aliases.get(key)!;
-			// Only expand if canonical not already present (canonical takes precedence)
-			if (!(canonical in expanded) && !(canonical in unparsed_args)) {
-				expanded[canonical] = Array.isArray(value) ? [...value] : value;
-			}
-			// Don't copy alias key (strip it)
-		} else {
+		const canonical = cache.aliases.get(key);
+		if (canonical === undefined) {
 			expanded[key] = Array.isArray(value) ? [...value] : value;
+			if (value !== undefined) positions.set(key, position);
+		} else if (!Object.hasOwn(expanded, canonical) && !Object.hasOwn(unparsed_args, canonical)) {
+			// only expand if canonical not already present (canonical takes precedence),
+			// the alias key itself is stripped
+			expanded[canonical] = Array.isArray(value) ? [...value] : value;
+			if (value !== undefined) positions.set(canonical, position);
 		}
+		position++;
 	}
 
 	const parsed = parse(schema, expanded);
 
 	if (parsed.ok) {
-		// Mutate data with the correct source of truth for no- prefixed args,
-		// the output being `expanded` itself or a copy of it, never the caller's object
+		// the output is `expanded` itself or what the schema made of it, never the caller's object
 		const data = parsed.value as Record<string, ArgValue>;
+		// sync each boolean `no-x` with its boolean `x`: the one given last wins, and when
+		// only one is given it wins; when neither is, `no-x` follows `x` if `x` has a value
 		for (const key in data) {
-			if (key.startsWith('no-')) {
-				const base_key = key.substring(3);
-				// Only sync if both keys are booleans in the schema
-				if (cache.boolean_keys.has(key) && cache.boolean_keys.has(base_key)) {
-					if (!(key in unparsed_args) && !(key in expanded)) {
-						data[key] = !data[base_key];
-					} else if (!(base_key in unparsed_args) && !(base_key in expanded)) {
-						data[base_key] = !data[key];
-					}
-				}
+			if (!key.startsWith('no-')) continue;
+			const base_key = key.substring(3);
+			if (!cache.boolean_keys.has(key) || !cache.boolean_keys.has(base_key)) continue;
+			const key_position = positions.get(key);
+			const base_position = positions.get(base_key);
+			if (
+				key_position === undefined ||
+				(base_position !== undefined && base_position > key_position)
+			) {
+				if (data[base_key] !== undefined) data[key] = !data[base_key];
+			} else if (data[key] !== undefined) {
+				data[base_key] = !data[key];
 			}
 		}
+		// last, so a synced `__proto__` entry lands as an own key; a copy or a
+		// transform's output keeps its own prototype
+		if (data === expanded) Object.setPrototypeOf(data, Object.prototype);
 	}
 
 	return parsed;
@@ -278,7 +302,7 @@ export const args_parse = <TOutput extends Record<string, ArgValue> = Args>(
  * - Single-char keys get single dash, multi-char get double dash
  * - Boolean `true` becomes bare flag, `false` is skipped
  * - `undefined` values are skipped
- * - `no-` prefixed keys skipped when base key is truthy (avoid contradiction)
+ * - A `no-x` and `x` both truthy keep only the later key, the one `args_parse` and `argv_parse` let win
  * - When schema provided, extracts aliases and prefers shortest form
  *
  * Schema analysis is cached per schema (WeakMap) for performance.
@@ -318,17 +342,20 @@ export const args_serialize = (args: Args, schema?: AnySchema): Array<string> =>
 		}
 	};
 
+	const keys = Object.keys(args);
+	// whether `key` and `other` are both truthy and `other` comes later, so `key` is skipped
+	// (an index of -1 is never later, so an inherited `other` never counts)
+	const loses_to = (key: string, other: string): boolean =>
+		keys.indexOf(other) > keys.indexOf(key) && !!args[key] && !!args[other];
+
 	let positionals: Array<string> | null = null;
 	for (const [key, value] of Object.entries(args)) {
 		if (key === '_') {
 			positionals = value ? (value as Array<string | number | boolean>).map((v) => v + '') : [];
 		} else {
-			// Skip no-X if X exists and is truthy
-			if (key.startsWith('no-')) {
-				const base = key.substring(3);
-				if (base in args && args[base]) {
-					continue; // Skip redundant no- flag
-				}
+			// a `no-x` and `x` given both ways keep the later one, as parsing the output would
+			if (key.startsWith('no-') ? loses_to(key, key.substring(3)) : loses_to(key, 'no-' + key)) {
+				continue;
 			}
 
 			// Determine the name to use (prefer shortest if schema provided)
@@ -379,6 +406,14 @@ const coerce_value = (value: string): string | number => {
 	return value;
 };
 
+// Internal: Set a key on args as its last key, so the keys are in the order of their last appearance
+const set_last = (args: Args, key: string, value: ArgValue): void => {
+	// deleting first moves an existing key to the end
+	// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+	delete args[key];
+	args[key] = value;
+};
+
 // Internal: Set a value on args, handling arrays for repeated flags
 const set_arg = (args: Args, key: string, value: string | number | boolean): void => {
 	if (key in args) {
@@ -386,8 +421,9 @@ const set_arg = (args: Args, key: string, value: string | number | boolean): voi
 		const existing = args[key];
 		if (Array.isArray(existing)) {
 			existing.push(value);
+			set_last(args, key, existing);
 		} else {
-			args[key] = [existing!, value];
+			set_last(args, key, [existing!, value]);
 		}
 	} else {
 		args[key] = value;
@@ -412,6 +448,9 @@ const set_arg = (args: Args, key: string, value: string | number | boolean): voi
  * - `--` → stops flag parsing, rest become positionals
  * - Positionals collected in `_` array
  * - Repeated flags become arrays
+ * - Keys are in the order of their last appearance, so `args_parse` can tell which of
+ *   a `no-x` pair given both ways came last: `--b --a --b` → keys `a`, `b`
+ *   (integer-like keys excepted, which JS always lists first)
  *
  * Intentional differences from mri:
  * - `--flag=` returns `''` (mri returns `true`)
@@ -472,7 +511,7 @@ export const argv_parse = (argv: Array<string>): ParsedArgs => {
 			// Handle --no-flag (negation) - includes --no- which sets '' to false
 			if (rest.startsWith('no-')) {
 				const key = rest.slice(3); // May be empty string for --no-
-				args[key] = false;
+				set_last(args, key, false);
 				i++;
 				continue;
 			}
@@ -487,7 +526,7 @@ export const argv_parse = (argv: Array<string>): ParsedArgs => {
 				i += 2;
 			} else {
 				// Boolean flag
-				args[key] = true;
+				set_last(args, key, true);
 				i++;
 			}
 			continue;
@@ -510,7 +549,7 @@ export const argv_parse = (argv: Array<string>): ParsedArgs => {
 				const value = chars.slice(equals_index + 1);
 				// For -abc=value, set a and b to true, c gets value
 				for (let j = 0; j < key.length - 1; j++) {
-					args[key[j]!] = true;
+					set_last(args, key[j]!, true);
 				}
 				if (key.length > 0) {
 					set_arg(args, key[key.length - 1]!, coerce_value(value));
@@ -534,7 +573,7 @@ export const argv_parse = (argv: Array<string>): ParsedArgs => {
 					i += 2;
 				} else {
 					// Boolean flag
-					args[char] = true;
+					set_last(args, char, true);
 					if (is_last) i++;
 				}
 			}

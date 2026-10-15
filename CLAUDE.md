@@ -132,7 +132,8 @@ See `docs/benchmark.md` for full documentation.
 - `args.ts` - `args_parse()` for CLI arguments with `@fuzdev/fuz_schema` object
   schemas, returning its `SchemaResult` (issues on failure); supports aliases
   (`meta(entry, {aliases: ['v']})`, declared on `SchemaMeta` here),
-  `--no-flag` negation, boolean coercion
+  `--no-flag` negation (a `no-x` pair given both ways resolves to the later of the keys kept once
+  aliases give way — with `argv_parse`, the one given last), numeric coercion in `argv_parse`
 
 ### System utilities
 

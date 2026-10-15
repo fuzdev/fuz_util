@@ -79,7 +79,7 @@ export const PackageJson = s.loose_object({
 		meta(
 			s.pipe(
 				s.string,
-				s.check((v: string) => count_graphemes(v) === 1, 'must be a single unicode character')
+				s.check((v: string) => count_graphemes(v) === 1, 'a single unicode character')
 			),
 			{
 				description:

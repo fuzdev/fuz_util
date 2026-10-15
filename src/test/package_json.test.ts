@@ -82,6 +82,14 @@ describe('PackageJson', () => {
 		assert.ok(!s.parse(PackageJson, { name: 'abc', glyph: '' }).ok);
 	});
 
+	test('a `glyph` that is not a single grapheme reads as one', () => {
+		const parsed = s.parse(PackageJson, { name: 'abc', glyph: 'ab' });
+		assert.ok(!parsed.ok);
+		assert.deepEqual(parsed.issues.map(s.format_issue), [
+			'glyph: expected a single unicode character, received string'
+		]);
+	});
+
 	test('empty `exports` become an own `undefined` key', () => {
 		const parsed = s.parse(PackageJson, { name: 'abc', exports: {} });
 		assert.ok(parsed.ok);
