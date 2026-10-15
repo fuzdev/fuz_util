@@ -39,11 +39,12 @@ fuz_util is a **foundational utility library**:
 - `iterator.ts` - iterator helpers
 - `bytes.ts` - binary data conversion (`to_bytes`)
 - `hex.ts` - hex encoding (`to_hex`)
-- `hash_schemas.ts` - hash vocabulary with no hashing, so no WASM: `Blake3Hash`
-  (bare hex64), `FactHashSchema` / `FactHash` (branded `blake3:`-prefixed
-  digest), `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`, `is_fact_hash`. Client code
-  that only validates a hash imports from here — the two modules below pull the
-  WASM binary in and initialize it at module scope
+- `hash_schemas.ts` - hash vocabulary with no hashing, so no WASM: `FactHash`
+  (fuz_schema `Branded` `blake3:`-prefixed digest), `FACT_HASH_PREFIX`,
+  `FACT_HASH_PATTERN`, `FACT_HASH_EXACT` (what schemas validating a fact hash
+  build on), `is_fact_hash`. Client code that only validates a hash imports
+  from here — the two modules below pull the WASM binary in and initialize it
+  at module scope
 - `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex;
   `blake3_ready`, via `@fuzdev/blake3-wasm`)
 - `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
@@ -133,12 +134,6 @@ See `docs/benchmark.md` for full documentation.
   (`meta(entry, {aliases: ['v']})`, declared on `SchemaMeta` here),
   `--no-flag` negation, boolean coercion
 
-### Schema introspection
-
-- `zod.ts` - Zod schema walkers: unwrapping wrappers, base types, object keys and
-  field schemas, field info (`zod_extract_fields`) for adversarial-input and
-  test-data generation
-
 ### System utilities
 
 - `process.ts` - process/spawn helpers with typed results
@@ -185,7 +180,6 @@ See `docs/benchmark.md` for full documentation.
   max-chroma search, `oklch()` string helpers; tuple-returning by default,
   with allocation-free `oklch_to_srgb_into` and gamut helpers for hot loops
 - `maths.ts` - math helpers
-- `id.ts` - ID generation
 - `counter.ts` - counter utilities
 - `dom.ts` - DOM utilities (isomorphic)
 - `deep_equal.ts` - deep equality with security features (constructor comparison,

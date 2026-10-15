@@ -9,8 +9,7 @@
 design:
 
 - kitchen-sink utilities library - sorry, I wish it weren't so, JS made me do it
-- dependencies are optional ([`zod`](https://github.com/colinhacks/zod),
-  [`svelte`](https://github.com/sveltejs/svelte),
+- dependencies are optional ([`svelte`](https://github.com/sveltejs/svelte),
   [`@fuzdev/blake3-wasm`](https://github.com/fuzdev/blake3),
   [`esm-env`](https://github.com/benmccann/esm-env), `@types/node`, `@types/estree`)
   except [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema),

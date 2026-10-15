@@ -1,7 +1,7 @@
 import { describe, test, assert } from 'vitest';
 
 import { hash_blake3 } from '#lib/hash_blake3.ts';
-import { Blake3Hash } from '#lib/hash_schemas.ts';
+import { FACT_HASH_PREFIX, is_fact_hash } from '#lib/hash_schemas.ts';
 
 describe('hash_blake3', () => {
 	// Known test vectors from blake3_wasm test suite (~/dev/blake3/test/test_vectors.json)
@@ -127,11 +127,11 @@ describe('hash_blake3', () => {
 		});
 	});
 
-	describe('Blake3Hash integration', () => {
-		test('hash_blake3 output always passes Blake3Hash', () => {
+	describe('fact hash integration', () => {
+		test('hash_blake3 output prefixed with the fact hash prefix is a fact hash', () => {
 			for (const input of ['', 'hello', 'test', '\u{1F389}', 'a'.repeat(1000)]) {
 				const h = hash_blake3(input);
-				assert.strictEqual(Blake3Hash.safeParse(h).success, true);
+				assert.ok(is_fact_hash(FACT_HASH_PREFIX + h));
 			}
 		});
 	});

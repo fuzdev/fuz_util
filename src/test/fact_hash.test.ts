@@ -9,7 +9,7 @@ import {
 import {
 	FACT_HASH_PREFIX,
 	FACT_HASH_PATTERN,
-	FactHashSchema,
+	FACT_HASH_EXACT,
 	is_fact_hash,
 	type FactHash
 } from '#lib/hash_schemas.ts';
@@ -40,12 +40,12 @@ describe('fact_hash_bytes', () => {
 		assert.strictEqual(fact_hash_bytes(text), fact_hash_bytes(new TextEncoder().encode(text)));
 	});
 
-	test('is deterministic and produces a schema-valid FactHash', () => {
+	test('is deterministic and produces a valid FactHash', () => {
 		const h1 = fact_hash_bytes('same');
 		const h2 = fact_hash_bytes('same');
 		assert.strictEqual(h1, h2);
 		assert.ok(is_fact_hash(h1));
-		assert.doesNotThrow(() => FactHashSchema.parse(h1));
+		assert.ok(FACT_HASH_EXACT.test(h1));
 	});
 
 	test('different inputs hash differently', () => {

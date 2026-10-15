@@ -5,15 +5,15 @@
  * the hash self-identifying — any text scanner can find it without prior
  * knowledge of the source.
  *
- * The vocabulary — `FactHashSchema`, `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`,
- * `is_fact_hash` — lives in `hash_schemas.ts`, which imports no WASM. This
+ * The vocabulary — `FactHash`, `FACT_HASH_PREFIX`, `FACT_HASH_PATTERN`,
+ * `FACT_HASH_EXACT`, `is_fact_hash` — lives in `hash_schemas.ts`, which imports no WASM. This
  * module holds the functions that actually hash, so importing it costs the
  * `@fuzdev/blake3-wasm` binary. Client code validating a hash it received
  * should import from `hash_schemas.ts` instead.
  *
  * Runtime validation happens at construction (`fact_hash_bytes` /
- * `fact_hash_stream` cast at the source; `FactHashSchema.parse` /
- * `is_fact_hash` validate inputs from external boundaries).
+ * `fact_hash_stream` cast at the source; `is_fact_hash` and
+ * schemas typed `FactHash` validate inputs from external boundaries).
  *
  * The hash-producing helpers carry the `fact_hash_` prefix so they namespace
  * cleanly alongside the branded `FactHash` type and the `FACT_HASH_*`

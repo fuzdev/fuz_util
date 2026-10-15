@@ -6,8 +6,8 @@
  * in browser contexts where the WASM must be fetched asynchronously.
  *
  * Importing this module costs the WASM binary. Code that only validates the
- * shape of a hash wants `Blake3Hash` from `hash_schemas.ts`, which is
- * WASM-free.
+ * shape of a hash wants `is_fact_hash` and `FACT_HASH_EXACT` from
+ * `hash_schemas.ts`, which is WASM-free.
  *
  * @module
  */
