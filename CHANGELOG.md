@@ -1,5 +1,21 @@
 # @fuzdev/fuz_util
 
+## 0.74.0
+
+### Minor Changes
+
+- **breaking** feat: `package_json.ts`, `url.ts`, and `fetch.ts` take '@fuzdev/fuz_schema' schemas instead of Zod's ([01f43fa](https://github.com/fuzdev/fuz_util/commit/01f43fa))
+
+  - `PackageJson`, `PackageJsonRepository`, `PackageJsonAuthor`, `PackageJsonFunding`, `PackageJsonExports`, `ExportValue`, `Url`, `FetchValueCacheKey`, and `FetchValueCacheItem` are fuz_schema schemas with no `.parse`, `.safeParse`, `.shape`, or `.extend`: call `s.parse(PackageJson, value)` for `{ok: true, value}` or `{ok: false, issues}` in place of `.safeParse`, and `s.parse_or_throw` (throwing `SchemaError`) in place of `.parse`; format issues with fuz_schema's `format_issue`, whose text differs from Zod's (a failed union reads `expected string | loose_object` in place of "Invalid input"), and `deserialize_cache` throws `SchemaError` in place of `ZodError`. `FetchValueCache` is now only a type, `Map<string, FetchValueCacheItem>`, so import it with `import type`
+  - gro 0.217 and earlier don't start with this version: they import `FetchValueCache` as a value and call `PackageJson.safeParse` (gro 0.216 and earlier also import the removed `zod.ts` functions, as does fuz_app 0.136 and earlier); upgrade them with it
+  - `ExportValue` is a real recursive type, `string | null | {[key: string]: ExportValue}`, so `PackageJson['exports']` narrows from `Record<string, unknown>` to `Record<string, ExportValue>`; every other key of `PackageJson` keeps its type
+  - the output is the input itself when nothing in it changed, where Zod always copied, so a manifest's keys keep their order and mutating the output mutates the input; an own `__proto__` key (which `JSON.parse` makes) stays in the output of a loose object that returns the input itself, where Zod dropped it (a loose object that copies drops it, as Zod did), and in a record such as `dependencies` its value is validated before it's dropped, so `{"__proto__": 1}` there now fails
+  - `Url` checks the text with `URL.canParse` and returns it unchanged, where Zod trimmed it (and from Zod 4.6 also removed tabs and newlines): a padded URL is no longer rewritten, and one padded with whitespace that `URL` doesn't strip, such as a no-break space, now fails
+  - removes the CLI-help functions of `zod.ts`, which nothing uses since `args.ts` moved to fuz_schema: `zod_to_schema_description`, `zod_to_schema_default`, `zod_to_schema_aliases`, `zod_to_schema_type_string`, `zod_format_value`, `ZodSchemaProperty`, `zod_to_schema_properties`, and `zod_to_schema_names_with_aliases`; the walkers stay
+  - `types.ts` no longer re-exports `Flavored`, `Flavor`, `Branded`, and `Brand`: import them from '@fuzdev/fuz_schema/schema.ts'; '@fuzdev/fuz_schema' `^0.2.1` is required
+
+  fix: `deserialize_cache` loads a cache whose items have no `params` key, as every request without params writes, where it refused the whole cache (so fuz_repos's file cache was wiped on every load); `FetchValueCacheItem`'s `params` and `value` are optional, `value` being absent when `parse` returned `undefined`; an invalid entry's issues start with its cache key, or with its index when the key itself is invalid
+
 ## 0.73.0
 
 ### Minor Changes
