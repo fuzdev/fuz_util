@@ -6,7 +6,7 @@
   "logo": "logo.svg",
   "logo_alt": "a green sauropod wearing a brown utility belt",
   "tagline": "ancient not extinct",
-  "license": "MIT",
+  "license": "0BSD",
   "homepage": "https://util.fuz.dev/",
   "author": {
     "name": "Ryan Atkinson",
