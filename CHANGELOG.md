@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.76.0
+
+### Minor Changes
+
+- **breaking** chore: peer '@fuzdev/fuz_schema' `^0.4.0`, whose issue texts changed: `received` names `NaN` and `Infinity`, and a union's `expected` names its options as `received` names values (`string | null` where it read `nullable`, literal values, `object`) ([9384ea9](https://github.com/fuzdev/fuz_util/commit/9384ea9))
+
 ## 0.75.1
 
 ### Patch Changes
