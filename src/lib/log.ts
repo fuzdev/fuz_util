@@ -64,6 +64,31 @@ const DEFAULT_LOG_LEVEL: LogLevel =
 // Identity function for when colors are disabled
 const NO_COLOR_ST: typeof styleText = (_: string | Array<string>, s: string) => s;
 
+// styles unconditionally, so the logger's `colors` is the only decision
+// (by default `styleText` re-decides from `process.stdout` and the env)
+const COLOR_ST: typeof styleText = (format, text) =>
+	styleText(format, text, { validateStream: false });
+
+// the `FORCE_COLOR` values that turn color on, as in Node's `node:tty`; any other value turns it off
+const FORCE_COLOR_ON = new Set(['', '1', '2', '3', 'true']);
+
+// `isTTY` is typed `boolean` on Node's streams but is `undefined` on a non-terminal one
+const is_terminal = (stream: { isTTY?: boolean } | undefined): boolean => stream?.isTTY === true;
+
+/**
+ * Decides colors for a logger whose chain sets no override.
+ * Without `process` colors are on.
+ */
+const colors_detect = (log_console: LogConsole): boolean => {
+	if (typeof process === 'undefined') return true;
+	const { env } = process;
+	if (env.FORCE_COLOR !== undefined) return FORCE_COLOR_ON.has(env.FORCE_COLOR);
+	if (env.NO_COLOR || env.NODE_DISABLE_COLORS || env.CLAUDECODE || env.TERM === 'dumb')
+		return false;
+	// errors and warnings go to stderr, the rest to stdout, so color only when both are terminals
+	return log_console === console && is_terminal(process.stdout) && is_terminal(process.stderr);
+};
+
 /**
  * Simple, flexible logger with support for child loggers and automatic context.
  *
@@ -71,7 +96,7 @@ const NO_COLOR_ST: typeof styleText = (_: string | Array<string>, s: string) => 
  * - Instance-based configuration (no global state)
  * - Child loggers with automatic label concatenation
  * - Parent chain inheritance for level, console, and colors
- * - Respects NO_COLOR environment variable
+ * - Colors by default only on a terminal, respecting `FORCE_COLOR`, `NO_COLOR`, `NODE_DISABLE_COLORS`, and `CLAUDECODE` (see `colors`)
  *
  * @example
  * ```ts
@@ -154,23 +179,22 @@ export class Logger {
 	}
 
 	/**
-	 * Dynamic getter for colors - checks override, then parent, then environment variables.
+	 * Dynamic getter for colors - checks override, then parent, then the environment.
+	 * Output is styled exactly when this is `true`, so an override forces colors on or off
+	 * whatever the output stream is.
 	 *
-	 * Colors are disabled if either the `NO_COLOR` or `CLAUDECODE` environment variable is set.
-	 * The `CLAUDECODE` check disables colors in Claude Code environments where ANSI color codes
-	 * may not render correctly in the output.
+	 * With no override in the parent chain, the default is decided in order:
+	 * - `FORCE_COLOR` set: on for `''`, `'1'`, `'2'`, `'3'`, or `'true'`, as in Node, otherwise off
+	 * - `NO_COLOR`, `NODE_DISABLE_COLORS`, or `CLAUDECODE` set and non-empty, or `TERM` of
+	 *   `'dumb'`: off. The `CLAUDECODE` check disables colors in Claude Code environments where
+	 *   ANSI color codes may not render correctly in the output.
+	 * - otherwise on only when the logger writes to the global `console` and both stdout and stderr
+	 *   are terminals, so a custom `console` defaults to off
+	 *
+	 * Without `process` the default is on.
 	 */
 	get colors(): boolean {
-		if (this.#colors_override !== undefined) {
-			return this.#colors_override;
-		}
-		if (this.parent) {
-			return this.parent.colors;
-		}
-		const has_no_color =
-			typeof process !== 'undefined' &&
-			(process.env.NO_COLOR !== undefined || process.env.CLAUDECODE !== undefined);
-		return !has_no_color;
+		return this.#colors_resolve(this);
 	}
 
 	/**
@@ -178,6 +202,19 @@ export class Logger {
 	 */
 	set colors(value: boolean) {
 		this.#colors_override = value;
+	}
+
+	/**
+	 * Walks the parent chain for a colors override, deciding the default by `logger`'s console.
+	 */
+	#colors_resolve(logger: Logger): boolean {
+		if (this.#colors_override !== undefined) {
+			return this.#colors_override;
+		}
+		if (this.parent) {
+			return this.parent.#colors_resolve(logger);
+		}
+		return colors_detect(logger.console);
 	}
 
 	/**
@@ -263,7 +300,7 @@ export class Logger {
 		const current_colors = this.colors;
 		if (this.#cached_colors !== current_colors) {
 			this.#cached_colors = current_colors;
-			this.#cached_st = current_colors ? styleText : NO_COLOR_ST;
+			this.#cached_st = current_colors ? COLOR_ST : NO_COLOR_ST;
 			this.#cached_error = undefined;
 			this.#cached_warn = undefined;
 			this.#cached_info = undefined;
@@ -459,8 +496,10 @@ export interface LoggerOptions {
 	console?: LogConsole;
 
 	/**
-	 * Whether to use colors in output.
-	 * Inherits from parent or defaults to enabled (unless NO_COLOR env var is set).
+	 * Whether to use colors in output, forcing them on or off whatever the output stream is.
+	 * Inherits from parent or defaults to the environment: on when writing to a terminal
+	 * through the global `console`, adjusted by `FORCE_COLOR`, `NO_COLOR`, `NODE_DISABLE_COLORS`,
+	 * `CLAUDECODE`, and `TERM` (see the `Logger` `colors` getter).
 	 */
 	colors?: boolean;
 }
