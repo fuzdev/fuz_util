@@ -1,14 +1,10 @@
 /**
  * `FactStore` interface.
  *
- * Backend-agnostic content-addressed byte store. Implementations vary by
- * context (filesystem, PG, federated composition later) but all share this
- * interface so callers don't care which. The interface lives in fuz_util
- * (zero backend deps) so build tools can use it; backend implementations
- * live downstream.
- *
- * Idempotent writes, verifiable reads, embedded vs external storage
- * abstracted — see the per-method contracts below.
+ * The shape of a backend-agnostic content-addressed byte store: idempotent
+ * writes keyed by the content hash, verifiable reads, and embedded vs external
+ * storage abstracted — see the per-method contracts below. It lives in
+ * fuz_util (zero backend deps), so it names no backend.
  *
  * @module
  */
