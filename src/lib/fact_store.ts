@@ -16,10 +16,9 @@ import type { FactHash } from './hash_schemas.ts';
  *
  * `content_type` is advisory and not part of the hash. Omitting it
  * (`undefined`) reads back from `get_meta` as `null` — `undefined` means
- * "caller didn't specify," `null` means "no type stored." `refs` lets
- * callers declare references for binary content where text scanning isn't
- * sound; for JSON content, implementations may auto-extract refs from the
- * bytes when no explicit `refs` is supplied.
+ * "caller didn't specify," `null` means "no type stored." `refs` declares the
+ * fact's outgoing references; implementations record exactly these and never
+ * scan the bytes for more, whatever the content type. Omitting it records none.
  */
 export interface FactPutOptions {
 	content_type?: string;
@@ -27,17 +26,13 @@ export interface FactPutOptions {
 }
 
 /**
- * Outcome of a streaming `put_stream` — the finalized digests + byte count.
+ * Outcome of a streaming `put_stream` — the finalized hash + byte count.
  *
- * `hash` is the `blake3:`-prefixed fact hash (content address); `sha256` is the
- * bare-hex SHA-256 computed in the same pass, so a consumer can persist it
- * alongside the fact and let clients verify downloads with the ubiquitous
- * `sha256sum` (there is no universal shell BLAKE3 tool); `size` is the streamed
- * byte count. Mirrors the Rust `PutStreamOutcome`.
+ * `hash` is the `blake3:`-prefixed fact hash (content address); `size` is the
+ * streamed byte count. Mirrors the Rust `PutStreamOutcome`.
  */
 export interface PutStreamOutcome {
 	hash: FactHash;
-	sha256: string;
 	size: number;
 }
 
@@ -77,8 +72,8 @@ export interface FactStore {
 
 	/**
 	 * Stream bytes into the store with bounded memory, returning the finalized
-	 * digests + size. Hashes BLAKE3 (content address) **and** SHA-256 in a single
-	 * pass over the stream, buffers in memory only up to the embedded threshold,
+	 * hash + size. Hashes BLAKE3 (content address) in a single pass over the
+	 * stream, buffers in memory only up to the embedded threshold,
 	 * then spills to the disk CAS — so a multi-GB upload never buffers in RAM.
 	 *
 	 * Enforces `max_bytes` mid-stream: a body whose running byte count passes the

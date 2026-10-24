@@ -41,21 +41,27 @@ fuz_util is a **foundational utility library**:
 - `hex.ts` - hex encoding (`to_hex`)
 - `hash_schemas.ts` - hash vocabulary with no hashing, so no WASM: `FactHash`
   (fuz_schema `Branded` `blake3:`-prefixed digest), `FACT_HASH_PREFIX`,
-  `FACT_HASH_PATTERN`, `FACT_HASH_EXACT` (what schemas validating a fact hash
-  build on), `is_fact_hash`. Client code that only validates a hash imports
+  `FACT_HASH_EXACT` (what schemas validating a fact hash build on),
+  `is_fact_hash`. Client code that only validates a hash imports
   from here — the two modules below pull the WASM binary in and initialize it
   at module scope
 - `hash_blake3.ts` - BLAKE3 hashing (`hash_blake3`, sync, 64-char hex;
   `blake3_ready`, via `@fuzdev/blake3-wasm`)
-- `hash.ts` - `hash_sha256` (Web Crypto SHA-256, async), `hash_insecure` (DJB2
-  for non-security uses)
+- `hash.ts` - Web Crypto digests (async, lowercase hex): `hash_sha256` and
+  `hash_sha512` for interop with tools and formats that name them (like a
+  `sha512sum` check), `hash_sha1` and `hash_sha384` for
+  interop and inspection only (SHA-1 is broken; not for new formats); plus
+  `hash_insecure`, a sync 32-bit DJB2 for cache keys and change detection, not
+  collision-resistant and not a stable id to persist. BLAKE3, the native
+  content hash, is in `hash_blake3.ts`. Which digest fills which role across
+  the TS and Rust spines: the fuz-stack skill's `twin-impl.md` § Digests
 - `fact_hash.ts` - fact-hash producers: `fact_hash_bytes`, `fact_hash_stream`,
-  `fact_hash_verify`, `fact_hash_extract_refs` (depth-first scan of a JSON
-  value for `blake3:` refs)
+  `fact_hash_verify`; no ref scanning (refs are declared via `FactPutOptions`)
 - `fact_store.ts` - `FactStore` backend-agnostic content-addressed byte-store
   interface (`put` / `put_stream` / `get` / `delete` / `has` /
-  `get_meta` / `get_refs`), `FactMeta`, `FactPutOptions`, `PutStreamOutcome`
-  (the bounded-memory `put_stream` digests + size). Interface only — backend
+  `get_meta` / `get_refs`), `FactMeta`, `FactPutOptions` (`refs` are
+  declared, never extracted from the bytes), `PutStreamOutcome` (the
+  bounded-memory `put_stream` hash + size). Interface only — backend
   implementations live downstream (zero backend deps here)
 - `fractional_index.ts` - lex-ordered key generation for ordered lists
   without rebalancing (`fractional_index_between`,

@@ -127,8 +127,22 @@ describe('hash_insecure', () => {
 		}
 	});
 
-	test('empty buffer is DJB2 initial value', () => {
+	test('empty input is the DJB2 seed', () => {
+		assert.strictEqual(hash_insecure(''), '00001505');
 		assert.strictEqual(hash_insecure(new ArrayBuffer(0)), '00001505');
+	});
+
+	test('matches reference DJB2 (hash * 33 + c, mod 2^32)', () => {
+		assert.strictEqual(hash_insecure('hello'), '0f923099');
+		assert.strictEqual(hash_insecure(new Uint8Array([104, 101, 108, 108, 111])), '0f923099');
+		// UTF-16 code units of '🎉' (a surrogate pair)
+		assert.strictEqual(hash_insecure('🎉'), '0076298a');
+	});
+
+	test('matches reference DJB2 on long input', () => {
+		// pins a long input against reference DJB2 (mod 2^32), string and bytes
+		assert.strictEqual(hash_insecure('a'.repeat(100_000)), '7bff91a5');
+		assert.strictEqual(hash_insecure(new Uint8Array(100_000).fill(97)), '7bff91a5');
 	});
 
 	test('different inputs produce different outputs', () => {

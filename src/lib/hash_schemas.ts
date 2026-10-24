@@ -1,5 +1,5 @@
 /**
- * Hash vocabulary — the `FactHash` type, patterns, and guards, with no hashing.
+ * Hash vocabulary — the `FactHash` type, its pattern, and its guard, with no hashing.
  *
  * This module is deliberately WASM-free. `hash_blake3.ts` and `fact_hash.ts`
  * import `@fuzdev/blake3-wasm` and kick off its initialization at module
@@ -23,28 +23,9 @@ import type { Branded } from '@fuzdev/fuz_schema/schema.ts';
 export const FACT_HASH_PREFIX = 'blake3:';
 
 /**
- * Pattern for detecting a fact hash anywhere in text.
- *
- * Has the global flag because the primary use is `String.matchAll` over
- * cell data / fact bytes. Callers that only need to validate a single
- * known string should use `is_fact_hash` instead — `RegExp.test` mutates
- * `lastIndex` on global patterns.
- *
- * The trailing `(?=blake3:|[^0-9a-f]|$)` lookahead enforces a right
- * boundary so a 64-hex digest is matched only when it actually *ends*:
- * followed by a non-hex char, the end of string, or the start of another
- * `blake3:` ref. This rejects malformed over-long runs (`blake3:` + 65+
- * hex) rather than silently truncating them to a different valid-shaped
- * hash, while still matching two refs concatenated with no separator
- * (the `blake3:` alternative is needed because the prefix itself begins
- * with the hex char `b`). A bare `(?![0-9a-f])` would instead drop the
- * first of two glued refs.
- */
-export const FACT_HASH_PATTERN = /blake3:[0-9a-f]{64}(?=blake3:|[^0-9a-f]|$)/g;
-
-/**
- * Stricter anchored variant for full-string validation. Schemas that validate
- * a fact hash build on this exact pattern, e.g. `z.string().regex(FACT_HASH_EXACT)`.
+ * Anchored pattern for full-string validation: `blake3:` plus exactly 64
+ * lowercase hex chars. Schemas that validate a fact hash build on it, e.g.
+ * `z.string().regex(FACT_HASH_EXACT)`.
  */
 export const FACT_HASH_EXACT = /^blake3:[0-9a-f]{64}$/;
 

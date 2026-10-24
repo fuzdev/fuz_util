@@ -1,24 +1,16 @@
 import { describe, test, assert } from 'vitest';
 
-import {
-	fact_hash_bytes,
-	fact_hash_stream,
-	fact_hash_verify,
-	fact_hash_extract_refs
-} from '#lib/fact_hash.ts';
+import { fact_hash_bytes, fact_hash_stream, fact_hash_verify } from '#lib/fact_hash.ts';
 import {
 	FACT_HASH_PREFIX,
-	FACT_HASH_PATTERN,
 	FACT_HASH_EXACT,
 	is_fact_hash,
 	type FactHash
 } from '#lib/hash_schemas.ts';
 import { hash_blake3 } from '#lib/hash_blake3.ts';
-import type { Json } from '#lib/json.ts';
 
 /** A syntactically valid (if not content-derived) fact hash literal. */
 const HASH_A = (FACT_HASH_PREFIX + 'a'.repeat(64)) as FactHash;
-const HASH_B = (FACT_HASH_PREFIX + 'b'.repeat(64)) as FactHash;
 
 /** Build a single-chunk `ReadableStream<Uint8Array>` from `bytes`. */
 const stream_of = (...chunks: Array<Uint8Array>): ReadableStream<Uint8Array> =>
@@ -103,105 +95,5 @@ describe('fact_hash_verify', () => {
 	test('true for the empty input', () => {
 		const empty = new Uint8Array(0);
 		assert.ok(fact_hash_verify(fact_hash_bytes(empty), empty));
-	});
-});
-
-describe('fact_hash_extract_refs', () => {
-	test('finds a ref in a plain string value', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs({ image: HASH_A }), [HASH_A]);
-	});
-
-	test('walks nested objects and arrays', () => {
-		const value = { a: { b: [HASH_A, { c: HASH_B }] } };
-		assert.deepStrictEqual(new Set(fact_hash_extract_refs(value)), new Set([HASH_A, HASH_B]));
-	});
-
-	test('object keys are not scanned', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs({ [HASH_A]: 'value' }), []);
-	});
-
-	test('deduplicates repeated refs', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs([HASH_A, HASH_A, { x: HASH_A }]), [HASH_A]);
-	});
-
-	test('preserves depth-first first-seen order', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs([HASH_B, HASH_A, HASH_B]), [HASH_B, HASH_A]);
-	});
-
-	test('extracts multiple refs from a single string value', () => {
-		const blob = `prefix ${HASH_A} middle ${HASH_B} suffix`;
-		assert.deepStrictEqual(new Set(fact_hash_extract_refs({ blob })), new Set([HASH_A, HASH_B]));
-	});
-
-	test('ignores null, numbers, and booleans', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs({ a: null, b: 1, c: true, d: [null, 2] }), []);
-	});
-
-	test('returns [] for top-level non-string primitives', () => {
-		for (const v of [null, 42, true, false]) {
-			assert.deepStrictEqual(fact_hash_extract_refs(v as Json), [], JSON.stringify(v));
-		}
-	});
-
-	test('returns [] when no refs are present', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs({ title: 'no hashes here' }), []);
-	});
-
-	test('returns [] for empty containers', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs({}), []);
-		assert.deepStrictEqual(fact_hash_extract_refs([]), []);
-	});
-
-	test('finds both of two hashes glued together with no separator', () => {
-		// Concatenated refs in a blob (e.g. packed binary metadata rendered to
-		// text) must both surface — the second `blake3:` is found right after
-		// the first match ends.
-		assert.deepStrictEqual(fact_hash_extract_refs({ blob: HASH_A + HASH_B }), [HASH_A, HASH_B]);
-	});
-
-	test('a top-level string value is scanned', () => {
-		assert.deepStrictEqual(fact_hash_extract_refs(HASH_A as unknown as string), [HASH_A]);
-	});
-
-	test('uppercase-hex hashes are not matched (scanner is lowercase-only)', () => {
-		// Mirrors `is_fact_hash`'s lowercase contract — an uppercased digest
-		// is not a valid ref and must not be silently extracted.
-		const upper = FACT_HASH_PREFIX + 'A'.repeat(64);
-		assert.deepStrictEqual(fact_hash_extract_refs({ upper }), []);
-	});
-
-	test('self-identifying: a hash glued to a leading word is still found', () => {
-		// The `blake3:` prefix is self-identifying — the unanchored scan finds
-		// it mid-token (no word boundary required), unlike anchored validation.
-		assert.deepStrictEqual(fact_hash_extract_refs({ k: 'xref=' + HASH_A }), [HASH_A]);
-	});
-
-	test('multiple refs in one string preserve their in-string order', () => {
-		// `String.match` returns matches left-to-right; pin that the dedup Set
-		// preserves that order for a single scanned string.
-		assert.deepStrictEqual(fact_hash_extract_refs(`${HASH_B} then ${HASH_A}`), [HASH_B, HASH_A]);
-	});
-
-	test('rejects an over-long hex run instead of truncating to a wrong hash', () => {
-		// `blake3:` + 65+ hex is malformed, not normal data. The right-boundary
-		// lookahead drops it rather than emitting the (different) 64-char prefix
-		// as if it were a real ref.
-		assert.deepStrictEqual(fact_hash_extract_refs({ over: FACT_HASH_PREFIX + 'a'.repeat(65) }), []);
-		assert.deepStrictEqual(
-			fact_hash_extract_refs({ over: FACT_HASH_PREFIX + 'a'.repeat(128) }),
-			[]
-		);
-	});
-
-	test('a valid ref followed immediately by a non-hex char is still found', () => {
-		// The boundary is "not more hex" — a hash glued to non-hex text (a
-		// slash, brace, the letter past the hex range) is a complete ref.
-		assert.deepStrictEqual(fact_hash_extract_refs({ k: HASH_A + '/thumb.png' }), [HASH_A]);
-		assert.deepStrictEqual(fact_hash_extract_refs({ k: HASH_A + 'z' }), [HASH_A]);
-	});
-
-	test('FACT_HASH_PATTERN is global (lastIndex hazard for .test, safe for .match)', () => {
-		// Guards the documented contract that the exported pattern carries /g.
-		assert.ok(FACT_HASH_PATTERN.global);
 	});
 });
