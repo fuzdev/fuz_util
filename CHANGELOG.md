@@ -1,5 +1,14 @@
 # @fuzdev/fuz_util
 
+## 0.78.0
+
+### Minor Changes
+
+- **breaking** feat: remove `fact_hash_extract_refs` and `FACT_HASH_PATTERN`: a fact's refs are what its writer declares in `FactPutOptions.refs`, and `FactStore` implementations no longer scan JSON content for them ([2e9b5ee](https://github.com/fuzdev/fuz_util/commit/2e9b5ee))
+- **breaking** fix: `hash_insecure` is now real 32-bit DJB2 (`hash * 33 + c`, wrapped to 32 bits each step), so its output changes for every non-empty input; rebuild anything keyed by it ([2e9b5ee](https://github.com/fuzdev/fuz_util/commit/2e9b5ee))
+- **breaking** fix: `Logger` styles output exactly when its `colors` is true, so `colors: true` forces color on a non-terminal; the default is on only when the global `console` writes to terminal stdout and stderr, `FORCE_COLOR` forces it on or off as in Node, and an empty `NO_COLOR` or `CLAUDECODE` no longer disables it ([8df9931](https://github.com/fuzdev/fuz_util/commit/8df9931))
+- **breaking** feat: remove `sha256` from `PutStreamOutcome`: `put_stream` returns the BLAKE3 fact `hash` and `size` only ([2e9b5ee](https://github.com/fuzdev/fuz_util/commit/2e9b5ee))
+
 ## 0.77.0
 
 ### Minor Changes
