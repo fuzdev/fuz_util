@@ -1,6 +1,6 @@
 # @fuzdev/fuz_util
 
-[<img src="static/logo.svg" alt="a green sauropod wearing a brown utility belt" align="right" width="256" height="256">](https://util.fuz.dev/)
+[<img src="static/logo.svg" alt="a green sauropod wearing a brown belt" align="right" width="256" height="256">](https://util.fuz.dev/)
 
 > utility belt for JS 🦕 ancient not extinct
 
