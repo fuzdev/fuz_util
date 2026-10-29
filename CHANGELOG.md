@@ -1,5 +1,17 @@
 # @fuzdev/fuz_util
 
+## 0.79.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([aa23356](https://github.com/fuzdev/fuz_util/commit/aa23356))
+
+  Breaking dependency changes:
+
+  - svelte-docinfo: 0.16.0 → 0.17.0 (minor)
+
+- chore: upgrade svelte-docinfo 0.16.0 ([49b2ecd](https://github.com/fuzdev/fuz_util/commit/49b2ecd))
+
 ## 0.78.0
 
 ### Minor Changes
