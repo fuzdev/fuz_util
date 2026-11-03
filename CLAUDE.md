@@ -144,7 +144,8 @@ See `docs/benchmark.md` for full documentation.
 ### System utilities
 
 - `process.ts` - process/spawn helpers with typed results
-- `fetch.ts` - fetch utilities with caching, rate limit detection, ETag support;
+- `fetch.ts` - `fetch_value`, fetch with caching, rate limit detection, ETag
+  support; the caller passes `fetch` (required, no global default);
   `deserialize_cache` validates the cache with `@fuzdev/fuz_schema`
 - `fs.ts` - file system utilities (`fs_exists`, `fs_empty_dir`, `fs_search`)
 - `path.ts` - path utilities
