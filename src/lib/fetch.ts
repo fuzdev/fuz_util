@@ -2,7 +2,6 @@ import * as s from '@fuzdev/fuz_schema/schema.ts';
 import type { Flavored } from '@fuzdev/fuz_schema/schema.ts';
 
 import type { Logger } from './log.ts';
-import { EMPTY_OBJECT } from './object.ts';
 import type { Result } from './result.ts';
 import { json_stringify_deterministic } from './json.ts';
 
@@ -20,7 +19,12 @@ export interface FetchValueOptions<TValue, TParams = undefined> {
 	cache?: FetchValueCache | null;
 	return_early_from_cache?: boolean; // TODO name?
 	log?: Logger;
-	fetch?: typeof globalThis.fetch;
+	/**
+	 * The `fetch` to call, required so the network is always handed in:
+	 * pass `globalThis.fetch` on Node and in browsers, `net.fetch` on the gro runtime,
+	 * which has no global `fetch`.
+	 */
+	fetch: typeof globalThis.fetch;
 }
 
 /**
@@ -52,18 +56,9 @@ export interface FetchValueOptions<TValue, TParams = undefined> {
  */
 export const fetch_value = async <TValue = any, TParams = undefined>(
 	url: string | URL,
-	options?: FetchValueOptions<TValue, TParams>
+	options: FetchValueOptions<TValue, TParams>
 ): Promise<Result<{ value: TValue; headers: Headers }, { status: number; message: string }>> => {
-	const {
-		request,
-		params,
-		parse,
-		token,
-		cache,
-		return_early_from_cache,
-		log,
-		fetch = globalThis.fetch
-	} = options ?? EMPTY_OBJECT;
+	const { request, params, parse, token, cache, return_early_from_cache, log, fetch } = options;
 
 	const url_obj = typeof url === 'string' ? new URL(url) : url;
 	const url_str = url_obj.href;
