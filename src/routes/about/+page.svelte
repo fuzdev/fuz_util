@@ -15,7 +15,7 @@
 </script>
 
 <main class="width_atmost_md">
-	<section>
+	<section class="box">
 		<header class="box">
 			<h1 class="mt_xl5">{library.repo_name}</h1>
 		</header>
