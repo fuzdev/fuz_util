@@ -1,1 +1,0 @@
-import{d as e,u as t}from"./DBHDDPsn.js";var n=n=>t(e(e(n,`https://`),`www.`),`/`);export{n as t};
