@@ -25,7 +25,7 @@ export const FACT_HASH_PREFIX = 'blake3:';
 /**
  * Anchored pattern for full-string validation: `blake3:` plus exactly 64
  * lowercase hex chars. Schemas that validate a fact hash build on it, e.g.
- * `z.string().regex(FACT_HASH_EXACT)`.
+ * `pipe(string, regex(FACT_HASH_EXACT))`.
  */
 export const FACT_HASH_EXACT = /^blake3:[0-9a-f]{64}$/;
 
