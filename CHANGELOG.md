@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.80.0
+
+### Minor Changes
+
+- **breaking** feat: `fetch_value` requires `options.fetch` and no longer defaults to `globalThis.fetch`, so the network is always handed in; pass `globalThis.fetch` on Node and in browsers ([55feecc](https://github.com/fuzdev/fuz_util/commit/55feecc))
+
 ## 0.79.1
 
 ### Patch Changes
