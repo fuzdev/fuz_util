@@ -147,7 +147,6 @@ See `docs/benchmark.md` for full documentation.
 - `fetch.ts` - `fetch_value`, fetch with caching, rate limit detection, ETag
   support; the caller passes `fetch` (required, no global default);
   `deserialize_cache` validates the cache with `@fuzdev/fuz_schema`
-- `fs.ts` - file system utilities (`fs_exists`, `fs_empty_dir`, `fs_search`)
 - `path.ts` - path utilities
 - `git.ts` - git operations; `GitOrigin` and `GitBranch` are flavored
   `@fuzdev/fuz_schema` string schemas

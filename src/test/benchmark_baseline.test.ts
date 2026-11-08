@@ -220,8 +220,7 @@ describe('benchmark_baseline_load', () => {
 	});
 
 	test('handles version mismatch', async () => {
-		const { writeFile } = await import('node:fs/promises');
-		const { fs_exists } = await import('#lib/fs.ts');
+		const { writeFile, access } = await import('node:fs/promises');
 
 		// Write a schema-valid baseline but with a stale version number
 		await mkdir(test_dir, { recursive: true });
@@ -243,7 +242,12 @@ describe('benchmark_baseline_load', () => {
 
 		// Should return null and remove the stale-version file
 		assert.isNull(loaded);
-		assert.isFalse(await fs_exists(filepath));
+		assert.isFalse(
+			await access(filepath).then(
+				() => true,
+				() => false
+			)
+		);
 	});
 });
 

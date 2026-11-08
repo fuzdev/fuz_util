@@ -5,11 +5,10 @@
  * @module
  */
 
-import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { access, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as s from '@fuzdev/fuz_schema/schema.ts';
 
-import { fs_exists } from './fs.ts';
 import { git_info_get } from './git.ts';
 import type { BenchmarkResult } from './benchmark_types.ts';
 import {
@@ -456,7 +455,9 @@ export const benchmark_baseline_load = async (
 	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
 	const filepath = join(base_path, BASELINE_FILENAME);
 
-	if (!(await fs_exists(filepath))) {
+	try {
+		await access(filepath);
+	} catch {
 		return null;
 	}
 

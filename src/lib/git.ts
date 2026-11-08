@@ -1,9 +1,18 @@
 import type { SpawnOptions } from 'node:child_process';
+import { access } from 'node:fs/promises';
 import * as s from '@fuzdev/fuz_schema/schema.ts';
 
 import { spawn, spawn_out, spawn_result_to_message } from './process.ts';
 import { to_file_path } from './path.ts';
-import { fs_exists } from './fs.ts';
+
+const cwd_exists = async (path: string): Promise<boolean> => {
+	try {
+		await access(path);
+		return true;
+	} catch {
+		return false;
+	}
+};
 
 /**
  * Basic git repository info.
@@ -62,7 +71,7 @@ export const git_remote_branch_exists = async (
 	options?: SpawnOptions
 ): Promise<boolean> => {
 	const final_branch = branch ?? (await git_current_branch_name(options));
-	if (options?.cwd && !(await fs_exists(to_file_path(options.cwd)))) {
+	if (options?.cwd && !(await cwd_exists(to_file_path(options.cwd)))) {
 		return false;
 	}
 	const result = await spawn(
@@ -90,7 +99,7 @@ export const git_local_branch_exists = async (
 	branch: GitBranch,
 	options?: SpawnOptions
 ): Promise<boolean> => {
-	if (options?.cwd && !(await fs_exists(to_file_path(options.cwd)))) {
+	if (options?.cwd && !(await cwd_exists(to_file_path(options.cwd)))) {
 		return false;
 	}
 	const result = await spawn('git', ['show-ref', '--quiet', 'refs/heads/' + branch], options);
