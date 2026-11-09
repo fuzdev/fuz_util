@@ -1,5 +1,11 @@
 # @fuzdev/fuz_util
 
+## 0.81.0
+
+### Minor Changes
+
+- **breaking** remove `@fuzdev/fuz_util/fs.ts` (`fs_exists`, `fs_empty_dir`, `fs_search`, `fs_classify_error`, `FsError`, `FsJsonError`, `FsSearchOptions`); gro consumers use `@fuzdev/gro/fs.ts` and `@fuzdev/gro/fs_search.ts`, others take an injected dependency or write local code with `node:fs/promises` ([8eb5b8a](https://github.com/fuzdev/fuz_util/commit/8eb5b8a))
+
 ## 0.80.0
 
 ### Minor Changes
