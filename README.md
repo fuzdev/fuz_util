@@ -15,8 +15,8 @@ design:
   [`esm-env`](https://github.com/benmccann/esm-env) and
   [`@fuzdev/fuz_schema`](https://github.com/fuzdev/fuz_schema), which has no
   dependencies of its own; its schemas back `PackageJson`, `Url`, `fetch.ts`,
-  `args.ts`, `git.ts`, and `benchmark_baseline.ts`, and brand `FactHash`
-- mix of JS module environments - browser-only, Node-only, universal
+  `args.ts`, and `benchmark_baseline.ts`, and brand `FactHash`
+- mix of JS module environments - browser-only and universal
 - mostly small pure functions
 - all TypeScript, for styles and Svelte and SvelteKit
   see <a href="https://github.com/fuz-dev/fuz">@fuzdev/fuz_ui</a>

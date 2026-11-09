@@ -141,17 +141,12 @@ See `docs/benchmark.md` for full documentation.
 
 ### System utilities
 
-- `process.ts` - process/spawn helpers with typed results
 - `fetch.ts` - `fetch_value`, fetch with caching, rate limit detection, ETag
   support; the caller passes `fetch` (required, no global default);
   `deserialize_cache` validates the cache with `@fuzdev/fuz_schema`
 - `path.ts` - path utilities
-- `git.ts` - git operations; `GitOrigin` and `GitBranch` are flavored
-  `@fuzdev/fuz_schema` string schemas
 - `log.ts` - hierarchical logging system
 
-- `process.ts` - `spawn()` with `kind`-discriminated results (`SpawnResultExited`,
-  `SpawnResultSignaled`, `SpawnResultError`); narrow with `result.kind === ...`
 - `log.ts` - `Logger` class with hierarchical children, auto-detects level from
   `PUBLIC_LOG_LEVEL` env var
 

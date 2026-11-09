@@ -58,7 +58,7 @@ export const log_level_parse = (value: string | undefined): LogLevel | undefined
 
 const DEFAULT_LOG_LEVEL: LogLevel =
 	(typeof process === 'undefined' ? undefined : log_level_parse(process.env.PUBLIC_LOG_LEVEL)) ??
-	(process.env.VITEST ? 'off' : DEV ? 'debug' : 'info');
+	(typeof process !== 'undefined' && process.env.VITEST ? 'off' : DEV ? 'debug' : 'info');
 
 // the opening SGR sequence of each color the logger uses, all closed by the default foreground
 const COLOR_OPEN = {
