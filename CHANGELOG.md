@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.82.0
+
+### Minor Changes
+
+- **breaking** feat: `benchmark_baseline.ts` is pure and does no file or git I/O; **breaking** remove `benchmark_lock.ts` (`benchmark_lock_acquire`, `benchmark_lock_format_refusal`, `BENCHMARK_LOCK_PATH`, and its types), which has no replacement. On upgrade, replace `benchmark_baseline_save` with `benchmark_baseline_create` plus `benchmark_baseline_serialize` and write the text yourself, creating its directory, passing `git_commit`, `git_branch`, and `runtime_version` (`.gro/benchmarks` is no longer a default); replace `benchmark_baseline_load` with reading the file and `benchmark_baseline_parse`, which returns a `Result` and no longer deletes a corrupt file; and pass the parsed baseline, or null, to the now-synchronous `benchmark_baseline_compare(results, baseline, {runtime_version})`. `node_version` becomes `runtime_version` in the baseline, and `baseline_node_version`, `current_node_version`, and `node_version_changed` become `baseline_runtime_version`, `current_runtime_version`, and `runtime_version_changed` in the comparison, so re-save baselines. `log.ts` and `print.ts` import no `node:util`: `print.ts` defines `StyleText` and `StyleName`, narrowed to the colors it prints with, and Node's `styleText` still passes to `configure_print_colors`; a consumer calling `st` with another style or an array uses `styleText` directly ([bd427d2](https://github.com/fuzdev/fuz_util/commit/bd427d2))
+- **breaking** remove `@fuzdev/fuz_util/process.ts` and `@fuzdev/fuz_util/git.ts`, and fix `log.ts` throwing at load with no `process` global; gro consumers use `@fuzdev/gro/spawn.ts`, `@fuzdev/gro/process.ts`, and `@fuzdev/gro/git.ts`, others take an injected dependency or write local code with `node:child_process` ([5d2c652](https://github.com/fuzdev/fuz_util/commit/5d2c652))
+
 ## 0.81.0
 
 ### Minor Changes
