@@ -101,10 +101,8 @@ npm run benchmark:deep_equal   # Run individual benchmark
 
 Baseline stored in `src/benchmarks/baseline.json` (gitignored — local-only).
 
-`benchmark_lock.ts` (Node-only) is a machine-wide lock so two benchmark runs
-never measure at once: `benchmark_lock_acquire` never waits, takes over a lock
-whose process is gone, and its `release()` reports whether the lock was still
-this process's.
+`benchmark_baseline.ts` is pure: `benchmark_baseline_create`, `_serialize`,
+`_parse` (a `Result`), and a synchronous `_compare`; callers do the file I/O.
 
 See `docs/benchmark.md` for full documentation.
 

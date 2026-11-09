@@ -1,25 +1,24 @@
 /**
- * Benchmark baseline storage and comparison utilities.
- * Save benchmark results to disk and compare against baselines for regression detection.
+ * Benchmark baselines: build one from results, serialize and parse it, and
+ * compare results against it for regression detection. Callers do the file I/O.
  *
  * @module
  */
 
-import { access, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
-import { join } from 'node:path';
 import * as s from '@fuzdev/fuz_schema/schema.ts';
 
-import { git_info_get } from './git.ts';
 import type { BenchmarkResult } from './benchmark_types.ts';
 import {
 	benchmark_stats_compare,
 	type BenchmarkComparison,
 	type BenchmarkStatsComparable
 } from './benchmark_stats.ts';
+import type { Result } from './result.ts';
+import { to_error_message } from './error.ts';
 import { stats_confidence_interval_from_summary, stats_cv } from './stats.ts';
 
 // Version for forward compatibility - increment when schema changes
-const BASELINE_VERSION = 3;
+const BASELINE_VERSION = 4;
 
 /**
  * Schema for the effective per-task time budget that produced a sample set.
@@ -70,7 +69,8 @@ export type BenchmarkBaselineEntry = s.Infer<typeof BenchmarkBaselineEntry>;
  * `metadata` is an opt-in passthrough bag for context that applies to the whole
  * run but isn't part of the comparison math — corpus identity (file counts,
  * total bytes), dependency versions, binary sizes, hardware notes, build flags.
- * Pass it on save and read it back on load; it's not interpreted by
+ * Pass it to `benchmark_baseline_create` and read it back from the parsed
+ * baseline or the comparison result; it's not interpreted by
  * `benchmark_baseline_compare`. The intended use is to let consumers attach
  * "did this run measure the same thing as the baseline?" context (e.g. corpus
  * shape) without forking the schema, then surface mismatches in their own
@@ -83,45 +83,48 @@ export const BenchmarkBaseline = s.strip_object({
 	timestamp: s.string,
 	git_commit: s.nullable(s.string),
 	git_branch: s.nullable(s.string),
-	node_version: s.string,
+	runtime_version: s.string,
 	entries: s.array(BenchmarkBaselineEntry),
 	metadata: s.optional(s.record(s.unknown))
 });
 export type BenchmarkBaseline = s.Infer<typeof BenchmarkBaseline>;
 
 /**
- * Options for saving a baseline.
+ * Options for `benchmark_baseline_create`, the run-level facts a baseline records.
  */
-export interface BenchmarkBaselineSaveOptions {
-	/** Directory to store baselines (default: '.gro/benchmarks') */
-	path?: string;
-	/** Git commit hash (auto-detected if not provided) */
-	git_commit?: string | null;
-	/** Git branch name (auto-detected if not provided) */
-	git_branch?: string | null;
+export interface BenchmarkBaselineCreateOptions {
+	/** The commit measured, null when unknown. */
+	git_commit: string | null;
+	/** The branch measured, null when unknown. */
+	git_branch: string | null;
+	/** The JS runtime's version, like `process.version` on Node. */
+	runtime_version: string;
 	/**
 	 * Opt-in passthrough for run-level context (corpus identity, dependency
-	 * versions, binary sizes, hardware notes). Round-trips on `_load` and is
-	 * accessible via `BenchmarkBaselineComparisonResult.baseline_metadata`, but
-	 * is *not* interpreted by `_compare` — consumers decide what to do with
-	 * mismatches. Keep values JSON-serializable; this is written verbatim to
-	 * the baseline file.
+	 * versions, binary sizes, hardware notes). Round-trips through serializing
+	 * and parsing and is accessible via
+	 * `BenchmarkBaselineComparisonResult.baseline_metadata`, but is *not*
+	 * interpreted by `benchmark_baseline_compare`, so consumers decide what to
+	 * do with mismatches. Keep values JSON-serializable.
 	 */
 	metadata?: Record<string, unknown>;
 }
 
 /**
- * Options for loading a baseline.
+ * Why `benchmark_baseline_parse` found no usable baseline.
  */
-export interface BenchmarkBaselineLoadOptions {
-	/** Directory to load baseline from (default: '.gro/benchmarks') */
-	path?: string;
+export interface BenchmarkBaselineParseError {
+	/** `invalid` is text that isn't a baseline, `version_mismatch` one written by another version. */
+	kind: 'invalid' | 'version_mismatch';
+	message: string;
 }
 
 /**
  * Options for comparing against a baseline.
  */
-export interface BenchmarkBaselineCompareOptions extends BenchmarkBaselineLoadOptions {
+export interface BenchmarkBaselineCompareOptions {
+	/** The JS runtime's version, compared against the baseline's. */
+	runtime_version: string;
 	/**
 	 * Minimum speedup ratio to consider a regression.
 	 * For example, 1.05 means only flag regressions that are 5% or more slower.
@@ -181,23 +184,22 @@ export interface BenchmarkBaselineComparisonResult {
 	baseline_age_days: number | null;
 	/** Whether the baseline is considered stale based on staleness_warning_days option */
 	baseline_stale: boolean;
-	/** Node.js version recorded in the baseline (null if no baseline). */
-	baseline_node_version: string | null;
-	/** Node.js version of the process that produced the current results. */
-	current_node_version: string;
+	/** JS runtime version recorded in the baseline (null if no baseline). */
+	baseline_runtime_version: string | null;
+	/** JS runtime version of the process that produced the current results. */
+	current_runtime_version: string;
 	/**
-	 * True if the baseline's node version differs from the current process.
+	 * True if the baseline's runtime version differs from the current one.
 	 * Informational only — surfaced in the comparison header so readers can
 	 * apply the caveat across all task comparisons; does not affect per-task
-	 * classification (Node bumps affect every task uniformly).
+	 * classification (runtime bumps affect every task uniformly).
 	 */
-	node_version_changed: boolean;
+	runtime_version_changed: boolean;
 	/**
 	 * The `metadata` bag persisted in the baseline file, or `null` if the
 	 * baseline didn't have one (or no baseline was found). Returned verbatim —
 	 * fuz_util doesn't validate the shape or diff it against any "current run"
-	 * metadata. If the consumer needs a diff, they pass `options.metadata`
-	 * (current-run context) and walk the two records themselves.
+	 * metadata. A consumer that needs a diff walks the two records itself.
 	 */
 	baseline_metadata: Record<string, unknown> | null;
 	/**
@@ -228,7 +230,7 @@ export interface BenchmarkBaselineComparisonResult {
 	methodology_changed: Array<BenchmarkBaselineTaskComparison>;
 	/** Tasks in current run but not in baseline */
 	new_tasks: Array<string>;
-	/** Tasks in baseline but not in current run */
+	/** Tasks in baseline but not in current run, or that collected no valid samples in it */
 	removed_tasks: Array<string>;
 }
 
@@ -294,9 +296,6 @@ export interface BenchmarkBaselineTaskComparison {
 	 */
 	max_outlier_ratio: number;
 }
-
-const DEFAULT_BASELINE_PATH = '.gro/benchmarks';
-const BASELINE_FILENAME = 'baseline.json';
 
 /**
  * Convert benchmark results to baseline entries.
@@ -383,125 +382,86 @@ export const benchmark_budget_diff = (
 };
 
 /**
- * Save benchmark results as the current baseline.
+ * Builds a baseline from benchmark results, stamped with the current time.
  *
  * Each entry's effective time-budget (`duration_ms`, `warmup_iterations`,
- * `min_iterations`, `max_iterations`) is persisted alongside the stats so a
+ * `min_iterations`, `max_iterations`) is recorded alongside the stats so a
  * later `benchmark_baseline_compare` can detect methodology drift — a budget
  * mismatch between baseline and current routes the task to the
  * `methodology_changed` bucket instead of producing false regressions /
  * improvements. Suite-level config (`timer`, `cooldown_ms`) is *not*
- * persisted; keep it stable across runs in the same baseline lineage.
+ * recorded; keep it stable across runs in the same baseline lineage.
  *
- * @throws Error if creating the baseline directory or writing the file fails
+ * A task with no valid samples (`sample_size` 0) is left out, since its NaN
+ * stats can't survive JSON, so a later comparison reports it as new.
  *
  * @example
  * ```ts
- * const bench = new Benchmark();
- * bench.add('test', () => fn());
- * await bench.run();
- * await benchmark_baseline_save(bench.results());
+ * const baseline = benchmark_baseline_create(bench.results(), {
+ *   git_commit: null,
+ *   git_branch: null,
+ *   runtime_version: process.version,
+ * });
+ * await writeFile(file, benchmark_baseline_serialize(baseline));
  * ```
  */
-export const benchmark_baseline_save = async (
+export const benchmark_baseline_create = (
 	results: Array<BenchmarkResult>,
-	options: BenchmarkBaselineSaveOptions = {}
-): Promise<void> => {
-	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
-
-	// Get git info if not provided
-	let git_commit = options.git_commit;
-	let git_branch = options.git_branch;
-	if (git_commit === undefined || git_branch === undefined) {
-		const git_info = await git_info_get();
-		git_commit ??= git_info.commit;
-		git_branch ??= git_info.branch;
-	}
-
-	const baseline: BenchmarkBaseline = {
-		version: BASELINE_VERSION,
-		timestamp: new Date().toISOString(),
-		git_commit,
-		git_branch,
-		node_version: process.version,
-		entries: results_to_entries(results),
-		// Only write `metadata` when the caller passed something — keeps
-		// baselines that don't use the feature byte-identical to the pre-
-		// metadata schema (no spurious `"metadata": {}` field in the file).
-		...(options.metadata !== undefined ? { metadata: options.metadata } : {})
-	};
-
-	await mkdir(base_path, { recursive: true });
-	const filepath = join(base_path, BASELINE_FILENAME);
-	await writeFile(filepath, JSON.stringify(baseline, null, '\t'), 'utf-8');
-};
+	options: BenchmarkBaselineCreateOptions
+): BenchmarkBaseline => ({
+	version: BASELINE_VERSION,
+	timestamp: new Date().toISOString(),
+	git_commit: options.git_commit,
+	git_branch: options.git_branch,
+	runtime_version: options.runtime_version,
+	entries: results_to_entries(results.filter((r) => r.stats.sample_size > 0)),
+	...(options.metadata !== undefined ? { metadata: options.metadata } : {})
+});
 
 /**
- * Load the current baseline from disk.
- *
- * @returns the baseline, or null if not found or invalid
- *
- * @example
- * ```ts
- * const baseline = await benchmark_baseline_load();
- * if (baseline) {
- *   console.log(`Baseline from ${baseline.timestamp}`);
- * }
- * ```
+ * Serializes a baseline as the text to store, which `benchmark_baseline_parse` reads back.
  */
-export const benchmark_baseline_load = async (
-	options: BenchmarkBaselineLoadOptions = {}
-): Promise<BenchmarkBaseline | null> => {
-	const base_path = options.path ?? DEFAULT_BASELINE_PATH;
-	const filepath = join(base_path, BASELINE_FILENAME);
+export const benchmark_baseline_serialize = (baseline: BenchmarkBaseline): string =>
+	JSON.stringify(baseline, null, '\t');
 
+/**
+ * Parses stored baseline text. A caller with no usable baseline usually says
+ * why and compares against null, as with no file at all; replacing the file is
+ * up to the caller.
+ *
+ * @returns the baseline, or why the text holds no usable one
+ */
+export const benchmark_baseline_parse = (
+	text: string
+): Result<{ baseline: BenchmarkBaseline }, BenchmarkBaselineParseError> => {
+	let data: unknown;
 	try {
-		await access(filepath);
-	} catch {
-		return null;
-	}
-
-	try {
-		const contents = await readFile(filepath, 'utf-8');
-		const parsed = JSON.parse(contents);
-		const baseline = s.parse_or_throw(BenchmarkBaseline, parsed);
-
-		// Check version compatibility. Auto-delete on mismatch because the schema
-		// shift (new required fields like `budget` / `outlier_ratio`) means we
-		// can't usefully load the old file — but tell the caller what to do next,
-		// since the failure mode is silent (the run continues, just without a
-		// baseline comparison) and easy to miss in CI output.
-		if (baseline.version !== BASELINE_VERSION) {
-			// eslint-disable-next-line no-console
-			console.warn(
-				`Benchmark baseline version mismatch (got ${baseline.version}, expected ${
-					BASELINE_VERSION
-				}). Removing stale baseline: ${
-					filepath
-				}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`
-			);
-			await rm(filepath, { force: true });
-			return null;
-		}
-
-		return baseline;
+		data = JSON.parse(text);
 	} catch (error) {
-		// eslint-disable-next-line no-console
-		console.warn(
-			`Invalid or corrupted benchmark baseline file. Removing: ${
-				filepath
-			}. Re-run with --save (or the consumer's equivalent flag) to seed a new baseline.`,
-			error instanceof Error ? error.message : error
-		);
-		await rm(filepath, { force: true });
-		return null;
+		return { ok: false, kind: 'invalid', message: to_error_message(error) };
 	}
+	// the version goes first, since another version's file can fail this one's schema
+	const version = (data as { version?: unknown } | null)?.version;
+	if (typeof version === 'number' && version !== BASELINE_VERSION) {
+		return {
+			ok: false,
+			kind: 'version_mismatch',
+			message: `got version ${version}, expected ${BASELINE_VERSION}`
+		};
+	}
+	const parsed = s.parse(BenchmarkBaseline, data);
+	if (!parsed.ok) {
+		return { ok: false, kind: 'invalid', message: parsed.issues.map(s.format_issue).join('; ') };
+	}
+	return { ok: true, baseline: parsed.value };
 };
 
 /**
- * Compare benchmark results against the stored baseline.
+ * Compare benchmark results against a baseline.
  *
- * @param options - comparison options including regression threshold and staleness warning
+ * @param results - current benchmark results
+ * @param baseline - the baseline to compare against, null when there is none
+ * @param options - the current runtime version, and thresholds for regressions and staleness
  * @returns comparison result with regressions, improvements, and unchanged tasks
  *
  * @example
@@ -510,7 +470,8 @@ export const benchmark_baseline_load = async (
  * bench.add('test', () => fn());
  * await bench.run();
  *
- * const comparison = await benchmark_baseline_compare(bench.results(), {
+ * const comparison = benchmark_baseline_compare(bench.results(), baseline, {
+ *   runtime_version: process.version,
  *   regression_threshold: 1.05, // Only flag regressions 5% or more slower
  *   staleness_warning_days: 7,  // Warn if baseline is older than 7 days
  * });
@@ -523,11 +484,12 @@ export const benchmark_baseline_load = async (
  * }
  * ```
  */
-export const benchmark_baseline_compare = async (
+export const benchmark_baseline_compare = (
 	results: Array<BenchmarkResult>,
-	options: BenchmarkBaselineCompareOptions = {}
-): Promise<BenchmarkBaselineComparisonResult> => {
-	const baseline = await benchmark_baseline_load(options);
+	baseline: BenchmarkBaseline | null,
+	options: BenchmarkBaselineCompareOptions
+): BenchmarkBaselineComparisonResult => {
+	const current_runtime_version = options.runtime_version;
 	const regression_threshold = options.regression_threshold ?? 1.0;
 	// Calibrated for general system-noise contamination (thermal throttling,
 	// background load). See `noise_warning_cv_threshold` doc for tuning notes.
@@ -546,9 +508,9 @@ export const benchmark_baseline_compare = async (
 			baseline_commit: null,
 			baseline_age_days: null,
 			baseline_stale: false,
-			baseline_node_version: null,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: null,
+			current_runtime_version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -588,6 +550,12 @@ export const benchmark_baseline_compare = async (
 			continue;
 		}
 
+		// measured nothing this run, so its NaN stats can't be compared
+		if (current.sample_size === 0) {
+			removed_tasks.push(current.name);
+			continue;
+		}
+
 		// Create minimal stats objects for comparison
 		const baseline_stats: BenchmarkStatsComparable = {
 			mean_ns: baseline_entry.mean_ns,
@@ -619,8 +587,7 @@ export const benchmark_baseline_compare = async (
 
 		// Recompute cv at comparison time from persisted `mean_ns` /
 		// `std_dev_ns`. We don't persist `cv` directly because it's a pure
-		// function of those two values — keeping it derived means older
-		// baselines (which never wrote a `cv` field) work unchanged, and the
+		// function of those two values — keeping it derived means the
 		// recomputation can't drift from the source values.
 		const baseline_cv = stats_cv(baseline_entry.mean_ns, baseline_entry.std_dev_ns);
 		const current_cv = stats_cv(current.mean_ns, current.std_dev_ns);
@@ -712,9 +679,9 @@ export const benchmark_baseline_compare = async (
 		baseline_commit: baseline.git_commit,
 		baseline_age_days,
 		baseline_stale,
-		baseline_node_version: baseline.node_version,
-		current_node_version: process.version,
-		node_version_changed: baseline.node_version !== process.version,
+		baseline_runtime_version: baseline.runtime_version,
+		current_runtime_version,
+		runtime_version_changed: baseline.runtime_version !== current_runtime_version,
 		baseline_metadata: baseline.metadata ?? null,
 		comparisons,
 		regressions,
@@ -733,7 +700,7 @@ export const benchmark_baseline_compare = async (
  */
 export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonResult): string => {
 	if (!result.baseline_found) {
-		return 'No baseline found. Call benchmark_baseline_save() to create one.';
+		return 'No baseline found. Save one from these results to compare future runs against it.';
 	}
 
 	const lines: Array<string> = [];
@@ -751,9 +718,9 @@ export const benchmark_baseline_format = (result: BenchmarkBaselineComparisonRes
 					: `${Math.floor(result.baseline_age_days)} days`;
 		lines.push(`Baseline age: ${age_str}${result.baseline_stale ? ' (STALE)' : ''}`);
 	}
-	if (result.node_version_changed && result.baseline_node_version) {
+	if (result.runtime_version_changed && result.baseline_runtime_version) {
 		lines.push(
-			`Baseline node: ${result.baseline_node_version} → ${result.current_node_version} (CHANGED)`
+			`Baseline runtime: ${result.baseline_runtime_version} → ${result.current_runtime_version} (CHANGED)`
 		);
 	}
 	lines.push('');
@@ -867,9 +834,9 @@ export const benchmark_baseline_format_json = (
 		baseline_commit: result.baseline_commit,
 		baseline_age_days: result.baseline_age_days,
 		baseline_stale: result.baseline_stale,
-		baseline_node_version: result.baseline_node_version,
-		current_node_version: result.current_node_version,
-		node_version_changed: result.node_version_changed,
+		baseline_runtime_version: result.baseline_runtime_version,
+		current_runtime_version: result.current_runtime_version,
+		runtime_version_changed: result.runtime_version_changed,
 		baseline_metadata: result.baseline_metadata,
 		summary: {
 			total:

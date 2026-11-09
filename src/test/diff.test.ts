@@ -5,8 +5,6 @@
  */
 
 import { assert, test, describe } from 'vitest';
-import { styleText } from 'node:util';
-
 import {
 	diff_lines,
 	diff_hunks,
@@ -15,7 +13,7 @@ import {
 	generate_diff,
 	type DiffLine
 } from '#lib/diff.ts';
-import { configure_print_colors } from '#lib/print.ts';
+import { configure_print_colors, type StyleText } from '#lib/print.ts';
 import { create_random_alea } from '#lib/random_alea.ts';
 
 /**
@@ -542,8 +540,7 @@ describe('format_diff', () => {
 		const hunks = single_change_hunks();
 		assert.notInclude(format_diff(hunks, 'a', 'b'), '\x1b[');
 		// node's styleText no-ops on non-TTY streams, so use a deterministic styler
-		const fake_st = ((format: unknown, text: string) =>
-			`[${String(format)}]${text}[/]`) as typeof styleText;
+		const fake_st: StyleText = (format, text) => `[${format}]${text}[/]`;
 		configure_print_colors(fake_st);
 		try {
 			const colored = format_diff(hunks, 'a', 'b');

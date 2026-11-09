@@ -10,19 +10,27 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { format_file } from '@fuzdev/gro/format_file.ts';
+import {
+	GIT_LOCAL_PASS_ENV,
+	git_current_branch_name,
+	git_current_commit_hash,
+	to_git_program
+} from '@fuzdev/gro/git.ts';
+import { spawn } from '@fuzdev/gro/spawn.ts';
 
 import { Benchmark } from '../lib/benchmark.ts';
 import {
-	benchmark_baseline_save,
+	benchmark_baseline_create,
 	benchmark_baseline_compare,
-	benchmark_baseline_format
+	benchmark_baseline_format,
+	benchmark_baseline_parse,
+	benchmark_baseline_serialize
 } from '../lib/benchmark_baseline.ts';
 import { slugify } from '../lib/path.ts';
 import { deep_equal } from '../lib/deep_equal.ts';
 
 const save_baseline = process.argv.includes('--save');
-const BASELINE_PATH = 'src/benchmarks';
-const BASELINE_FILE = `${BASELINE_PATH}/baseline.json`;
+const BASELINE_FILE = 'src/benchmarks/baseline.json';
 
 // Configure benchmark
 const bench = new Benchmark({
@@ -88,20 +96,34 @@ console.log(bench.table());
 // Baseline comparison
 //
 
-const comparison = await benchmark_baseline_compare(bench.results(), {
-	path: BASELINE_PATH,
-	regression_threshold: 1.05, // 5% threshold to reduce noise
-	staleness_warning_days: 30
-});
+const stored = await readFile(BASELINE_FILE, 'utf-8').catch(() => null);
+const parsed = stored === null ? null : benchmark_baseline_parse(stored);
+if (parsed && !parsed.ok) console.warn(`Ignoring baseline: ${parsed.message}`);
+
+const comparison = benchmark_baseline_compare(
+	bench.results(),
+	parsed?.ok ? parsed.baseline : null,
+	{
+		runtime_version: process.version,
+		regression_threshold: 1.05, // 5% threshold to reduce noise
+		staleness_warning_days: 30
+	}
+);
 
 console.log('\n📈 Baseline Comparison\n');
 console.log(benchmark_baseline_format(comparison));
 
 if (save_baseline) {
-	await benchmark_baseline_save(bench.results(), { path: BASELINE_PATH });
-	const content = await readFile(BASELINE_FILE, 'utf-8');
-	const formatted = format_file(content, { filepath: BASELINE_FILE });
-	await writeFile(BASELINE_FILE, formatted);
+	const git = to_git_program(spawn, { pass_env: GIT_LOCAL_PASS_ENV });
+	const baseline = benchmark_baseline_create(bench.results(), {
+		git_commit: await git_current_commit_hash(git),
+		git_branch: await git_current_branch_name(git),
+		runtime_version: process.version
+	});
+	await writeFile(
+		BASELINE_FILE,
+		format_file(benchmark_baseline_serialize(baseline), { filepath: BASELINE_FILE })
+	);
 	console.log(`\n✓ Baseline saved to ${BASELINE_FILE}`);
 } else if (comparison.baseline_found) {
 	if (comparison.regressions.length > 0) {

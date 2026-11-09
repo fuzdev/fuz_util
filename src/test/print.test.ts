@@ -1,4 +1,5 @@
 import { describe, test, assert, beforeAll, afterAll } from 'vitest';
+import { styleText } from 'node:util';
 
 import {
 	print_ms,
@@ -192,5 +193,23 @@ describe('configure_print_colors', () => {
 		assert.isFunction(result);
 		// null resets to identity
 		assert.strictEqual(result('red', 'hello'), 'hello');
+	});
+
+	test("sets `st`, accepting Node's styleText", () => {
+		try {
+			assert.strictEqual(configure_print_colors(styleText), styleText);
+			assert.strictEqual(st, styleText);
+		} finally {
+			configure_print_colors(null);
+		}
+	});
+
+	test('routes `st` through the configured function', () => {
+		try {
+			configure_print_colors((format, text) => `${format}:${text}`);
+			assert.strictEqual(st('red', 'x'), 'red:x');
+		} finally {
+			configure_print_colors(null);
+		}
 	});
 });

@@ -271,7 +271,7 @@ suite-level so cross-task comparisons remain meaningful.
    Re-save the baseline after intentional budget changes to clear the bucket
    and surface any genuine drift that was masked. Suite-level config (`timer`,
    `cooldown_ms`) is *not* persisted; keep it stable across runs in the same
-   baseline lineage. Node version *is* recorded and surfaced as an
+   baseline lineage. Runtime version *is* recorded and surfaced as an
    informational header line on mismatch, since a V8 bump affects every task
    uniformly.
 
@@ -343,17 +343,17 @@ suite-level so cross-task comparisons remain meaningful.
    than a z=1.96 interval at small n.
 
 7. **Run-level metadata is an opt-in passthrough, not part of the
-   comparison math.** Pass `options.metadata` to `benchmark_baseline_save`
+   comparison math.** Pass `metadata` to `benchmark_baseline_create`
    to attach a freeform `Record<string, unknown>` (corpus identity,
    dependency versions, binary sizes, hardware notes) to the baseline
-   file. It round-trips through `_load` and lands on the comparison
+   file. It round-trips through parsing and lands on the comparison
    result as `baseline_metadata`. fuz_util does **not** diff metadata
    between baseline and current — consumers know what their bag means
    and how to display drift. The intended use is bridging gaps that the
    built-in detection can't see: the methodology bucket catches per-task
    budget drift but is blind to "is this the same corpus?" or "did the
    compiler change?" — metadata gives consumers a place to put that
-   context without forking the schema. When omitted on save, the field
+   context without forking the schema. When omitted, the field
    is absent from the file (not `{}`), and `baseline_metadata` is
    `null` on the comparison result.
 
@@ -364,7 +364,7 @@ suite-level so cross-task comparisons remain meaningful.
    `benchmark_baseline_compare`'s Welch test + noise-warning gates are
    strictly better than the ratio threshold, and metadata round-trips
    the run-level context they need. Migration ordering: (a) replace
-   their `saveBaseline`/`compareBaseline` with the fuz_util equivalents,
+   their `saveBaseline`/`compareBaseline` with the fuz_util functions,
    passing their `Baseline` shape as `metadata`; (b) keep their
    `corpusMatch` warning by walking `baseline_metadata.corpus`
    themselves; (c) drop the static-threshold comparison in favor of the
@@ -811,27 +811,46 @@ interface BenchmarkComparison {
 
 ### Baseline Storage and Regression Detection
 
-Save benchmark results to disk and compare against baselines for CI/CD regression detection:
+Compare benchmark results against a saved baseline for CI/CD regression detection.
+The functions are pure, so a caller does the file I/O, storing the baseline as the
+text `benchmark_baseline_serialize` returns:
 
 ```ts
+import {mkdir, readFile, writeFile} from 'node:fs/promises';
 import {Benchmark} from '@fuzdev/fuz_util/benchmark.ts';
 import {
-	benchmark_baseline_save,
+	benchmark_baseline_create,
+	benchmark_baseline_serialize,
+	benchmark_baseline_parse,
 	benchmark_baseline_compare,
 	benchmark_baseline_format,
 	benchmark_baseline_format_json,
 } from '@fuzdev/fuz_util/benchmark_baseline.ts';
+
+const DIR = 'benchmark';
+const FILE = `${DIR}/baseline.json`;
 
 const bench = new Benchmark();
 bench.add('parse', () => parse(input));
 bench.add('format', () => format(data));
 await bench.run();
 
-// Save current results as baseline
-await benchmark_baseline_save(bench.results());
+// Save current results as the baseline
+const baseline = benchmark_baseline_create(bench.results(), {
+	git_commit: null, // or the host's commit and branch
+	git_branch: null,
+	runtime_version: process.version,
+});
+await mkdir(DIR, {recursive: true});
+await writeFile(FILE, benchmark_baseline_serialize(baseline));
 
-// Compare against saved baseline
-const comparison = await benchmark_baseline_compare(bench.results(), {
+// Read the saved baseline, treating a missing or unusable file as none
+const stored = await readFile(FILE, 'utf-8').catch(() => null);
+const parsed = stored === null ? null : benchmark_baseline_parse(stored);
+if (parsed && !parsed.ok) console.warn(`Ignoring baseline: ${parsed.message}`);
+
+const comparison = benchmark_baseline_compare(bench.results(), parsed?.ok ? parsed.baseline : null, {
+	runtime_version: process.version,
 	regression_threshold: 1.05, // Only flag regressions 5%+ slower
 	staleness_warning_days: 7, // Warn if baseline > 7 days old
 });
@@ -845,19 +864,17 @@ if (comparison.regressions.length > 0) {
 console.log(benchmark_baseline_format_json(comparison, {pretty: true}));
 ```
 
-**Storage location**: `.gro/benchmarks/baseline.json`
-
 **Features:**
 
-- Auto-detects git commit and branch
-- Validates with `@fuzdev/fuz_schema` schemas (warns and auto-cleans corrupted/version-mismatched files; the warning tells the caller to re-run with `--save`)
+- Records the git commit and branch the caller passes
+- Validates with `@fuzdev/fuz_schema` schemas, and `benchmark_baseline_parse` says why text holds no usable baseline (`invalid` or `version_mismatch`); replacing the file is up to the caller
 - Categorizes results: regressions, improvements, unchanged, methodology_changed, new, removed
 - Welch's t-test for statistical significance (sample-corrected std_dev), not raw ratios
 - Per-row `noise_warning` when cv or outlier ratio is high enough to undermine the significance call (see Caveats §5)
 - Methodology drift detection when per-task budget changes between baseline and current (see Caveats §4)
 - Configurable regression threshold to reduce noise
 - Staleness warnings for old baselines
-- Node version mismatch surfaced in the comparison header
+- Runtime version mismatch surfaced in the comparison header
 - Optional `metadata` passthrough for run-level context (corpus identity, versions, hardware notes — see Caveats §7)
 - Regressions sorted by effect size (most severe first); methodology_changed sorted by name
 - JSON output format for CI integration
@@ -865,27 +882,29 @@ console.log(benchmark_baseline_format_json(comparison, {pretty: true}));
 **API:**
 
 ```ts
-// Save baseline (auto-detects git info)
-await benchmark_baseline_save(results, {
-	path?: string,         // default: '.gro/benchmarks'
-	git_commit?: string,   // auto-detected
-	git_branch?: string,   // auto-detected
+// Build a baseline, and turn it into the text to store
+const baseline = benchmark_baseline_create(results, {
+	git_commit: string | null,
+	git_branch: string | null,
+	runtime_version: string,            // like `process.version`
 	metadata?: Record<string, unknown>, // opt-in passthrough (see Caveats §7)
 });
+const text = benchmark_baseline_serialize(baseline);
 
-// Load baseline (returns null if missing/invalid)
-const baseline = await benchmark_baseline_load({path?: string});
+// Parse stored text
+const parsed = benchmark_baseline_parse(text);
+// parsed.ok ? parsed.baseline : parsed.kind ('invalid' | 'version_mismatch'), parsed.message
 
-// Compare with options
-const result = await benchmark_baseline_compare(results, {
-	path?: string,
+// Compare with options (baseline null when there is none)
+const result = benchmark_baseline_compare(results, baseline, {
+	runtime_version: string,
 	regression_threshold?: number,     // minimum ratio to flag (default: 1.0)
 	staleness_warning_days?: number,   // warn if older than N days
 });
 // result.regressions (sorted by severity), result.improvements,
 // result.unchanged, result.new_tasks, result.removed_tasks,
 // result.baseline_age_days, result.baseline_stale,
-// result.baseline_metadata (verbatim from save, null if absent)
+// result.baseline_metadata (verbatim from the baseline, null if absent)
 
 // Human-readable summary
 console.log(benchmark_baseline_format(result));
@@ -893,49 +912,6 @@ console.log(benchmark_baseline_format(result));
 // JSON for CI/programmatic use
 console.log(benchmark_baseline_format_json(result, {pretty?: boolean}));
 ```
-
-## Tips for Accurate Benchmarks
-
-1. **Run for sufficient time**: At least 1-5 seconds per task
-2. **Use warmup iterations**: Let JIT compile the code first (10-50 iterations for complex functions)
-3. **Close other applications**: Reduce CPU contention
-4. **Run multiple times**: Compare results across runs for consistency
-5. **Check p99 percentile**: Don't just look at averages
-6. **Use GC control**: Trigger GC between tasks for fairness
-7. **Avoid side effects**: Don't modify external state in benchmarks
-8. **Test realistic workloads**: Use real data, not just toy examples
-9. **Avoid allocations in `on_iteration`**: The callback runs between measurements, but allocations can trigger GC before the next iteration
-
-### One Benchmark at a Time
-
-Two benchmarks running at once on one machine change each other's caches,
-CPU frequency, and scheduling, so both read wrong. `benchmark_lock.ts`
-(Node-only) is a machine-wide lock a harness can hold while it measures:
-
-```ts
-import {benchmark_lock_acquire, benchmark_lock_format_refusal} from '@fuzdev/fuz_util/benchmark_lock.ts';
-
-const acquired = benchmark_lock_acquire('slugify benchmarks');
-if (!acquired.ok) {
-	console.error(benchmark_lock_format_refusal(acquired));
-	process.exit(2);
-}
-try {
-	await bench.run();
-} finally {
-	// false when another process took the lock over: discard what was measured
-	if (!acquired.lock.release()) console.warn('lost the benchmark lock');
-}
-```
-
-Acquiring never waits: a second run is refused and told who holds the lock.
-A lock whose process is gone is taken over, and an unreadable one is refused
-rather than broken. The default path, `BENCHMARK_LOCK_PATH`, is fixed
-(`/tmp/fuz_benchmark.lock` on POSIX) rather than under `TMPDIR`, so every
-process on the machine sees the same lock; tests pass their own `path`. On
-Windows the temp directory is per user, so the lock is per user there. A
-shared path means any local user can block benchmarks by creating the file,
-and the refusal names it.
 
 ### Browser Timing Precision
 

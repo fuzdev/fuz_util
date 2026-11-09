@@ -1,15 +1,16 @@
-import { describe, test, assert, beforeEach, afterEach } from 'vitest';
-import { rm, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { describe, test, assert, beforeEach } from 'vitest';
 
 import {
-	benchmark_baseline_save,
-	benchmark_baseline_load,
+	benchmark_baseline_create,
+	benchmark_baseline_serialize,
+	benchmark_baseline_parse,
 	benchmark_baseline_compare,
 	benchmark_baseline_format,
 	benchmark_baseline_format_json,
-	benchmark_budget_diff
+	benchmark_budget_diff,
+	type BenchmarkBaseline,
+	type BenchmarkBaselineCompareOptions,
+	type BenchmarkBaselineCreateOptions
 } from '#lib/benchmark_baseline.ts';
 import { Benchmark } from '#lib/benchmark.ts';
 import { BenchmarkStats } from '#lib/benchmark_stats.ts';
@@ -43,8 +44,65 @@ const create_synthetic_result = (
 	};
 };
 
-// Use a unique temp directory for each test run
-const test_dir = join(tmpdir(), `benchmark_baseline_test_${Date.now()}`);
+const OPTIONS: BenchmarkBaselineCreateOptions = {
+	git_commit: 'abc',
+	git_branch: 'main',
+	runtime_version: 'v1'
+};
+
+const create_result = (name: string, timings_ns: Array<number>): BenchmarkResult => ({
+	name,
+	stats: new BenchmarkStats(timings_ns),
+	iterations: timings_ns.length,
+	total_time_ms: 1,
+	timings_ns,
+	budget: {
+		duration_ms: 1000,
+		warmup_iterations: 10,
+		min_iterations: 30,
+		max_iterations: 100_000,
+		async_resolved: false
+	}
+});
+
+// the stored text, as a caller's file would hold it
+let stored: string | null;
+
+beforeEach(() => {
+	stored = null;
+});
+
+const save = (
+	results: Array<BenchmarkResult>,
+	options?: Partial<BenchmarkBaselineCreateOptions>
+): void => {
+	stored = benchmark_baseline_serialize(
+		benchmark_baseline_create(results, {
+			git_commit: null,
+			git_branch: null,
+			runtime_version: process.version,
+			...options
+		})
+	);
+};
+
+const load = (): BenchmarkBaseline | null => {
+	if (stored === null) return null;
+	const parsed = benchmark_baseline_parse(stored);
+	return parsed.ok ? parsed.baseline : null;
+};
+
+// rewrites the stored baseline, to simulate one from another run
+const rewrite = (mutate: (data: any) => void): void => {
+	const data = JSON.parse(stored!);
+	mutate(data);
+	stored = JSON.stringify(data);
+};
+
+const compare = (
+	results: Array<BenchmarkResult>,
+	options?: Partial<BenchmarkBaselineCompareOptions>
+) => benchmark_baseline_compare(results, load(), { runtime_version: process.version, ...options });
 
 // shared mock data for format/format_json tests
 const create_mock_baseline_entry = (name: string, mean_ns: number) => ({
@@ -85,16 +143,8 @@ const create_mock_regression = (name: string, baseline_ns: number, current_ns: n
 	max_outlier_ratio: 0
 });
 
-beforeEach(async () => {
-	await mkdir(test_dir, { recursive: true });
-});
-
-afterEach(async () => {
-	await rm(test_dir, { recursive: true, force: true });
-});
-
-describe('benchmark_baseline_save', () => {
-	test('roundtrip with benchmark_baseline_load', async () => {
+describe('benchmark_baseline_create', () => {
+	test('roundtrips through serialize and parse', async () => {
 		const bench = new Benchmark({
 			duration_ms: 50,
 			min_iterations: 5
@@ -105,9 +155,9 @@ describe('benchmark_baseline_save', () => {
 
 		await bench.run();
 
-		await benchmark_baseline_save(bench.results(), { path: test_dir });
+		save(bench.results());
 
-		const loaded = await benchmark_baseline_load({ path: test_dir });
+		const loaded = load();
 
 		assert.isNotNull(loaded);
 		assert.isDefined(loaded);
@@ -116,7 +166,7 @@ describe('benchmark_baseline_save', () => {
 		assert.isDefined(loaded.entries[1]);
 		assert.strictEqual(loaded.entries[0].name, 'task1');
 		assert.strictEqual(loaded.entries[1].name, 'task2');
-		assert.strictEqual(loaded.node_version, process.version);
+		assert.strictEqual(loaded.runtime_version, process.version);
 		assert.ok(loaded.timestamp);
 		// Budget survives the JSON roundtrip with the effective values the
 		// loop saw (suite config + per-task overrides resolved). The
@@ -141,113 +191,99 @@ describe('benchmark_baseline_save', () => {
 		bench.add('task1', () => 1 + 1);
 		await bench.run();
 
-		await benchmark_baseline_save(bench.results(), {
-			path: test_dir,
-			git_commit: 'custom_commit_hash',
-			git_branch: 'custom_branch'
-		});
+		save(bench.results(), { git_commit: 'custom_commit_hash', git_branch: 'custom_branch' });
 
-		const loaded = await benchmark_baseline_load({ path: test_dir });
+		const loaded = load();
 
 		assert.isNotNull(loaded);
 		assert.isDefined(loaded);
 		assert.strictEqual(loaded.git_commit, 'custom_commit_hash');
 		assert.strictEqual(loaded.git_branch, 'custom_branch');
 	});
+
+	test('omits metadata when none is given', () => {
+		assert.notProperty(benchmark_baseline_create([], OPTIONS), 'metadata');
+	});
+
+	test('a task with no valid samples leaves a baseline that parses', () => {
+		const baseline = benchmark_baseline_create(
+			[create_result('measured', [1, 2, 3, 4, 5, 6]), create_result('no_samples', [0, 0, 0])],
+			OPTIONS
+		);
+		const parsed = benchmark_baseline_parse(benchmark_baseline_serialize(baseline));
+		assert.ok(parsed.ok);
+		assert.deepEqual(
+			parsed.baseline.entries.map((e) => e.name),
+			['measured']
+		);
+	});
 });
 
-describe('benchmark_baseline_load', () => {
-	test('returns null when no baseline exists', async () => {
-		const loaded = await benchmark_baseline_load({ path: test_dir });
-		assert.isNull(loaded);
+describe('benchmark_baseline_parse', () => {
+	const assert_parse_error = (text: string, kind: 'invalid' | 'version_mismatch'): void => {
+		const parsed = benchmark_baseline_parse(text);
+		assert.ok(!parsed.ok);
+		assert.strictEqual(parsed.kind, kind);
+		assert.ok(parsed.message);
+	};
+
+	test('reports text that is not JSON as invalid', () => {
+		assert_parse_error('not valid json', 'invalid');
 	});
 
-	test('handles corrupted file', async () => {
-		const { writeFile } = await import('node:fs/promises');
-
-		// Write invalid JSON
-		await mkdir(test_dir, { recursive: true });
-		await writeFile(join(test_dir, 'baseline.json'), 'not valid json', 'utf-8');
-
-		const loaded = await benchmark_baseline_load({ path: test_dir });
-
-		// Should return null and remove corrupted file
-		assert.isNull(loaded);
+	test('reports JSON that is not a baseline as invalid', () => {
+		assert_parse_error('null', 'invalid');
+		assert_parse_error('[]', 'invalid');
+		assert_parse_error(JSON.stringify({ wrong: 'schema' }), 'invalid');
 	});
 
-	test('handles invalid schema', async () => {
-		const { writeFile } = await import('node:fs/promises');
-
-		// Write valid JSON but invalid schema
-		await mkdir(test_dir, { recursive: true });
-		await writeFile(
-			join(test_dir, 'baseline.json'),
-			JSON.stringify({ version: 1, wrong: 'schema' }),
-			'utf-8'
-		);
-
-		const loaded = await benchmark_baseline_load({ path: test_dir });
-
-		// Should return null and remove invalid file
-		assert.isNull(loaded);
-	});
-
-	test('strips unknown keys and rejects a missing required key', async () => {
-		const { writeFile, readFile } = await import('node:fs/promises');
-		await benchmark_baseline_save([create_synthetic_result('t', 1000)], { path: test_dir });
-		const file = join(test_dir, 'baseline.json');
-		const saved = JSON.parse(await readFile(file, 'utf-8'));
-		const [entry] = saved.entries;
-
-		await writeFile(
-			file,
-			JSON.stringify({
-				...saved,
-				extra: 1,
-				entries: [{ ...entry, extra: 1, budget: { ...entry.budget, extra: 1 } }]
-			}),
-			'utf-8'
-		);
-		const loaded = await benchmark_baseline_load({ path: test_dir });
+	test('strips unknown keys and rejects a missing required key', () => {
+		save([create_synthetic_result('t', 1000)]);
+		rewrite((data) => {
+			data.extra = 1;
+			data.entries[0].extra = 1;
+			data.entries[0].budget.extra = 1;
+		});
+		const loaded = load();
 		assert.isNotNull(loaded);
 		assert.notProperty(loaded, 'extra');
 		assert.notProperty(loaded.entries[0], 'extra');
 		assert.notProperty(loaded.entries[0]!.budget, 'extra');
 
-		const { node_version: _, ...missing } = saved;
-		await writeFile(file, JSON.stringify(missing), 'utf-8');
-		assert.isNull(await benchmark_baseline_load({ path: test_dir }));
+		rewrite((data) => {
+			delete data.runtime_version;
+		});
+		assert_parse_error(stored!, 'invalid');
 	});
 
-	test('handles version mismatch', async () => {
-		const { writeFile, access } = await import('node:fs/promises');
+	test('reports a version mismatch', () => {
+		save([]);
+		rewrite((data) => {
+			data.version = 999;
+		});
+		assert_parse_error(stored!, 'version_mismatch');
+	});
 
-		// Write a schema-valid baseline but with a stale version number
-		await mkdir(test_dir, { recursive: true });
-		const filepath = join(test_dir, 'baseline.json');
-		await writeFile(
-			filepath,
-			JSON.stringify({
-				version: 999,
-				timestamp: new Date().toISOString(),
-				git_commit: null,
-				git_branch: null,
-				node_version: 'v22.0.0',
-				entries: []
-			}),
-			'utf-8'
-		);
+	test('reports another version as a mismatch even when it fails the schema', () => {
+		assert_parse_error(JSON.stringify({ version: 3, node_version: 'v22.0.0' }), 'version_mismatch');
+	});
+});
 
-		const loaded = await benchmark_baseline_load({ path: test_dir });
-
-		// Should return null and remove the stale-version file
-		assert.isNull(loaded);
-		assert.isFalse(
-			await access(filepath).then(
-				() => true,
-				() => false
-			)
-		);
+describe('benchmark_baseline_serialize', () => {
+	test('writes tab-indented JSON with the file version first', () => {
+		const baseline = benchmark_baseline_create([create_synthetic_result('a', 1000)], {
+			git_commit: 'abc',
+			git_branch: 'main',
+			runtime_version: 'v99.0.0'
+		});
+		const text = benchmark_baseline_serialize(baseline);
+		assert.ok(text.startsWith('{\n\t"version": 4,\n\t"timestamp": "'));
+		const data = JSON.parse(text);
+		assert.strictEqual(data.git_commit, 'abc');
+		assert.strictEqual(data.git_branch, 'main');
+		assert.strictEqual(data.runtime_version, 'v99.0.0');
+		assert.strictEqual(data.entries[0].name, 'a');
+		assert.notProperty(data, 'metadata');
 	});
 });
 
@@ -261,7 +297,7 @@ describe('benchmark_baseline_compare', () => {
 		bench.add('task1', () => 1 + 1);
 		await bench.run();
 
-		const comparison = await benchmark_baseline_compare(bench.results(), { path: test_dir });
+		const comparison = compare(bench.results());
 
 		assert.isFalse(comparison.baseline_found);
 		assert.deepEqual(comparison.new_tasks, ['task1']);
@@ -279,10 +315,10 @@ describe('benchmark_baseline_compare', () => {
 		await bench.run();
 
 		// Save baseline
-		await benchmark_baseline_save(bench.results(), { path: test_dir });
+		save(bench.results());
 
 		// Compare same results
-		const comparison = await benchmark_baseline_compare(bench.results(), { path: test_dir });
+		const comparison = compare(bench.results());
 
 		assert.isTrue(comparison.baseline_found);
 		assert.lengthOf(comparison.comparisons, 1);
@@ -299,7 +335,7 @@ describe('benchmark_baseline_compare', () => {
 		bench1.add('task1', () => 1 + 1);
 		await bench1.run();
 
-		await benchmark_baseline_save(bench1.results(), { path: test_dir });
+		save(bench1.results());
 
 		// Add a new task
 		const bench2 = new Benchmark({
@@ -310,7 +346,7 @@ describe('benchmark_baseline_compare', () => {
 		bench2.add('task2', () => 2 + 2);
 		await bench2.run();
 
-		const comparison = await benchmark_baseline_compare(bench2.results(), { path: test_dir });
+		const comparison = compare(bench2.results());
 
 		assert.isTrue(comparison.baseline_found);
 		assert.deepEqual(comparison.new_tasks, ['task2']);
@@ -326,7 +362,7 @@ describe('benchmark_baseline_compare', () => {
 		bench1.add('task2', () => 2 + 2);
 		await bench1.run();
 
-		await benchmark_baseline_save(bench1.results(), { path: test_dir });
+		save(bench1.results());
 
 		// Remove a task
 		const bench2 = new Benchmark({
@@ -336,7 +372,7 @@ describe('benchmark_baseline_compare', () => {
 		bench2.add('task1', () => 1 + 1);
 		await bench2.run();
 
-		const comparison = await benchmark_baseline_compare(bench2.results(), { path: test_dir });
+		const comparison = compare(bench2.results());
 
 		assert.isTrue(comparison.baseline_found);
 		assert.deepEqual(comparison.removed_tasks, ['task2']);
@@ -356,13 +392,13 @@ describe('benchmark_baseline_compare', () => {
 		});
 
 		await bench.run();
-		await benchmark_baseline_save(bench.results(), { path: test_dir });
+		save(bench.results());
 
 		// Run again
 		bench.reset();
 		await bench.run();
 
-		const comparison = await benchmark_baseline_compare(bench.results(), { path: test_dir });
+		const comparison = compare(bench.results());
 
 		assert.isTrue(comparison.baseline_found);
 		assert.ok(comparison.baseline_timestamp);
@@ -386,9 +422,9 @@ describe('benchmark_baseline_compare', () => {
 		bench.add('task1', () => 1 + 1);
 		await bench.run();
 
-		await benchmark_baseline_save(bench.results(), { path: test_dir });
+		save(bench.results());
 
-		const comparison = await benchmark_baseline_compare(bench.results(), { path: test_dir });
+		const comparison = compare(bench.results());
 
 		assert.isTrue(comparison.baseline_found);
 		assert.isNotNull(comparison.baseline_age_days);
@@ -398,21 +434,15 @@ describe('benchmark_baseline_compare', () => {
 		assert.isFalse(comparison.baseline_stale);
 	});
 
-	test('regression_threshold downgrades small regressions to unchanged', async () => {
+	test('regression_threshold downgrades small regressions to unchanged', () => {
 		// Baseline at 1000ns; current at 1030ns (3% slower).
-		await benchmark_baseline_save([create_synthetic_result('test_task', 1000)], {
-			path: test_dir
-		});
+		save([create_synthetic_result('test_task', 1000)]);
 
-		const comparison = await benchmark_baseline_compare(
-			[create_synthetic_result('test_task', 1030)],
-			{
-				path: test_dir,
-				// 3% is above the practical-significance floor but below the regression threshold.
-				min_percent_difference: 0.01,
-				regression_threshold: 1.05
-			}
-		);
+		// 3% is above the practical-significance floor but below the regression threshold.
+		const comparison = compare([create_synthetic_result('test_task', 1030)], {
+			min_percent_difference: 0.01,
+			regression_threshold: 1.05
+		});
 
 		assert.lengthOf(comparison.regressions, 0);
 		assert.lengthOf(comparison.unchanged, 1);
@@ -420,17 +450,17 @@ describe('benchmark_baseline_compare', () => {
 		assert.strictEqual(comparison.unchanged[0].name, 'test_task');
 	});
 
-	test('methodology change routes to methodology_changed bucket, not regressions or comparisons', async () => {
+	test('methodology change routes to methodology_changed bucket, not regressions or comparisons', () => {
 		// Baseline at 1000ns with min_iterations: 10. Current at 1500ns
 		// (50% slower — would normally be a regression) but with min_iterations: 50.
 		// The budget mismatch should route it to methodology_changed only.
-		await benchmark_baseline_save([create_synthetic_result('test_task', 1000)], { path: test_dir });
+		save([create_synthetic_result('test_task', 1000)]);
 
 		const current = create_synthetic_result('test_task', 1500, {
 			...default_budget,
 			min_iterations: 50
 		});
-		const comparison = await benchmark_baseline_compare([current], { path: test_dir });
+		const comparison = compare([current]);
 
 		assert.lengthOf(comparison.regressions, 0);
 		assert.lengthOf(comparison.unchanged, 0);
@@ -443,13 +473,10 @@ describe('benchmark_baseline_compare', () => {
 		assert.lengthOf(comparison.comparisons, 0);
 	});
 
-	test('identical budgets do not flag methodology_changed', async () => {
-		await benchmark_baseline_save([create_synthetic_result('test_task', 1000)], { path: test_dir });
+	test('identical budgets do not flag methodology_changed', () => {
+		save([create_synthetic_result('test_task', 1000)]);
 
-		const comparison = await benchmark_baseline_compare(
-			[create_synthetic_result('test_task', 1000)],
-			{ path: test_dir }
-		);
+		const comparison = compare([create_synthetic_result('test_task', 1000)]);
 
 		assert.lengthOf(comparison.methodology_changed, 0);
 		assert.lengthOf(comparison.unchanged, 1);
@@ -471,12 +498,10 @@ describe('benchmark_baseline_compare', () => {
 		] as const;
 
 		for (const { field, value } of cases) {
-			await rm(test_dir, { recursive: true, force: true });
-			await mkdir(test_dir, { recursive: true });
-			await benchmark_baseline_save([create_synthetic_result('t', 1000)], { path: test_dir });
+			save([create_synthetic_result('t', 1000)]);
 
 			const current = create_synthetic_result('t', 1000, { ...default_budget, [field]: value });
-			const comparison = await benchmark_baseline_compare([current], { path: test_dir });
+			const comparison = compare([current]);
 
 			assert.lengthOf(comparison.methodology_changed, 1, `${field} did not route`);
 			assert.lengthOf(comparison.unchanged, 0, `${field} leaked into unchanged`);
@@ -484,8 +509,8 @@ describe('benchmark_baseline_compare', () => {
 		}
 	});
 
-	test('methodology change with multiple fields changed at once', async () => {
-		await benchmark_baseline_save([create_synthetic_result('t', 1000)], { path: test_dir });
+	test('methodology change with multiple fields changed at once', () => {
+		save([create_synthetic_result('t', 1000)]);
 
 		const current = create_synthetic_result('t', 1000, {
 			duration_ms: 2000,
@@ -494,7 +519,7 @@ describe('benchmark_baseline_compare', () => {
 			max_iterations: 50_000,
 			async_resolved: true
 		});
-		const comparison = await benchmark_baseline_compare([current], { path: test_dir });
+		const comparison = compare([current]);
 
 		assert.lengthOf(comparison.methodology_changed, 1);
 		assert.isDefined(comparison.methodology_changed[0]);
@@ -513,26 +538,24 @@ describe('benchmark_baseline_compare', () => {
 		]);
 	});
 
-	test('node_version_changed reflects process vs baseline mismatch', async () => {
-		const { readFile, writeFile } = await import('node:fs/promises');
+	test('runtime_version_changed reflects a runtime version mismatch', () => {
+		save([create_synthetic_result('task', 1000)], { runtime_version: 'v0.0.1-fake' });
 
-		await benchmark_baseline_save([create_synthetic_result('task', 1000)], { path: test_dir });
+		const comparison = compare([create_synthetic_result('task', 1000)]);
 
-		// Rewrite the saved node_version to simulate a Node upgrade.
-		const filepath = join(test_dir, 'baseline.json');
-		const baseline = JSON.parse(await readFile(filepath, 'utf-8'));
-		baseline.node_version = 'v0.0.1-fake';
-		await writeFile(filepath, JSON.stringify(baseline), 'utf-8');
-
-		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
-			path: test_dir
-		});
-
-		assert.isTrue(comparison.node_version_changed);
-		assert.strictEqual(comparison.baseline_node_version, 'v0.0.1-fake');
+		assert.isTrue(comparison.runtime_version_changed);
+		assert.strictEqual(comparison.baseline_runtime_version, 'v0.0.1-fake');
+		assert.strictEqual(comparison.current_runtime_version, process.version);
 	});
 
-	test('noise_warning fires when cv exceeds default 0.3 threshold on either side', async () => {
+	test('reports the given runtime version with no baseline', () => {
+		const comparison = benchmark_baseline_compare([], null, { runtime_version: 'v99.0.0' });
+		assert.strictEqual(comparison.current_runtime_version, 'v99.0.0');
+		assert.strictEqual(comparison.baseline_runtime_version, null);
+		assert.isFalse(comparison.runtime_version_changed);
+	});
+
+	test('noise_warning fires when cv exceeds default 0.3 threshold on either side', () => {
 		// Construct a result with cv ≈ 0.5: alternating 500/1500 → mean=1000,
 		// std_dev=500. MAD outlier detection keeps all values (modified z-score
 		// = 0.6745 < 3.5 threshold), so the persisted std_dev reflects the
@@ -557,14 +580,9 @@ describe('benchmark_baseline_compare', () => {
 			budget: default_budget
 		});
 
-		await benchmark_baseline_save([noisy_result('baseline_noisy'), stable_result('clean')], {
-			path: test_dir
-		});
+		save([noisy_result('baseline_noisy'), stable_result('clean')]);
 
-		const comparison = await benchmark_baseline_compare(
-			[stable_result('baseline_noisy'), stable_result('clean')],
-			{ path: test_dir }
-		);
+		const comparison = compare([stable_result('baseline_noisy'), stable_result('clean')]);
 
 		// `baseline_noisy` has noisy baseline → max_cv ≈ 0.5, flags noise_warning.
 		// `clean` is stable on both sides → no warning.
@@ -586,7 +604,7 @@ describe('benchmark_baseline_compare', () => {
 		assert.isFalse(clean_entry.noise_warning);
 	});
 
-	test('noise_warning respects custom noise_warning_cv_threshold', async () => {
+	test('noise_warning respects custom noise_warning_cv_threshold', () => {
 		// Same noisy fixture (cv ≈ 0.5). With threshold raised to 0.6, the
 		// warning is suppressed; with threshold dropped to 0.1, even mildly
 		// noisy stable_result (cv near 0) stays suppressed but the noisy one
@@ -601,22 +619,16 @@ describe('benchmark_baseline_compare', () => {
 			budget: default_budget
 		});
 
-		await benchmark_baseline_save([result('t')], { path: test_dir });
+		save([result('t')]);
 
-		const raised = await benchmark_baseline_compare([result('t')], {
-			path: test_dir,
-			noise_warning_cv_threshold: 0.6
-		});
+		const raised = compare([result('t')], { noise_warning_cv_threshold: 0.6 });
 		const found_raised = [...raised.regressions, ...raised.improvements, ...raised.unchanged].find(
 			(r) => r.name === 't'
 		);
 		assert.isDefined(found_raised);
 		assert.isFalse(found_raised.noise_warning);
 
-		const lowered = await benchmark_baseline_compare([result('t')], {
-			path: test_dir,
-			noise_warning_cv_threshold: 0.1
-		});
+		const lowered = compare([result('t')], { noise_warning_cv_threshold: 0.1 });
 		const found_lowered = [
 			...lowered.regressions,
 			...lowered.improvements,
@@ -626,7 +638,7 @@ describe('benchmark_baseline_compare', () => {
 		assert.isTrue(found_lowered.noise_warning);
 	});
 
-	test('noise_warning fires on high outlier_ratio even with tight cleaned cv', async () => {
+	test('noise_warning fires on high outlier_ratio even with tight cleaned cv', () => {
 		// Timings that produce a tight cleaned distribution but high outlier
 		// ratio: 80 samples lightly varied around 1000 (990-1010, gives
 		// MAD a non-zero floor so detection actually fires — purely
@@ -648,11 +660,9 @@ describe('benchmark_baseline_compare', () => {
 			budget: default_budget
 		});
 
-		await benchmark_baseline_save([bimodal_result('t')], { path: test_dir });
+		save([bimodal_result('t')]);
 
-		const comparison = await benchmark_baseline_compare([bimodal_result('t')], {
-			path: test_dir
-		});
+		const comparison = compare([bimodal_result('t')]);
 
 		const entry = [
 			...comparison.regressions,
@@ -668,7 +678,7 @@ describe('benchmark_baseline_compare', () => {
 		assert.isTrue(entry.noise_warning);
 	});
 
-	test('noise_warning_outlier_ratio_threshold is respected', async () => {
+	test('noise_warning_outlier_ratio_threshold is respected', () => {
 		// Same bimodal fixture; raising the outlier threshold past the actual
 		// rate suppresses the warning, lowering it below makes it fire.
 		const bimodal_timings = [
@@ -684,10 +694,9 @@ describe('benchmark_baseline_compare', () => {
 			budget: default_budget
 		});
 
-		await benchmark_baseline_save([bimodal_result('t')], { path: test_dir });
+		save([bimodal_result('t')]);
 
-		const raised = await benchmark_baseline_compare([bimodal_result('t')], {
-			path: test_dir,
+		const raised = compare([bimodal_result('t')], {
 			noise_warning_cv_threshold: 0.99, // disable cv gate
 			noise_warning_outlier_ratio_threshold: 0.5 // above actual ~0.2
 		});
@@ -697,8 +706,7 @@ describe('benchmark_baseline_compare', () => {
 		assert.isDefined(found_raised);
 		assert.isFalse(found_raised.noise_warning);
 
-		const lowered = await benchmark_baseline_compare([bimodal_result('t')], {
-			path: test_dir,
+		const lowered = compare([bimodal_result('t')], {
 			noise_warning_cv_threshold: 0.99, // still disabled
 			noise_warning_outlier_ratio_threshold: 0.05 // below actual ~0.2
 		});
@@ -711,7 +719,7 @@ describe('benchmark_baseline_compare', () => {
 		assert.isTrue(found_lowered.noise_warning);
 	});
 
-	test('outlier_ratio survives the baseline JSON roundtrip', async () => {
+	test('outlier_ratio survives the baseline JSON roundtrip', () => {
 		const bimodal_timings = [
 			...Array.from({ length: 80 }, (_, i) => 990 + (i % 21)),
 			...Array(20).fill(50_000)
@@ -725,15 +733,15 @@ describe('benchmark_baseline_compare', () => {
 			budget: default_budget
 		};
 
-		await benchmark_baseline_save([bimodal_result], { path: test_dir });
-		const loaded = await benchmark_baseline_load({ path: test_dir });
+		save([bimodal_result]);
+		const loaded = load();
 
 		assert.isNotNull(loaded);
 		assert.isDefined(loaded.entries[0]);
 		assert.isAbove(loaded.entries[0].outlier_ratio, 0.1);
 	});
 
-	test('metadata round-trips through save → load → compare', async () => {
+	test('metadata round-trips through save → load → compare', () => {
 		// Mirrors the intended consumer pattern: pass run-level context that
 		// the comparison math doesn't care about (corpus shape, versions,
 		// hardware notes) on save; read it back on the comparison result.
@@ -744,42 +752,29 @@ describe('benchmark_baseline_compare', () => {
 			notes: 'thermal throttling observed mid-run'
 		};
 
-		await benchmark_baseline_save([create_synthetic_result('task', 1000)], {
-			path: test_dir,
-			metadata
-		});
+		save([create_synthetic_result('task', 1000)], { metadata });
 
-		const loaded = await benchmark_baseline_load({ path: test_dir });
+		const loaded = load();
 		assert.isNotNull(loaded);
 		assert.deepEqual(loaded.metadata, metadata);
 
-		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
-			path: test_dir
-		});
+		const comparison = compare([create_synthetic_result('task', 1000)]);
 		assert.deepEqual(comparison.baseline_metadata, metadata);
 	});
 
-	test('omitted metadata is absent from the saved file (no spurious "metadata: {}")', async () => {
-		// The save path uses a conditional spread so old baselines stay
-		// byte-identical when no metadata is passed. Verifies the field is
-		// truly absent, not just empty — important because consumers may
-		// distinguish "never set metadata" (legacy or opt-out) from "set to {}".
-		await benchmark_baseline_save([create_synthetic_result('task', 1000)], { path: test_dir });
+	test('omitted metadata is absent from the saved file (no spurious "metadata: {}")', () => {
+		// truly absent, not just empty, since consumers may distinguish
+		// "never set metadata" from "set to {}"
+		save([create_synthetic_result('task', 1000)]);
 
-		const { readFile } = await import('node:fs/promises');
-		const raw = JSON.parse(await readFile(join(test_dir, 'baseline.json'), 'utf-8'));
-		assert.notProperty(raw, 'metadata');
+		assert.notProperty(JSON.parse(stored!), 'metadata');
 
-		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
-			path: test_dir
-		});
+		const comparison = compare([create_synthetic_result('task', 1000)]);
 		assert.isNull(comparison.baseline_metadata);
 	});
 
-	test('baseline_metadata is null when no baseline exists', async () => {
-		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
-			path: test_dir
-		});
+	test('baseline_metadata is null when no baseline exists', () => {
+		const comparison = compare([create_synthetic_result('task', 1000)]);
 		assert.isFalse(comparison.baseline_found);
 		assert.isNull(comparison.baseline_metadata);
 	});
@@ -795,9 +790,9 @@ describe('benchmark_baseline_compare', () => {
 			baseline_commit: 'abc',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [noisy_regression],
@@ -830,9 +825,9 @@ describe('benchmark_baseline_compare', () => {
 			baseline_commit: 'abc',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [noisy_regression, clean_regression],
@@ -856,16 +851,11 @@ describe('benchmark_baseline_compare', () => {
 		// Save baseline tasks in non-alphabetical order, then change every
 		// task's budget so all route to methodology_changed. The bucket should
 		// come back alphabetical even though insertion order was c, a, b.
-		await benchmark_baseline_save(
-			['c', 'a', 'b'].map((name) => create_synthetic_result(name, 1000)),
-			{ path: test_dir }
-		);
+		save(['c', 'a', 'b'].map((name) => create_synthetic_result(name, 1000)));
 
 		const bumped = (name: string) =>
 			create_synthetic_result(name, 1000, { ...default_budget, min_iterations: 50 });
-		const comparison = await benchmark_baseline_compare([bumped('c'), bumped('a'), bumped('b')], {
-			path: test_dir
-		});
+		const comparison = compare([bumped('c'), bumped('a'), bumped('b')]);
 
 		assert.lengthOf(comparison.methodology_changed, 3);
 		assert.deepEqual(
@@ -874,20 +864,14 @@ describe('benchmark_baseline_compare', () => {
 		);
 	});
 
-	test('regressions sorted by percent_difference descending', async () => {
-		await benchmark_baseline_save(
-			['a', 'b', 'c'].map((name) => create_synthetic_result(name, 1000)),
-			{ path: test_dir }
-		);
+	test('regressions sorted by percent_difference descending', () => {
+		save(['a', 'b', 'c'].map((name) => create_synthetic_result(name, 1000)));
 
-		const comparison = await benchmark_baseline_compare(
-			[
-				create_synthetic_result('a', 1500), // 50% slower
-				create_synthetic_result('b', 1200), // 20% slower
-				create_synthetic_result('c', 1300) // 30% slower
-			],
-			{ path: test_dir }
-		);
+		const comparison = compare([
+			create_synthetic_result('a', 1500), // 50% slower
+			create_synthetic_result('b', 1200), // 20% slower
+			create_synthetic_result('c', 1300) // 30% slower
+		]);
 
 		assert.lengthOf(comparison.regressions, 3);
 		assert.deepEqual(
@@ -896,20 +880,14 @@ describe('benchmark_baseline_compare', () => {
 		);
 	});
 
-	test('improvements sorted by percent_difference descending', async () => {
-		await benchmark_baseline_save(
-			['a', 'b', 'c'].map((name) => create_synthetic_result(name, 2000)),
-			{ path: test_dir }
-		);
+	test('improvements sorted by percent_difference descending', () => {
+		save(['a', 'b', 'c'].map((name) => create_synthetic_result(name, 2000)));
 
-		const comparison = await benchmark_baseline_compare(
-			[
-				create_synthetic_result('a', 1000), // 100% faster (2x speedup)
-				create_synthetic_result('b', 1500), // 33% faster
-				create_synthetic_result('c', 1200) // 67% faster
-			],
-			{ path: test_dir }
-		);
+		const comparison = compare([
+			create_synthetic_result('a', 1000), // 100% faster (2x speedup)
+			create_synthetic_result('b', 1500), // 33% faster
+			create_synthetic_result('c', 1200) // 67% faster
+		]);
 
 		assert.lengthOf(comparison.improvements, 3);
 		assert.deepEqual(
@@ -918,18 +896,14 @@ describe('benchmark_baseline_compare', () => {
 		);
 	});
 
-	test('baseline_stale is true when older than staleness_warning_days', async () => {
-		const { readFile, writeFile } = await import('node:fs/promises');
-
+	test('baseline_stale is true when older than staleness_warning_days', () => {
 		// Save a fresh baseline, then rewrite its timestamp to 30 days ago.
-		await benchmark_baseline_save([create_synthetic_result('task', 1000)], { path: test_dir });
-		const filepath = join(test_dir, 'baseline.json');
-		const baseline = JSON.parse(await readFile(filepath, 'utf-8'));
-		baseline.timestamp = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-		await writeFile(filepath, JSON.stringify(baseline), 'utf-8');
+		save([create_synthetic_result('task', 1000)]);
+		rewrite((data) => {
+			data.timestamp = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+		});
 
-		const comparison = await benchmark_baseline_compare([create_synthetic_result('task', 1000)], {
-			path: test_dir,
+		const comparison = compare([create_synthetic_result('task', 1000)], {
 			staleness_warning_days: 7
 		});
 
@@ -947,13 +921,10 @@ describe('benchmark_baseline_compare', () => {
 		bench.add('task1', () => 1 + 1);
 		await bench.run();
 
-		await benchmark_baseline_save(bench.results(), { path: test_dir });
+		save(bench.results());
 
 		// Fresh baseline should not be stale with reasonable threshold
-		const comparison = await benchmark_baseline_compare(bench.results(), {
-			path: test_dir,
-			staleness_warning_days: 1
-		});
+		const comparison = compare(bench.results(), { staleness_warning_days: 1 });
 
 		assert.isFalse(comparison.baseline_stale);
 		assert.isDefined(comparison.baseline_age_days);
@@ -961,19 +932,43 @@ describe('benchmark_baseline_compare', () => {
 		assert.isBelow(comparison.baseline_age_days, 1);
 
 		// With staleness_warning_days: 365, should not be stale
-		const comparison2 = await benchmark_baseline_compare(bench.results(), {
-			path: test_dir,
-			staleness_warning_days: 365
-		});
+		const comparison2 = compare(bench.results(), { staleness_warning_days: 365 });
 
 		assert.isFalse(comparison2.baseline_stale);
 
 		// Without staleness_warning_days, stale should be false
-		const comparison3 = await benchmark_baseline_compare(bench.results(), {
-			path: test_dir
-		});
+		const comparison3 = compare(bench.results());
 
 		assert.isFalse(comparison3.baseline_stale);
+	});
+
+	test('carries the baseline facts to the comparison and its JSON', () => {
+		const baseline = benchmark_baseline_create([], OPTIONS);
+		const comparison = benchmark_baseline_compare([], baseline, {
+			runtime_version: 'v2',
+			staleness_warning_days: -1
+		});
+		assert.strictEqual(comparison.baseline_commit, 'abc');
+		const json = JSON.parse(benchmark_baseline_format_json(comparison));
+		assert.strictEqual(json.baseline_commit, 'abc');
+		assert.strictEqual(json.baseline_runtime_version, 'v1');
+		assert.strictEqual(json.current_runtime_version, 'v2');
+		assert.isTrue(json.runtime_version_changed);
+		assert.isTrue(json.baseline_stale);
+	});
+
+	test('a task with a baseline entry and no valid samples reads as removed', () => {
+		const baseline = benchmark_baseline_create([create_result('t', [1, 2, 3, 4, 5, 6])], {
+			git_commit: null,
+			git_branch: null,
+			runtime_version: 'v1'
+		});
+		const comparison = benchmark_baseline_compare([create_result('t', [0, 0, 0])], baseline, {
+			runtime_version: 'v1'
+		});
+		assert.deepEqual(comparison.removed_tasks, ['t']);
+		assert.lengthOf(comparison.unchanged, 0);
+		assert.lengthOf(comparison.comparisons, 0);
 	});
 });
 
@@ -985,9 +980,9 @@ describe('benchmark_baseline_format', () => {
 			baseline_commit: null,
 			baseline_age_days: null,
 			baseline_stale: false,
-			baseline_node_version: null,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: null,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1001,7 +996,6 @@ describe('benchmark_baseline_format', () => {
 		const formatted = benchmark_baseline_format(result);
 
 		assert.include(formatted, 'No baseline found');
-		assert.include(formatted, 'benchmark_baseline_save()');
 	});
 
 	test('with results', () => {
@@ -1011,9 +1005,9 @@ describe('benchmark_baseline_format', () => {
 			baseline_commit: 'abc123def456',
 			baseline_age_days: 5.5,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [create_mock_regression('slow_task', 1000, 2000)],
@@ -1045,9 +1039,9 @@ describe('benchmark_baseline_format', () => {
 			baseline_commit: 'abc123def456',
 			baseline_age_days: 30,
 			baseline_stale: true,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1064,16 +1058,16 @@ describe('benchmark_baseline_format', () => {
 		assert.include(formatted, '(STALE)');
 	});
 
-	test('node_version_changed surfaces in header', () => {
+	test('runtime_version_changed surfaces in header', () => {
 		const result = {
 			baseline_found: true,
 			baseline_timestamp: '2024-01-15T10:30:00Z',
 			baseline_commit: 'abc123def456',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: 'v22.15.0',
-			current_node_version: 'v24.0.0',
-			node_version_changed: true,
+			baseline_runtime_version: 'v22.15.0',
+			current_runtime_version: 'v24.0.0',
+			runtime_version_changed: true,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1086,7 +1080,7 @@ describe('benchmark_baseline_format', () => {
 
 		const formatted = benchmark_baseline_format(result);
 
-		assert.include(formatted, 'Baseline node: v22.15.0 → v24.0.0');
+		assert.include(formatted, 'Baseline runtime: v22.15.0 → v24.0.0');
 		assert.include(formatted, 'CHANGED');
 	});
 
@@ -1102,9 +1096,9 @@ describe('benchmark_baseline_format', () => {
 			baseline_commit: 'abc123def456',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1143,9 +1137,9 @@ describe('benchmark_baseline_format', () => {
 			baseline_commit: 'abc',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1215,9 +1209,9 @@ describe('benchmark_baseline_format_json', () => {
 			baseline_commit: 'abc123def456',
 			baseline_age_days: 5.5,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [create_mock_regression('slow_task', 1000, 2000)],
@@ -1258,9 +1252,9 @@ describe('benchmark_baseline_format_json', () => {
 			baseline_commit: 'abc',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: metadata,
 			comparisons: [],
 			regressions: [],
@@ -1287,9 +1281,9 @@ describe('benchmark_baseline_format_json', () => {
 			baseline_commit: 'abc',
 			baseline_age_days: 1,
 			baseline_stale: false,
-			baseline_node_version: process.version,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: process.version,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],
@@ -1329,9 +1323,9 @@ describe('benchmark_baseline_format_json', () => {
 			baseline_commit: null,
 			baseline_age_days: null,
 			baseline_stale: false,
-			baseline_node_version: null,
-			current_node_version: process.version,
-			node_version_changed: false,
+			baseline_runtime_version: null,
+			current_runtime_version: process.version,
+			runtime_version_changed: false,
 			baseline_metadata: null,
 			comparisons: [],
 			regressions: [],

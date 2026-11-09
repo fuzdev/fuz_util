@@ -1,4 +1,3 @@
-import { styleText } from 'node:util';
 import { DEV } from 'esm-env';
 
 /**
@@ -61,13 +60,23 @@ const DEFAULT_LOG_LEVEL: LogLevel =
 	(typeof process === 'undefined' ? undefined : log_level_parse(process.env.PUBLIC_LOG_LEVEL)) ??
 	(process.env.VITEST ? 'off' : DEV ? 'debug' : 'info');
 
+// the opening SGR sequence of each color the logger uses, all closed by the default foreground
+const COLOR_OPEN = {
+	gray: '\u001b[90m',
+	magenta: '\u001b[35m',
+	red: '\u001b[31m',
+	yellow: '\u001b[33m'
+} as const;
+const COLOR_CLOSE = '\u001b[39m';
+
+type LogColor = keyof typeof COLOR_OPEN;
+type LogStyle = (format: LogColor, text: string) => string;
+
 // Identity function for when colors are disabled
-const NO_COLOR_ST: typeof styleText = (_: string | Array<string>, s: string) => s;
+const NO_COLOR_ST: LogStyle = (_, text) => text;
 
 // styles unconditionally, so the logger's `colors` is the only decision
-// (by default `styleText` re-decides from `process.stdout` and the env)
-const COLOR_ST: typeof styleText = (format, text) =>
-	styleText(format, text, { validateStream: false });
+const COLOR_ST: LogStyle = (format, text) => COLOR_OPEN[format] + text + COLOR_CLOSE;
 
 // the `FORCE_COLOR` values that turn color on, as in Node's `node:tty`; any other value turns it off
 const FORCE_COLOR_ON = new Set(['', '1', '2', '3', 'true']);
@@ -123,7 +132,7 @@ export class Logger {
 
 	// Lazy cache for formatted prefixes (individually cached and invalidated when colors change)
 	#cached_colors?: boolean;
-	#cached_st?: typeof styleText;
+	#cached_st?: LogStyle;
 	#cached_error?: string;
 	#cached_warn?: string;
 	#cached_info?: string;
@@ -309,10 +318,10 @@ export class Logger {
 	}
 
 	/**
-	 * Formats the label portion of log output with given styleText function.
+	 * Formats the label portion of log output with the given style function.
 	 * Applies color styling if enabled, otherwise returns plain bracketed label.
 	 */
-	#format_label(st: typeof styleText, colored: boolean): string {
+	#format_label(st: LogStyle, colored: boolean): string {
 		if (!this.label) return '';
 
 		return colored

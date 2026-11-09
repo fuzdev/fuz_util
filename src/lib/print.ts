@@ -1,16 +1,26 @@
-import type { styleText } from 'node:util';
-
 import type { Timings } from './timings.ts';
 import type { Logger } from './log.ts';
 
-export let st: typeof styleText = (_, v) => v;
+/**
+ * A style name fuz_util prints with.
+ */
+export type StyleName = 'blue' | 'cyan' | 'gray' | 'green' | 'magenta' | 'red' | 'white' | 'yellow';
+
+/**
+ * Styles text for a terminal. Node's `util.styleText` is one.
+ */
+export type StyleText = (format: StyleName, text: string) => string;
+
+/**
+ * The module-level styling function, leaving text unstyled until
+ * `configure_print_colors` sets one.
+ */
+export let st: StyleText = (_, v) => v;
 
 /**
  * Configures the module-level styling function for colored output.
  */
-export const configure_print_colors = (
-	s: typeof styleText | null | undefined
-): typeof styleText => {
+export const configure_print_colors = (s: StyleText | null | undefined): StyleText => {
 	st = s ?? ((_, v) => v);
 	return st;
 };
