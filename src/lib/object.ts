@@ -62,7 +62,7 @@ export const pick_by = <T extends Record<K, any>, K extends string | number>(
  *
  * @returns `obj` with all `undefined` properties removed
  *
- * @see {@link https://github.com/Microsoft/TypeScript/issues/13195}
+ * @see https://github.com/Microsoft/TypeScript/issues/13195
  */
 export const omit_undefined = <T extends Record<string | number, any>>(obj: T): T =>
 	pick_by(obj, (v) => v !== undefined) as T;
