@@ -1,5 +1,12 @@
 # @fuzdev/fuz_util
 
+## 0.82.1
+
+### Patch Changes
+
+- fix: declaration maps resolve to the shipped source, so go-to-definition lands in `src/lib` ([e701c8c](https://github.com/fuzdev/fuz_util/commit/e701c8c))
+- deps: peer '@fuzdev/fuz_schema' `>=0.5.7`, admitting 0.6: the floor is the version whose named schema types (`ObjectSchema`, `StringSchema`, …) this package's declarations print when built against it, and 0.6.0's type changes compile here unchanged ([5685342](https://github.com/fuzdev/fuz_util/commit/5685342))
+
 ## 0.82.0
 
 ### Minor Changes
