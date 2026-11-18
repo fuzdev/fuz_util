@@ -70,7 +70,12 @@ fuz_util is a **foundational utility library**:
 - `diff.ts` - line + intra-line char diffs via greedy Myers (`diff_lines`
   with 1-based line numbers and `no_newline`, `diff_hunks` context grouping,
   `diff_segments` changed-char ranges, `format_diff`/`generate_diff`
-  unified-diff text with `@@` headers)
+  unified-diff text with `@@` headers; and the way in from git:
+  `diff_lines_from_edits` rebuilds a `DiffLine` list from two texts plus
+  `DiffEdit` `@@` regions (validated, a `Result`; inverse
+  `diff_edits_from_lines`), `diff_hunks_parse` reads one file's patch text
+  into `DiffHunk`s; both need exact-text git output, see their TSDoc; the
+  real-git fixtures regenerate with `src/test/fixtures/diff_git/update.task.ts`)
 
 ### Async and timing
 

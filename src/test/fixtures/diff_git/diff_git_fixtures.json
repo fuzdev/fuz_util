@@ -1,0 +1,223 @@
+{
+	"git_version": "git version 2.47.3",
+	"cases": [
+		{
+			"name": "code_edit",
+			"a": "import {foo} from './foo.ts';\n\nexport const add = (a: number, b: number): number => {\n\treturn a + b;\n};\n\nexport const sub = (a: number, b: number): number => {\n\treturn a - b;\n};\n\nexport const mul = (a: number, b: number): number => {\n\treturn a * b;\n};\n\nexport const div = (a: number, b: number): number => {\n\treturn a / b;\n};\n\nconst unused = 1;\n\nexport const neg = (a: number): number => -a;\n",
+			"b": "import {foo} from './foo.ts';\nimport {bar} from './bar.ts';\n\nexport const add = (a: number, b: number): number => {\n\treturn a + b;\n};\n\nexport const mul = (a: number, b: number): number => {\n\tconst product = a * b;\n\treturn product;\n};\n\nexport const div = (a: number, b: number): number => {\n\treturn a / b;\n};\n\nexport const neg = (a: number): number => -a;\n\nexport const abs = (a: number): number => Math.abs(a);\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex bebc1d2..60e90c6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,0 +2 @@ import {foo} from './foo.ts';\n+import {bar} from './bar.ts';\n@@ -7,4 +7,0 @@ export const add = (a: number, b: number): number => {\n-export const sub = (a: number, b: number): number => {\n-\treturn a - b;\n-};\n-\n@@ -12 +9,2 @@ export const mul = (a: number, b: number): number => {\n-\treturn a * b;\n+\tconst product = a * b;\n+\treturn product;\n@@ -19,2 +16,0 @@ export const div = (a: number, b: number): number => {\n-const unused = 1;\n-\n@@ -21,0 +18,2 @@ export const neg = (a: number): number => -a;\n+\n+export const abs = (a: number): number => Math.abs(a);\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex bebc1d2..60e90c6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,21 +1,19 @@\n import {foo} from './foo.ts';\n+import {bar} from './bar.ts';\n \n export const add = (a: number, b: number): number => {\n \treturn a + b;\n };\n \n-export const sub = (a: number, b: number): number => {\n-\treturn a - b;\n-};\n-\n export const mul = (a: number, b: number): number => {\n-\treturn a * b;\n+\tconst product = a * b;\n+\treturn product;\n };\n \n export const div = (a: number, b: number): number => {\n \treturn a / b;\n };\n \n-const unused = 1;\n-\n export const neg = (a: number): number => -a;\n+\n+export const abs = (a: number): number => Math.abs(a);\n"
+		},
+		{
+			"name": "slider",
+			"a": "{\n  a\n}\n{\n  b\n}\n",
+			"b": "{\n  a\n}\n{\n  new\n}\n{\n  b\n}\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 470ab52..02eb9ae 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3,0 +4,3 @@\n+{\n+  new\n+}\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 470ab52..02eb9ae 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,6 +1,9 @@\n {\n   a\n }\n+{\n+  new\n+}\n {\n   b\n }\n"
+		},
+		{
+			"name": "newline_added",
+			"a": "one\ntwo\nthree",
+			"b": "one\ntwo\nthree\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 54d55bf..4cb29ea 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +3 @@ two\n-three\n\\ No newline at end of file\n+three\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 54d55bf..4cb29ea 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,3 +1,3 @@\n one\n two\n-three\n\\ No newline at end of file\n+three\n"
+		},
+		{
+			"name": "newline_removed",
+			"a": "one\ntwo\nthree\n",
+			"b": "one\ntwo\nthree",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 4cb29ea..54d55bf 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +3 @@ two\n-three\n+three\n\\ No newline at end of file\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 4cb29ea..54d55bf 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,3 +1,3 @@\n one\n two\n-three\n+three\n\\ No newline at end of file\n"
+		},
+		{
+			"name": "both_unterminated_last_changed",
+			"a": "one\ntwo\nthree",
+			"b": "one\ntwo\nTHREE",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 54d55bf..2090089 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +3 @@ two\n-three\n\\ No newline at end of file\n+THREE\n\\ No newline at end of file\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 54d55bf..2090089 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,3 +1,3 @@\n one\n two\n-three\n\\ No newline at end of file\n+THREE\n\\ No newline at end of file\n"
+		},
+		{
+			"name": "both_unterminated_middle_changed",
+			"a": "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nend",
+			"b": "line 1\nline 2\nchanged\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nend",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex f4477cf..fa47787 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +3 @@ line 2\n-line 3\n+changed\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex f4477cf..fa47787 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,6 +1,6 @@\n line 1\n line 2\n-line 3\n+changed\n line 4\n line 5\n line 6\n"
+		},
+		{
+			"name": "unterminated_append",
+			"a": "one\ntwo",
+			"b": "one\ntwo\nthree\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 9ed40b4..4cb29ea 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2 +2,2 @@ one\n-two\n\\ No newline at end of file\n+two\n+three\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 9ed40b4..4cb29ea 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,2 +1,3 @@\n one\n-two\n\\ No newline at end of file\n+two\n+three\n"
+		},
+		{
+			"name": "single_unterminated_to_empty",
+			"a": "only",
+			"b": "",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex c400566..e69de29 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1 +0,0 @@\n-only\n\\ No newline at end of file\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex c400566..e69de29 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1 +0,0 @@\n-only\n\\ No newline at end of file\n"
+		},
+		{
+			"name": "created",
+			"a": "",
+			"b": "first\nsecond\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex e69de29..66a52ee 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -0,0 +1,2 @@\n+first\n+second\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex e69de29..66a52ee 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -0,0 +1,2 @@\n+first\n+second\n"
+		},
+		{
+			"name": "deleted",
+			"a": "first\nsecond\n",
+			"b": "",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 66a52ee..e69de29 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,2 +0,0 @@\n-first\n-second\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 66a52ee..e69de29 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,2 +0,0 @@\n-first\n-second\n"
+		},
+		{
+			"name": "insert_at_start",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\n",
+			"b": "new0\nl1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex a52ef27..f0ef153 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -0,0 +1 @@\n+new0\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex a52ef27..f0ef153 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,3 +1,4 @@\n+new0\n l1\n l2\n l3\n"
+		},
+		{
+			"name": "delete_at_end",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\n",
+			"b": "l1\nl2\nl3\nl4\nl5\nl6\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex a52ef27..0970e47 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -7,2 +6,0 @@ l6\n-l7\n-l8\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex a52ef27..0970e47 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -4,5 +4,3 @@ l3\n l4\n l5\n l6\n-l7\n-l8\n"
+		},
+		{
+			"name": "far_apart",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\nl21\nl22\nl23\nl24\nl25\nl26\nl27\nl28\nl29\nl30\n",
+			"b": "l1\nL2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\nl21\nl22\nl23\nl24\nl25\nl26\nl27\nl28\nL29\nl30\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 58b8997..a40b3d6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2 +2 @@ l1\n-l2\n+L2\n@@ -29 +29 @@ l28\n-l29\n+L29\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 58b8997..a40b3d6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,5 +1,5 @@\n l1\n-l2\n+L2\n l3\n l4\n l5\n@@ -26,5 +26,5 @@ l25\n l26\n l27\n l28\n-l29\n+L29\n l30\n"
+		},
+		{
+			"name": "near_merge",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"b": "l1\nl2\nl3\nl4\nL5\nl6\nl7\nl8\nl9\nl10\nL11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 86bba90..7fbc0ee 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -5 +5 @@ l4\n-l5\n+L5\n@@ -11 +11 @@ l10\n-l11\n+L11\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 86bba90..7fbc0ee 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2,13 +2,13 @@ l1\n l2\n l3\n l4\n-l5\n+L5\n l6\n l7\n l8\n l9\n l10\n-l11\n+L11\n l12\n l13\n l14\n"
+		},
+		{
+			"name": "merge_gap_6",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"b": "l1\nl2\nl3\nl4\nL5\nl6\nl7\nl8\nl9\nl10\nl11\nL12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 86bba90..cb48d14 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -5 +5 @@ l4\n-l5\n+L5\n@@ -12 +12 @@ l11\n-l12\n+L12\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 86bba90..cb48d14 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2,14 +2,14 @@ l1\n l2\n l3\n l4\n-l5\n+L5\n l6\n l7\n l8\n l9\n l10\n l11\n-l12\n+L12\n l13\n l14\n l15\n"
+		},
+		{
+			"name": "merge_gap_7",
+			"a": "l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nl13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"b": "l1\nl2\nl3\nl4\nL5\nl6\nl7\nl8\nl9\nl10\nl11\nl12\nL13\nl14\nl15\nl16\nl17\nl18\nl19\nl20\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 86bba90..a0185d9 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -5 +5 @@ l4\n-l5\n+L5\n@@ -13 +13 @@ l12\n-l13\n+L13\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 86bba90..a0185d9 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2,7 +2,7 @@ l1\n l2\n l3\n l4\n-l5\n+L5\n l6\n l7\n l8\n@@ -10,7 +10,7 @@ l9\n l10\n l11\n l12\n-l13\n+L13\n l14\n l15\n l16\n"
+		},
+		{
+			"name": "crlf",
+			"a": "one\r\ntwo\r\nthree\r\n",
+			"b": "one\r\nTWO\r\nthree\r\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex e1587ff..103b2f6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2 +2 @@ one\n-two\r\n+TWO\r\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex e1587ff..103b2f6 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,3 +1,3 @@\n one\r\n-two\r\n+TWO\r\n three\r\n"
+		},
+		{
+			"name": "blank_lines",
+			"a": "\n\n\nx\n\n\n",
+			"b": "\n\nx\n\n\n\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 701642f..b10203d 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +2,0 @@\n-\n@@ -6,0 +6 @@ x\n+\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 701642f..b10203d 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,6 +1,6 @@\n \n \n-\n x\n \n \n+\n"
+		},
+		{
+			"name": "suppress_blank_empty",
+			"a": "x\n\ny\n\nz\n",
+			"b": "x\n\nY\n\nz\n",
+			"command_u0": "git -c diff.suppressBlankEmpty=true diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex c97b89f..8bb15e3 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -3 +3 @@ x\n-y\n+Y\n",
+			"command_u3": "git -c diff.suppressBlankEmpty=true diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex c97b89f..8bb15e3 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,5 +1,5 @@\n x\n\n-y\n+Y\n\n z\n"
+		},
+		{
+			"name": "diff_like_text",
+			"a": "--- a\n+++ b\n@@ -1 +1 @@\n-x\n+y\n",
+			"b": "--- a\n+++ c\n@@ -1 +1 @@\n-x\n+z\n",
+			"command_u0": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U0 a.txt b.txt",
+			"u0": "diff --git a/a.txt b/b.txt\nindex 995f85b..929a020 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -2 +2 @@\n-+++ b\n++++ c\n@@ -5 +5 @@\n-+y\n++z\n",
+			"command_u3": "git diff --no-index --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -U3 a.txt b.txt",
+			"u3": "diff --git a/a.txt b/b.txt\nindex 995f85b..929a020 100644\n--- a/a.txt\n+++ b/b.txt\n@@ -1,5 +1,5 @@\n --- a\n-+++ b\n++++ c\n @@ -1 +1 @@\n -x\n-+y\n++z\n"
+		}
+	],
+	"patches": {
+		"rename_mode_u3": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -U3 -- old_name.txt new_name.txt",
+			"patch": "diff --git a/old_name.txt b/new_name.txt\nold mode 100644\nnew mode 100755\nsimilarity index 89%\nrename from old_name.txt\nrename to new_name.txt\nindex 4a077c8..4567c70\n--- a/old_name.txt\n+++ b/new_name.txt\n@@ -3,7 +3,7 @@ row 2\n row 3\n row 4\n row 5\n-row 6\n+row six\n row 7\n row 8\n row 9\n"
+		},
+		"rename_mode_u0": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -U0 -- old_name.txt new_name.txt",
+			"patch": "diff --git a/old_name.txt b/new_name.txt\nold mode 100644\nnew mode 100755\nsimilarity index 89%\nrename from old_name.txt\nrename to new_name.txt\nindex 4a077c8..4567c70\n--- a/old_name.txt\n+++ b/new_name.txt\n@@ -6 +6 @@ row 5\n-row 6\n+row six\n"
+		},
+		"binary": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -- image.bin",
+			"patch": "diff --git a/image.bin b/image.bin\nindex 0df5c99..0ed6a69 100644\nBinary files a/image.bin and b/image.bin differ\n"
+		},
+		"added_file": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -- added.txt",
+			"patch": "diff --git a/added.txt b/added.txt\nnew file mode 100644\nindex 0000000..45b983b\n--- /dev/null\n+++ b/added.txt\n@@ -0,0 +1 @@\n+hi\n"
+		},
+		"deleted_file": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -- gone.txt",
+			"patch": "diff --git a/gone.txt b/gone.txt\ndeleted file mode 100644\nindex b023018..0000000\n--- a/gone.txt\n+++ /dev/null\n@@ -1 +0,0 @@\n-bye\n"
+		},
+		"deleted_file_irreversible": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M -D -- gone.txt",
+			"patch": "diff --git a/gone.txt b/gone.txt\ndeleted file mode 100644\nindex b023018..0000000\n"
+		},
+		"word_diff_u3": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M --word-diff -U3 -- indented.txt",
+			"patch": "diff --git a/indented.txt b/indented.txt\nindex fe762a8..3684209 100644\n--- a/indented.txt\n+++ b/indented.txt\n@@ -1,3 +1,3 @@\n  a\n  [-b-]{+B x+}\n  c\n"
+		},
+		"word_diff_u0": {
+			"command": "git diff --cached --no-color --no-ext-diff --no-textconv --diff-algorithm=histogram --indent-heuristic -M --word-diff -U0 -- indented.txt",
+			"patch": "diff --git a/indented.txt b/indented.txt\nindex fe762a8..3684209 100644\n--- a/indented.txt\n+++ b/indented.txt\n@@ -2 +2 @@\n  [-b-]{+B x+}\n"
+		}
+	},
+	"files": {
+		"rename_a": "row 1\nrow 2\nrow 3\nrow 4\nrow 5\nrow 6\nrow 7\nrow 8\nrow 9\nrow 10\nrow 11\nrow 12\n",
+		"rename_b": "row 1\nrow 2\nrow 3\nrow 4\nrow 5\nrow six\nrow 7\nrow 8\nrow 9\nrow 10\nrow 11\nrow 12\n"
+	}
+}

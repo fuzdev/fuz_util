@@ -1,12 +1,15 @@
 /**
  * Line and intra-line character diffs via greedy Myers over interned
- * sequences, plus hunk grouping and unified-diff text formatting.
+ * sequences, plus hunk grouping and unified-diff text formatting, and the
+ * way back in from another differ: line diffs rebuilt from `@@` change
+ * regions, and hunks parsed from unified-diff text.
  *
  * @module
  */
 
 import { string_is_binary } from './string.ts';
 import { st } from './print.ts';
+import type { Result } from './result.ts';
 
 /**
  * One line of a line diff. Line numbers are 1-based; the absent side of an
@@ -415,6 +418,486 @@ export const diff_hunks = (lines: Array<DiffLine>, context_lines = 3): Array<Dif
 	}
 	flush();
 	return hunks;
+};
+
+/**
+ * One change region as a `@@` header numbers it,
+ * `[a_start, a_count, b_start, b_count]` — the line-text-free form of a diff
+ * that `git diff -U0` headers carry. Starts are 1-based; a side with a zero
+ * count starts at the line *before* the region on that side, 0 at the very
+ * beginning, as in `DiffHunk`. A count omitted from a header is 1.
+ */
+export type DiffEdit = [a_start: number, a_count: number, b_start: number, b_count: number];
+
+/**
+ * The 0-based number of lines before a region on one side, from its
+ * 1-based `@@` start.
+ */
+const edit_position = (start: number, count: number): number => (count > 0 ? start - 1 : start);
+
+/**
+ * Checks one edit's numbers, returning why they're unusable or `null`.
+ */
+const check_edit_numbers = (edit: DiffEdit): string | null => {
+	if (edit.length !== 4) return 'expected four numbers';
+	for (const n of edit) {
+		if (!Number.isSafeInteger(n) || n < 0) return 'expected non-negative integers';
+	}
+	const [a_start, a_count, b_start, b_count] = edit;
+	if (a_count === 0 && b_count === 0) return 'changes no lines';
+	if (a_count > 0 && a_start === 0) return 'a_start is 0 with a nonzero a_count';
+	if (b_count > 0 && b_start === 0) return 'b_start is 0 with a nonzero b_count';
+	return null;
+};
+
+/**
+ * A failed `diff_lines_from_edits` result naming the edit, its label built
+ * only on failure.
+ */
+const edit_fail = (i: number, edit: DiffEdit, reason: string): { ok: false; message: string } => ({
+	ok: false,
+	message: `edits[${i}] [${edit.join(', ')}]: ${reason}`
+});
+
+/**
+ * Rebuilds a whole-file line diff from two texts and their change regions —
+ * the `Array<DiffLine>` that `diff_lines(a, b)` returns when its diff chose
+ * these regions. Lets a caller render another differ's choices, like git's
+ * histogram diff from `git diff -U0` headers, without the line text crossing
+ * a wire.
+ *
+ * Lines split as in `diff_lines`, so a terminated and an unterminated final
+ * line never match: git reports a newline-only change as a region holding
+ * the final line, and that region's lines carry `no_newline`. Each region
+ * emits its removes before its adds; the lines between regions are `same`.
+ * Edits that touch (no unchanged line between them on either side) merge
+ * into one region, as `diff_lines` normalizes a run of changes. An empty
+ * `edits` asserts the texts are equal.
+ *
+ * Inconsistent input is an expected failure, not a bug — stale edits or the
+ * wrong blob — so it returns a failed `Result` naming the edit or line:
+ * numbers that aren't non-negative integers, an edit that changes no lines,
+ * edits out of order or overlapping, a region past either text's end,
+ * unchanged runs of different lengths on the two sides, or an unchanged
+ * line whose text (or final newline) differs between the sides.
+ *
+ * The edits must come from an exact-text diff of these same texts: with git,
+ * `--no-textconv --no-ext-diff`, no color or `--word-diff`, no option that
+ * ignores whitespace or lines (`-w`, `-b`, `--ignore-space-at-eol`,
+ * `--ignore-cr-at-eol`, `--ignore-blank-lines`, `-I`), and blobs or commits
+ * rather than a worktree file that clean/smudge filters or `core.autocrlf`
+ * change. Under an ignoring option git calls lines unchanged whose text
+ * differs, which a `same` `DiffLine` can't hold, so such edits are refused.
+ *
+ * @param a - the original content
+ * @param b - the updated content
+ * @param edits - the change regions in order, as `diff_edits_from_lines` returns them
+ * @returns the line diff, or why the edits don't fit the texts
+ */
+export const diff_lines_from_edits = (
+	a: string,
+	b: string,
+	edits: Array<DiffEdit>
+): Result<{ value: Array<DiffLine> }, { message: string }> => {
+	const a_split = split_lines(a);
+	const b_split = split_lines(b);
+	const a_lines = a_split.lines;
+	const b_lines = b_split.lines;
+	const a_last_unterminated = a_split.ends_newline ? -1 : a_lines.length - 1;
+	const b_last_unterminated = b_split.ends_newline ? -1 : b_lines.length - 1;
+	const result: Array<DiffLine> = [];
+	let ai = 0;
+	let bi = 0;
+	// where the pending changed region starts, -1 for none; touching edits extend it
+	let region_a = -1;
+	let region_b = -1;
+	const flush_region = (): void => {
+		if (region_a === -1) return;
+		for (let i = region_a; i < ai; i++) {
+			const line: DiffLine = { type: 'remove', text: a_lines[i]!, a_line: i + 1, b_line: null };
+			if (i === a_last_unterminated) line.no_newline = true;
+			result.push(line);
+		}
+		for (let i = region_b; i < bi; i++) {
+			const line: DiffLine = { type: 'add', text: b_lines[i]!, a_line: null, b_line: i + 1 };
+			if (i === b_last_unterminated) line.no_newline = true;
+			result.push(line);
+		}
+		region_a = -1;
+		region_b = -1;
+	};
+	// emits `count` unchanged lines, returning why one doesn't match or `null`
+	const emit_same = (count: number, where: string): string | null => {
+		for (let i = 0; i < count; i++) {
+			const a_text = a_lines[ai]!;
+			const a_unterminated = ai === a_last_unterminated;
+			if (a_text !== b_lines[bi]) {
+				return `unchanged a line ${ai + 1} and b line ${bi + 1} differ ${where}`;
+			}
+			if (a_unterminated !== (bi === b_last_unterminated)) {
+				return `unchanged a line ${ai + 1} and b line ${bi + 1} differ in their final newline ${where}`;
+			}
+			const line: DiffLine = { type: 'same', text: a_text, a_line: ai + 1, b_line: bi + 1 };
+			if (a_unterminated) line.no_newline = true;
+			result.push(line);
+			ai++;
+			bi++;
+		}
+		return null;
+	};
+	// check the edits' structure before any text, so a structural fault reports as one
+	let a_end = 0;
+	let b_end = 0;
+	for (let i = 0; i < edits.length; i++) {
+		const edit = edits[i]!;
+		const invalid = check_edit_numbers(edit);
+		if (invalid !== null) return edit_fail(i, edit, invalid);
+		const [a_start, a_count, b_start, b_count] = edit;
+		const a_pos = edit_position(a_start, a_count);
+		const b_pos = edit_position(b_start, b_count);
+		if (a_pos < a_end || b_pos < b_end) {
+			return edit_fail(i, edit, 'out of order or overlapping the previous edit');
+		}
+		if (a_pos + a_count > a_lines.length) {
+			return edit_fail(i, edit, `past the end of a, which has ${a_lines.length} lines`);
+		}
+		if (b_pos + b_count > b_lines.length) {
+			return edit_fail(i, edit, `past the end of b, which has ${b_lines.length} lines`);
+		}
+		if (a_pos - a_end !== b_pos - b_end) {
+			return edit_fail(
+				i,
+				edit,
+				`the unchanged run before it is ${a_pos - a_end} lines in a but ${b_pos - b_end} in b`
+			);
+		}
+		a_end = a_pos + a_count;
+		b_end = b_pos + b_count;
+	}
+	const tail = a_lines.length - a_end;
+	const where = edits.length === 0 ? 'with no edits' : 'after the last edit';
+	if (tail !== b_lines.length - b_end) {
+		return {
+			ok: false,
+			message: `the unchanged run ${where} is ${tail} lines in a but ${b_lines.length - b_end} in b`
+		};
+	}
+	for (let i = 0; i < edits.length; i++) {
+		const [a_start, a_count, b_start, b_count] = edits[i]!;
+		const a_pos = edit_position(a_start, a_count);
+		const b_pos = edit_position(b_start, b_count);
+		const gap = a_pos - ai;
+		if (gap > 0) {
+			flush_region();
+			const mismatch = emit_same(gap, `before edits[${i}]`);
+			if (mismatch !== null) return { ok: false, message: mismatch };
+		}
+		if (region_a === -1) {
+			region_a = a_pos;
+			region_b = b_pos;
+		}
+		ai = a_pos + a_count;
+		bi = b_pos + b_count;
+	}
+	flush_region();
+	const mismatch = emit_same(tail, where);
+	if (mismatch !== null) return { ok: false, message: mismatch };
+	return { ok: true, value: result };
+};
+
+/**
+ * Collects a whole-file line diff's change regions — the inverse of
+ * `diff_lines_from_edits`, so `diff_lines_from_edits(a, b,
+ * diff_edits_from_lines(diff_lines(a, b)))` returns `diff_lines(a, b)`. Each
+ * maximal run of non-`same` lines is one edit. A zero-count side anchors to
+ * the line before the run, so the lines must start at the top of the file
+ * (as `diff_lines` returns them, not a hunk's slice).
+ *
+ * @param lines - a whole-file line diff
+ */
+export const diff_edits_from_lines = (lines: Array<DiffLine>): Array<DiffEdit> => {
+	const edits: Array<DiffEdit> = [];
+	let a_prev = 0; // the last line seen on each side
+	let b_prev = 0;
+	let i = 0;
+	while (i < lines.length) {
+		const line = lines[i]!;
+		if (line.type === 'same') {
+			if (line.a_line !== null) a_prev = line.a_line;
+			if (line.b_line !== null) b_prev = line.b_line;
+			i++;
+			continue;
+		}
+		let a_first = 0;
+		let a_count = 0;
+		let b_first = 0;
+		let b_count = 0;
+		const a_before = a_prev;
+		const b_before = b_prev;
+		while (i < lines.length && lines[i]!.type !== 'same') {
+			const { a_line, b_line } = lines[i]!;
+			if (a_line !== null) {
+				if (a_count === 0) a_first = a_line;
+				a_count++;
+				a_prev = a_line;
+			}
+			if (b_line !== null) {
+				if (b_count === 0) b_first = b_line;
+				b_count++;
+				b_prev = b_line;
+			}
+			i++;
+		}
+		edits.push([
+			a_count > 0 ? a_first : a_before,
+			a_count,
+			b_count > 0 ? b_first : b_before,
+			b_count
+		]);
+	}
+	return edits;
+};
+
+/**
+ * Why `diff_hunks_parse` couldn't read a patch.
+ */
+export interface DiffHunksParseError {
+	/**
+	 * `'binary'` when git printed the file as binary (`Binary files … differ`
+	 * or `GIT binary patch`) — no line hunks exist, distinct from a patch
+	 * with no content change; `'invalid'` for text that isn't one file's
+	 * consistent unified diff.
+	 */
+	kind: 'binary' | 'invalid';
+	message: string;
+}
+
+/**
+ * The extended header lines git prints before a file's first hunk.
+ */
+const PATCH_HEADER_PREFIXES = [
+	'diff ',
+	'index ',
+	'--- ',
+	'+++ ',
+	'old mode ',
+	'new mode ',
+	'deleted file mode ',
+	'new file mode ',
+	'similarity index ',
+	'dissimilarity index ',
+	'rename from ',
+	'rename to ',
+	'copy from ',
+	'copy to '
+];
+
+/**
+ * Parses a run of decimal digits (no sign, spaces, or exponent), or returns
+ * `null`.
+ */
+const parse_uint = (text: string): number | null => {
+	if (text === '' || text.length > 15) return null;
+	for (let i = 0; i < text.length; i++) {
+		const c = text.charCodeAt(i);
+		if (c < 48 || c > 57) return null;
+	}
+	return Number(text);
+};
+
+/**
+ * Parses a `start[,count]` header range; an omitted count is 1.
+ */
+const parse_hunk_range = (text: string): [number, number] | null => {
+	const comma = text.indexOf(',');
+	const start = parse_uint(comma === -1 ? text : text.slice(0, comma));
+	const count = comma === -1 ? 1 : parse_uint(text.slice(comma + 1));
+	if (start === null || count === null) return null;
+	return [start, count];
+};
+
+/**
+ * Parses `@@ -a[,b] +c[,d] @@[ section]`, or returns `null`.
+ */
+const parse_hunk_header = (line: string): DiffEdit | null => {
+	if (!line.startsWith('@@ -')) return null;
+	const end = line.indexOf(' @@', 4);
+	if (end === -1) return null;
+	if (line.length > end + 3 && line[end + 3] !== ' ') return null;
+	const ranges = line.slice(4, end);
+	const plus = ranges.indexOf(' +');
+	if (plus === -1) return null;
+	const a = parse_hunk_range(ranges.slice(0, plus));
+	const b = parse_hunk_range(ranges.slice(plus + 2));
+	if (a === null || b === null) return null;
+	return [a[0], a[1], b[0], b[1]];
+};
+
+/**
+ * Parses one file's unified diff as git prints it (`git diff -U3`, or any
+ * context width) into hunks — for rendering a change from the patch alone,
+ * without either side's text.
+ *
+ * File header lines before the first `@@` (`diff --git`, `index`, `---`,
+ * `+++`, mode, rename, and copy lines) are skipped; a patch with headers
+ * and no hunks (a rename or mode change alone) or empty text parses to `[]`.
+ * A count omitted from a `@@` header is 1, and the section text after the
+ * closing `@@` is ignored. `\ No newline at end of file` sets `no_newline`
+ * on the line before it, per `DiffLine`. Lines split on `\n` only, so `\r`
+ * stays in line text as in `diff_lines`.
+ *
+ * The result is checked against itself: each hunk's lines must match its
+ * header's counts, hunks must be in order and not overlap, the unchanged
+ * runs between hunks must be equally long on both sides, each hunk must
+ * change a line, and no line or hunk may follow a side's no-newline line. A
+ * failure's `kind` tells a binary patch from malformed text.
+ *
+ * Inside a hunk an empty row is an empty unchanged line, as git prints one
+ * under `diff.suppressBlankEmpty` (and `git apply` and GNU patch accept).
+ * The patch must be plain exact-text output, as `diff_lines_from_edits`
+ * details: `--no-textconv --no-ext-diff`, no color, no `--word-diff` (its
+ * rows carry no line markers, so they mostly parse as a hunk that changes
+ * nothing, which is refused), and no option that ignores whitespace or lines
+ * (`-w`, `-b`, `--ignore-blank-lines`, and the like), under which a context
+ * line shows one text for lines that differ between the sides. `git diff -D`
+ * prints a deleted file's headers with no hunks, so it parses to `[]` like a
+ * pure rename.
+ *
+ * @param patch - one file's unified diff text
+ * @returns the hunks, with starts and counts as their headers give them
+ */
+export const diff_hunks_parse = (
+	patch: string
+): Result<{ value: Array<DiffHunk> }, DiffHunksParseError> => {
+	const rows = patch.split('\n');
+	if (rows[rows.length - 1] === '') rows.pop();
+	const hunks: Array<DiffHunk> = [];
+	const invalid = (row: number, message: string): { ok: false } & DiffHunksParseError => ({
+		ok: false,
+		kind: 'invalid',
+		message: `line ${row + 1}: ${message}`
+	});
+	let hunk: DiffHunk | null = null;
+	let a_left = 0; // lines the open hunk's header still promises
+	let b_left = 0;
+	let a_next = 0; // the next line number on each side
+	let b_next = 0;
+	let a_end = 0; // lines on each side through the last hunk
+	let b_end = 0;
+	let a_ended = false; // a no-newline line ended the side
+	let b_ended = false;
+	let hunk_row = 0; // the open hunk's header row
+	let hunk_changed = false; // the open hunk has a removed or added line
+	let last: DiffLine | null = null;
+	for (let r = 0; r < rows.length; r++) {
+		const row = rows[r]!;
+		if (hunk !== null && (a_left > 0 || b_left > 0)) {
+			// `diff.suppressBlankEmpty` prints an empty unchanged line as an empty row
+			const marker = row === '' ? ' ' : row[0];
+			const text = row.slice(1);
+			let line: DiffLine;
+			if (marker === ' ') {
+				if (a_left === 0 || b_left === 0) {
+					return invalid(r, 'a context line past the count in its hunk header');
+				}
+				if (a_ended || b_ended) return invalid(r, 'a line after the end of the file');
+				line = { type: 'same', text, a_line: a_next++, b_line: b_next++ };
+				a_left--;
+				b_left--;
+			} else if (marker === '-') {
+				if (a_left === 0) return invalid(r, 'a removed line past the count in its hunk header');
+				if (a_ended) return invalid(r, 'a line after the end of the file');
+				line = { type: 'remove', text, a_line: a_next++, b_line: null };
+				a_left--;
+				hunk_changed = true;
+			} else if (marker === '+') {
+				if (b_left === 0) return invalid(r, 'an added line past the count in its hunk header');
+				if (b_ended) return invalid(r, 'a line after the end of the file');
+				line = { type: 'add', text, a_line: null, b_line: b_next++ };
+				b_left--;
+				hunk_changed = true;
+			} else if (marker === '\\') {
+				if (last === null || last.no_newline) {
+					return invalid(r, 'a no-newline marker with no line before it');
+				}
+				last.no_newline = true;
+				if (last.a_line !== null) a_ended = true;
+				if (last.b_line !== null) b_ended = true;
+				continue;
+			} else {
+				return invalid(r, `the hunk ends early, missing ${a_left} lines of a and ${b_left} of b`);
+			}
+			hunk.lines.push(line);
+			last = line;
+			// git never prints a hunk without a change; `--word-diff` output parses as one
+			if (a_left === 0 && b_left === 0 && !hunk_changed) {
+				return invalid(hunk_row, 'a hunk that changes no lines, which git never prints');
+			}
+			continue;
+		}
+		if (row.startsWith('\\') && last !== null) {
+			if (last.no_newline) return invalid(r, 'a second no-newline marker');
+			last.no_newline = true;
+			if (last.a_line !== null) a_ended = true;
+			if (last.b_line !== null) b_ended = true;
+			continue;
+		}
+		if (row.startsWith('@@')) {
+			const edit = parse_hunk_header(row);
+			if (edit === null) return invalid(r, `a malformed hunk header: ${row}`);
+			const numbers = check_edit_numbers(edit);
+			if (numbers !== null) return invalid(r, `hunk header ${numbers}`);
+			const [a_start, a_count, b_start, b_count] = edit;
+			const a_pos = edit_position(a_start, a_count);
+			const b_pos = edit_position(b_start, b_count);
+			if (a_pos < a_end || b_pos < b_end) {
+				return invalid(r, 'a hunk out of order or overlapping the previous hunk');
+			}
+			// a side that ended unterminated has no lines after it to change or anchor to
+			if (
+				(a_ended && (a_count > 0 || a_pos > a_end)) ||
+				(b_ended && (b_count > 0 || b_pos > b_end))
+			) {
+				return invalid(r, 'a hunk after the end of the file');
+			}
+			if (a_pos - a_end !== b_pos - b_end) {
+				return invalid(
+					r,
+					`the unchanged run before the hunk is ${a_pos - a_end} lines in a but ${b_pos - b_end} in b`
+				);
+			}
+			hunk = { a_start, a_count, b_start, b_count, lines: [] };
+			hunks.push(hunk);
+			a_left = a_count;
+			b_left = b_count;
+			a_next = a_pos + 1;
+			b_next = b_pos + 1;
+			a_end = a_pos + a_count;
+			b_end = b_pos + b_count;
+			hunk_row = r;
+			hunk_changed = false;
+			last = null;
+			continue;
+		}
+		if (hunk === null) {
+			if (row.startsWith('Binary files ') || row === 'GIT binary patch') {
+				return { ok: false, kind: 'binary', message: `line ${r + 1}: a binary patch` };
+			}
+			if (PATCH_HEADER_PREFIXES.some((prefix) => row.startsWith(prefix))) continue;
+			return invalid(r, 'expected a file header or a hunk header');
+		}
+		if (PATCH_HEADER_PREFIXES.some((prefix) => row.startsWith(prefix))) {
+			return invalid(r, "a second file's header, but this parses one file");
+		}
+		return invalid(r, 'a line past the count in its hunk headers');
+	}
+	if (hunk !== null && (a_left > 0 || b_left > 0)) {
+		return invalid(
+			rows.length - 1,
+			`the patch ends inside a hunk, missing ${a_left} lines of a and ${b_left} of b`
+		);
+	}
+	return { ok: true, value: hunks };
 };
 
 /**

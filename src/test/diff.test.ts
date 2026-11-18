@@ -5,83 +5,17 @@
  */
 
 import { assert, test, describe } from 'vitest';
-import {
-	diff_lines,
-	diff_hunks,
-	diff_segments,
-	format_diff,
-	generate_diff,
-	type DiffLine
-} from '#lib/diff.ts';
+import { diff_lines, diff_hunks, diff_segments, format_diff, generate_diff } from '#lib/diff.ts';
 import { configure_print_colors, type StyleText } from '#lib/print.ts';
 import { create_random_alea } from '#lib/random_alea.ts';
 
-/**
- * Rebuilds the `a` text from a diff — `same` + `remove` lines, terminated
- * unless the side's final line carries `no_newline`.
- */
-const reconstruct_a = (diff: Array<DiffLine>): string => {
-	const lines: Array<string> = [];
-	let ends_newline = true;
-	for (const d of diff) {
-		if (d.a_line !== null) {
-			lines.push(d.text);
-			if (d.no_newline) ends_newline = false;
-		}
-	}
-	if (lines.length === 0) return '';
-	return lines.join('\n') + (ends_newline ? '\n' : '');
-};
-
-/**
- * Rebuilds the `b` text from a diff — `same` + `add` lines.
- */
-const reconstruct_b = (diff: Array<DiffLine>): string => {
-	const lines: Array<string> = [];
-	let ends_newline = true;
-	for (const d of diff) {
-		if (d.b_line !== null) {
-			lines.push(d.text);
-			if (d.no_newline) ends_newline = false;
-		}
-	}
-	if (lines.length === 0) return '';
-	return lines.join('\n') + (ends_newline ? '\n' : '');
-};
-
-/**
- * Asserts 1-based, gapless, monotonic line numbers per side.
- */
-const assert_line_numbers = (diff: Array<DiffLine>): void => {
-	let ai = 0;
-	let bi = 0;
-	for (const d of diff) {
-		if (d.a_line !== null) {
-			ai++;
-			assert.strictEqual(d.a_line, ai);
-		}
-		if (d.b_line !== null) {
-			bi++;
-			assert.strictEqual(d.b_line, bi);
-		}
-	}
-};
-
-/**
- * Asserts each changed region is normalized to removes-before-adds.
- */
-const assert_normalized = (diff: Array<DiffLine>): void => {
-	let seen_add = false;
-	for (const d of diff) {
-		if (d.type === 'same') {
-			seen_add = false;
-		} else if (d.type === 'add') {
-			seen_add = true;
-		} else {
-			assert.isFalse(seen_add, 'remove after add within a changed region');
-		}
-	}
-};
+import {
+	assert_line_numbers,
+	assert_normalized,
+	random_diff_case,
+	reconstruct_a,
+	reconstruct_b
+} from './diff_test_helpers.ts';
 
 describe('diff_lines', () => {
 	describe('identical content', () => {
@@ -670,36 +604,7 @@ describe('generate_diff', () => {
 
 describe('round-trip property', () => {
 	const random = create_random_alea('diff-rework');
-	const random_int = (max: number): number => Math.floor(random() * max);
-	const alphabet = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', ''];
-
-	const random_case = (): { a: string; b: string } => {
-		const a_lines: Array<string> = [];
-		const a_len = random_int(40);
-		for (let i = 0; i < a_len; i++) a_lines.push(alphabet[random_int(alphabet.length)]!);
-		const b_lines = [...a_lines];
-		const mutations = random_int(9);
-		for (let i = 0; i < mutations; i++) {
-			const kind = random_int(3);
-			const at = random_int(b_lines.length + 1);
-			if (kind === 0) {
-				b_lines.splice(at, random_int(4));
-			} else if (kind === 1) {
-				b_lines.splice(at, 0, alphabet[random_int(alphabet.length)]!);
-			} else if (at < b_lines.length) {
-				b_lines[at] = alphabet[random_int(alphabet.length)]!;
-			}
-		}
-		const terminate = (lines: Array<string>): string => {
-			if (lines.length === 0) return '';
-			// avoid the ambiguous unterminated-empty-final-line case: an empty
-			// final line without a trailing newline is indistinguishable from a
-			// terminated text under this test's reconstruction
-			if (lines[lines.length - 1] === '' || random_int(2) === 0) return lines.join('\n') + '\n';
-			return lines.join('\n');
-		};
-		return { a: terminate(a_lines), b: terminate(b_lines) };
-	};
+	const random_case = (): { a: string; b: string } => random_diff_case(random);
 
 	test('diffs reconstruct both sides exactly', () => {
 		for (let i = 0; i < 100; i++) {
