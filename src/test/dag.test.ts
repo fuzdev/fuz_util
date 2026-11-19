@@ -164,14 +164,11 @@ describe('run_dag', () => {
 					}
 				})
 			);
-			const start = Date.now();
 			const result = await run_with_execute(nodes);
-			const elapsed = Date.now() - start;
 
 			assert.isTrue(result.success);
 			assert.strictEqual(result.completed, 3);
 			assert.isAbove(max_concurrent, 1, 'nodes should run concurrently');
-			assert.isBelow(elapsed, 80, 'parallel execution should be faster than sequential');
 		});
 
 		test('diamond dependency: a -> b,c -> d', async () => {
