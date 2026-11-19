@@ -415,6 +415,28 @@ describe('diff_hunks_parse', () => {
 			);
 		});
 
+		test('a no-newline marker on an empty line', () => {
+			// once the hunk's counts are met, on each kind of line
+			assert_invalid('@@ -1,2 +1 @@\n a\n-\n\\ No newline at end of file\n', 'on an empty line');
+			assert_invalid('@@ -1 +1,2 @@\n a\n+\n\\ No newline at end of file\n', 'on an empty line');
+			assert_invalid(
+				'@@ -1,2 +1,2 @@\n-a\n+b\n \n\\ No newline at end of file\n',
+				'on an empty line'
+			);
+			// an empty row read as an empty unchanged line (`diff.suppressBlankEmpty`)
+			assert_invalid(
+				'@@ -1,2 +1,2 @@\n-a\n+b\n\n\\ No newline at end of file\n',
+				'on an empty line'
+			);
+			// inside the hunk, with lines of b still to come
+			assert_invalid(
+				'@@ -1,2 +1,2 @@\n a\n-\n\\ No newline at end of file\n+b\n',
+				'on an empty line'
+			);
+			// a one-space line isn't empty
+			assert.ok(diff_hunks_parse('@@ -1 +1 @@\n- \n\\ No newline at end of file\n+b\n').ok);
+		});
+
 		test('a line after a side ended without a newline', () => {
 			assert_invalid(
 				'@@ -1,2 +1,2 @@\n-a\n\\ No newline at end of file\n-b\n+c\n+d\n',

@@ -693,6 +693,12 @@ const PATCH_HEADER_PREFIXES = [
 ];
 
 /**
+ * An unterminated final line has at least one character — an empty one
+ * would be no line at all — so git never marks an empty line.
+ */
+const EMPTY_NO_NEWLINE = 'a no-newline marker on an empty line, which git never prints';
+
+/**
  * Parses a run of decimal digits (no sign, spaces, or exponent), or returns
  * `null`.
  */
@@ -749,8 +755,9 @@ const parse_hunk_header = (line: string): DiffEdit | null => {
  * The result is checked against itself: each hunk's lines must match its
  * header's counts, hunks must be in order and not overlap, the unchanged
  * runs between hunks must be equally long on both sides, each hunk must
- * change a line, and no line or hunk may follow a side's no-newline line. A
- * failure's `kind` tells a binary patch from malformed text.
+ * change a line, no line or hunk may follow a side's no-newline line, and
+ * no empty line may be marked no-newline. A failure's `kind` tells a binary
+ * patch from malformed text.
  *
  * Inside a hunk an empty row is an empty unchanged line, as git prints one
  * under `diff.suppressBlankEmpty` (and `git apply` and GNU patch accept).
@@ -820,6 +827,7 @@ export const diff_hunks_parse = (
 				if (last === null || last.no_newline) {
 					return invalid(r, 'a no-newline marker with no line before it');
 				}
+				if (last.text === '') return invalid(r, EMPTY_NO_NEWLINE);
 				last.no_newline = true;
 				if (last.a_line !== null) a_ended = true;
 				if (last.b_line !== null) b_ended = true;
@@ -837,6 +845,7 @@ export const diff_hunks_parse = (
 		}
 		if (row.startsWith('\\') && last !== null) {
 			if (last.no_newline) return invalid(r, 'a second no-newline marker');
+			if (last.text === '') return invalid(r, EMPTY_NO_NEWLINE);
 			last.no_newline = true;
 			if (last.a_line !== null) a_ended = true;
 			if (last.b_line !== null) b_ended = true;
