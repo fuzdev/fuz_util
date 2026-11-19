@@ -1,5 +1,15 @@
 # @fuzdev/fuz_util
 
+## 0.83.0
+
+### Minor Changes
+
+- Update dependencies (BREAKING CHANGES) ([5566f68](https://github.com/fuzdev/fuz_util/commit/5566f68))
+  
+  Breaking dependency changes:
+  - svelte-docinfo: 0.17.0 → 0.18.1 (minor)
+- feat: rebuild line diffs from another differ's change regions and parse unified-diff patches in `diff.ts` — `DiffEdit` (a `@@` region tuple), `diff_lines_from_edits` (validated, returns a `Result`), its inverse `diff_edits_from_lines`, and `diff_hunks_parse` (one file's `git diff` text to `DiffHunk`s, `\ No newline` aware and refusing the marker on an empty line, binary patches a distinct failure); both expect exact-text git output (no `-w` and friends, no `--word-diff`, no textconv) ([570b92a](https://github.com/fuzdev/fuz_util/commit/570b92a))
+
 ## 0.82.1
 
 ### Patch Changes
