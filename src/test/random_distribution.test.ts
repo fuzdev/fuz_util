@@ -1,6 +1,11 @@
 /**
  * Distribution quality tests for PRNGs.
  * Tests uniformity and independence from first principles.
+ *
+ * Every generator here is seeded, so each statistic is a fixed value and the
+ * thresholds can't flake. `Math.random` can't be seeded: its statistics vary
+ * per run and would fail these thresholds by chance, so
+ * `src/benchmarks/random_quality.ts` reports its quality instead.
  */
 
 import { describe, test, assert } from 'vitest';
@@ -19,9 +24,8 @@ import {
 // sample size for most tests
 const N = 100_000;
 
-// generator factories — each returns a fresh PRNG
+// generator factories — each returns a fresh, seeded PRNG
 const generators: Array<{ name: string; create: () => Prng; expect_good: boolean }> = [
-	{ name: 'Math.random', create: () => Math.random, expect_good: true },
 	{ name: 'Alea', create: () => create_random_alea(42), expect_good: true },
 	{ name: 'Xoshiro128**', create: () => create_random_xoshiro(42), expect_good: true },
 	{ name: 'Xorshift32', create: () => create_random_xorshift32(42), expect_good: true },
